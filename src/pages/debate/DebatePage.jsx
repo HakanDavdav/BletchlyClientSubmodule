@@ -377,7 +377,7 @@ export default function DebatePage() {
     })
 
     setConnection(newConnection)
-  }, [debateId, isValidDebateId, t])
+  }, [debateId, isValidDebateId])
 
   useEffect(() => {
     if (connection) {
@@ -389,7 +389,7 @@ export default function DebatePage() {
           connection.on('ReceiveDebateStream', (jsonStr) => {
             try {
               const data = JSON.parse(jsonStr)
-              handleSignal(data)
+              handleSignalRef.current?.(data)
             } catch (e) {
               console.error('Failed to parse debate signal', e)
             }
@@ -416,7 +416,7 @@ export default function DebatePage() {
         connection.stop()
       }
     }
-  }, [connection, debateId, t])
+  }, [connection, debateId])
 
   // 30-second watchdog: If no debate signal is received after landing on the page, timeout and redirect to default page
   useEffect(() => {
@@ -438,7 +438,7 @@ export default function DebatePage() {
         clearTimeout(initialSignalTimeoutRef.current)
       }
     }
-  }, [debateId, isValidDebateId, navigate, t, connection])
+  }, [debateId, isValidDebateId])
 
   const normalizeJury = (j, existing = null) => {
     const id =
@@ -476,6 +476,8 @@ export default function DebatePage() {
       opponentScore,
     }
   }
+
+  const handleSignalRef = useRef(null)
 
   const handleSignal = (data) => {
     if (!data) return
@@ -594,7 +596,7 @@ export default function DebatePage() {
         }
 
         if (data.activeSpeakerId && actorId) {
-          setIsMyTurn(data.activeSpeakerId === actorId)
+          setIsMyTurn(String(data.activeSpeakerId).toLowerCase() === String(actorId).toLowerCase())
         } else {
           setIsMyTurn(false)
         }
@@ -706,6 +708,8 @@ export default function DebatePage() {
         break
     }
   }
+
+  handleSignalRef.current = handleSignal
 
   const handleReady = () => {
     if (connection && connection.state === signalR.HubConnectionState.Connected) {
@@ -859,7 +863,7 @@ export default function DebatePage() {
                   transform: `translate(calc(-50% + ${bot.x}px), calc(-50% + ${bot.y}px)) rotate(${bot.rotation}deg)`,
                   opacity: isExcitedMode ? Math.min(1, bot.opacity + 0.45) : bot.opacity,
                   filter: isExcitedMode
-                    ? `drop-shadow(0 0 10px var(--color-primary)) brightness(${bot.excitedGlow})`
+                    ? `drop-shadow(0 0 10px var(--color-synapse-zap, var(--color-primary))) brightness(${bot.excitedGlow})`
                     : 'none',
                   transition: `opacity 0.22s ease ${bot.reactionDelay}s, filter 0.22s ease ${bot.reactionDelay}s, color 0.22s ease ${bot.reactionDelay}s`,
                   zIndex: 0,
@@ -974,6 +978,21 @@ export default function DebatePage() {
             <div className="debate-arena single-chat">
             {/* Unified Chat Timeline */}
             <div className="chat-messages-container" ref={chatScrollRef}>
+              {phase === 'waiting_ready' && (
+                <div
+                  style={{
+                    display: 'flex',
+                    flex: 1,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%',
+                    height: '100%',
+                    minHeight: '260px',
+                  }}
+                >
+                  <div className="spinner spinner-lg" />
+                </div>
+              )}
               {messages.map((msg, index) => {
                 const isProponent = msg.speaker === 'proponent'
                 const p = isProponent ? proponent : opponent
@@ -1087,11 +1106,11 @@ export default function DebatePage() {
                     </div>
                   </div>
                   <button
-                    className="btn btn-primary"
+                    className="btn btn-primary btn-back-home"
                     onClick={() => navigate('/')}
                     style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                   >
-                    <ArrowLeft size={16} /> {t('common.back_to_feed', 'Akışa Dön')}
+                    <ArrowLeft size={16} /> {t('common.back_to_home', 'Ana Sayfaya Dön')}
                   </button>
                 </div>
               )}
@@ -1167,7 +1186,7 @@ export default function DebatePage() {
                 </div>
               </div>
               <button
-                className="btn btn-primary"
+                className="btn btn-primary btn-back-home"
                 onClick={() => navigate('/')}
                 style={{ display: 'flex', alignItems: 'center', gap: 6 }}
               >

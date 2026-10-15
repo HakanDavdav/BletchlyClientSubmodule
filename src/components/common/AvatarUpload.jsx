@@ -5,6 +5,7 @@ import { Loader2, UploadCloud, Camera, Trash2, ImagePlus } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import AvatarCropModal from './AvatarCropModal'
+import ImageWithLoader from './ImageWithLoader'
 
 export default function AvatarUpload({
   imageUrl,
@@ -13,6 +14,7 @@ export default function AvatarUpload({
   size = 144,
   shape = 'circle',
   compact = false,
+  aspectRatio,
 }) {
   const { t } = useTranslation()
   const fileInputRef = useRef(null)
@@ -131,7 +133,8 @@ export default function AvatarUpload({
     }
   }
 
-  const borderRadius = shape === 'circle' ? '50%' : '16px'
+  const borderRadius = shape === 'circle' ? '50%' : '14px'
+  const borderWidth = shape === 'circle' ? 2.5 : 2
   const cropShape = shape === 'circle' ? 'round' : 'rect'
 
   const previewBox = (
@@ -146,7 +149,7 @@ export default function AvatarUpload({
           : 'var(--color-surface-raised)',
         border: isDragging
           ? '2px dashed var(--color-primary)'
-          : `2.5px solid ${isHovered && !disabled ? 'var(--color-primary)' : 'var(--color-border)'}`,
+          : `${borderWidth}px solid ${isHovered && !disabled ? 'var(--color-primary)' : 'var(--color-border)'}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -154,6 +157,7 @@ export default function AvatarUpload({
         flexShrink: 0,
         cursor: disabled || isUploading ? 'not-allowed' : 'pointer',
         transition: 'all 0.25s ease',
+        transform: isHovered && !disabled ? 'translateY(-1px)' : 'none',
         boxShadow:
           isHovered && !disabled
             ? '0 6px 20px rgba(0, 0, 0, 0.18)'
@@ -178,15 +182,18 @@ export default function AvatarUpload({
         </div>
       ) : imageUrl ? (
         <>
-          <img
+          <ImageWithLoader
             src={imageUrl}
             alt="Avatar"
+            spinnerSize="sm"
+            spinnerOpacity={0.4}
+            wrapperStyle={{ width: '100%', height: '100%' }}
             style={{
               width: '100%',
               height: '100%',
               objectFit: 'cover',
               display: 'block',
-              transition: 'transform 0.3s ease',
+              transition: 'transform 0.3s ease, opacity 0.28s ease',
               transform: isHovered ? 'scale(1.05)' : 'scale(1)',
             }}
           />
@@ -204,7 +211,7 @@ export default function AvatarUpload({
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 4,
+              gap: compact ? 0 : 4,
               opacity: isHovered ? 1 : compact ? 0.65 : 0,
               transition: 'all 0.25s ease',
               color: '#fff',
@@ -213,16 +220,18 @@ export default function AvatarUpload({
             }}
           >
             <Camera size={Math.max(20, Math.round(size * 0.2))} />
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                letterSpacing: '0.02em',
-                textShadow: '0 1px 4px rgba(0, 0, 0, 0.8)',
-              }}
-            >
-              {t('upload.change', 'Değiştir')}
-            </span>
+            {!compact && (
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  letterSpacing: '0.02em',
+                  textShadow: '0 1px 4px rgba(0, 0, 0, 0.8)',
+                }}
+              >
+                {t('upload.change', 'Değiştir')}
+              </span>
+            )}
           </div>
         </>
       ) : (
@@ -232,15 +241,22 @@ export default function AvatarUpload({
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 6,
+            gap: size < 60 ? 2 : 6,
             color: isHovered ? 'var(--color-primary)' : 'var(--color-text-faint)',
             transition: 'color 0.2s ease',
+            padding: size < 60 ? 2 : undefined,
           }}
         >
-          <UploadCloud size={Math.max(28, Math.round(size * 0.28))} />
-          <span style={{ fontSize: 11, fontWeight: 500 }}>
-            {t('upload.drag_or_click', 'Görsel Seç')}
-          </span>
+          {compact ? (
+            <Camera size={Math.max(20, Math.round(size * 0.2))} />
+          ) : (
+            <UploadCloud size={Math.max(18, Math.round(size * (size < 60 ? 0.42 : 0.28)))} />
+          )}
+          {size >= 60 && !compact && (
+            <span style={{ fontSize: 11, fontWeight: 500 }}>
+              {t('upload.drag_or_click', 'Görsel Seç')}
+            </span>
+          )}
         </div>
       )}
     </div>
@@ -262,6 +278,7 @@ export default function AvatarUpload({
       imageSrc={cropSrc}
       open={showCrop}
       cropShape={cropShape}
+      aspectRatio={aspectRatio}
       onConfirm={handleCropConfirm}
       onCancel={handleCropCancel}
     />
@@ -274,7 +291,7 @@ export default function AvatarUpload({
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 8,
+          gap: size < 60 ? 4 : 8,
           width: size,
           maxWidth: '100%',
         }}
@@ -289,16 +306,20 @@ export default function AvatarUpload({
               className="btn btn-danger btn-sm"
               disabled={disabled || isUploading}
               onClick={handleRemove}
+              title={t('upload.remove', 'Kaldır')}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 6,
+                gap: size < 60 ? 0 : 6,
                 width: '100%',
+                padding: size < 60 ? '2px 0' : '4px 8px',
+                height: size < 60 ? 22 : undefined,
+                minHeight: 'unset',
               }}
             >
-              <Trash2 size={13} />
-              <span>{t('upload.remove', 'Kaldır')}</span>
+              <Trash2 size={size < 60 ? 12 : 13} />
+              {size >= 60 && <span>{t('upload.remove', 'Kaldır')}</span>}
             </button>
           </div>
         )}

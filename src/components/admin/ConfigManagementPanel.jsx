@@ -669,9 +669,10 @@ export default function ConfigManagementPanel() {
                   >
                     {formatLabel(k)}
                   </span>
-                  {/* Field count badge when collapsed */}
+                  {/* Field count badge when collapsed (mobilde gizlenir) */}
                   {!isExpanded && (
                     <span
+                      className="config-field-count"
                       style={{
                         fontSize: 10,
                         padding: '1px 6px',
@@ -802,7 +803,7 @@ export default function ConfigManagementPanel() {
         className="flex justify-between items-center border-b shrink-0 mb-3 gap-2 flex-wrap"
         style={{ borderColor: 'var(--color-border)', paddingBottom: 8 }}
       >
-        <div className="flex items-center gap-2 overflow-x-auto">
+        <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar" style={{ minWidth: 0, overflowX: 'auto' }}>
           {topSections.map((secKey) => {
             const isActive = activeSection === secKey
             return (

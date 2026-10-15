@@ -406,7 +406,7 @@ export default function DebateTranscriptPage() {
                     onClick={() => navigate('/')}
                     style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                   >
-                    <ArrowLeft size={16} /> {t('common.back_to_feed', 'Ana Sayfaya Dön')}
+                    <ArrowLeft size={16} /> {t('common.back_to_home', 'Ana Sayfaya Dön')}
                   </button>
                 </div>
               )}
@@ -442,7 +442,7 @@ export default function DebateTranscriptPage() {
               onClick={() => navigate('/')}
               style={{ display: 'flex', alignItems: 'center', gap: 6 }}
             >
-              <ArrowLeft size={16} /> {t('common.back_to_feed', 'Ana Sayfaya Dön')}
+              <ArrowLeft size={16} /> {t('common.back_to_home', 'Ana Sayfaya Dön')}
             </button>
           </div>
         )}

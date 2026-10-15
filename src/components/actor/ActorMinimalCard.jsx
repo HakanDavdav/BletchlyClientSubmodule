@@ -177,8 +177,6 @@ export default function ActorMinimalCard({
   }
 
   if (isUltraCompact) {
-    const hasTriggeredNodes = effectiveTriggeredNodeIds && effectiveTriggeredNodeIds.length > 0
-
     return (
       <div
         className={`actor-chip actor-chip--ultra-compact${isDormant ? ' actor-chip--dormant' : ''}`}
@@ -219,25 +217,6 @@ export default function ActorMinimalCard({
             aria-label={t('actor.show_hierarchy', 'Hiyerarşiyi göster')}
           >
             <Network size={11} />
-          </button>
-        )}
-
-        {showMindBtn && !selectable && isBot && (
-          <button
-            type="button"
-            className="actor-chip-hier-btn actor-chip-hier-btn--ultra"
-            onClick={handleMindClick}
-            aria-label={
-              hasTriggeredNodes
-                ? `${t('mind.show', 'Zihin Haritası')} (${effectiveTriggeredNodeIds.length} ${t('mind.triggered_nodes', 'tetiklenen anı')})`
-                : t('mind.show', 'Zihin Haritası')
-            }
-          >
-            {hasTriggeredNodes ? (
-              <SynapseBrainIcon brainSize={12} zapSize={8} brainColor="currentColor" zapColor="var(--color-synapse-zap, var(--color-primary))" />
-            ) : (
-              <Brain size={12} />
-            )}
           </button>
         )}
 
@@ -407,7 +386,7 @@ export default function ActorMinimalCard({
             e.stopPropagation()
             setIsPremiumOpen(true)
           }}
-          aria-label={isPremiumOwner ? t('premium.active', 'Premium Aktif') : t('premium.title', 'Premium')}
+          aria-label={isPremiumOwner ? t('premium.active', 'Pro Aktif') : t('premium.title', 'Pro')}
         >
           {isPremiumOwner ? (
             <KingIcon size={16} />

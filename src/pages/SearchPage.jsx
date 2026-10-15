@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { Search } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { searchApi } from '../api/searchApi'
 import PostCard from '../components/content/PostCard'
 import ActorMinimalCard from '../components/actor/ActorMinimalCard'
 import TribeMinimalCard from '../components/tribe/TribeMinimalCard'
+import PostMinimalCard from '../components/content/PostMinimalCard'
 import BackButton from '../components/common/BackButton'
 import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
@@ -23,6 +25,14 @@ export default function SearchPage() {
   // arama sayfasının kendi içinde bir form bulunur.
   const [localQuery, setLocalQuery] = useState(query)
   const [localMode, setLocalMode] = useState(mode)
+
+  useEffect(() => {
+    setLocalQuery(query)
+  }, [query])
+
+  useEffect(() => {
+    setLocalMode(mode)
+  }, [mode])
 
   useDevLog('SearchPage', arguments[0] || {})
 
@@ -300,36 +310,341 @@ export default function SearchPage() {
  * sayfa içi arama formu. Masaüstünde gizlenir.
  */
 function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, t }) {
+  const [suggestions, setSuggestions] = useState(null)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
+  const searchWrapRef = useRef(null)
+
   const modes = [
     { key: 'general', label: t('search.mode.general', 'Genel') },
     { key: 'posts', label: t('search.mode.posts', 'Başlıklar') },
-    { key: 'actors', label: t('search.mode.actors', 'Aktörler') },
+    { key: 'actors', label: t('search.mode.actors', 'Kişiler') },
     { key: 'tribes', label: t('search.mode.tribes', 'Klanlar') },
   ]
+
+  // Debounced search suggestions (identical to PC topbar)
+  useEffect(() => {
+    if (!query || query.trim().length === 0) {
+      setSuggestions(null)
+      setShowSuggestions(false)
+      return
+    }
+
+    const timer = setTimeout(async () => {
+      setIsLoadingSuggestions(true)
+      try {
+        let result
+        switch (mode) {
+          case 'posts':
+            result = await searchApi.filterPosts({ query: query.trim() })
+            setSuggestions({ posts: (result.data?.data || []).slice(0, 5) })
+            break
+          case 'actors':
+            result = await searchApi.filterActors({ query: query.trim() })
+            setSuggestions({ actors: (result.data?.data || []).slice(0, 5) })
+            break
+          case 'tribes':
+            result = await searchApi.filterTribes({ query: query.trim() })
+            setSuggestions({ tribes: (result.data?.data || []).slice(0, 5) })
+            break
+          default:
+            result = await searchApi.general(query.trim())
+            const data = result.data?.data
+            setSuggestions({
+              posts: (data?.posts || data?.Posts || []).slice(0, 3),
+              actors: (data?.actors || data?.Actors || []).slice(0, 3),
+              tribes: (data?.tribes || data?.Tribes || []).slice(0, 3),
+            })
+        }
+        setShowSuggestions(true)
+      } catch (err) {
+        console.error('Failed to fetch search suggestions:', err)
+        setSuggestions(null)
+      } finally {
+        setIsLoadingSuggestions(false)
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [query, mode])
+
+  // Click outside to close suggestions
+  useEffect(() => {
+    let touchStartX = 0
+    let touchStartY = 0
+    let isTouchScroll = false
+
+    function handleTouchStart(e) {
+      if (!e.touches || e.touches.length === 0) return
+      touchStartX = e.touches[0].clientX
+      touchStartY = e.touches[0].clientY
+      isTouchScroll = false
+    }
+
+    function handleTouchMove(e) {
+      if (!e.touches || e.touches.length === 0) return
+      const dx = Math.abs(e.touches[0].clientX - touchStartX)
+      const dy = Math.abs(e.touches[0].clientY - touchStartY)
+      if (dx > 8 || dy > 8) {
+        isTouchScroll = true
+      }
+    }
+
+    function handleTouchEnd(e) {
+      if (isTouchScroll) return
+      if (searchWrapRef.current && !searchWrapRef.current.contains(e.target)) {
+        setShowSuggestions(false)
+      }
+    }
+
+    function handleMouseDown(e) {
+      if (searchWrapRef.current && !searchWrapRef.current.contains(e.target)) {
+        setShowSuggestions(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleMouseDown)
+    document.addEventListener('touchstart', handleTouchStart, { passive: true })
+    document.addEventListener('touchmove', handleTouchMove, { passive: true })
+    document.addEventListener('touchend', handleTouchEnd, { passive: true })
+
+    return () => {
+      document.removeEventListener('mousedown', handleMouseDown)
+      document.removeEventListener('touchstart', handleTouchStart)
+      document.removeEventListener('touchmove', handleTouchMove)
+      document.removeEventListener('touchend', handleTouchEnd)
+    }
+  }, [])
 
   return (
     <form
       className="mobile-search-form"
+      ref={searchWrapRef}
       onSubmit={(e) => {
         e.preventDefault()
+        setShowSuggestions(false)
         onSubmit()
       }}
     >
-      <div className="mobile-search-form__input-row">
+      <div className="mobile-search-form__input-row" style={{ position: 'relative' }}>
         <div className="mobile-search-form__input-wrap">
           <Search size={17} className="mobile-search-form__icon" />
           <input
             className="input"
             placeholder={t('topbar.search', 'Ara')}
             value={query}
-            onChange={(e) => onQueryChange(e.target.value)}
+            onChange={(e) => {
+              onQueryChange(e.target.value)
+              if (!showSuggestions && e.target.value.trim().length > 0) {
+                setShowSuggestions(true)
+              }
+            }}
+            onFocus={() => {
+              if (suggestions && query.trim().length > 0) {
+                setShowSuggestions(true)
+              }
+            }}
           />
         </div>
         <button type="submit" className="btn btn-primary btn-sm">
           {t('topbar.search_button', 'Ara')}
         </button>
+
+        {/* Search Suggestions Dropdown */}
+        <AnimatePresence>
+          {showSuggestions && (suggestions || isLoadingSuggestions) && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                marginTop: 6,
+                background: 'var(--color-bg)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 8,
+                boxShadow: 'var(--shadow-lg)',
+                zIndex: 300,
+                maxHeight: 380,
+                overflowY: 'auto',
+              }}
+            >
+              {isLoadingSuggestions ? (
+                <div style={{ padding: 16, textAlign: 'center' }}>
+                  <div className="spinner spinner-sm" />
+                </div>
+              ) : suggestions ? (
+                <div style={{ padding: 8 }}>
+                  {mode === 'general' ? (
+                    <>
+                      {suggestions.actors?.length > 0 && (
+                        <div style={{ marginBottom: 8 }}>
+                          <div
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 700,
+                              color: 'var(--color-text-faint)',
+                              padding: '4px 8px',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            {t('common.actors', 'Kişiler')}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            {suggestions.actors.slice(0, 3).map((actor) => (
+                              <div
+                                key={actor.actorId}
+                                className="lb-card"
+                                style={{ padding: '8px 16px', cursor: 'pointer' }}
+                                onClick={() => setShowSuggestions(false)}
+                              >
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <ActorMinimalCard actor={actor} />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {suggestions.tribes?.length > 0 && (
+                        <div style={{ marginBottom: 8 }}>
+                          <div
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 700,
+                              color: 'var(--color-text-faint)',
+                              padding: '4px 8px',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            {t('common.tribes', 'Klanlar')}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            {suggestions.tribes.slice(0, 3).map((tribe) => (
+                              <div
+                                key={tribe.tribeId}
+                                onClick={() => setShowSuggestions(false)}
+                              >
+                                <TribeMinimalCard {...tribe} />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {suggestions.posts?.length > 0 && (
+                        <div>
+                          <div
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 700,
+                              color: 'var(--color-text-faint)',
+                              padding: '4px 8px',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            {t('common.posts', 'Başlıklar')}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            {suggestions.posts.slice(0, 4).map((post) => (
+                              <div
+                                key={post.contentItemId}
+                                onClick={() => setShowSuggestions(false)}
+                              >
+                                <PostMinimalCard {...post} />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {(!suggestions.posts || suggestions.posts.length === 0) &&
+                        (!suggestions.actors || suggestions.actors.length === 0) &&
+                        (!suggestions.tribes || suggestions.tribes.length === 0) && (
+                          <div
+                            style={{
+                              padding: 16,
+                              textAlign: 'center',
+                              color: 'var(--color-text-faint)',
+                              fontSize: 13,
+                            }}
+                          >
+                            {t('search.no_results', 'Sonuç bulunamadı')}
+                          </div>
+                        )}
+                    </>
+                  ) : (
+                    <>
+                      {mode === 'posts' && suggestions.posts?.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          {suggestions.posts.map((post) => (
+                            <div
+                              key={post.contentItemId}
+                              onClick={() => setShowSuggestions(false)}
+                            >
+                              <PostMinimalCard {...post} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {mode === 'actors' && suggestions.actors?.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          {suggestions.actors.map((actor) => (
+                            <div
+                              key={actor.actorId}
+                              className="lb-card"
+                              style={{ padding: '8px 16px', cursor: 'pointer' }}
+                              onClick={() => setShowSuggestions(false)}
+                            >
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <ActorMinimalCard actor={actor} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {mode === 'tribes' && suggestions.tribes?.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          {suggestions.tribes.map((tribe) => (
+                            <div
+                              key={tribe.tribeId}
+                              onClick={() => setShowSuggestions(false)}
+                            >
+                              <TribeMinimalCard {...tribe} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {((mode === 'posts' && (!suggestions.posts || suggestions.posts.length === 0)) ||
+                        (mode === 'actors' && (!suggestions.actors || suggestions.actors.length === 0)) ||
+                        (mode === 'tribes' && (!suggestions.tribes || suggestions.tribes.length === 0))) && (
+                        <div
+                          style={{
+                            padding: 16,
+                            textAlign: 'center',
+                            color: 'var(--color-text-faint)',
+                            fontSize: 13,
+                          }}
+                        >
+                          {t('search.no_results', 'Sonuç bulunamadı')}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              ) : null}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-      <div className="mobile-search-form__modes">
+      <div className="mobile-search-form__modes hscroll-strip">
         {modes.map((m) => (
           <button
             key={m.key}

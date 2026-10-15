@@ -33,42 +33,12 @@ function DetailRow({ icon: Icon, label, value, multiline = false, iconSize = 14 
   if (value === null || value === undefined || value === '') return null
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'minmax(140px, 0.35fr) minmax(0, 1fr)',
-        gap: 16,
-        padding: '12px 0',
-        borderBottom: '1px solid var(--color-border-light)',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          alignSelf: 'start',
-          gap: 7,
-          color: 'var(--color-text-secondary)',
-          fontSize: 12,
-          fontWeight: 700,
-          textTransform: 'uppercase',
-          letterSpacing: '0.04em',
-        }}
-      >
-        {Icon && <Icon size={iconSize} style={{ flexShrink: 0 }} />}
+    <div className="card-detail-row">
+      <div className="card-detail-row__label">
+        {Icon && <Icon size={iconSize} className="card-detail-row__icon" style={{ flexShrink: 0 }} />}
         <span>{label}</span>
       </div>
-      <div
-        style={{
-          minWidth: 0,
-          color: 'var(--color-text-primary)',
-          fontSize: 13,
-          lineHeight: 1.6,
-          whiteSpace: multiline ? 'pre-wrap' : 'normal',
-          overflowWrap: 'anywhere',
-          wordBreak: 'break-word',
-        }}
-      >
+      <div className={`card-detail-row__value${multiline ? ' is-multiline' : ''}`}>
         {value}
       </div>
     </div>
@@ -119,7 +89,7 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
   const detailRows = [
     {
       icon: BotFlashCardsIcon,
-      iconSize: 20,
+      iconSize: 15,
       label: t('card.prompt', 'Kişilik Promptu'),
       value: personalityPrompt || (
         <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--color-danger)' }}>
@@ -131,20 +101,20 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
     },
     {
       icon: BotFlashCardsIcon,
-      iconSize: 20,
+      iconSize: 15,
       label: t('card.hint', 'Kart Hint'),
       value: cardHint,
       multiline: true,
     },
     {
       icon: BotFlashCardsIcon,
-      iconSize: 20,
+      iconSize: 15,
       label: t('card.tags', 'Etiketler'),
       value: tags.length > 0 ? tags.join(', ') : null,
     },
     {
       icon: BotFlashCardsIcon,
-      iconSize: 20,
+      iconSize: 15,
       label: t('card.marketplace_status', 'Marketplace'),
       value:
         cardData.isListedOnMarketplace === null || cardData.isListedOnMarketplace === undefined
@@ -155,7 +125,7 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
     },
     {
       icon: BotFlashCardsIcon,
-      iconSize: 20,
+      iconSize: 15,
       label: t('card.price', 'Fiyat'),
       value: cardData.price == null ? null : `${cardData.price} AP`,
     },
@@ -220,9 +190,7 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
           }
         />
 
-        <div
-          style={{ maxHeight: 'calc(88vh - 92px)', overflowY: 'auto', padding: '8px 24px 24px' }}
-        >
+        <div className="card-detail-modal-body">
           <div>
             {detailRows.map((row) => (
               <DetailRow key={row.label} {...row} />

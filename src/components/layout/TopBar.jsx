@@ -12,10 +12,10 @@ import {
   Sun,
   Moon,
   Bot,
-  ChevronDown,
   CirclePlus,
   PaintbrushVertical,
   Edit2,
+  Lock,
   X,
   Users,
   Brain,
@@ -47,13 +47,41 @@ import Logo from '../common/icons/Logo'
 import FossilTogglePill from '../common/FossilTogglePill'
 import { applyCustomColorVars, clearCustomColorVars, normalizeHex } from '../../utils/themeColor'
 
+function PaletteLockedSlash({ size = '100%', strokeWidth = 2 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        pointerEvents: 'none',
+        overflow: 'visible',
+        filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55))',
+      }}
+    >
+      <line
+        x1="2.5"
+        y1="21.5"
+        x2="21.5"
+        y2="2.5"
+        stroke="var(--color-warning)"
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
 const COLOR_PRESETS = [
   { color: '#3b82f6', label: 'Mavi', isDefault: true },
   { color: '#10b981', label: 'Yeşil', isDefault: true },
+  { color: '#ec4899', label: 'Pembe', isDefault: true },
   { color: '#8b5cf6', label: 'Mor' },
   { color: '#06b6d4', label: 'Turkuaz' },
   { color: '#f97316', label: 'Turuncu' },
-  { color: '#ec4899', label: 'Pembe' },
   { color: '#ef4444', label: 'Kırmızı' },
   { color: '#eab308', label: 'Sarı' },
   { color: '#14b8a6', label: 'Teal' },
@@ -105,13 +133,13 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
     setActiveLeftCacheType,
   } = useUIStore()
   const langs = [
-    { code: 'tr', label: 'Türkçe', flagUrl: 'https://flagcdn.com/w20/tr.png' },
-    { code: 'en', label: 'English', flagUrl: 'https://flagcdn.com/w20/us.png' },
-    { code: 'ja', label: '日本語', flagUrl: 'https://flagcdn.com/w20/jp.png' },
-    { code: 'hi', label: 'हिन्दी', flagUrl: 'https://flagcdn.com/w20/in.png' },
-    { code: 'de', label: 'Deutsch', flagUrl: 'https://flagcdn.com/w20/de.png' },
-    { code: 'fr', label: 'Français', flagUrl: 'https://flagcdn.com/w20/fr.png' },
-    { code: 'ar', label: 'العربية', flagUrl: 'https://flagcdn.com/w20/sa.png' },
+    { code: 'tr', label: 'Türkçe', flagUrl: 'https://flagcdn.com/tr.svg' },
+    { code: 'en', label: 'English', flagUrl: 'https://flagcdn.com/us.svg' },
+    { code: 'ja', label: '日本語', flagUrl: 'https://flagcdn.com/jp.svg' },
+    { code: 'hi', label: 'हिन्दी', flagUrl: 'https://flagcdn.com/in.svg' },
+    { code: 'de', label: 'Deutsch', flagUrl: 'https://flagcdn.com/de.svg' },
+    { code: 'fr', label: 'Français', flagUrl: 'https://flagcdn.com/fr.svg' },
+    { code: 'ar', label: 'العربية', flagUrl: 'https://flagcdn.com/sa.svg' },
   ]
 
   const { t, i18n } = useTranslation()
@@ -121,7 +149,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
     langs.find((l) => l.code === rawLang || l.code === rawLang.split('-')[0]) || langs[0]
   const currentLang = activeLangObj.code
 
-  const { isDarkMode, toggleTheme, isGreenMode, toggleGreenMode, customColor, setCustomColor, setGreenMode, savedCustomColor, setSavedCustomColor } =
+  const { isDarkMode, toggleTheme, isGreenMode, customColor, selectThemeColor, savedCustomColor, setSavedCustomColor } =
     useThemeStore()
   const [isBotShaking, setIsBotShaking] = useState(false)
   const [isPaletteOpen, setIsPaletteOpen] = useState(false)
@@ -154,28 +182,14 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
   const handleBotClick = () => {
     setIsBotShaking(true)
     setTimeout(() => setIsBotShaking(false), 500)
-    if (isPremium) {
-      setIsPaletteOpen((v) => !v)
-      return
-    }
-    toggleGreenMode()
+    setIsPaletteOpen((v) => !v)
   }
 
   const applyPaletteColor = useCallback(
     (color) => {
-      const normalized = typeof color === 'string' ? color.toLowerCase() : ''
-      if (normalized === '#10b981') {
-        setCustomColor(null)
-        setGreenMode(true)
-      } else if (normalized === '#3b82f6') {
-        setCustomColor(null)
-        setGreenMode(false)
-      } else {
-        setGreenMode(false)
-        setCustomColor(normalized)
-      }
+      selectThemeColor(color)
     },
-    [setCustomColor, setGreenMode]
+    [selectThemeColor]
   )
 
   const queryClient = useQueryClient()
@@ -411,7 +425,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
       return
     }
 
-    // 300ms bekle, sonra API çağrısı yap
+    // 500ms bekle, sonra API çağrısı yap
     debounceTimerRef.current = setTimeout(async () => {
       setIsLoadingSuggestions(true)
       try {
@@ -462,7 +476,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
       } finally {
         setIsLoadingSuggestions(false)
       }
-    }, 300)
+    }, 500)
 
     return () => {
       if (debounceTimerRef.current) {
@@ -506,7 +520,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
   const searchModeOptions = [
     { key: 'general', label: t('search.mode.general', 'Genel') },
     { key: 'posts', label: t('search.mode.posts', 'Başlıklar') },
-    { key: 'actors', label: t('search.mode.actors', 'Aktörler') },
+    { key: 'actors', label: t('search.mode.actors', 'Kişiler') },
     { key: 'tribes', label: t('search.mode.tribes', 'Klanlar') },
   ]
 
@@ -548,18 +562,20 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
             onClick={() => navigate('/')}
           >
             <Logo width={36} height={48} fill="var(--color-primary)" />
-            <span
-              className="topbar-brand-text"
-              style={{
-                fontWeight: 800,
-                fontSize: 26,
-                color: 'var(--color-primary)',
-                marginTop: 4,
-                marginLeft: -2,
-              }}
-            >
-              letchly
-            </span>
+            {!isMobile && (
+              <span
+                className="topbar-brand-text"
+                style={{
+                  fontWeight: 800,
+                  fontSize: 26,
+                  color: 'var(--color-primary)',
+                  marginTop: 4,
+                  marginLeft: -2,
+                }}
+              >
+                letchly
+              </span>
+            )}
           </div>
 
           {seasonStatus && typeof seasonStatus.daysRemaining === 'number' && (
@@ -581,10 +597,20 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
         <form
           className="topbar-search-form"
           onSubmit={handleSearch}
-          style={{ flex: 1, display: 'flex', gap: 6, maxWidth: 600, margin: '0 auto' }}
+          style={{
+            flex: 1,
+            display: 'flex',
+            gap: 6,
+            maxWidth: 540,
+            margin: '0 auto',
+            // transform yerine relative/left: transform stacking context yaratıp
+            // öneri dropdown'ını Klanlar/Botlar dropdown'ının altına düşürüyordu
+            position: 'relative',
+            left: 8,
+          }}
         >
           {/* Mode selector */}
-          <div style={{ position: 'relative' }}>
+          <div className="topbar-search-mode" style={{ position: 'relative' }}>
             <button
               type="button"
               className="btn btn-outline btn-sm"
@@ -710,7 +736,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                                   textTransform: 'uppercase',
                                 }}
                               >
-                                {t('common.actors', 'Aktörler')}
+                                {t('common.actors', 'Kişiler')}
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                                 {suggestions.actors.slice(0, 3).map((actor) => (
@@ -1145,6 +1171,11 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
               gap: 7,
             }}
           >
+            {/* 1355px altında gizlenir */}
+            <div
+              className="hide-under-1355"
+              style={{ display: 'flex', alignItems: 'center', gap: 7 }}
+            >
             <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)' }}>
               Hakan Davdav
             </span>
@@ -1231,29 +1262,17 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                 <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
               </svg>
             </a>
+            </div>
             <div
               style={{ width: 1, height: 28, background: 'var(--color-border)', margin: '0 4px' }}
             />
 
             <div style={{ position: 'relative' }} ref={paletteRef}>
               <button
-                className={`btn-icon ${
-                  isBotShaking
-                    ? isPremium
-                      ? 'theme-toggle-shake'
-                      : isGreenMode
-                        ? 'theme-toggle-to-green'
-                        : 'theme-toggle-to-blue'
-                    : ''
-                }`}
+                className={`btn-icon ${isBotShaking ? 'theme-toggle-shake' : ''}`}
                 onClick={handleBotClick}
-                aria-label={
-                  isPremium
-                    ? t('topbar.premium_palette_title', 'Özel Renk Paleti')
-                    : isGreenMode
-                      ? 'Mavi Tema'
-                      : 'Yeşil Tema'
-                }
+                aria-label={t('topbar.premium_palette_title', 'Özel Renk Paleti')}
+                title={t('topbar.premium_palette_title', 'Özel Renk Paleti')}
                 style={{ color: 'var(--color-primary)', height: 30, padding: '0 2px' }}
               >
                 <span style={{ display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
@@ -1263,7 +1282,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
               </button>
 
               <AnimatePresence>
-                {isPaletteOpen && isPremium && (
+                {isPaletteOpen && (
                   <motion.div
                     initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -1287,11 +1306,15 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                     >
                       {COLOR_PRESETS.map((preset) => {
                         const activeBase = customColor || (isGreenMode ? '#10b981' : '#3b82f6')
+                        const locked = !isPremium && !preset.isDefault
                         return (
                           <button
                             key={preset.color}
                             type="button"
+                            disabled={locked}
+                            aria-disabled={locked || undefined}
                             onClick={() => {
+                              if (locked) return
                               cancelColorPreview()
                               applyPaletteColor(preset.color)
                             }}
@@ -1307,43 +1330,33 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                                   ? 'var(--color-text-primary)'
                                   : 'transparent'
                               }`,
-                              cursor: 'pointer',
+                              cursor: locked ? 'not-allowed' : 'pointer',
+                              opacity: locked ? 0.6 : 1,
                               padding: 0,
                             }}
                           >
-                            {preset.isDefault && (
-                              <span
-                                style={{
-                                  position: 'absolute',
-                                  inset: 0,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  fontSize: 10,
-                                  fontWeight: 800,
-                                  color: '#ffffff',
-                                  lineHeight: 1,
-                                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.45)',
-                                  pointerEvents: 'none',
-                                }}
-                              >
-                                D
-                              </span>
+                            {locked && (
+                              <PaletteLockedSlash strokeWidth={2.2} />
                             )}
                           </button>
                         )
                       })}
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 8 }}>
                       {savedCustomColor && (
                         <button
                           type="button"
+                          disabled={!isPremium}
+                          aria-disabled={!isPremium || undefined}
                           aria-label={t('topbar.premium_palette_saved', 'Kayıtlı renk')}
+                          title={t('topbar.premium_palette_saved', 'Kayıtlı renk')}
                           onClick={() => {
+                            if (!isPremium) return
                             cancelColorPreview()
                             applyPaletteColor(savedCustomColor)
                           }}
                           style={{
+                            position: 'relative',
                             width: 24,
                             height: 24,
                             borderRadius: '50%',
@@ -1353,20 +1366,46 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                                 ? 'var(--color-text-primary)'
                                 : 'transparent'
                             }`,
-                            cursor: 'pointer',
+                            cursor: !isPremium ? 'not-allowed' : 'pointer',
+                            opacity: !isPremium ? 0.6 : 1,
                             padding: 0,
-                            marginRight: 6,
                           }}
-                        />
+                        >
+                          {!isPremium && (
+                            <PaletteLockedSlash strokeWidth={2.2} />
+                          )}
+                        </button>
                       )}
                       <button
                         type="button"
-                        className="actor-chip-hier-btn"
+                        disabled={!isPremium}
+                        aria-disabled={!isPremium || undefined}
                         aria-label={t('topbar.premium_palette_custom', 'Custom')}
-                        onClick={() => colorInputRef.current?.click()}
-                        style={{ width: 24, height: 24 }}
+                        title={t('topbar.premium_palette_custom', 'Custom')}
+                        onClick={() => {
+                          if (!isPremium) return
+                          colorInputRef.current?.click()
+                        }}
+                        style={{
+                          position: 'relative',
+                          width: 24,
+                          height: 24,
+                          borderRadius: '50%',
+                          border: '1px solid var(--color-border)',
+                          background: 'var(--color-surface)',
+                          color: 'var(--color-text-secondary)',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: !isPremium ? 'not-allowed' : 'pointer',
+                          opacity: !isPremium ? 0.65 : 1,
+                          padding: 0,
+                        }}
                       >
-                        <Edit2 size={13} />
+                        <Edit2 size={12} />
+                        {!isPremium && (
+                          <PaletteLockedSlash strokeWidth={2.2} />
+                        )}
                       </button>
                       <input
                         ref={colorInputRef}
@@ -1517,6 +1556,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                     discriminator={myProfile?.discriminator}
                     actorId={myProfile?.actorId || actorId}
                     size="md"
+                    hideBadge={hasPendingInvitation}
                     onClick={
                       location.pathname !== '/init-profile'
                         ? () => navigate(`/profile?actorId=${myProfile?.actorId || actorId}`)
@@ -1992,10 +2032,8 @@ function MobileTopbarControls() {
     isDarkMode,
     toggleTheme,
     isGreenMode,
-    toggleGreenMode,
     customColor,
-    setCustomColor,
-    setGreenMode,
+    selectThemeColor,
     savedCustomColor,
     setSavedCustomColor,
   } = useThemeStore()
@@ -2020,13 +2058,13 @@ function MobileTopbarControls() {
   const isPremium = (userCapabilities & UserCapabilities.Premium) === UserCapabilities.Premium
 
   const langs = [
-    { code: 'tr', label: 'Türkçe', flagUrl: 'https://flagcdn.com/w20/tr.png' },
-    { code: 'en', label: 'English', flagUrl: 'https://flagcdn.com/w20/us.png' },
-    { code: 'ja', label: '日本語', flagUrl: 'https://flagcdn.com/w20/jp.png' },
-    { code: 'hi', label: 'हिन्दी', flagUrl: 'https://flagcdn.com/w20/in.png' },
-    { code: 'de', label: 'Deutsch', flagUrl: 'https://flagcdn.com/w20/de.png' },
-    { code: 'fr', label: 'Français', flagUrl: 'https://flagcdn.com/w20/fr.png' },
-    { code: 'ar', label: 'العربية', flagUrl: 'https://flagcdn.com/w20/sa.png' },
+    { code: 'tr', label: 'Türkçe', flagUrl: 'https://flagcdn.com/tr.svg' },
+    { code: 'en', label: 'English', flagUrl: 'https://flagcdn.com/us.svg' },
+    { code: 'ja', label: '日本語', flagUrl: 'https://flagcdn.com/jp.svg' },
+    { code: 'hi', label: 'हिन्दी', flagUrl: 'https://flagcdn.com/in.svg' },
+    { code: 'de', label: 'Deutsch', flagUrl: 'https://flagcdn.com/de.svg' },
+    { code: 'fr', label: 'Français', flagUrl: 'https://flagcdn.com/fr.svg' },
+    { code: 'ar', label: 'العربية', flagUrl: 'https://flagcdn.com/sa.svg' },
   ]
   const rawLang = (i18n.language || 'tr').toLowerCase()
   const activeLangObj =
@@ -2052,19 +2090,9 @@ function MobileTopbarControls() {
 
   const applyPaletteColor = useCallback(
     (color) => {
-      const normalized = typeof color === 'string' ? color.toLowerCase() : ''
-      if (normalized === '#10b981') {
-        setCustomColor(null)
-        setGreenMode(true)
-      } else if (normalized === '#3b82f6') {
-        setCustomColor(null)
-        setGreenMode(false)
-      } else {
-        setGreenMode(false)
-        setCustomColor(normalized)
-      }
+      selectThemeColor(color)
     },
-    [setCustomColor, setGreenMode]
+    [selectThemeColor]
   )
 
   const commitCustomColor = (color) => {
@@ -2081,15 +2109,11 @@ function MobileTopbarControls() {
     applyPaletteColor(normalized)
   }
 
-  // Premium'da palet açılır; değilse mavi/yeşil tema arasında geçiş yapar
+  // Palet herkese açılır; premium olmayanlarda yalnızca 3 varsayılan renk.
   const handleBotClick = () => {
     setIsBotShaking(true)
     setTimeout(() => setIsBotShaking(false), 500)
-    if (isPremium) {
-      setIsPaletteOpen((v) => !v)
-      return
-    }
-    toggleGreenMode()
+    setIsPaletteOpen((v) => !v)
   }
 
   const themeLabel = isDarkMode
@@ -2112,31 +2136,13 @@ function MobileTopbarControls() {
         <button
           type="button"
           className={`btn-icon topbar-mobile-controls__btn ${
-            isBotShaking
-              ? isPremium
-                ? 'theme-toggle-shake'
-                : isGreenMode
-                  ? 'theme-toggle-to-blue'
-                  : 'theme-toggle-to-green'
-              : ''
+            isBotShaking ? 'theme-toggle-shake' : ''
           }`}
           onClick={handleBotClick}
-          aria-haspopup={isPremium ? 'dialog' : undefined}
-          aria-expanded={isPremium ? isPaletteOpen : undefined}
-          aria-label={
-            isPremium
-              ? t('topbar.premium_palette_title', 'Özel Renk Paleti')
-              : isGreenMode
-                ? t('topbar.green_theme', 'Yeşil Tema')
-                : t('topbar.blue_theme', 'Mavi Tema')
-          }
-          title={
-            isPremium
-              ? t('topbar.premium_palette_title', 'Özel Renk Paleti')
-              : isGreenMode
-                ? t('topbar.green_theme', 'Yeşil Tema')
-                : t('topbar.blue_theme', 'Mavi Tema')
-          }
+          aria-haspopup="dialog"
+          aria-expanded={isPaletteOpen}
+          aria-label={t('topbar.premium_palette_title', 'Özel Renk Paleti')}
+          title={t('topbar.premium_palette_title', 'Özel Renk Paleti')}
         >
           <span
             className="mobile-drawer-paint-bot"
@@ -2147,7 +2153,7 @@ function MobileTopbarControls() {
           </span>
         </button>
 
-        {isPaletteOpen && isPremium && (
+        {isPaletteOpen && (
           <div
             className="topbar-mobile-controls__palette-menu"
             role="dialog"
@@ -2156,18 +2162,26 @@ function MobileTopbarControls() {
             <div className="topbar-mobile-controls__palette-grid">
               {COLOR_PRESETS.map((preset) => {
                 const activeBase = customColor || (isGreenMode ? '#10b981' : '#3b82f6')
+                const locked = !isPremium && !preset.isDefault
                 return (
                   <button
                     key={preset.color}
                     type="button"
-                    onClick={() => applyPaletteColor(preset.color)}
+                    disabled={locked}
+                    aria-disabled={locked || undefined}
+                    onClick={() => {
+                      if (locked) return
+                      applyPaletteColor(preset.color)
+                    }}
                     aria-label={preset.label}
                     className={`topbar-mobile-controls__swatch${
                       activeBase === preset.color ? ' is-active' : ''
-                    }`}
+                    }${locked ? ' is-locked' : ''}`}
                     style={{ background: preset.color }}
                   >
-                    {preset.isDefault && <span>D</span>}
+                    {locked && (
+                      <PaletteLockedSlash strokeWidth={2.2} />
+                    )}
                   </button>
                 )
               })}
@@ -2176,27 +2190,49 @@ function MobileTopbarControls() {
               {savedCustomColor && (
                 <button
                   type="button"
+                  disabled={!isPremium}
+                  aria-disabled={!isPremium || undefined}
                   aria-label={t('topbar.premium_palette_saved', 'Kayıtlı renk')}
-                  onClick={() => applyPaletteColor(savedCustomColor)}
+                  title={t('topbar.premium_palette_saved', 'Kayıtlı renk')}
+                  onClick={() => {
+                    if (!isPremium) return
+                    applyPaletteColor(savedCustomColor)
+                  }}
                   className={`topbar-mobile-controls__swatch${
                     customColor === savedCustomColor ? ' is-active' : ''
-                  }`}
+                  }${!isPremium ? ' is-locked' : ''}`}
                   style={{ background: savedCustomColor }}
-                />
+                >
+                  {!isPremium && (
+                    <PaletteLockedSlash strokeWidth={2.2} />
+                  )}
+                </button>
               )}
               <button
                 type="button"
-                className="topbar-mobile-controls__palette-custom"
+                disabled={!isPremium}
+                aria-disabled={!isPremium || undefined}
+                className={`topbar-mobile-controls__palette-custom${!isPremium ? ' is-locked' : ''}`}
                 aria-label={t('topbar.premium_palette_custom', 'Custom')}
-                onClick={() => colorInputRef.current?.click()}
+                title={t('topbar.premium_palette_custom', 'Custom')}
+                onClick={() => {
+                  if (!isPremium) return
+                  colorInputRef.current?.click()
+                }}
               >
                 <Edit2 size={13} />
+                {!isPremium && (
+                  <PaletteLockedSlash strokeWidth={2.2} />
+                )}
               </button>
               <input
                 ref={colorInputRef}
                 type="color"
                 value={customColor || (isGreenMode ? '#10b981' : '#3b82f6')}
-                onChange={(e) => commitCustomColor(e.target.value)}
+                onChange={(e) => {
+                  if (!isPremium) return
+                  commitCustomColor(e.target.value)
+                }}
                 className="topbar-mobile-controls__color-input"
                 aria-label={t('topbar.premium_palette_custom', 'Custom')}
               />
@@ -2220,10 +2256,12 @@ function MobileTopbarControls() {
             alt={activeLangObj.code}
             style={{ width: 21, height: 16, borderRadius: 2 }}
           />
-          <ChevronDown
-            size={14}
+          <span
+            aria-hidden="true"
             className={`topbar-mobile-controls__caret${isLangOpen ? ' is-open' : ''}`}
-          />
+          >
+            ▼
+          </span>
         </button>
 
         {isLangOpen && (

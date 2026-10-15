@@ -7,6 +7,9 @@ import toast from 'react-hot-toast'
 import { Edit2, X, Check, Crown, Bot, Loader2, Users, Trash2 } from 'lucide-react'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
 import SelectionMarker from '../common/SelectionMarker'
+import BotIcon from '../common/icons/BotIcon'
+import AvatarUpload from '../common/AvatarUpload'
+import ImageWithLoader from '../common/ImageWithLoader'
 
 export default function CardEditComponent({ card, myBots = [], onClose, onSaved }) {
   const { t } = useTranslation()
@@ -19,11 +22,13 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
   const [editFormData, setEditFormData] = useState({
     cardName: '',
     personalityPrompt: '',
+    imageUrl: '',
     isListedOnMarketplace: false,
     assignedBotIds: [],
   })
 
   const [isConfirmed, setIsConfirmed] = useState(false)
+  const canConfirm = !isCreator || (Boolean(editFormData.cardName.trim()) && Boolean(editFormData.personalityPrompt.trim()))
 
   useEffect(() => {
     if (!card) return
@@ -44,6 +49,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
       personalityPrompt: isCreator
         ? innerCardData.personalityPrompt || card.personalityPrompt || ''
         : '',
+      imageUrl: innerCardData.imageUrl || card.imageUrl || '',
       isListedOnMarketplace: Boolean(innerCardData.isListedOnMarketplace),
       assignedBotIds,
     })
@@ -90,6 +96,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
       if (editFormData.personalityPrompt.trim()) {
         payload.personalityPrompt = editFormData.personalityPrompt.trim()
       }
+      payload.imageUrl = editFormData.imageUrl || ''
       payload.isListedOnMarketplace = editFormData.isListedOnMarketplace
     }
 
@@ -163,6 +170,44 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
         className={`personality-card personality-card--filled personality-card--editor${isConfirmed ? ' personality-card--editor-confirmed' : ''}`}
         style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 12 }}
       >
+        {/* Background Image Layer if present */}
+        {editFormData.imageUrl && (
+          <div className="personality-card__bg-image-wrap" aria-hidden="true">
+            <ImageWithLoader
+              src={editFormData.imageUrl}
+              alt=""
+              className="personality-card__bg-image"
+              wrapperStyle={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+              spinnerSize="sm"
+              spinnerOpacity={0.4}
+            />
+            <div className="personality-card__bg-image-overlay" />
+            <div className="personality-card__bg-image-shade" />
+          </div>
+        )}
+
+        {/* Background Bot Watermark */}
+        <div
+          className="personality-card__bg-bot"
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            pointerEvents: 'none',
+            userSelect: 'none',
+            zIndex: 1,
+            opacity: editFormData.imageUrl ? 0.22 : 0.08,
+            color: 'var(--color-primary)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <BotIcon size={120} />
+        </div>
+
         {/* Creator / Purchaser Crown Badge on Top-Left */}
         {isCreator ? (
           <span
@@ -213,28 +258,24 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
           </span>
         )}
 
-        <div className="personality-card__topline">
-          {isConfirmed && (
-            <span className="personality-card__title personality-card-editor__confirmed-title">
-              {editFormData.cardName}
-            </span>
-          )}
-          <SelectionMarker
-            checked={isConfirmed}
-            onChange={isConfirmed ? () => setIsConfirmed(false) : undefined}
-            disabled={editMutation.isPending || deleteMutation.isPending}
-            size="sm"
-            label={
-              isConfirmed
-                ? t('card.personality_confirmed', 'Kişilik kartı onaylandı')
-                : t('card.personality_pending', 'Kişilik kartı bekliyor')
-            }
-          />
-        </div>
-
         {/* Card Body: Name and Prompt/Hint */}
-        <div className="personality-card-editor__body">
-          {!isConfirmed && (
+        <div className="personality-card-editor__body" style={{ position: 'relative', zIndex: 2 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
+            {isCreator && (
+              <div style={{ flexShrink: 0 }}>
+                <AvatarUpload
+                  imageUrl={editFormData.imageUrl}
+                  onImageUploaded={(url) =>
+                    setEditFormData((prev) => ({ ...prev, imageUrl: url }))
+                  }
+                  disabled={editMutation.isPending || deleteMutation.isPending || isConfirmed}
+                  size={44}
+                  shape="rect"
+                  compact={true}
+                  aspectRatio={3 / 4}
+                />
+              </div>
+            )}
             <input
               className="input personality-card__title personality-card-editor__name"
               type="text"
@@ -245,19 +286,41 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
               }
               placeholder={t('card.card_name_placeholder', 'Kişilik kart adı')}
               disabled={!isCreator || editMutation.isPending || deleteMutation.isPending}
+              readOnly={isConfirmed || !isCreator}
               maxLength={100}
               aria-label={t('card.card_name', 'Kart adı')}
-              style={!isCreator ? { opacity: 0.8, cursor: 'not-allowed' } : undefined}
+              style={{
+                flex: 1,
+                minWidth: 0,
+                margin: 0,
+                ...(!isCreator ? { opacity: 0.8, cursor: 'not-allowed' } : {}),
+                ...(isConfirmed
+                  ? { borderColor: 'transparent', background: 'transparent', boxShadow: 'none' }
+                  : null),
+              }}
             />
-          )}
+            <div style={{ flexShrink: 0, display: 'flex' }}>
+              <SelectionMarker
+                checked={isConfirmed}
+                onChange={
+                  isConfirmed
+                    ? () => setIsConfirmed(false)
+                    : canConfirm
+                      ? () => setIsConfirmed(true)
+                      : undefined
+                }
+                disabled={editMutation.isPending || deleteMutation.isPending}
+                size="box"
+                label={
+                  isConfirmed
+                    ? t('card.personality_confirmed', 'Kişilik kartı onaylandı')
+                    : t('card.personality_pending', 'Kişilik kartı bekliyor')
+                }
+              />
+            </div>
+          </div>
 
-          {isConfirmed ? (
-            <p className="personality-card-editor__preview">
-              {isCreator
-                ? editFormData.personalityPrompt
-                : `"${cardData?.cardHint || card?.cardHint || t('card.hint_placeholder', 'Bu kart için özel oluşturulmuş kişilik kuralları.')}"`}
-            </p>
-          ) : isCreator ? (
+          {isCreator ? (
             <textarea
               className="input textarea personality-card-editor__prompt"
               value={editFormData.personalityPrompt}
@@ -266,8 +329,19 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
               }
               placeholder={t('card.personality_prompt_placeholder', 'Bu kişiliği tanımlayın...')}
               disabled={editMutation.isPending || deleteMutation.isPending}
+              readOnly={isConfirmed}
               maxLength={2000}
               aria-label={t('card.personality_prompt', 'Kişilik tanımı')}
+              style={
+                isConfirmed
+                  ? {
+                      borderColor: 'transparent',
+                      background: 'transparent',
+                      boxShadow: 'none',
+                      resize: 'none',
+                    }
+                  : undefined
+              }
             />
           ) : (
             <div
@@ -278,6 +352,9 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
                 flexDirection: 'column',
                 gap: 8,
                 justifyContent: 'center',
+                ...(isConfirmed
+                  ? { borderColor: 'transparent', background: 'transparent', boxShadow: 'none' }
+                  : null),
               }}
             >
               <div
@@ -322,6 +399,8 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
               }))
             }}
             style={{
+              position: 'relative',
+              zIndex: 2,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -349,12 +428,6 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
               >
                 {t('card.list_on_marketplace', 'Pazarda Satışa Çıkar')}
               </span>
-              <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>
-                {t(
-                  'card.list_on_marketplace_desc',
-                  'Diğer kullanıcılar bu kartı pazar yerinden satın alabilir'
-                )}
-              </span>
             </div>
             <SelectionMarker
               checked={editFormData.isListedOnMarketplace}
@@ -368,6 +441,8 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
         {/* Integrated Bot Assignment Section (Tiklenebilir ActorMinimalCard Listesi) */}
         <div
           style={{
+            position: 'relative',
+            zIndex: 2,
             display: 'flex',
             flexDirection: 'column',
             gap: 8,
@@ -399,17 +474,8 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
               }}
             >
               <Bot size={15} color="var(--color-primary)" />
-              {t('card.assign_to_bots', 'Bu Kartı Kuşanacak Botlar')}
+              {t('card.assign_to_bots', 'Atanan Botlar')}
             </label>
-            <span
-              style={{
-                fontSize: 11,
-                color: 'var(--color-text-secondary)',
-                fontWeight: 600,
-              }}
-            >
-              {editFormData.assignedBotIds.length} {t('card.selected_bots_count', 'bot seçili')}
-            </span>
           </div>
 
           {myBots.length === 0 ? (
@@ -605,7 +671,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
               ) : (
                 <>
                   <Check size={13} />
-                  {t('common.save_changes', 'Değişiklikleri Kaydet')}
+                  {t('action.save', 'Kaydet')}
                 </>
               )}
             </button>

@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast'
 import { Swords, Check, X, User } from 'lucide-react'
 import { actorApi } from '../../api/actorApi'
 import { trackDebate } from '../../utils/analytics'
+import ImageWithLoader from '../common/ImageWithLoader'
 
 export default function InvitationModal({ invitation, onClose }) {
   const { t } = useTranslation()
@@ -49,7 +50,7 @@ export default function InvitationModal({ invitation, onClose }) {
       setLoading(true)
       await actorApi.acceptDebate(invitation.debateId)
       trackDebate('accept_challenge', { debate_id: invitation.debateId })
-      toast.success(t('debate.invitation_accepted', 'Meydan okuma kabul edildi! Arenaya aktarılıyorsunuz...'))
+      toast.success(t('debate.invitation_accepted', 'Meydan okuma kabul edildi!'))
       onClose()
       navigate(`/debate?id=${invitation.debateId}`, {
         state: {
@@ -127,15 +128,25 @@ export default function InvitationModal({ invitation, onClose }) {
           }}
         >
           {invitation.proponentImageUrl ? (
-            <img
+            <ImageWithLoader
               src={invitation.proponentImageUrl}
               alt={invitation.proponentName}
+              spinnerSize="sm"
+              spinnerOpacity={0.4}
+              wrapperStyle={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                overflow: 'hidden',
+                border: '2px solid var(--color-primary-light)',
+                flexShrink: 0,
+                background: 'var(--color-surface-2)',
+              }}
               style={{
                 width: 48,
                 height: 48,
                 borderRadius: '50%',
                 objectFit: 'cover',
-                border: '2px solid var(--color-primary-light)',
               }}
             />
           ) : (

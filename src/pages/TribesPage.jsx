@@ -1,41 +1,131 @@
-import { useState, useRef, useEffect } from 'react'
-import { useInfiniteQuery } from '@tanstack/react-query'
-import { Search as SearchIcon, Filter, X } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { X, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import BackButton from '../components/common/BackButton'
 import TribeMinimalCard from '../components/tribe/TribeMinimalCard'
+import { TopicTag } from '../components/topic/TopicTag'
 import { tribeApi } from '../api/tribeApi'
+import { TopicTypes } from '../constants/TopicTypes'
+import { TopicColors } from '../constants/enums'
+
+const EXPLORE_PAGE_COUNT = 4
+
+const resolveTopicValue = (topicTypeName) => {
+  if (topicTypeName == null) return null
+  if (typeof topicTypeName === 'number') return topicTypeName
+  const found = TopicTypes.find((x) => x.enumName === topicTypeName)
+  return found ? found.value : null
+}
+
+const getTribeTopicValues = (tr) => {
+  const raw = tr.topicTypes || tr.TopicTypes || []
+  const values = raw.map((tt) => resolveTopicValue(tt?.topicTypeName ?? tt?.TopicTypeName))
+  return [...new Set(values.filter((v) => v != null))]
+}
 
 export default function TribesPage() {
   const { t } = useTranslation()
 
-  // Search & Filter state
-  const [searchInput, setSearchInput] = useState('')
-  const [filterOrderType, setFilterOrderType] = useState('')
-  const [filterStartDate, setFilterStartDate] = useState('')
-  const [filterEndDate, setFilterEndDate] = useState('')
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const filterRef = useRef(null)
+  // Area (TopicType) filters — multi-select
+  const [activeAreas, setActiveAreas] = useState([])
 
-  // Active query parameters that trigger refetch
-  const [activeParams, setActiveParams] = useState({
-    query: '',
-    orderType: '',
-    startDate: null,
-    endDate: null,
-  })
+  // Areas strip horizontal navigation
+  const areasStripRef = useRef(null)
+  const [areasArrows, setAreasArrows] = useState({ canLeft: false, canRight: false })
 
-  useEffect(() => {
-    const handler = (e) => {
-      if (filterRef.current && !filterRef.current.contains(e.target)) {
-        setIsFilterOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+  const updateAreasArrows = useCallback(() => {
+    const el = areasStripRef.current
+    if (!el) return
+    setAreasArrows({
+      canLeft: el.scrollLeft > 4,
+      canRight: el.scrollLeft + el.clientWidth < el.scrollWidth - 4,
+    })
   }, [])
 
+  useEffect(() => {
+    updateAreasArrows()
+    const timer = setTimeout(updateAreasArrows, 300)
+    window.addEventListener('resize', updateAreasArrows)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('resize', updateAreasArrows)
+    }
+  }, [updateAreasArrows])
+
+  const scrollAreas = (direction) => {
+    const el = areasStripRef.current
+    if (!el) return
+    el.scrollBy({ left: direction * Math.max(240, el.clientWidth * 0.7), behavior: 'smooth' })
+  }
+
+  // Active query parameters that trigger refetch
+  const hasActiveFilter = activeAreas.length > 0
+
+  // ─── Explore pool (Areas reference) ────────────────────────────────────────
+  const { data: exploreTribes = [], isLoading: isExploreLoading } = useQuery({
+    queryKey: ['tribesExplore'],
+    queryFn: async () => {
+      const pages = await Promise.all(
+        Array.from({ length: EXPLORE_PAGE_COUNT }, (_, i) =>
+          tribeApi
+            .loadTribes(i + 1, '', 'Crowded', null, null, '')
+            .then((res) => res.data?.data || [])
+        )
+      )
+      return pages.flat()
+    },
+    enabled: !hasActiveFilter,
+    staleTime: 60_000,
+  })
+
+  const featuredTribes = useMemo(() => exploreTribes.slice(0, 8), [exploreTribes])
+
+  const areaSections = useMemo(() => {
+    const map = new Map()
+    exploreTribes.forEach((tr) => {
+      getTribeTopicValues(tr).forEach((value) => {
+        if (!map.has(value)) {
+          const meta = TopicTypes.find((x) => x.value === value)
+          map.set(value, {
+            value,
+            enumName: meta?.enumName,
+            key: meta?.key,
+            color: TopicColors[value] || 'var(--color-primary)',
+            tribes: [],
+          })
+        }
+        map.get(value).tribes.push(tr)
+      })
+    })
+    return [...map.values()].sort((a, b) => b.tribes.length - a.tribes.length)
+  }, [exploreTribes])
+
+  // Explore sections: cards fill 2 rows per area (columns measured from width)
+  const sectionsRef = useRef(null)
+  const [sectionColumns, setSectionColumns] = useState(4)
+
+  const computeSectionColumns = useCallback(() => {
+    const el = sectionsRef.current
+    if (!el) return
+    const width = el.clientWidth
+    const minCard = 280
+    const gap = 12
+    setSectionColumns(Math.max(1, Math.floor((width + gap) / (minCard + gap))))
+  }, [])
+
+  useEffect(() => {
+    computeSectionColumns()
+    const el = sectionsRef.current
+    if (!el) return
+    const observer = new ResizeObserver(computeSectionColumns)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [computeSectionColumns, hasActiveFilter, areaSections.length])
+
+  const maxSectionCards = sectionColumns * 2
+
+  // ─── Filtered / paginated list ─────────────────────────────────────────────
   const {
     data,
     fetchNextPage,
@@ -43,21 +133,23 @@ export default function TribesPage() {
     isFetchingNextPage,
     isLoading,
   } = useInfiniteQuery({
-    queryKey: ['tribesList', activeParams],
+    queryKey: ['tribesList', activeAreas],
     queryFn: ({ pageParam = 1 }) =>
       tribeApi
         .loadTribes(
           pageParam,
-          activeParams.query,
-          activeParams.orderType,
-          activeParams.startDate,
-          activeParams.endDate
+          '',
+          '',
+          null,
+          null,
+          activeAreas
+            .map((value) => TopicTypes.find((x) => x.value === value)?.enumName)
+            .filter(Boolean)
         )
         .then((res) => res.data?.data || []),
-    getNextPageParam: (lastPage, allPages) => {
-      if (activeParams.query) return undefined
-      return lastPage.length === 20 ? allPages.length + 1 : undefined
-    },
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length === 20 ? allPages.length + 1 : undefined,
+    enabled: hasActiveFilter,
   })
 
   const allFetchedTribes = data?.pages.flatMap((p) => p) || []
@@ -67,7 +159,7 @@ export default function TribesPage() {
 
   useEffect(() => {
     setVisibleCount(20)
-  }, [activeParams])
+  }, [activeAreas])
 
   const visibleTribes = allFetchedTribes.slice(0, visibleCount)
 
@@ -97,291 +189,269 @@ export default function TribesPage() {
     }
   }, [visibleCount, allFetchedTribes.length, hasNextPage, isFetchingNextPage, fetchNextPage])
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault()
-    setActiveParams({
-      query: searchInput,
-      orderType: filterOrderType || 'None',
-      startDate: filterStartDate || null,
-      endDate: filterEndDate || null,
-    })
-    setIsFilterOpen(false)
+  const handleAreaToggle = (area) => {
+    setActiveAreas((current) =>
+      current.includes(area.value)
+        ? current.filter((value) => value !== area.value)
+        : [...current, area.value]
+    )
   }
 
+  const clearAreas = () => setActiveAreas([])
+
+  const renderTribeCard = (tr) => (
+    <TribeMinimalCard
+      key={tr.tribeId || tr.TribeId}
+      tribeId={tr.tribeId || tr.TribeId}
+      tribeName={tr.tribeName || tr.TribeName}
+      tribePoint={tr.tribePoint ?? tr.tribeActorPoint ?? tr.TribeActorPoint}
+      imageUrl={tr.imageUrl || tr.ImageUrl}
+      isDormant={tr.isDormant ?? tr.IsDormant ?? false}
+    />
+  )
+
   return (
-    <div
-      className="flex-col gap-4"
-      style={{ paddingBottom: 60, maxWidth: 1200, margin: '0 auto', width: '100%' }}
-    >
+    <div className="flex-col gap-4" style={{ paddingBottom: 60, width: '100%' }}>
       <div className="flex items-center gap-3 px-2" style={{ marginBottom: 12 }}>
         <BackButton style={{ marginBottom: 0 }} />
       </div>
 
-      {/* Advanced Search Bar matching TopBar & MarketplacePage */}
-      <form
-        onSubmit={handleSearchSubmit}
+      {/* Header */}
+      <div
         style={{
           display: 'flex',
-          gap: 6,
-          marginBottom: 32,
+          alignItems: 'center',
+          gap: 14,
+          marginBottom: 24,
+          paddingBottom: 14,
+          borderBottom: '1px solid var(--color-border)',
+        }}
+      >
+        <div className="page-header-icon">
+          <Users size={22} color="#fff" />
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <h1
+            style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
+          >
+            {t('tribes_page.explore_title', 'Keşfet')}
+          </h1>
+          <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
+            {t(
+              'tribes_page.explore_desc',
+              'Klanları keşfet, ilgini çeken topluluklara katıl.'
+            )}
+          </p>
+        </div>
+      </div>
+
+
+      {/* Areas chips */}
+      <div
+        style={{
+          marginBottom: 28,
           paddingBottom: 24,
           borderBottom: '1px solid var(--color-border)',
         }}
       >
-        <div style={{ flex: 1, position: 'relative' }}>
-          <SearchIcon
-            size={16}
+        <div style={{ position: 'relative' }}>
+          <div
+            ref={areasStripRef}
+            className="hscroll-strip tribes-areas-strip"
+            onScroll={updateAreasArrows}
             style={{
-              position: 'absolute',
-              left: 10,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: 'var(--color-text-faint)',
-              zIndex: 1,
-            }}
-          />
-          <input
-            className="input"
-            style={{ paddingLeft: 32 }}
-            placeholder={t('topbar.search', 'Ara')}
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-          />
-        </div>
-
-        {/* Filter button & Dropdown */}
-        <div style={{ position: 'relative' }} ref={filterRef}>
-          <button
-            type="button"
-            className="btn btn-outline btn-sm btn-icon"
-            onClick={() => setIsFilterOpen(!isFilterOpen)}
-            aria-label={t('topbar.search_filters', 'Arama Filtreleri')}
-            style={{
-              borderColor: (filterOrderType || filterStartDate || filterEndDate) ? 'var(--color-primary)' : undefined,
+              display: 'flex',
+              flexWrap: 'nowrap',
+              gap: 8,
+              overflowX: 'auto',
             }}
           >
-            <Filter
-              size={14}
-              color={(filterOrderType || filterStartDate || filterEndDate) ? 'var(--color-primary)' : 'currentColor'}
-              fill={(filterOrderType || filterStartDate || filterEndDate) ? 'var(--color-primary)' : 'none'}
-            />
-          </button>
-          {(filterOrderType || filterStartDate || filterEndDate) && (
+        <button
+          type="button"
+          onClick={clearAreas}
+          style={{
+            padding: '5px 14px',
+            borderRadius: 20,
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: 'pointer',
+            background: activeAreas.length === 0 ? 'var(--color-primary)' : 'transparent',
+            color: activeAreas.length === 0 ? '#fff' : 'var(--color-text-secondary)',
+            border: `1px solid ${activeAreas.length === 0 ? 'var(--color-primary)' : 'var(--color-border)'}`,
+            transition: 'all 0.2s',
+          }}
+        >
+          {t('tribes_page.all_areas', 'Tümü')}
+        </button>
+        {TopicTypes.map((topic) => {
+          const color = TopicColors[topic.value] || 'var(--color-primary)'
+          const isSelected = activeAreas.includes(topic.value)
+          return (
             <button
+              key={topic.value}
               type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                e.preventDefault()
-                setFilterOrderType('')
-                setFilterStartDate('')
-                setFilterEndDate('')
-                setIsFilterOpen(false)
-              }}
-              aria-label={t('common.clear_all', 'Tümünü Temizle')}
+              onClick={() => handleAreaToggle(topic)}
               style={{
-                position: 'absolute',
-                top: -4,
-                right: -4,
-                transform: 'none',
-                marginTop: 0,
-                background: '#ef4444',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '50%',
-                width: 14,
-                height: 14,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                padding: '5px 14px',
+                borderRadius: 20,
+                fontSize: 13,
+                fontWeight: 500,
                 cursor: 'pointer',
-                padding: 0,
-                zIndex: 10,
+                background: isSelected ? color : `${color}18`,
+                color: isSelected ? '#fff' : color,
+                border: `1px solid ${isSelected ? color : `${color}55`}`,
+                transition: 'all 0.2s',
               }}
             >
-              <X size={10} strokeWidth={3} />
+              {t(`topics.${topic.key || topic.enumName?.toLowerCase()}`, topic.label)}
             </button>
-          )}
-          <AnimatePresence>
-            {isFilterOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  marginTop: 4,
-                  background: 'var(--color-bg)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 8,
-                  boxShadow: 'var(--shadow-md)',
-                  zIndex: 200,
-                  minWidth: 220,
-                  padding: 12,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 12,
-                  textAlign: 'left',
-                }}
+          )
+        })}
+          </div>
+
+          {areasArrows.canLeft && (
+            <>
+              <span className="tribes-areas-fade tribes-areas-fade--left" aria-hidden="true" />
+              <button
+                type="button"
+                className="tribes-areas-nav tribes-areas-nav--left"
+                onClick={() => scrollAreas(-1)}
+                aria-label={t('common.previous', 'Önceki')}
               >
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: 'var(--color-text)',
-                    borderBottom: '1px solid var(--color-border-light)',
-                    paddingBottom: 6,
-                  }}
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 10 10"
+                  aria-hidden="true"
+                  style={{ display: 'block', transform: 'rotate(90deg)' }}
                 >
-                  <span>{t('search.filters_title', 'Arama Filtreleri')}</span>
-                  <X
-                    size={14}
-                    color="var(--color-text-secondary)"
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => setIsFilterOpen(false)}
-                  />
-                </div>
-
-                {/* OrderType selection: only Crowded, Newest, Oldest */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
-                    {t('search.sort_by', 'Sıralama')}
-                  </label>
-                  <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                    <select
-                      className="input"
-                      style={{ padding: '4px 8px', height: 32, fontSize: 13, flex: 1 }}
-                      value={filterOrderType}
-                      onChange={(e) => setFilterOrderType(e.target.value)}
-                    >
-                      <option value="">{t('search.none', 'Yok')}</option>
-                      <option value="Crowded">
-                        {t('tribe.most_crowded', 'En Kalabalık')}
-                      </option>
-                      <option value="Newest">{t('sort.newest', 'En Yeni')}</option>
-                      <option value="Oldest">{t('topbar.oldest', 'En Eski')}</option>
-                    </select>
-                    {filterOrderType && (
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        style={{ padding: 0, width: 32, height: 32, flexShrink: 0 }}
-                        onClick={() => setFilterOrderType('')}
-                        aria-label={t('common.clear', 'Temizle')}
-                      >
-                        <X size={16} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Start Date */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
-                    {t('search.start_date', 'Başlangıç Tarihi')}
-                  </label>
-                  <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                    <input
-                      type="date"
-                      className="input"
-                      style={{ padding: '4px 8px', height: 32, fontSize: 13, flex: 1 }}
-                      value={filterStartDate}
-                      onChange={(e) => setFilterStartDate(e.target.value)}
-                    />
-                    {filterStartDate && (
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        style={{ padding: 0, width: 32, height: 32, flexShrink: 0 }}
-                        onClick={() => setFilterStartDate('')}
-                        aria-label={t('common.clear', 'Temizle')}
-                      >
-                        <X size={16} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* End Date */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
-                    {t('search.end_date', 'Bitiş Tarihi')}
-                  </label>
-                  <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                    <input
-                      type="date"
-                      className="input"
-                      style={{ padding: '4px 8px', height: 32, fontSize: 13, flex: 1 }}
-                      value={filterEndDate}
-                      onChange={(e) => setFilterEndDate(e.target.value)}
-                    />
-                    {filterEndDate && (
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        style={{ padding: 0, width: 32, height: 32, flexShrink: 0 }}
-                        onClick={() => setFilterEndDate('')}
-                        aria-label={t('common.clear', 'Temizle')}
-                      >
-                        <X size={16} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  className="btn btn-primary btn-sm"
-                  style={{ width: '100%', marginTop: 4, paddingTop: 7, paddingBottom: 7 }}
+                  <path d="M1 2.2 L9 2.2 L5 8 Z" fill="currentColor" />
+                </svg>
+              </button>
+            </>
+          )}
+          {areasArrows.canRight && (
+            <>
+              <span className="tribes-areas-fade tribes-areas-fade--right" aria-hidden="true" />
+              <button
+                type="button"
+                className="tribes-areas-nav tribes-areas-nav--right"
+                onClick={() => scrollAreas(1)}
+                aria-label={t('common.next', 'Sonraki')}
+              >
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 10 10"
+                  aria-hidden="true"
+                  style={{ display: 'block', transform: 'rotate(-90deg)' }}
                 >
-                  {t('topbar.search_button', 'Ara')}
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                  <path d="M1 2.2 L9 2.2 L5 8 Z" fill="currentColor" />
+                </svg>
+              </button>
+            </>
+          )}
         </div>
+      </div>
 
-        <button type="submit" className="btn btn-primary btn-sm">
-          {t('topbar.search_button', 'Ara')}
-        </button>
-      </form>
+      {hasActiveFilter ? (
+        <>
+          {/* Active areas header */}
+          {activeAreas.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+              {activeAreas.map((value) => (
+                <TopicTag key={value} topicType={value} size="md" />
+              ))}
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={clearAreas}
+              >
+                <X size={14} />
+                {t('tribes_page.clear_area', 'Temizle')}
+              </button>
+            </div>
+          )}
 
-      {isLoading ? (
+          {isLoading ? (
+            <div className="flex justify-center" style={{ padding: 60 }}>
+              <div className="spinner spinner-lg" />
+            </div>
+          ) : visibleTribes.length === 0 ? (
+            <p className="empty-state">{t('tribes_page.empty', 'Henüz klan bulunmuyor.')}</p>
+          ) : (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: 16,
+              }}
+            >
+              {visibleTribes.map(renderTribeCard)}
+            </div>
+          )}
+
+          {/* Sentinel for infinite scroll */}
+          <div ref={loadMoreRef} style={{ height: 20 }} />
+          {isFetchingNextPage && (
+            <div className="flex justify-center" style={{ padding: 20 }}>
+              <div className="spinner spinner-md" />
+            </div>
+          )}
+        </>
+      ) : isExploreLoading ? (
         <div className="flex justify-center" style={{ padding: 60 }}>
           <div className="spinner spinner-lg" />
         </div>
-      ) : visibleTribes.length === 0 ? (
+      ) : exploreTribes.length === 0 ? (
         <p className="empty-state">{t('tribes_page.empty', 'Henüz klan bulunmuyor.')}</p>
       ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            gap: 16,
-          }}
-        >
-          {visibleTribes.map((tr) => (
-            <TribeMinimalCard
-              key={tr.tribeId || tr.TribeId}
-              tribeId={tr.tribeId || tr.TribeId}
-              tribeName={tr.tribeName || tr.TribeName}
-              tribePoint={tr.tribePoint ?? tr.tribeActorPoint ?? tr.TribeActorPoint}
-              imageUrl={tr.imageUrl || tr.ImageUrl}
-              isDormant={tr.isDormant ?? tr.IsDormant ?? false}
-            />
-          ))}
-        </div>
-      )}
+        <div ref={sectionsRef}>
+          {/* Featured */}
+          {featuredTribes.length > 0 && (
+            <section className="tribes-explore-section">
+              <div className="tribes-explore-section-header">
+                <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                  {t('tribes_page.featured', 'Öne Çıkanlar')}
+                </h2>
+              </div>
+              <div
+                className="tribes-explore-grid"
+                style={{ gridTemplateColumns: `repeat(${sectionColumns}, minmax(0, 1fr))` }}
+              >
+                {featuredTribes.slice(0, maxSectionCards).map(renderTribeCard)}
+              </div>
+            </section>
+          )}
 
-      {/* Sentinel for infinite scroll */}
-      <div ref={loadMoreRef} style={{ height: 20 }} />
-      {isFetchingNextPage && (
-        <div className="flex justify-center" style={{ padding: 20 }}>
-          <div className="spinner spinner-md" />
+          {/* Area sections */}
+          {areaSections.map((section) => (
+            <section key={section.value} className="tribes-explore-section">
+              <div className="tribes-explore-section-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                  <TopicTag topicType={section.value} size="md" />
+                  <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
+                    {t('tribes_page.tribes_count', '{{count}} klan', {
+                      count: section.tribes.length,
+                    })}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setActiveAreas([section.value])}
+                >
+                  {t('tribes_page.see_all', 'Tümünü Gör')}
+                </button>
+              </div>
+              <div
+                className="tribes-explore-grid"
+                style={{ gridTemplateColumns: `repeat(${sectionColumns}, minmax(0, 1fr))` }}
+              >
+                {section.tribes.slice(0, maxSectionCards).map(renderTribeCard)}
+              </div>
+            </section>
+          ))}
         </div>
       )}
     </div>

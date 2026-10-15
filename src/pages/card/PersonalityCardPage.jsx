@@ -27,6 +27,7 @@ export default function PersonalityCardPage() {
   const [formData, setFormData] = useState({
     cardName: '',
     personalityPrompt: '',
+    imageUrl: '',
     tags: [],
     personalityCardConfirmed: false,
   })
@@ -40,7 +41,7 @@ export default function PersonalityCardPage() {
 
   const { data: userProfile } = useQuery({
     queryKey: ['actor', actorId],
-    queryFn: () => actorApi.getActor(actorId).then((res) => res.data?.data),
+    queryFn: () => actorApi.getProfile(actorId).then((res) => res.data?.data),
     enabled: Boolean(actorId),
   })
 
@@ -64,6 +65,7 @@ export default function PersonalityCardPage() {
       setFormData({
         cardName: '',
         personalityPrompt: '',
+        imageUrl: '',
         tags: [],
         personalityCardConfirmed: false,
       })
@@ -75,6 +77,7 @@ export default function PersonalityCardPage() {
       ...current,
       cardName: field === 'cardName' ? value : current.cardName,
       personalityPrompt: field === 'prompt' ? value : current.personalityPrompt,
+      imageUrl: field === 'imageUrl' ? value : current.imageUrl,
       personalityCardConfirmed: false,
     }))
   }
@@ -210,6 +213,7 @@ export default function PersonalityCardPage() {
               variant="editor"
               editorCardName={formData.cardName}
               editorPrompt={formData.personalityPrompt}
+              editorImageUrl={formData.imageUrl}
               editorConfirmed={formData.personalityCardConfirmed}
               disabled={createMutation.isPending}
               onEditorChange={handlePersonalityCardChange}

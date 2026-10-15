@@ -35,6 +35,11 @@ export default function FossilTogglePill({
           ? titleOpen || t('hierarchy.hide_fossils', 'Fosilleşmiş alt birimleri daralt')
           : title || t('hierarchy.show_fossils', 'Fosilleşmiş alt birimleri göster')
       }
+      title={
+        open
+          ? titleOpen || t('hierarchy.hide_fossils', 'Fosilleşmiş alt birimleri daralt')
+          : title || t('hierarchy.show_fossils', 'Fosilleşmiş alt birimleri göster')
+      }
       style={style}
     >
       <TRexSkullIcon className="badge-fossil-icon" />

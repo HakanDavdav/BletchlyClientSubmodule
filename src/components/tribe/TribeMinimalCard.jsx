@@ -9,6 +9,7 @@ import useDevLog from '../../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 import TRexSkullIcon from '../../assets/t-rex-skull-svgrepo-com.svg?react'
 import CardIcon from '../common/icons/CardIcon'
+import ImageWithLoader from '../common/ImageWithLoader'
 
 /**
  * TribeMinimalCard — plan.md Component #4
@@ -126,11 +127,22 @@ export default function TribeMinimalCard({
     >
       <div style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
         {showImage ? (
-          <img
+          <ImageWithLoader
             src={imageUrl}
             alt={tribeName}
             className="tribe-card-img"
             onError={() => setFailedUrl(imageUrl)}
+            spinnerSize="sm"
+            spinnerOpacity={0.4}
+            wrapperClassName="tribe-card-img"
+            wrapperStyle={{
+              padding: 0,
+              overflow: 'hidden',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'var(--color-surface-2)',
+            }}
           />
         ) : (
           <div

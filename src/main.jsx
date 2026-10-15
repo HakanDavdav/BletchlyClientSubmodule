@@ -59,7 +59,8 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: Infinity, // Veriyi süresiz olarak taze kabul et (arka planda istek atma)
       refetchOnWindowFocus: false, // Sekme değişiminde gereksiz istekleri önler
-      retry: 1, // Hata durumunda sadece 1 kez tekrar dener
+      retry: (failureCount, error) =>
+        failureCount < 1 && !error?.isApiError && (!error?.response || error.response.status >= 500),
     },
   },
   mutationCache: new MutationCache({
@@ -127,6 +128,8 @@ import { BrowserRouter } from 'react-router-dom'
 // Authentication interceptor error handle (Token düştüğünde vb.)
 window.addEventListener('auth:unauthorized', () => {
   import('./store/authStore').then(({ default: useAuthStore }) => {
+    // Oturum yokken (anonim gezinme) 401 alınması login'e yönlendirmez
+    if (!useAuthStore.getState().isLoggedIn) return
     useAuthStore.getState().logout()
     window.location.href = '/login'
   })

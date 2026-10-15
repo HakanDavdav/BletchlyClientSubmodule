@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { Send } from 'lucide-react'
 import { contentItemApi } from '../../api/contentItemApi'
 import useAuthStore from '../../store/authStore'
 import useDevLog from '../../utils/useDevLog'
@@ -96,7 +95,6 @@ export default function EntryDraft({ parentContentItemId, editContentItemId = nu
             disabled={mutation.isPending}
             style={{ marginLeft: 'auto' }}
           >
-            <Send size={13} />
             {mutation.isPending 
               ? (editContentItemId ? t('action.saving') : t('action.sending')) 
               : (editContentItemId ? t('action.save') : t('action.send'))}

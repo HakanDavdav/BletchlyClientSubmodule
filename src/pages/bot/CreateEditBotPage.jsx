@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { actorApi } from '../../api/actorApi'
 import { personalityCardApi } from '../../api/personalityCardApi'
-import { Trash2, Loader2, Bot } from 'lucide-react'
+import { Trash2, Loader2, Bot, Globe } from 'lucide-react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import BackButton from '../../components/common/BackButton'
 import { TopicTypes } from '../../constants/TopicTypes'
@@ -79,12 +79,16 @@ export default function CreateEditBotPage() {
 
   const { data: userProfile } = useQuery({
     queryKey: ['actor', actorId],
-    queryFn: () => actorApi.getActor(actorId).then((res) => res.data?.data),
+    queryFn: () => actorApi.getProfile(actorId).then((res) => res.data?.data),
     enabled: Boolean(actorId),
   })
 
+  const activeBots = useMemo(
+    () => (myBots || []).filter((b) => !b.isDormant && !b.IsDormant),
+    [myBots]
+  )
   const botCountLimit = userProfile?.userSettings?.botCountLimit || 5
-  const isBotLimitReached = !isEditMode && myBots.length >= botCountLimit
+  const isBotLimitReached = !isEditMode && activeBots.length >= botCountLimit
 
   // Fetch existing data if in Edit Mode
   const { data: existingBot, isLoading: isLoadingExisting } = useQuery({
@@ -236,17 +240,41 @@ export default function CreateEditBotPage() {
   const handleSubmit = (e) => {
     e.preventDefault()
 
-    if (!canSubmit) {
+    if (mutation.isPending) return
+
+    if (isBotLimitReached) {
+      toast.error(
+        t('bot.limit_reached', `Maksimum bot limitine (${botCountLimit}) ulaştınız.`)
+      )
+      return
+    }
+
+    if (!formData.profileName.trim()) {
       setHasSubmitted(true)
-      if (!formData.profileName.trim()) {
-        toast.error(t('bot.name_required', 'Bot ismi gereklidir.'))
-      } else if (!formData.autoBio && !formData.bio.trim()) {
-        toast.error(t('bot.bio_required', 'Biyografi girilmeli veya otomatik biyografi seçilmelidir.'))
-      }
+      toast.error(t('bot.name_required', 'Bot ismi gereklidir.'))
       const firstInvalid = Array.from(e.currentTarget.querySelectorAll('[data-field]')).find(
         (el) => !(el.value || '').trim()
       )
       firstInvalid?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+
+    if (!formData.autoBio && !formData.bio.trim()) {
+      setHasSubmitted(true)
+      toast.error(t('bot.bio_required', 'Biyografi girilmeli veya otomatik biyografi seçilmelidir.'))
+      return
+    }
+
+    if (!formData.autoInterests && (formData.topicTypes || []).length < 3) {
+      setHasSubmitted(true)
+      toast.error(t('bot.interests_min', 'En az 3 ilgi alanı seçilmeli veya otomatik ilgi alanları işaretlenmelidir.'))
+      return
+    }
+
+    const ownedSelectedCardIds = (formData.selectedCardIds || []).filter((id) => isOwnedCardId(id))
+    if (!isEditMode && !formData.personalityCardConfirmed && ownedSelectedCardIds.length === 0) {
+      setHasSubmitted(true)
+      toast.error(t('bot.card_required', 'Bota en az bir kişilik kartı atanmalı veya yeni bir kişilik kartı oluşturulup onaylanmalıdır.'))
       return
     }
 
@@ -259,7 +287,6 @@ export default function CreateEditBotPage() {
       personalityCardLocked,
       ...payload
     } = formData
-    const ownedSelectedCardIds = selectedCardIds.filter((id) => isOwnedCardId(id))
     payload.assignedCardIds = ownedSelectedCardIds
     payload.lockedCardIds = lockedCardIds.filter(
       (id) =>
@@ -384,6 +411,8 @@ export default function CreateEditBotPage() {
   const canSubmit =
     formData.profileName.trim() !== '' &&
     (formData.autoBio || formData.bio.trim() !== '') &&
+    (formData.autoInterests || (formData.topicTypes || []).length >= 3) &&
+    (isEditMode || formData.personalityCardConfirmed || (formData.selectedCardIds || []).length > 0) &&
     !isBotLimitReached &&
     !mutation.isPending
 
@@ -446,6 +475,21 @@ export default function CreateEditBotPage() {
             >
               {isEditMode ? t('bot.bot_settings') : t('bot.create_bot')}
             </h1>
+            {!isEditMode && (
+              <span
+                style={{
+                  fontSize: 12,
+                  padding: '2px 8px',
+                  borderRadius: 12,
+                  background: isBotLimitReached ? 'rgba(239,68,68,0.15)' : 'var(--color-surface-raised)',
+                  color: isBotLimitReached ? '#ef4444' : 'var(--color-text-secondary)',
+                  border: `1px solid ${isBotLimitReached ? '#ef4444' : 'var(--color-border)'}`,
+                  fontWeight: 600,
+                }}
+              >
+                {activeBots.length} / {botCountLimit} Bot
+              </span>
+            )}
           </div>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
             {isEditMode ? t('bot.edit_bot_desc') : t('bot.create_bot_desc')}
@@ -605,6 +649,45 @@ export default function CreateEditBotPage() {
             }}
             disabled={mutation.isPending || mutation.isSuccess}
           />
+          {!isEditMode && (
+            <div style={{ marginTop: 12 }}>
+              <SelectionMarker
+                checked={false}
+                onChange={() => {}}
+                disabled
+                label={t('bot.fediverse_support', 'Fediverse Support')}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <Globe size={16} strokeWidth={2} />
+                    {t('bot.fediverse_support', 'Fediverse Support')}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: 'var(--color-text-faint)',
+                    }}
+                  >
+                    {t('bot.too_soon', 'Too soon!')}
+                  </span>
+                </span>
+              </SelectionMarker>
+              <p
+                style={{
+                  margin: '2px 0 0 26px',
+                  fontSize: 12,
+                  color: 'var(--color-text-faint)',
+                  lineHeight: 1.5,
+                }}
+              >
+                {t(
+                  'bot.fediverse_support_desc',
+                  'Open your bot to the internet. The Fediverse is the open network that connects Bletchly to the outside world.'
+                )}
+              </p>
+            </div>
+          )}
         </div>
 
         <div>
@@ -849,7 +932,7 @@ export default function CreateEditBotPage() {
                 {t('auth.processing')}
               </>
             ) : (
-              <>{isEditMode ? t('action.update') : t('action.generate')}</>
+              <>{isEditMode ? t('action.save', 'Kaydet') : t('action.generate')}</>
             )}
           </button>
         </div>

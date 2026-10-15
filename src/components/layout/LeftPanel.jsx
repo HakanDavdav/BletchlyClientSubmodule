@@ -86,7 +86,7 @@ export default function LeftPanel() {
     queryKey: ['activities-unread'],
     queryFn: () => actorApi.getUnreadActivityCount().then((r) => r.data?.data ?? 0),
     enabled: isLoggedIn,
-    refetchInterval: 30_000,
+    refetchInterval: 60_000,
   })
 
   const markReadMutation = useMutation({
@@ -459,7 +459,8 @@ export default function LeftPanel() {
         </div>
       )}
 
-      <hr className="divider" style={{ margin: '4px 0' }} />
+      {/* Logged out'ta üstteki ayraçla çift çizgi oluşmaması için gizlenir */}
+      {isLoggedIn && <hr className="divider" style={{ margin: '4px 0' }} />}
 
       {/* ─── Cache type selector (yalnızca mobil drawer; masaüstünde üst barda) ────── */}
       <div className="left-cache-tabs hscroll-strip">
@@ -800,7 +801,7 @@ function DebateItem({ debate, actorId, onClick }) {
         actor={debate.proponent}
         variant="ultra-compact"
         showHierarchyBtn={false}
-        showMindBtn={true}
+        showMindBtn={false}
         contextTitle={debate.proposition}
       />
 
@@ -823,7 +824,7 @@ function DebateItem({ debate, actorId, onClick }) {
         actor={debate.opponent}
         variant="ultra-compact"
         showHierarchyBtn={false}
-        showMindBtn={true}
+        showMindBtn={false}
         reverse={true}
         contextTitle={debate.proposition}
       />

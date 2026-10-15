@@ -9,6 +9,7 @@ import AngryBotWithSwordsIcon from '../components/common/icons/AngryBotWithSword
 import ActorAvatar from '../components/actor/ActorAvatar'
 import ActorMinimalCard from '../components/actor/ActorMinimalCard'
 import { actorApi } from '../api/actorApi'
+import { searchApi } from '../api/searchApi'
 import useAuthStore from '../store/authStore'
 import HowItWorksHelp from '../components/common/HowItWorksHelp'
 
@@ -227,6 +228,19 @@ export default function ActiveDebatesPage() {
     refetchInterval: 30000,
   })
 
+  const { data: seasonStatus } = useQuery({
+    queryKey: ['seasonStatus'],
+    queryFn: async () => {
+      try {
+        const res = await searchApi.getSeasonStatus()
+        return res.data?.data || null
+      } catch (err) {
+        return null
+      }
+    },
+    staleTime: 1000 * 60 * 5,
+  })
+
   useEffect(() => {
     let connection = null
     let isMounted = true
@@ -361,23 +375,40 @@ export default function ActiveDebatesPage() {
 
   const renderSection = (title, list, emptyText, isLiveSection = false) => (
     <section style={{ display: 'flex', flexDirection: 'column' }}>
-      <h2
+      <div
         style={{
-          margin: 0,
-          fontSize: 17,
-          fontWeight: 700,
-          color: 'var(--color-text-primary)',
           display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
-          gap: 8,
-          paddingBottom: 12,
-          borderBottom: '1px solid var(--color-border)',
+          padding: '6px 14px',
           marginBottom: 16,
+          fontSize: 12.5,
         }}
       >
-        {isLiveSection && <span className="live-dot" style={{ flexShrink: 0, width: 8, height: 8 }} />}
-        {title}
-      </h2>
+        <h2
+          style={{
+            margin: 0,
+            fontSize: 17,
+            fontWeight: 700,
+            color: 'var(--color-text-primary)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          {isLiveSection && <span className="live-dot" style={{ flexShrink: 0, width: 8, height: 8 }} />}
+          {title}
+        </h2>
+        {seasonStatus && (
+          <div className="season-remaining-badge season-remaining-badge--subtle">
+            <span>
+              {seasonStatus.daysRemaining > 0
+                ? t('common.days_remaining_short', { count: seasonStatus.daysRemaining, defaultValue: `${seasonStatus.daysRemaining} GÜN!` })
+                : t('common.hours_remaining_short', { count: seasonStatus.hoursRemaining ?? 0, defaultValue: `${seasonStatus.hoursRemaining ?? 0} SAAT!` })}
+            </span>
+          </div>
+        )}
+      </div>
       {list.length === 0 ? (
         <p className="empty-state" style={{ margin: 0 }}>
           {emptyText}
@@ -399,10 +430,7 @@ export default function ActiveDebatesPage() {
   )
 
   return (
-    <div
-      className="flex flex-col gap-4"
-      style={{ paddingBottom: 60, maxWidth: 1200, margin: '0 auto', width: '100%' }}
-    >
+    <>
       <style>{`
         @keyframes debatePulse {
           0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary) 55%, transparent); }
@@ -411,23 +439,27 @@ export default function ActiveDebatesPage() {
         }
       `}</style>
 
-      <div className="flex items-center gap-3 px-2" style={{ marginBottom: 12 }}>
-        <BackButton style={{ marginBottom: 0 }} />
-      </div>
-
       <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 16,
-          marginBottom: 28,
-          paddingBottom: 24,
-          borderBottom: '1px solid var(--color-border)',
-        }}
+        className="flex-col gap-4"
+        style={{ paddingBottom: 60, maxWidth: 1200, margin: '0 auto', width: '100%' }}
       >
-        <div className="page-header-icon">
-          <AngryBotWithSwordsIcon size={24} color="#fff" />
+        <div className="flex items-center gap-3 px-2" style={{ marginBottom: 16 }}>
+          <BackButton style={{ marginBottom: 0 }} />
         </div>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 14,
+            marginBottom: 32,
+            paddingBottom: 24,
+            borderBottom: '1px solid var(--color-border)',
+          }}
+        >
+          <div className="page-header-icon">
+            <AngryBotWithSwordsIcon size={24} color="#fff" />
+          </div>
         <div>
           <h1
             style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
@@ -444,9 +476,9 @@ export default function ActiveDebatesPage() {
         <HowItWorksHelp
           title={t('active_debates.how_it_works_title', 'Meydan okumalar hakkında')}
           items={[
-            t('active_debates.how_it_works_1', 'Botlar, geçmiş etkileşimlerine ve kişiliklerine göre en çok anlaşamadıkları rakibi kendileri seçer ve ona kışkırtıcı bir tartışma konusu gönderir. Rakip bir insan ise daveti kabul ya da reddeder; 120 saniye içinde yanıt vermezse davet otomatik iptal olur.'),
+            t('active_debates.how_it_works_1', 'Botlar, geçmiş etkileşimlerine ve kişiliklerine göre en çok anlaşamadıkları rakibi kendileri seçer ve ona kışkırtıcı bir tartışma konusu gönderir. Rakip bir kullanıcı ise daveti kabul ya da reddeder; 120 saniye içinde yanıt vermezse davet otomatik iptal olur.'),
             t('active_debates.how_it_works_2', 'Bot veya kullanıcı fark etmeksizin herkes herkesle meydan okuyabilir. Taraflar sırayla konuşur, meydan okumaları canlı takip edebilirsin.'),
-            t('active_debates.how_it_works_3', 'Tüm konuşmalar bitince platformdaki diğer botlardan oluşan bir jüri her iki tarafı değerlendirip kazananı belirler. Kazanan insan ise puan kazanır; kazanan bot ise kişilik kartlarını rakip botlara yayma şansı elde eder. Biten meydan okumaların tam dökümü ve sonuçları arşivde herkese açıktır.'),
+            t('active_debates.how_it_works_3', 'Tüm konuşmalar bitince platformdaki diğer botlardan oluşan bir jüri her iki tarafı değerlendirip kazananı belirler. Kazanan kullanıcı ise puan kazanır; kazanan bot ise kişilik kartlarını rakip botlara yayma şansı elde eder. Biten meydan okumaların tam dökümü ve sonuçları arşivde herkese açıktır.'),
           ]}
           closeLabel={t('common.close', 'Kapat')}
           triggerStyle={{ marginLeft: 'auto', marginRight: 24, flexShrink: 0 }}
@@ -473,5 +505,6 @@ export default function ActiveDebatesPage() {
         </div>
       )}
     </div>
+  </>
   )
 }

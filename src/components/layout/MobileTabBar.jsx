@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import BotFlashCardsIcon from '../common/icons/BotFlashCardsIcon'
 import AngryBotWithSwordsIcon from '../common/icons/AngryBotWithSwordsIcon'
 import BletchlyGuideModal from '../common/BletchlyGuideModal'
+import MobilBottomMiddleBotSvg from '../../assets/FigmaNew/MobilBottomMiddleBot.svg?react'
 
 /**
  * MobileTabBar — yalnızca mobil (≤900px) ekranlarda görünen alt gezinme çubuğu.
@@ -84,26 +85,34 @@ export default function MobileTabBar() {
     },
   ]
 
+  const searchParams = new URLSearchParams(location.search)
+  const queryActorId = searchParams.get('actorId')
+  const isOwnProfile =
+    Boolean(isLoggedIn && actorId) &&
+    (path === '/profile' || path.startsWith('/profile/')) &&
+    (!queryActorId || queryActorId === actorId)
+  const isProfileActive = isOwnProfile || isActive('/account-settings', '/init-profile')
+
   const tabs = [
     {
       key: 'home',
       label: t('tab_bar.home', 'Ana Sayfa'),
-      icon: <Home size={21} strokeWidth={2.1} />,
+      icon: (active) => <Home size={21} strokeWidth={active ? 2.65 : 2.0} />,
       active: path === '/',
       onClick: () => go('/'),
     },
     {
       key: 'search',
       label: t('tab_bar.search', 'Ara'),
-      icon: <Search size={21} strokeWidth={2.1} />,
+      icon: (active) => <Search size={21} strokeWidth={active ? 2.65 : 2.0} />,
       active: isActive('/search'),
       onClick: () => go('/search'),
     },
     {
       key: 'profile',
       label: t('tab_bar.profile', 'Profil'),
-      icon: <User size={21} strokeWidth={2.1} />,
-      active: isActive('/profile', '/account-settings', '/init-profile'),
+      icon: (active) => <User size={21} strokeWidth={active ? 2.65 : 2.0} />,
+      active: isProfileActive,
       onClick: () => go(isLoggedIn && actorId ? `/profile?actorId=${actorId}` : '/login'),
     },
   ]
@@ -116,7 +125,7 @@ export default function MobileTabBar() {
         onClick={goBack}
         aria-label={t('tab_bar.back', 'Geri')}
       >
-        <ArrowLeft size={21} strokeWidth={2.1} />
+        <ArrowLeft size={21} strokeWidth={2.0} />
       </button>
       {tabs.slice(0, 1).map((tab) => (
         <button
@@ -127,7 +136,7 @@ export default function MobileTabBar() {
           aria-label={tab.label}
           aria-current={tab.active ? 'page' : undefined}
         >
-          {tab.icon}
+          {typeof tab.icon === 'function' ? tab.icon(tab.active) : tab.icon}
         </button>
       ))}
 
@@ -140,7 +149,14 @@ export default function MobileTabBar() {
           aria-label={t('topbar.quick_links', 'Hızlı Bağlantılar')}
           aria-expanded={isQuickOpen}
         >
-          <span className="mobile-tab-bar__quick-caret" aria-hidden="true">▼</span>
+          {/* Bütünleşik bot ikonu: yön ve renk layout.css ile yönetilir */}
+          <span className="mobile-tab-bar__quick-bot" aria-hidden="true">
+            <MobilBottomMiddleBotSvg
+              width={20}
+              height={26}
+              style={{ display: 'block' }}
+            />
+          </span>
         </button>
         <AnimatePresence>
           {isQuickOpen && (
@@ -182,7 +198,7 @@ export default function MobileTabBar() {
           aria-label={tab.label}
           aria-current={tab.active ? 'page' : undefined}
         >
-          {tab.icon}
+          {typeof tab.icon === 'function' ? tab.icon(tab.active) : tab.icon}
         </button>
       ))}
     </nav>

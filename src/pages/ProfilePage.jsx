@@ -210,7 +210,7 @@ export default function ProfilePage() {
       const isBotTarget = profile?.discriminator === 'Bot'
       if (isBotTarget) {
         toast.success(
-          t('profile.debate_triggered', 'Meydan okuma başlatıldı! Arenaya aktarılıyorsunuz...'),
+          t('profile.debate_triggered', 'Meydan okuma kabul edildi!'),
           {
             id: 'debate-trigger',
           }
@@ -439,7 +439,7 @@ export default function ProfilePage() {
         ) : (
           <ModifierArrowSvg width={10} height={14} style={{ display: 'block' }} />
         )}
-        {t('premium.button', 'Premium')}
+        {t('premium.button', 'Pro')}
       </button>
       <div
         style={{
@@ -693,6 +693,7 @@ export default function ProfilePage() {
     {
       key: 'model',
       label: activeModelItem.title,
+      description: `${t('bot.model_label', 'Yapay Zeka Modeli')}: ${activeModelItem.title}`,
       Icon: activeModelItem.Icon,
       tone: 'model',
       size: 24,
@@ -703,6 +704,7 @@ export default function ProfilePage() {
     {
       key: 'default',
       label: t('bot.capability_default', 'Varsayılan'),
+      description: `${t('bot.capability_default', 'Varsayılan')}: ${t('bot.capability_default_desc', 'Temel bot özellikleri ve standart kapasite')}`,
       Icon: ShieldCheck,
       tone: 'default',
       size: 25,
@@ -711,6 +713,7 @@ export default function ProfilePage() {
       ? {
           key: 'extended_memory',
           label: t('bot.capability_extended_memory', 'Genişletilmiş Hafıza'),
+          description: `${t('bot.capability_extended_memory', 'Genişletilmiş Hafıza')}: ${t('bot.capability_extended_memory_desc', '60 günlük genişletilmiş hafıza ve derin bağlam')}`,
           Icon: Brain,
           tone: 'extended-memory',
           size: 25,
@@ -718,6 +721,7 @@ export default function ProfilePage() {
       : {
           key: 'memory',
           label: t('bot.capability_memory', 'Hafıza'),
+          description: `${t('bot.capability_memory', 'Hafıza')}: ${t('bot.capability_memory_desc', '30 günlük standart bot hafızası')}`,
           Icon: Brain,
           tone: 'memory',
           size: 25,
@@ -728,6 +732,10 @@ export default function ProfilePage() {
           {
             key: 'fossil',
             label: t(
+              'common.fossil_bot_desc',
+              'Fosil Bot: Aktif döngüden çekilmiş, soy ağacında köprü görevi görür.'
+            ),
+            description: t(
               'common.fossil_bot_desc',
               'Fosil Bot: Aktif döngüden çekilmiş, soy ağacında köprü görevi görür.'
             ),
@@ -745,6 +753,7 @@ export default function ProfilePage() {
     {
       key: 'default',
       label: t('user.capability_default', 'Varsayılan'),
+      description: `${t('user.capability_default', 'Varsayılan')}: ${t('user.capability_default_desc', 'Standart kullanıcı özellikleri ve temel limitler')}`,
       Icon: ShieldCheck,
       tone: 'default',
       size: 25,
@@ -753,7 +762,8 @@ export default function ProfilePage() {
       ? [
           {
             key: 'premium',
-            label: t('user.capability_premium', 'Premium'),
+            label: t('user.capability_premium', 'Pro'),
+            description: `${t('user.capability_premium', 'Pro')}: ${t('user.capability_premium_desc', 'Yükseltilmiş limitler ve ayrıcalıklı Pro özellikleri')}`,
             Icon: KingIcon,
             tone: 'premium',
             size: 25,
@@ -982,11 +992,12 @@ export default function ProfilePage() {
             {profile.discriminator === 'Bot' ? (
               <div style={{ marginTop: 0, marginBottom: 0, maxWidth: 600 }}>
                 <div className="bot-capability-emblems" style={{ marginBottom: 0 }}>
-                  {capabilityEmblems.map(({ key, label, Icon, tone, size = 25 }) => (
+                  {capabilityEmblems.map(({ key, label, description, Icon, tone, size = 25 }) => (
                     <span
                       key={key}
                       className={`bot-capability-emblem bot-capability-emblem--${tone}`}
                       aria-label={label}
+                      title={description || label}
                       role="img"
                     >
                       <Icon size={size} strokeWidth={2.2} aria-hidden="true" />
@@ -997,11 +1008,12 @@ export default function ProfilePage() {
             ) : (
               <div style={{ marginTop: 0, marginBottom: 0, maxWidth: 600 }}>
                 <div className="bot-capability-emblems" style={{ marginBottom: 0 }}>
-                  {userCapabilityEmblems.map(({ key, label, Icon, tone, size = 25 }) => (
+                  {userCapabilityEmblems.map(({ key, label, description, Icon, tone, size = 25 }) => (
                     <span
                       key={key}
                       className={`bot-capability-emblem bot-capability-emblem--${tone}`}
                       aria-label={label}
+                      title={description || label}
                       role="img"
                     >
                       <Icon size={size} strokeWidth={2.2} aria-hidden="true" />
@@ -1260,7 +1272,7 @@ export default function ProfilePage() {
                 }}
               >
                 <Sliders size={14} style={{ color: 'var(--color-primary)' }} />
-                <span>Grade</span>
+                <span>{t('profile.grade', 'Derece')}</span>
                 {(() => {
                   const rawG =
                     profile.discriminator === 'Bot'
@@ -1311,7 +1323,7 @@ export default function ProfilePage() {
                   )
                 })()}
               </span>
-              <span className="profile-stat-label">{t('profile.modifiers', 'Modifiers')}</span>
+              <span className="profile-stat-label">{t('profile.modifiers', 'Modifikatörler')}</span>
             </div>
           </div>
 

@@ -22,6 +22,9 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { tribeApi } from '../api/tribeApi'
 import BackButton from '../components/common/BackButton'
 import TribeMinimalCard from '../components/tribe/TribeMinimalCard'
+import { TopicTagList } from '../components/topic/TopicTag'
+import { TopicTypes } from '../constants/TopicTypes'
+import ImageWithLoader from '../components/common/ImageWithLoader'
 import ActorMinimalCard from '../components/actor/ActorMinimalCard'
 import FossilTogglePill from '../components/common/FossilTogglePill'
 import PostCard from '../components/content/PostCard'
@@ -161,6 +164,7 @@ export default function TribePage() {
     {
       key: 'default',
       label: t('tribe.capability_default', 'Varsayılan'),
+      description: `${t('tribe.capability_default', 'Varsayılan')}: ${t('tribe.capability_default_desc', 'Standart klan kapasitesi ve temel özellikler')}`,
       Icon: ShieldCheck,
       tone: 'default',
       size: 25,
@@ -170,6 +174,10 @@ export default function TribePage() {
           {
             key: 'fossil',
             label: t(
+              'common.fossil_tribe_desc',
+              'Fosil Klan: Aktif döngüden çekilmiş inaktif klan.'
+            ),
+            description: t(
               'common.fossil_tribe_desc',
               'Fosil Klan: Aktif döngüden çekilmiş inaktif klan.'
             ),
@@ -233,15 +241,33 @@ export default function TribePage() {
                   </span>
                 </p>
               )}
+
+              {tribe.topicTypes && tribe.topicTypes.length > 0 && (
+                <div style={{ marginTop: 12 }}>
+                  <TopicTagList
+                    topicTypes={tribe.topicTypes
+                      .map((tt) => {
+                        const match = TopicTypes.find(
+                          (opt) =>
+                            opt.value === tt?.topicTypeName ||
+                            opt.enumName === tt?.topicTypeName
+                        )
+                        return match ? match.value : null
+                      })
+                      .filter((v) => v != null)}
+                  />
+                </div>
+              )}
             </div>
 
             <div style={{ marginTop: 12, marginBottom: 0, maxWidth: 600 }}>
               <div className="bot-capability-emblems" style={{ marginBottom: 0 }}>
-                {capabilityEmblems.map(({ key, label, Icon, tone, size = 25 }) => (
+                {capabilityEmblems.map(({ key, label, description, Icon, tone, size = 25 }) => (
                   <span
                     key={key}
                     className={`bot-capability-emblem bot-capability-emblem--${tone}`}
                     aria-label={label}
+                    title={description || label}
                     role="img"
                   >
                     <Icon size={size} strokeWidth={2.2} aria-hidden="true" />
@@ -299,10 +325,18 @@ export default function TribePage() {
               }}
             >
               {tribe.imageUrl && !tribeImgFailed ? (
-                <img
+                <ImageWithLoader
                   src={tribe.imageUrl}
                   alt={tribe.tribeName}
                   onError={() => setTribeImgFailed(true)}
+                  spinnerSize="md"
+                  spinnerOpacity={0.45}
+                  wrapperStyle={{
+                    width: 144,
+                    height: 144,
+                    borderRadius: 24,
+                    overflow: 'hidden',
+                  }}
                   style={{
                     width: 144,
                     height: 144,
@@ -330,7 +364,10 @@ export default function TribePage() {
               )}
 
               {isDormant && (
-                <div className="fossil-stamp" style={{ borderRadius: 24 }}>
+                <div
+                  className="fossil-stamp"
+                  style={{ borderRadius: 24 }}
+                >
                   <TRexSkullIcon className="fossil-stamp-icon" />
                 </div>
               )}
@@ -486,7 +523,7 @@ export default function TribePage() {
                 }}
               >
                 <Sliders size={14} style={{ color: 'var(--color-primary)' }} />
-                <span>Grade</span>
+                <span>{t('profile.grade', 'Derece')}</span>
                 <span
                   style={{
                     width: 19,
@@ -508,7 +545,7 @@ export default function TribePage() {
                   {tribeGradeLabel}
                 </span>
               </span>
-              <span className="profile-stat-label">{t('profile.modifiers', 'Modifiers')}</span>
+              <span className="profile-stat-label">{t('profile.modifiers', 'Modifikatörler')}</span>
             </div>
           </div>
 
@@ -518,12 +555,7 @@ export default function TribePage() {
             className="profile-limits-toggle"
             onClick={toggleLimits}
             aria-expanded={isLimitsExpanded}
-            aria-label={t(
-              'profile.limits_header_desc',
-              isLimitsExpanded
-                ? 'Limitler ve miras detaylarını gizle'
-                : 'Limitler ve miras detaylarını göster'
-            )}
+            aria-label={isLimitsExpanded ? 'Limitleri Gizle' : 'Limitleri Göster'}
           >
             <span
               aria-hidden="true"
@@ -540,9 +572,7 @@ export default function TribePage() {
             className="profile-limits-row"
             style={{ marginTop: 10, marginBottom: 0, paddingLeft: 4, paddingRight: 4 }}
           >
-            <div
-              className="profile-limit-chip"
-            >
+            <div className="profile-limit-chip">
               <Users size={25} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
               <span>{t('tribe.member_capacity', 'Üye Kapasitesi')}:</span>
               <span className="profile-limit-chip__val">
@@ -565,9 +595,7 @@ export default function TribePage() {
             className="profile-limits-row"
             style={{ marginTop: 0, marginBottom: 0, paddingLeft: 4, paddingRight: 4 }}
           >
-            <div
-              className="profile-limit-chip"
-            >
+            <div className="profile-limit-chip">
               <BotFlashCardsIcon
                 size={25}
                 style={{ color: 'var(--color-primary)', flexShrink: 0 }}
@@ -578,9 +606,7 @@ export default function TribePage() {
               </span>
             </div>
             <span className="profile-limit-divider">•</span>
-            <div
-              className="profile-limit-chip"
-            >
+            <div className="profile-limit-chip">
               <CardContingencyIcon
                 size={25}
                 style={{ color: 'var(--color-primary)', flexShrink: 0 }}
@@ -594,9 +620,7 @@ export default function TribePage() {
               tribe.cardInheritanceModifier !== null && (
                 <>
                   <span className="profile-limit-divider">•</span>
-                  <div
-                    className="profile-limit-chip"
-                  >
+                  <div className="profile-limit-chip">
                     <CardContingencyModifierIcon
                       size={42}
                       style={{ color: 'var(--color-primary)', flexShrink: 0 }}

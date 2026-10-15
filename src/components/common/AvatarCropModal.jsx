@@ -59,6 +59,7 @@ export default function AvatarCropModal({
   imageSrc,
   open,
   cropShape = 'round',
+  aspectRatio,
   onConfirm,
   onCancel,
 }) {
@@ -145,7 +146,7 @@ export default function AvatarCropModal({
             image={imageSrc}
             crop={crop}
             zoom={zoom}
-            aspect={1}
+            aspect={aspectRatio || (cropShape === 'rect' ? 3 / 4 : 1)}
             cropShape={cropShape}
             showGrid={false}
             onCropChange={setCrop}

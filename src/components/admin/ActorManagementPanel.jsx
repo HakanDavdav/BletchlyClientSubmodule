@@ -20,7 +20,7 @@ export default function ActorManagementPanel() {
     mutationFn: ({ actorId, points }) => adminApi.setActorPoint(actorId, points),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      toast.success(t('admin.actor_point_updated', 'Aktör puanı güncellendi'))
+      toast.success(t('admin.actor_point_updated', 'Kişi puanı güncellendi'))
     },
   })
 
@@ -31,8 +31,8 @@ export default function ActorManagementPanel() {
     onSuccess: (_, { isPremium }) => {
       toast.success(
         isPremium
-          ? t('admin.actor_premium_granted', 'Aktör Premium yapıldı')
-          : t('admin.actor_premium_revoked', 'Aktörün Premium statüsü kaldırıldı')
+          ? t('admin.actor_premium_granted', 'Kişi Pro yapıldı')
+          : t('admin.actor_premium_revoked', "Kişinin Pro statüsü kaldırıldı")
       )
       queryClient.invalidateQueries({ queryKey: ['actorProfile'] })
     },
@@ -40,14 +40,14 @@ export default function ActorManagementPanel() {
 
   const handleSetPoints = () => {
     if (!pointActorId.trim() || !points.toString().trim()) {
-      return toast.error(t('admin.actor_id_placeholder', 'Actor ID girin (GUID)'))
+      return toast.error(t('admin.actor_id_placeholder', 'Kişi ID girin (GUID)'))
     }
     setPointsMutation.mutate({ actorId: pointActorId.trim(), points: parseInt(points, 10) })
   }
 
   const handleSetPremium = (isPremium) => {
     if (!premiumActorId.trim()) {
-      return toast.error(t('admin.actor_id_placeholder', 'Actor ID girin (GUID)'))
+      return toast.error(t('admin.actor_id_placeholder', 'Kişi ID girin (GUID)'))
     }
     setPremiumMutation.mutate({ actorId: premiumActorId.trim(), isPremium })
   }
@@ -100,15 +100,15 @@ export default function ActorManagementPanel() {
         style={{ borderColor: 'var(--color-border)', marginBottom: '12px', paddingBottom: '8px' }}
       >
         <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: 'var(--color-text)' }}>
-          {t('admin.actor_management_title', 'Aktör Yönetimi')}
+          {t('admin.actor_management_title', 'Kişi Yönetimi')}
         </h2>
         <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: '2px 0 0' }}>
-          {t('admin.actor_management_desc', 'Aktör puanlarını ve seviyelerini yönetin')}
+          {t('admin.actor_management_desc', 'Kişi puanlarını ve seviyelerini yönetin')}
         </p>
       </div>
 
       <div className="flex flex-col gap-6 w-full">
-        {/* ─── BLOK 1: AKTÖR PUANI ─── */}
+        {/* ─── BLOK 1: KİŞİ PUANI ─── */}
         <div
           style={{
             padding: 16,
@@ -120,7 +120,7 @@ export default function ActorManagementPanel() {
           <div
             style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: 'var(--color-text)' }}
           >
-            {t('admin.actor_point_title', 'Aktör Puanı')}
+            {t('admin.actor_point_title', 'Kişi Puanı')}
           </div>
 
           <div className="form-group" style={{ marginBottom: '8px' }}>
@@ -134,7 +134,7 @@ export default function ActorManagementPanel() {
                 color: 'var(--color-text-secondary)',
               }}
             >
-              {t('admin.actor_id', 'Actor ID')}
+              {t('admin.actor_id', 'Kişi ID')}
             </label>
             <input
               className="input w-full"
@@ -200,7 +200,7 @@ export default function ActorManagementPanel() {
           </div>
         </div>
 
-        {/* ─── BLOK 2: AKTÖR PREMIUM ─── */}
+        {/* ─── BLOK 2: KİŞİ PREMIUM ─── */}
         <div
           style={{
             padding: 16,
@@ -212,7 +212,7 @@ export default function ActorManagementPanel() {
           <div
             style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: 'var(--color-text)' }}
           >
-            {t('admin.actor_premium_title', 'Aktör Premium Durumu')}
+            {t('admin.actor_premium_title', 'Kişi Pro Durumu')}
           </div>
 
           <div className="form-group" style={{ marginBottom: '10px' }}>
@@ -226,7 +226,7 @@ export default function ActorManagementPanel() {
                 color: 'var(--color-text-secondary)',
               }}
             >
-              {t('admin.actor_id', 'Actor ID')}
+              {t('admin.actor_id', 'Kişi ID')}
             </label>
             <input
               className="input w-full"
@@ -257,7 +257,7 @@ export default function ActorManagementPanel() {
                 borderRadius: 'var(--radius-md)',
               }}
             >
-              {isPremiumLoading ? t('admin.updating', 'Güncelleniyor...') : t('admin.make_premium', 'Premium Yap')}
+              {isPremiumLoading ? t('admin.updating', 'Güncelleniyor...') : t('admin.make_premium', 'Pro Yap')}
             </button>
 
             <button
@@ -271,7 +271,7 @@ export default function ActorManagementPanel() {
                 borderRadius: 'var(--radius-md)',
               }}
             >
-              {t('admin.revoke_premium', 'Premium Kaldır')}
+              {t('admin.revoke_premium', 'Pro Kaldır')}
             </button>
           </div>
         </div>
@@ -302,7 +302,7 @@ export default function ActorManagementPanel() {
             >
               {t(
                 'admin.season_reset_desc',
-                'Tüm aktör ve kabilelerin sezonluk puanlarını sıfırlar, liderlik tablosunu yeni sezon numarasıyla arşivler ve inaktif botları fosilleştirir.'
+                'Tüm kişi ve klanların sezonluk puanlarını sıfırlar, liderlik tablosunu yeni sezon numarasıyla arşivler ve inaktif botları fosilleştirir.'
               )}
             </p>
           </div>

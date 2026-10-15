@@ -27,11 +27,16 @@ import TRexSkullIcon from '../../assets/t-rex-skull-svgrepo-com.svg?react'
 
 function isNodeFossil(child) {
   if (!child) return false
+  // Tombstone (feshedilmiş/silinmiş) düğümler özünde fosilleşmiş düğümlerle
+  // aynı anlama gelir; bu yüzden onlar da fosil gibi ele alınır.
   return Boolean(
     child.isDormant ||
     child.IsDormant ||
+    child.isDeleted ||
+    child.IsDeleted ||
     child.data?.isDormant ||
     child.data?.IsDormant ||
+    child.data?.isDeleted ||
     child.bot?.isDormant ||
     child.bot?.IsDormant ||
     child.tribe?.isDormant ||
@@ -271,7 +276,8 @@ function CardTreeNode({
   const hasChildren = totalActive > 0 || totalPureFossils > 0
 
   const effectiveFossilExpanded = localFossilExpanded !== null ? localFossilExpanded : showFossils
-  const isDeleted = Boolean(node.isDeleted)
+  // Fosil (dormant) ve tombstone (feshedilmiş) düğümler aynı şekilde ele alınır
+  const isFossilLike = isNodeFossil(node)
 
   return (
     <div className={`vtree-node${node.nodeType === 'tribe' ? ' vtree-node--tribe' : ''}`}>
@@ -321,12 +327,7 @@ function CardTreeNode({
         className="vtree-card-wrapper"
         data-node-id={node.id}
         data-parent-id={parentId || undefined}
-        style={{
-          position: 'relative',
-          opacity: isDeleted ? 0.68 : 1,
-          transition: 'all 0.2s ease',
-          filter: isDeleted ? 'grayscale(35%)' : 'none',
-        }}
+        style={{ position: 'relative' }}
       >
         {/* Node Badge: Card Owner Crown */}
         {node.nodeType === 'owner' ? (
@@ -351,33 +352,6 @@ function CardTreeNode({
           </div>
         ) : null}
 
-        {/* Deleted / Tombstone Pass-through Bridge Badge */}
-        {isDeleted && (
-          <div
-            style={{
-              position: 'absolute',
-              top: -8,
-              left: 12,
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: '0.4px',
-              textTransform: 'uppercase',
-              padding: '1px 6px',
-              borderRadius: 6,
-              background: 'var(--color-danger, #ef4444)',
-              color: '#fff',
-              zIndex: 4,
-              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 3,
-            }}
-          >
-            <CircleAlert size={10} />
-            <span>{t('card.tombstone', 'Köprü (Feshedildi)')}</span>
-          </div>
-        )}
-
         {/* Render Node Content */}
         {node.nodeType === 'card' ? (
           <div style={{ width: 270, maxWidth: 290, textAlign: 'left' }}>
@@ -400,7 +374,7 @@ function CardTreeNode({
                 minWidth: 180,
                 width: '100%',
                 background: 'var(--color-surface)',
-                borderColor: isDeleted ? 'var(--color-border)' : 'var(--color-border)',
+                      borderColor: 'var(--color-border)',
                 boxShadow: 'var(--shadow-sm)',
                 borderBottomLeftRadius: 0,
                 borderBottomRightRadius: 0,
@@ -476,7 +450,11 @@ function CardTreeNode({
           </div>
         ) : (
           <ActorMinimalCard
-            actor={node.actor || node.bot || node.data}
+            actor={
+              isFossilLike
+                ? { ...(node.actor || node.bot || node.data), isDormant: true }
+                : node.actor || node.bot || node.data
+            }
             showHierarchyBtn={true}
             clickable={true}
             variant="expanded"
@@ -497,7 +475,7 @@ function CardTreeNode({
                     }
                   : {
                       background: 'var(--color-surface)',
-                      borderColor: isDeleted ? 'var(--color-border)' : 'var(--color-border)',
+                borderColor: 'var(--color-border)',
                       boxShadow: 'var(--shadow-sm)',
                       minWidth: 190,
                     }

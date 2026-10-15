@@ -4,6 +4,7 @@ import { BotGradeColors, UserGradeColors } from '../../constants/enums'
 import useDevLog from '../../utils/useDevLog'
 import useMyEntitiesStore from '../../store/myEntitiesStore'
 import { useTranslation } from 'react-i18next'
+import ImageWithLoader from '../common/ImageWithLoader'
 
 /**
  * ActorAvatar — profil resmi veya isim harfi fallback.
@@ -30,6 +31,7 @@ export default function ActorAvatar({
   grade,
   size = 'md',
   onClick,
+  hideBadge = false,
 }) {
   useDevLog('ActorAvatar', arguments[0] || {})
   const { t } = useTranslation()
@@ -97,11 +99,22 @@ export default function ActorAvatar({
       onClick={handleClick}
     >
       {showImage ? (
-        <img
+        <ImageWithLoader
           src={imageUrl}
-          alt={profileName || t('actor.avatar_alt', 'Aktör')}
+          alt={profileName || t('actor.avatar_alt', 'Kişi')}
           className={`avatar ${sizeClass}`}
           onError={() => setFailedUrl(imageUrl)}
+          spinnerSize="sm"
+          spinnerOpacity={0.35}
+          wrapperClassName={`avatar ${sizeClass}`}
+          wrapperStyle={{
+            padding: 0,
+            overflow: 'hidden',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: isBot ? 'var(--color-bot-light)' : 'var(--color-primary-light)',
+          }}
         />
       ) : (
         <div
@@ -133,7 +146,7 @@ export default function ActorAvatar({
         </span>
       )}
 
-      {isBot && (
+      {!hideBadge && isBot && (
         <div
           className="actor-avatar-badge-group"
           style={{ bottom: badgeOpts.bottom, right: badgeOpts.right }}
@@ -159,7 +172,7 @@ export default function ActorAvatar({
           )}
         </div>
       )}
-      {discriminator === 'User' && (
+      {!hideBadge && discriminator === 'User' && (
         <div
           className="actor-avatar-badge-group"
           style={{ bottom: badgeOpts.bottom, right: badgeOpts.right }}

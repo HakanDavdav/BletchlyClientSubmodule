@@ -1,13 +1,15 @@
 import MainLayout from './components/layout/MainLayout'
 import useUIStore from './store/uiStore'
 import useThemeStore from './store/themeStore'
+import useAuthStore from './store/authStore'
 import {
   applyCustomColorVars,
   clearCustomColorVars,
   resolveBaseColor,
 } from './utils/themeColor'
-import { useEffect, lazy, Suspense } from 'react'
+import { useEffect, useRef, useState, lazy, Suspense } from 'react'
 import { Toaster, ToastBar, toast } from 'react-hot-toast'
+import useIsMobile from './hooks/useIsMobile'
 import InitProfileGuard from './components/auth/InitProfileGuard'
 import { useTranslation } from 'react-i18next'
 import ScrollToTop from './components/common/ScrollToTop'
@@ -55,15 +57,90 @@ const AdminApp = import.meta.env.VITE_IS_ADMIN_BUILD === 'true'
 
 const MindPage = lazy(() => import('./pages/MindPage'))
 
+// Mobilde toast'ı sağa/sola sürükleyip bırakınca kapatmayı sağlar.
+function SwipeableToast({ toast: t, enabled, children }) {
+  const [dragX, setDragX] = useState(0)
+  const [dragging, setDragging] = useState(false)
+  const startXRef = useRef(null)
+
+  const handlePointerDown = (event) => {
+    if (!enabled) return
+    startXRef.current = event.clientX
+    setDragging(true)
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId)
+    } catch {
+      /* yoksay */
+    }
+  }
+
+  const handlePointerMove = (event) => {
+    if (!enabled || startXRef.current == null) return
+    setDragX(event.clientX - startXRef.current)
+  }
+
+  const handlePointerUp = () => {
+    if (!enabled || startXRef.current == null) return
+    const moved = dragX
+    startXRef.current = null
+    setDragging(false)
+    if (Math.abs(moved) > 80) {
+      toast.dismiss(t.id)
+    } else {
+      setDragX(0)
+    }
+  }
+
+  return (
+    <div
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        transform: dragX ? `translateX(${dragX}px)` : undefined,
+        opacity: dragX ? Math.max(0.25, 1 - Math.abs(dragX) / 220) : 1,
+        transition: dragging ? 'none' : 'transform 0.22s ease, opacity 0.22s ease',
+        touchAction: enabled ? 'pan-y' : undefined,
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
 export default function App() {
   const { t: translate } = useTranslation()
+  const isMobile = useIsMobile()
   const { isDarkMode, isGreenMode, customColor } = useThemeStore()
   const { incomingInvitation, isInvitationModalOpen, openInvitationModal, closeInvitation } =
     useInvitationHub()
   const location = useLocation()
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
+  const prevLoggedInRef = useRef(isLoggedIn)
 
   useEffect(() => {
     initGA()
+  }, [])
+
+  // Logout → varsayılan mavi; login → tarayıcıdaki tercih edilen renk.
+  useEffect(() => {
+    if (prevLoggedInRef.current === isLoggedIn) return
+    prevLoggedInRef.current = isLoggedIn
+    if (isLoggedIn) {
+      useThemeStore.getState().restorePreferredColor()
+    } else {
+      useThemeStore.getState().resetToDefaultBlue()
+    }
+  }, [isLoggedIn])
+
+  // Sayfa açılışında oturum varsa tercih edilen renk uygulanır (güvenlik).
+  useEffect(() => {
+    if (useAuthStore.getState().isLoggedIn) {
+      useThemeStore.getState().restorePreferredColor()
+    }
   }, [])
 
   useEffect(() => {
@@ -104,8 +181,15 @@ export default function App() {
   return (
     <>
       <ScrollToTop />
-      <Toaster position="top-right" toastOptions={{ duration: 10000 }}>
-        {(t) => (
+      <Toaster
+        position={isMobile ? 'top-center' : 'top-right'}
+        toastOptions={{ duration: 10000 }}
+        containerStyle={
+          isMobile ? { top: 'calc(env(safe-area-inset-top, 0px) + 12px)' } : undefined
+        }
+      >
+        {(t) => {
+          const bar = (
           <ToastBar
             toast={t}
             style={{
@@ -115,7 +199,7 @@ export default function App() {
               gap: '10px',
               padding: '10px 14px',
               borderRadius: '10px',
-              maxWidth: '420px',
+              maxWidth: isMobile ? 'calc(100vw - 32px)' : '420px',
             }}
           >
             {({ icon }) => (
@@ -183,20 +267,31 @@ export default function App() {
               </>
             )}
           </ToastBar>
-        )}
+          )
+          return isMobile ? (
+            <SwipeableToast toast={t} enabled>
+              {bar}
+            </SwipeableToast>
+          ) : (
+            bar
+          )
+        }}
       </Toaster>
       <MainLayout pendingInvitation={incomingInvitation} onOpenInvitation={openInvitationModal}>
         <InitProfileGuard>
           <Routes>
             {import.meta.env.VITE_IS_ADMIN_BUILD === 'true' && (
-              <Route
-                path="/admin/*"
-                element={
-                  <Suspense fallback={null}>
-                    <AdminApp />
-                  </Suspense>
-                }
-              />
+              <>
+                <Route path="/" element={<Navigate to="/admin/panel" replace />} />
+                <Route
+                  path="/admin/*"
+                  element={
+                    <Suspense fallback={null}>
+                      <AdminApp />
+                    </Suspense>
+                  }
+                />
+              </>
             )}
             <Route path="/" element={<FeedPage />} />
             <Route path="/post" element={<PostDetailPage />} />

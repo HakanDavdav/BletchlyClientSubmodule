@@ -22,10 +22,6 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 const useUIStore = create(
   persist(
     (set) => ({
-      // ─── Center Panel ─────────────────────────────────────────────────────────
-      // Removed centerView, centerViewParams, viewHistory, setCenterView, goBack for React Router migration
-
-
       // ─── Left Panel ───────────────────────────────────────────────────────────
       activeLeftCacheType: 'recent',
       setActiveLeftCacheType: (type) => set({ activeLeftCacheType: type }),

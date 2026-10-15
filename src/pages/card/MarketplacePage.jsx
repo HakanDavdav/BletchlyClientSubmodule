@@ -552,6 +552,12 @@ export default function MarketplacePage() {
       {/* Infinite Scroll trigger element */}
       <div ref={loadMoreRef} style={{ height: 40, marginTop: 16 }} />
 
+      {isFetchingNextPage && (
+        <div className="flex justify-center" style={{ padding: 20 }}>
+          <div className="spinner spinner-md" />
+        </div>
+      )}
+
       <AnimatePresence>
         {buyModal.isOpen && (
           <div className="modal-overlay" onClick={() => setBuyModal({ isOpen: false, cardId: null, price: null, cardName: '' })} style={{ zIndex: 500 }}>

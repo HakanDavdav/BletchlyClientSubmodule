@@ -379,7 +379,7 @@ export default function CreateEditPostPage() {
                 {t('auth.processing')}
               </>
             ) : (
-              <>{isEditMode ? t('action.update') : t('action.share')}</>
+              <>{isEditMode ? t('action.save', 'Kaydet') : t('action.share')}</>
             )}
           </button>
         </div>

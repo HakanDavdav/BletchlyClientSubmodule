@@ -10,6 +10,8 @@ import MobileTabBar from './MobileTabBar'
 import MobileDrawerExtras from './MobileDrawerExtras'
 import useUIStore from '../../store/uiStore'
 import useDevLog from '../../utils/useDevLog'
+import { useQuery } from '@tanstack/react-query'
+import { searchApi } from '../../api/searchApi'
 
 /**
  * MainLayout — 3 kolonlu ana iskelet.
@@ -24,11 +26,27 @@ export default function MainLayout({ children, pendingInvitation = null, onOpenI
   const navigate = useNavigate()
   const { t } = useTranslation()
   const isHierarchyPage =
-    location.pathname.startsWith('/hierarchy') || location.pathname.startsWith('/card-hierarchy')
+    location.pathname.startsWith('/hierarchy') ||
+    location.pathname.startsWith('/card-hierarchy') ||
+    location.pathname.startsWith('/tribes')
   const drawerRef = useRef(null)
   const drawerOverlayRef = useRef(null)
   const drawerHandleRef = useRef(null)
   const closeAnimRef = useRef(false)
+
+  const { data: seasonStatus } = useQuery({
+    queryKey: ['seasonStatus'],
+    queryFn: async () => {
+      try {
+        const res = await searchApi.getSeasonStatus()
+        return res.data?.data || null
+      } catch (err) {
+        return null
+      }
+    },
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  })
 
   // Drawer'ı elle sürükleyerek kapatırkenki animasyonun aynısıyla kapatır:
   // önce sola kaydırıp söndürür, animasyon bitince store'dan kapatır.
@@ -186,10 +204,30 @@ export default function MainLayout({ children, pendingInvitation = null, onOpenI
                     }}
                   >
                     <span>letchly</span>
+                    {seasonStatus && typeof seasonStatus.daysRemaining === 'number' && (
+                      <span
+                        className="season-remaining-badge season-remaining-badge--drawer"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          animateClose()
+                          navigate('/leaderboard')
+                        }}
+                      >
+                        <span>
+                          {seasonStatus.daysRemaining > 0
+                            ? `${seasonStatus.daysRemaining}!`
+                            : `${seasonStatus.hoursRemaining ?? 0}!`}
+                        </span>
+                      </span>
+                    )}
                   </button>
                 </div>
-                <LeftPanel />
-                <MobileDrawerExtras />
+                {/* Bar sabit kalsın diye kaydırılan içerik bar'ın altında ayrı
+                    bir kapsayıcıda toplanır */}
+                <div className="layout-left-drawer__scroll">
+                  <LeftPanel />
+                  <MobileDrawerExtras />
+                </div>
               </div>
             </>
           )}

@@ -238,6 +238,125 @@
   border-color: var(--color-primary-light);
 }
 
+/* Background Image & Overlay on Personality Cards */
+.personality-card__bg-image-wrap {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.personality-card__bg-image {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: calc(100% + 12px);
+  height: calc(100% + 12px);
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: cover;
+  display: block;
+  filter: blur(1.6px) saturate(1.15);
+  opacity: 0.74;
+  transform: scale(1.02);
+  transition:
+    filter var(--transition-normal, 0.3s ease),
+    transform var(--transition-normal, 0.3s ease),
+    opacity var(--transition-normal, 0.3s ease);
+}
+
+.personality-card:hover .personality-card__bg-image {
+  filter: blur(0.6px) saturate(1.22);
+  opacity: 0.88;
+  transform: scale(1.05);
+}
+
+.personality-card__bg-image-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(
+    --pc-filled-bg,
+    linear-gradient(145deg, var(--color-surface), var(--color-primary-lighter))
+  );
+  opacity: 0.45;
+  transition: opacity var(--transition-normal, 0.3s ease);
+}
+
+.personality-card:hover .personality-card__bg-image-overlay {
+  opacity: 0.36;
+}
+
+/* Rainbow spectrum cards in Premium Modal: always rendered by default in lowered-blur "hovered" state */
+.rainbow-card-wrapper .personality-card__bg-image,
+.rainbow-personality-card .personality-card__bg-image {
+  top: -2px;
+  left: -2px;
+  width: calc(100% + 4px);
+  height: calc(100% + 4px);
+  max-width: none !important;
+  max-height: none !important;
+  filter: blur(0.6px) saturate(1.22);
+  opacity: 0.88;
+  transform: scale(1.02);
+}
+
+.rainbow-card-wrapper .personality-card__bg-image-overlay,
+.rainbow-personality-card .personality-card__bg-image-overlay {
+  opacity: 0.36;
+}
+
+:root.dark .rainbow-card-wrapper .personality-card__bg-image-overlay,
+:root.dark .rainbow-personality-card .personality-card__bg-image-overlay {
+  opacity: 0.32;
+}
+
+.rainbow-card-wrapper:hover .personality-card__bg-image,
+.rainbow-personality-card:hover .personality-card__bg-image {
+  top: -2px;
+  left: -2px;
+  width: calc(100% + 4px);
+  height: calc(100% + 4px);
+  max-width: none !important;
+  max-height: none !important;
+  filter: blur(0.3px) saturate(1.26);
+  opacity: 0.94;
+  transform: scale(1.05);
+}
+
+.rainbow-card-wrapper:hover .personality-card__bg-image-overlay,
+.rainbow-personality-card:hover .personality-card__bg-image-overlay {
+  opacity: 0.28;
+}
+
+:root.dark .rainbow-card-wrapper:hover .personality-card__bg-image-overlay,
+:root.dark .rainbow-personality-card:hover .personality-card__bg-image-overlay {
+  opacity: 0.24;
+}
+
+.personality-card__bg-image-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.32) 100%);
+}
+
+:root.dark .personality-card__bg-image-overlay {
+  opacity: 0.4;
+}
+
+:root.dark .personality-card__bg-image-shade {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.1) 0%, rgba(15, 23, 42, 0.48) 100%);
+}
+
+.personality-card > :not(.personality-card__bg-image-wrap):not(.personality-card__bg-bot) {
+  position: relative;
+  z-index: 1;
+}
+
 .personality-card--empty {
   border-style: dashed;
   background: linear-gradient(145deg, var(--color-surface), var(--color-surface-2));
@@ -349,20 +468,89 @@
   border-color: var(--pc-tribe-badge-border) !important;
 }
 
+/* Rainbow Personality Card Preview - Always honors per-card custom variables, scaled down 50% */
+.rainbow-personality-card,
+.rainbow-personality-card.personality-card--filled {
+  min-height: 120px !important;
+  max-height: 120px !important;
+  height: 120px !important;
+  padding: 8px 8px 6px !important;
+  border-radius: 8px 8px 6px 6px !important;
+  gap: 2px !important;
+  overflow: hidden !important;
+  box-shadow: -3px 3px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+.rainbow-personality-card:hover,
+.rainbow-personality-card.personality-card--filled:hover,
+.rainbow-personality-card:focus,
+.rainbow-personality-card.personality-card--filled:focus {
+  box-shadow: -3px 3px 8px rgba(0, 0, 0, 0.35) !important;
+  outline: none !important;
+}
+
+.rainbow-personality-card::before {
+  inset: 4px !important;
+  border-radius: 5px 5px 4px 4px !important;
+}
+
+.rainbow-personality-card::after {
+  height: 2px !important;
+  border-radius: 7px 7px 0 0 !important;
+}
+
+.rainbow-personality-card .personality-card__topline {
+  min-height: 8px !important;
+  gap: 4px !important;
+}
+
+.rainbow-personality-card .personality-card__mark--placeholder {
+  width: 8px !important;
+  height: 8px !important;
+}
+
+.rainbow-personality-card .personality-card__bg-bot svg {
+  width: 50px !important;
+  height: 50px !important;
+}
+
+.rainbow-personality-card .personality-card__footer {
+  display: none !important;
+}
+
+.rainbow-personality-card .personality-card__hierarchy-btn {
+  display: none !important;
+}
+
+.rainbow-personality-card.personality-card--filled {
+  background: var(--pc-filled-bg) !important;
+  border-color: var(--pc-filled-border) !important;
+  border-width: 1.5px !important;
+  box-shadow: -3px 3px 8px rgba(0, 0, 0, 0.3) !important;
+}
+.rainbow-personality-card.personality-card--filled .personality-card__eyebrow {
+  color: var(--pc-filled-eyebrow) !important;
+}
+.rainbow-personality-card.personality-card--filled .personality-card__tag {
+  border-color: var(--pc-filled-badge-border) !important;
+  background: var(--pc-filled-badge-bg) !important;
+  color: var(--color-text) !important;
+}
+
 /* Green Theme Overrides */
 :root.theme-green .personality-card--filled {
-  background: linear-gradient(135deg, #6ee7b7 0%, #dcfce7 100%) !important;
-  border-color: #059669 !important;
+  background: var(--pc-filled-bg) !important;
+  border-color: var(--pc-filled-border) !important;
   border-width: 2px !important;
-  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.16) !important;
+  box-shadow: var(--pc-filled-shadow) !important;
 }
 :root.theme-green .personality-card--filled .personality-card__eyebrow {
-  color: #047857 !important;
+  color: var(--pc-filled-eyebrow) !important;
 }
 :root.theme-green .personality-card--filled .personality-card__type-badge {
-  background: rgba(5, 150, 105, 0.08) !important;
-  color: #047857 !important;
-  border-color: rgba(5, 150, 105, 0.15) !important;
+  background: var(--pc-filled-badge-bg) !important;
+  color: var(--pc-filled-badge-text) !important;
+  border-color: var(--pc-filled-badge-border) !important;
 }
 
 :root.theme-green .personality-card--tribe-assigned {
@@ -382,18 +570,18 @@
 
 /* Dark Green Theme Overrides */
 :root.dark.theme-green .personality-card--filled {
-  background: linear-gradient(135deg, #047857 0%, #02120e 100%) !important;
-  border-color: #10b981 !important;
+  background: var(--pc-filled-bg) !important;
+  border-color: var(--pc-filled-border) !important;
   border-width: 2px !important;
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.22) !important;
+  box-shadow: var(--pc-filled-shadow) !important;
 }
 :root.dark.theme-green .personality-card--filled .personality-card__eyebrow {
-  color: #a7f3d0 !important;
+  color: var(--pc-filled-eyebrow) !important;
 }
 :root.dark.theme-green .personality-card--filled .personality-card__type-badge {
-  background: rgba(16, 185, 129, 0.12) !important;
-  color: #a7f3d0 !important;
-  border-color: rgba(16, 185, 129, 0.2) !important;
+  background: var(--pc-filled-badge-bg) !important;
+  color: var(--pc-filled-badge-text) !important;
+  border-color: var(--pc-filled-badge-border) !important;
 }
 
 :root.dark.theme-green .personality-card--tribe-assigned {
@@ -496,8 +684,6 @@
 }
 
 .personality-card--editor .personality-card-editor__name {
-  width: calc(100% - 168px);
-  margin-inline: auto;
   font-weight: 400;
   text-align: center;
 }
@@ -591,6 +777,20 @@
   border-color: var(--color-error);
 }
 
+/* Kilit butonu hover'ı, soldaki bulut (görsel yükleme) butonuyla aynı olsun */
+.personality-card--editor .personality-card-editor__body .icon-action-button:hover {
+  --editor-box-border: var(--color-primary);
+  --editor-box-color: var(--color-primary);
+  --editor-box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+
+/* Kartların sağ üstündeki edit butonu da aynı tarz/hover */
+.personality-card__edit-action:hover {
+  --card-box-border: var(--color-primary);
+  --card-box-color: var(--color-primary);
+  --card-box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+
 .personality-card-editor__footer {
   display: flex;
   align-items: center;
@@ -669,6 +869,35 @@
   width: 18px;
   height: 18px;
   border-radius: 5px;
+}
+
+.selection-marker--box,
+.selection-marker--44 {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  border: 2px solid var(--color-border);
+  /* Normal kartlardaki seçim kutusu gibi dolu görünsün (token tanımsızsa surface'e düşer) */
+  background: var(--color-surface-raised, var(--color-surface));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
+}
+
+.selection-marker--box:hover:not(.is-disabled),
+.selection-marker--44:hover:not(.is-disabled) {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+.selection-marker--box.is-checked,
+.selection-marker--44.is-checked {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light, rgba(99, 102, 241, 0.12));
+  color: var(--color-primary-dark);
 }
 
 .selection-marker.is-checked {
@@ -973,6 +1202,14 @@
   --color-primary-gradient-end: #06b6d4; /* Cyan 500 */
   --color-primary-shadow: rgba(22, 163, 74, 0.3);
   --color-synapse-zap: var(--color-primary);
+
+  --pc-filled-bg: linear-gradient(135deg, #6ee7b7 0%, #dcfce7 100%);
+  --pc-filled-border: #059669;
+  --pc-filled-eyebrow: #047857;
+  --pc-filled-badge-bg: rgba(5, 150, 105, 0.08);
+  --pc-filled-badge-text: #047857;
+  --pc-filled-badge-border: rgba(5, 150, 105, 0.15);
+  --pc-filled-shadow: 0 4px 14px rgba(5, 150, 105, 0.16);
 }
 
 :root.dark.theme-green {
@@ -984,6 +1221,14 @@
   --color-primary-gradient-end: #0891b2; /* Cyan 600 */
   --color-primary-shadow: rgba(22, 163, 74, 0.3);
   --color-synapse-zap: var(--color-primary-dark);
+
+  --pc-filled-bg: linear-gradient(135deg, #047857 0%, #02120e 100%);
+  --pc-filled-border: #10b981;
+  --pc-filled-eyebrow: #a7f3d0;
+  --pc-filled-badge-bg: rgba(16, 185, 129, 0.12);
+  --pc-filled-badge-text: #a7f3d0;
+  --pc-filled-badge-border: rgba(16, 185, 129, 0.2);
+  --pc-filled-shadow: 0 4px 14px rgba(16, 185, 129, 0.22);
 }
 
 :root.dark {
@@ -1244,6 +1489,20 @@ select {
 }
 
 /* â”€â”€â”€ Responsive Breakpoints â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Biraz daralınca önce soldaki mod seçici (General) gizlenir.
+   Görünmez kalır ama yerini korur; arama kutusu onun boşluğunu doldurmaz. */
+@media (max-width: 1355px) {
+  /* İkisi tam aynı anda ve anında gizlensin (buton transition'ı geciktirmesin);
+     görünmez kalır ama yerlerini korurlar, böylece arama kutusu/butonu kaymaz */
+  .topbar-search-mode,
+  .topbar-search-mode *,
+  .hide-under-1355,
+  .hide-under-1355 * {
+    visibility: hidden !important;
+    transition: none !important;
+  }
+}
+
 @media (max-width: 1200px) {
   .layout-right {
     display: none;
@@ -1530,6 +1789,7 @@ select {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-full);
   box-shadow: var(--shadow-xs);
+  cursor: default;
 }
 
 .bot-capability-emblem--memory {
@@ -2657,6 +2917,13 @@ html.dark .bot-capability-emblem--fossil path {
   white-space: nowrap;
   user-select: none;
   pointer-events: none;
+}
+
+/* Mobil versiyonda debate davet sayacı aktifken avatarın sağ altındaki rozet grubunu gizle */
+@media (max-width: 900px) {
+  .topbar-invite-chip .actor-avatar-badge-group {
+    display: none !important;
+  }
 }
 
 /* Actor Chip Personality Card Stack Indicator */
@@ -4105,6 +4372,18 @@ textarea {
   z-index: 2;
 }
 
+.season-remaining-badge--drawer {
+  position: absolute;
+  bottom: -3px;
+  right: -17px;
+  z-index: 2;
+  padding: 1px 3.5px;
+  font-size: 8px;
+  line-height: 1.1;
+  transform: rotate(-25deg) scale(0.92);
+  transform-origin: center;
+}
+
 .season-remaining-badge--subtle {
   transform: rotate(-12deg);
 }
@@ -4132,18 +4411,12 @@ textarea {
   justify-content: space-between;
   align-items: center;
   padding: 6px 14px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border-light);
+  background: transparent;
+  border: none;
   border-radius: var(--radius-lg);
   margin-bottom: 16px;
   font-size: 12.5px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
   transition: all var(--transition-fast) ease;
-}
-
-.season-archive-bar-mini:hover,
-.season-live-bar-mini:hover {
-  border-color: var(--color-border);
 }
 
 .archive-mini-left,
@@ -4589,7 +4862,10 @@ textarea {
   }
 
   .entry-draft .btn {
-    min-height: 40px;
+    /* Gönder butonu mobilde biraz daha basık (dikeyde daraltıldı) */
+    min-height: 34px;
+    padding-top: 3px;
+    padding-bottom: 3px;
     padding-inline: 14px;
   }
 
@@ -4733,28 +5009,30 @@ textarea {
   }
 
   .page-header-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
+    width: 26px !important;
+    height: 26px !important;
+    min-width: 26px !important;
+    min-height: 26px !important;
+    border-radius: 7px !important;
   }
 
   /* Başlık ikonları mobilde küçülür (verdict banner'lar inline stil aldığı için etkilenmez) */
   .page-header-icon > svg {
-    width: 16px !important;
-    height: 16px !important;
+    width: 15px !important;
+    height: 15px !important;
     min-width: 0 !important;
     min-height: 0 !important;
   }
 
   /* Sarmalayıcı div kullanan başlık ikonları (ör. AngryBotWithSwords) oransal küçülür */
   .page-header-icon > div {
-    transform: scale(0.66);
+    transform: scale(0.62);
   }
 
   /* Kişilik Kartlarım sayfası: içteki kart ikonu blokla dengeli kalsın */
   .page-header-icon--card > svg {
-    width: 20px !important;
-    height: 20px !important;
+    width: 18px !important;
+    height: 18px !important;
   }
 
   .post-card-footer > div,
@@ -4886,6 +5164,7 @@ textarea {
     left: 0 !important;
     right: auto !important;
     max-width: calc(100vw - 24px);
+    z-index: 50 !important;
   }
 
   /* Mobilde yalnızca (gizli) geri butonu içeren satır, başlık çizgisi ile
@@ -4903,7 +5182,8 @@ textarea {
      (ikonun sol hizasından başlar); "?" butonu başlık satırında sağda kalır. */
   div:has(> .page-header-icon):not(.verdict-banner__content) {
     flex-wrap: wrap;
-    row-gap: 4px !important;
+    row-gap: 6px !important;
+    column-gap: 8px !important;
   }
 
   div:has(> .page-header-icon):not(.verdict-banner__content) > div:not(.page-header-icon) {
@@ -4914,16 +5194,17 @@ textarea {
     order: 1;
     margin-left: auto !important;
     margin-right: 10px !important;
-    width: 28px;
-    height: 28px;
-    min-width: 28px;
-    min-height: 28px;
+    width: 26px !important;
+    height: 26px !important;
+    min-width: 26px !important;
+    min-height: 26px !important;
+    border-radius: 7px !important;
   }
 
   /* Başlıktaki "?" (hakkında) ikonu butonla dengeli kalsın */
   div:has(> .page-header-icon):not(.verdict-banner__content) > .icon-action-button > svg {
-    width: 18px !important;
-    height: 18px !important;
+    width: 15px !important;
+    height: 15px !important;
   }
 
   /* p, display:contents'li sarmalayıcının çocuğu olduğu için torun seçici */
@@ -4933,9 +5214,10 @@ textarea {
     margin-top: 0 !important;
   }
 
-  /* Sayfa tanıtım başlıkları (Kart Marketi, Meydan Okumalar vb.): mobilde bir tık küçük */
+  /* Sayfa tanıtım başlıkları (Kart Marketi, Meydan Okumalar vb.): mobilde bir tık büyük ve bloklarla dikeyde tam eşit */
   div:has(> .page-header-icon):not(.verdict-banner__content) h1 {
-    font-size: 18px !important;
+    font-size: 20px !important;
+    line-height: 26px !important;
   }
 
   /* HowItWorksHelp modalı: mobilde "i" ikonları kaldırılır, sadece metin kalır */
@@ -4950,13 +5232,19 @@ textarea {
   /* Kart sayfası başlığı: yardım ikonu sıkıştırmasın */
   .card-page-header {
     flex-wrap: wrap;
-    gap: 10px !important;
+    column-gap: 8px !important;
+    row-gap: 6px !important;
     margin-bottom: 20px !important;
     padding-bottom: 16px !important;
   }
 
   .card-page-header .icon-action-button {
     margin-right: 10px !important;
+    width: 26px !important;
+    height: 26px !important;
+    min-width: 26px !important;
+    min-height: 26px !important;
+    border-radius: 7px !important;
   }
 
   /* Hierarchy üst bloğu tek bar: kimlik pili + araçlar aynı çerçevede birleşir */
@@ -5031,7 +5319,7 @@ textarea {
     display: none !important;
   }
 
-  .hierarchy-toolbar > div[style*="width: 1px"] {
+  .hierarchy-toolbar > div[style*='width: 1px'] {
     display: none;
   }
 
@@ -5067,6 +5355,7 @@ textarea {
 
   /* Kimlik pili bar içinde erir */
   .mind-header > div:first-child {
+    order: 1;
     flex: 1 1 auto;
     gap: 8px !important;
     max-width: none !important;
@@ -5077,8 +5366,17 @@ textarea {
     box-shadow: none !important;
   }
 
+  /* Bağlantılı anı başlığı her zaman 2. satırda, tam genişlikte */
+  .mind-context-title {
+    order: 3;
+    flex: 1 1 100%;
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+
   /* Mobilde legend + Anılar aynı satırda gruplanır */
   .mind-legend-row {
+    order: 4;
     display: flex;
     flex: 1 1 100%;
     align-items: center;
@@ -5107,7 +5405,7 @@ textarea {
     display: none;
   }
 
-  .mind-header .mind-controls span[style*="width: 1px"] {
+  .mind-header .mind-controls span[style*='width: 1px'] {
     display: none;
   }
 
@@ -5117,6 +5415,7 @@ textarea {
   }
 
   .mind-default-mobile {
+    order: 2;
     display: flex !important;
     flex-shrink: 0;
   }
@@ -5158,14 +5457,22 @@ textarea {
     display: none !important;
   }
 
-  /* Node detay paneli mobilde ekrana sığar; alt tab bar'ın altına taşmaz */
+  /* Panelin en üst başlık bloğu mobilde gizlenir: panel "Ara..." kutusundan başlar */
+  .mind-memories-panel-header {
+    display: none !important;
+  }
+
+  /* Mind düğüm detay modalı: mobilde tam ortalanır, ekrandan ve bardan taşmaz */
+  .mind-node-backdrop {
+    padding: 14px !important;
+    z-index: 1000 !important;
+  }
+
   .mind-node-panel {
-    width: calc(100% - 20px) !important;
-    max-height: calc(100vh - 240px - env(safe-area-inset-bottom, 0px)) !important;
-    top: calc(50% - 30px) !important;
-    padding: 18px !important;
-    border-radius: 16px !important;
-    gap: 16px !important;
+    width: 100% !important;
+    max-width: calc(100vw - 24px) !important;
+    max-height: min(78vh, 560px) !important;
+    border-radius: 18px !important;
   }
 
   /* Panel, içeri alınmış grafik alanının dışına taşmasın */
@@ -5194,7 +5501,9 @@ textarea {
     padding-left: 14px;
   }
 
-  .personality-card .personality-card__assignment-node-row > .actor-chip:not(.actor-chip--selectable) {
+  .personality-card
+    .personality-card__assignment-node-row
+    > .actor-chip:not(.actor-chip--selectable) {
     padding-right: 6px;
   }
 
@@ -5214,8 +5523,10 @@ textarea {
   }
 
   /* Avatar + isim satırı tam genişlik; butonlar alt satırda soldan (avatar hizasından) başlar */
-  .actor-chip:not(.layout-topbar *):not(.actor-chip--ultra-compact):has(.actor-chip-hier-btn) > div:first-child,
-  .actor-chip:not(.layout-topbar *):not(.actor-chip--ultra-compact):has(.actor-chip-premium-btn) > div:first-child {
+  .actor-chip:not(.layout-topbar *):not(.actor-chip--ultra-compact):has(.actor-chip-hier-btn)
+    > div:first-child,
+  .actor-chip:not(.layout-topbar *):not(.actor-chip--ultra-compact):has(.actor-chip-premium-btn)
+    > div:first-child {
     flex-basis: 100% !important;
     margin-right: 0 !important;
   }
@@ -5228,8 +5539,12 @@ textarea {
     min-width: 0;
   }
 
-  .post-card div:has(> .actor-chip):not(:has(> .tribe-card)) > .actor-chip:not(.actor-chip--ultra-compact),
-  .entry-card div:has(> .actor-chip):not(:has(> .tribe-card)) > .actor-chip:not(.actor-chip--ultra-compact) {
+  .post-card
+    div:has(> .actor-chip):not(:has(> .tribe-card))
+    > .actor-chip:not(.actor-chip--ultra-compact),
+  .entry-card
+    div:has(> .actor-chip):not(:has(> .tribe-card))
+    > .actor-chip:not(.actor-chip--ultra-compact) {
     min-width: 70%;
   }
 
@@ -5304,7 +5619,6 @@ textarea {
   }
 
   .guide-intro {
-    min-height: 560px !important;
     margin-bottom: 72px !important;
   }
 
@@ -5318,14 +5632,36 @@ textarea {
     min-height: 560px;
   }
 
-  /* 320px'te 280px'lik min kolon taşmasın */
+  /* 320px'te 280px'lik min kolon taşmasın; butonlar arası dikey mesafe kompakt */
   .guide-grid {
     grid-template-columns: 1fr !important;
+    gap: 8px !important;
   }
 
   .guide-card {
-    padding: 14px !important;
+    padding: 8px 12px !important;
     gap: 0 !important;
+    min-height: auto !important;
+  }
+
+  .guide-card > div:first-child {
+    gap: 10px !important;
+  }
+
+  .guide-card .guide-icon-box {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+  }
+
+  .guide-card .guide-icon-box svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .guide-card h3 {
+    font-size: 13.5px !important;
+    line-height: 1.25 !important;
   }
 
   .guide-card__desc,
@@ -5352,7 +5688,7 @@ textarea {
   .guide-camera__stage {
     width: 100%;
     transform-origin: center center;
-    animation: guide-camera-tour 26s ease-in-out infinite;
+    animation: guide-camera-tour 16s ease-in-out infinite;
     will-change: transform;
   }
 
@@ -5367,7 +5703,7 @@ textarea {
     gap: 4px !important;
   }
 
-  .hierarchy-header-left > div[style*="width: 1px"] {
+  .hierarchy-header-left > div[style*='width: 1px'] {
     display: none;
   }
 
@@ -5395,4 +5731,452 @@ textarea {
   .hierarchy-count-badge {
     display: none !important;
   }
+}
+
+/* ─── Scrollbar gizleme yardımcısı (admin sekmeleri/piller satırı) ────── */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Admin config kartlarındaki alan sayısı rozeti mobilde gizlenir */
+@media (max-width: 640px) {
+  .config-field-count {
+    display: none !important;
+  }
+
+  /* Privacy Policy / Terms of Service: kart içi boşluklar mobilde ferahlatılır */
+  .termly-raw-content {
+    padding: 20px 16px !important;
+    zoom: 1 !important;
+  }
+}
+
+/* ─── CardDetailModal ─────────────────────────────────────────────── */
+.card-detail-modal-body {
+  max-height: calc(88vh - 92px);
+  overflow-y: auto;
+  padding: 8px 24px 24px;
+}
+
+.card-detail-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 0.35fr) minmax(0, 1fr);
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.card-detail-row__label {
+  display: flex;
+  align-items: center;
+  align-self: start;
+  gap: 7px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.card-detail-row__icon {
+  flex-shrink: 0;
+}
+
+.card-detail-row__value {
+  min-width: 0;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.card-detail-row__value.is-multiline {
+  white-space: pre-wrap;
+}
+
+/* ─── Premium Modal Box & Body ───────────────────────────────────────── */
+.premium-modal-box {
+  width: min(1000px, calc(100vw - 48px));
+}
+
+.premium-modal-body {
+  padding: 18px 24px;
+}
+
+.rainbow-slots-container {
+  overflow: visible;
+  user-select: none;
+}
+
+/* ─── Premium Modal Rainbow Showcase Framed Card ─────────────────────── */
+.premium-rainbow-showcase-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl, 14px);
+  padding: 14px 16px 40px;
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.premium-rainbow-showcase-desc {
+  margin: 0;
+  text-align: center;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  line-height: 1.45;
+  padding: 0 16px;
+  margin-bottom: 2px;
+}
+
+/* ─── Premium Modal Themes Showcase Framed Card ─────────────────────── */
+.premium-themes-showcase-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl, 14px);
+  padding: 14px 16px;
+  gap: 12px;
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.premium-themes-showcase-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'title toggle'
+    'desc toggle';
+  align-items: start;
+  gap: 2px 16px;
+}
+
+.premium-themes-title-row {
+  display: contents;
+}
+
+.premium-themes-title {
+  grid-area: title;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.premium-themes-desc {
+  grid-area: desc;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+  white-space: pre-line;
+}
+
+.premium-themes-toggle-group {
+  grid-area: toggle;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+@media (max-width: 640px) {
+  .card-detail-modal-body {
+    padding: 8px 16px 20px;
+  }
+
+  .card-detail-row {
+    grid-template-columns: minmax(96px, 115px) minmax(0, 1fr);
+    gap: 10px;
+    padding: 9px 0;
+  }
+
+  .card-detail-row__label {
+    gap: 5px;
+    font-size: 10.5px;
+    font-weight: 650;
+    letter-spacing: 0.01em;
+    line-height: 1.3;
+  }
+
+  .card-detail-row__label svg {
+    width: 14px !important;
+    height: 14px !important;
+    min-width: 14px !important;
+    min-height: 14px !important;
+    flex-shrink: 0;
+  }
+
+  .card-detail-row__value {
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+
+  /* Premium Modal — Mobilde dış kenar boşlukları ve iç padding azaltılarak gri blokların yatay genişliği artırılır */
+  .premium-modal-box {
+    width: calc(100vw - 10px) !important;
+    max-width: calc(100vw - 10px) !important;
+    border-radius: 16px !important;
+  }
+
+  .premium-modal-body {
+    padding: 12px 8px !important;
+    gap: 10px !important;
+  }
+
+  .premium-plan-card {
+    padding: 8px 12px !important;
+    gap: 6px !important;
+    border-radius: 12px !important;
+  }
+
+  .premium-showcase-card,
+  .premium-themes-showcase-card {
+    padding: 12px 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .premium-perk-card {
+    padding: 8px 10px !important;
+    border-radius: 9px !important;
+  }
+
+  .premium-perk-desc {
+    display: none !important;
+  }
+
+  .premium-highlight-card {
+    padding: 8px 10px !important;
+    border-radius: 9px !important;
+  }
+
+  .premium-active-card {
+    padding: 14px 12px !important;
+    border-radius: 12px !important;
+  }
+
+  /* Rainbow Personality Card Preview — Mobilde küçük boyut ve kompakt orantı */
+  .rainbow-slots-container {
+    overflow: visible !important;
+    user-select: none !important;
+  }
+
+  .rainbow-personality-card,
+  .rainbow-personality-card.personality-card--filled {
+    min-height: var(--rainbow-card-h, 58px) !important;
+    max-height: var(--rainbow-card-h, 58px) !important;
+    height: var(--rainbow-card-h, 58px) !important;
+    width: var(--rainbow-card-w, 30px) !important;
+    padding: 3px 3px 2px !important;
+    border-radius: 4px 4px 3px 3px !important;
+    box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  .rainbow-personality-card:hover,
+  .rainbow-personality-card.personality-card--filled:hover,
+  .rainbow-personality-card:focus,
+  .rainbow-personality-card.personality-card--filled:focus {
+    box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.3) !important;
+    outline: none !important;
+  }
+
+  .rainbow-personality-card::before {
+    inset: 2px !important;
+    border-radius: 3px 3px 2px 2px !important;
+  }
+
+  .rainbow-personality-card::after {
+    height: 1.5px !important;
+    border-radius: 4px 4px 0 0 !important;
+  }
+
+  .rainbow-personality-card .personality-card__topline {
+    min-height: 5px !important;
+    gap: 2px !important;
+  }
+
+  .rainbow-personality-card .personality-card__mark--placeholder {
+    width: 5px !important;
+    height: 5px !important;
+  }
+
+  .rainbow-personality-card .personality-card__bg-bot svg {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .premium-rainbow-showcase-card {
+    border-radius: 12px;
+    padding: 10px 8px 24px;
+  }
+  .premium-rainbow-showcase-desc {
+    font-size: 12px;
+    padding: 0 4px;
+  }
+
+  /* Premium Modal Themes Showcase — Mobilde başlık ve seçenekler yan yana, açıklama altta yatay */
+  .premium-themes-showcase-header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .premium-themes-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .premium-themes-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--color-text-primary);
+    min-width: 0;
+    flex: 1;
+  }
+
+  .premium-themes-toggle-group {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-top: 0;
+  }
+
+  .premium-themes-toggle-group button,
+  .premium-themes-toggle-group .btn {
+    width: 33px !important;
+    height: 26px !important;
+    padding: 3px 0 !important;
+  }
+
+  .premium-themes-toggle-group svg {
+    width: 17px !important;
+    height: 17px !important;
+  }
+
+  .premium-themes-desc {
+    font-size: 11.5px;
+    color: var(--color-text-muted);
+    line-height: 1.45;
+    white-space: normal;
+    width: 100%;
+  }
+}
+
+/* ─── Tribes Explore Page ─────────────────────────────────────────────────── */
+.tribes-explore-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.tribes-explore-section {
+  margin-bottom: 48px;
+}
+
+.tribes-explore-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 600px) {
+  .tribes-explore-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px;
+  }
+}
+
+/* Areas chip şeridi: tek satırda kalır, oklarla yatay kaydırılır */
+.tribes-areas-strip {
+  flex-wrap: nowrap !important;
+  scrollbar-width: none;
+}
+
+.tribes-areas-strip > * {
+  flex-shrink: 0;
+}
+
+.tribes-areas-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.tribes-areas-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  z-index: 2;
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.12));
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.tribes-areas-nav:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.tribes-areas-nav--right {
+  right: -6px;
+}
+
+.tribes-areas-nav--left {
+  left: -6px;
+}
+
+/* Kenarlarda chip'ler butona yaklaştıkça yumuşakça kaybolur */
+.tribes-areas-fade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 180px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tribes-areas-fade--left {
+  left: 0;
+  background: linear-gradient(
+    to right,
+    var(--color-bg) 0%,
+    var(--color-bg) 16%,
+    color-mix(in srgb, var(--color-bg) 55%, transparent) 55%,
+    transparent 100%
+  );
+}
+
+.tribes-areas-fade--right {
+  right: 0;
+  background: linear-gradient(
+    to left,
+    var(--color-bg) 0%,
+    var(--color-bg) 16%,
+    color-mix(in srgb, var(--color-bg) 55%, transparent) 55%,
+    transparent 100%
+  );
 }

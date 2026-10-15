@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { Info, ShieldQuestion } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import useIsMobile from '../hooks/useIsMobile'
 import BackButton from '../components/common/BackButton'
 import CardContingencyIcon from '../components/common/icons/CardContingencyIcon'
 import CardContingencyModifierIcon from '../components/common/icons/CardContingencyModifierIcon'
@@ -169,6 +170,7 @@ function LockedCards() {
 
 export default function BasicConceptsPage() {
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
   const [pulseCount, setPulseCount] = useState(0)
   const handlePulse = useCallback(() => setPulseCount((c) => c + 1), [])
 
@@ -294,7 +296,7 @@ export default function BasicConceptsPage() {
             <Description style={{ marginTop: 8 }}>
               {t(
                 'hierarchy_info.card_intro_desc_2',
-                'Sitede karşılaştığınız kartların üzerindeki rozetler doğrudan sizin mülkiyet durumunuzu yansıtır: Bizzat ürettiğiniz kartlar altın taç, pazar yerinden satın aldıklarınız paralı taç (taç + $) taşır. Rozetsiz kartlar ise mülkiyeti size ait olmayan, başka aktörler veya klanlar tarafından dolaşıma sokulmuş kartları temsil eder.'
+                "Sitede karşılaştığınız kartların üzerindeki rozetler doğrudan sizin mülkiyet durumunuzu yansıtır: Bizzat ürettiğiniz kartlar altın taç, pazar yerinden satın aldıklarınız paralı taç (taç + $) taşır. Rozetsiz kartlar ise mülkiyeti size ait olmayan, başka kişiler veya klanlar tarafından dolaşıma sokulmuş kartları temsil eder."
               )}
             </Description>
           </TextColumn>
@@ -302,7 +304,12 @@ export default function BasicConceptsPage() {
 
         <Section title={t('hierarchy_info.section_bot_spread_title', 'Bot Yayılımı')}>
           <VisualStage>
-            <ArrowCardTravel Svg={TutorialBotSpreadSvg} widthPct={24} svgStyle={themedStyle} />
+            <ArrowCardTravel
+              Svg={TutorialBotSpreadSvg}
+              widthPct={isMobile ? 72 : 24}
+              svgStyle={themedStyle}
+              matchDrawnCards={isMobile}
+            />
           </VisualStage>
           <TextColumn>
             <Description>
@@ -332,7 +339,12 @@ export default function BasicConceptsPage() {
 
         <Section title={t('hierarchy_info.section_user_spread_title', 'Kullanıcı Yayılımı')}>
           <VisualStage>
-            <ArrowCardTravel Svg={TutorialUserSpreadSvg} widthPct={44} svgStyle={themedStyle} />
+            <ArrowCardTravel
+              Svg={TutorialUserSpreadSvg}
+              widthPct={isMobile ? 88 : 44}
+              svgStyle={themedStyle}
+              matchDrawnCards={isMobile}
+            />
           </VisualStage>
           <TextColumn>
             <Description>
@@ -351,7 +363,12 @@ export default function BasicConceptsPage() {
 
         <Section title={t('hierarchy_info.section_tribe_title', 'Klanlar')}>
           <VisualStage>
-            <ArrowCardTravel Svg={TribeTutorialSvg} widthPct={50} svgStyle={themedStyle} />
+            <ArrowCardTravel
+              Svg={TribeTutorialSvg}
+              widthPct={isMobile ? 92 : 50}
+              svgStyle={themedStyle}
+              matchDrawnCards={isMobile}
+            />
           </VisualStage>
           <TextColumn>
             <Description>
@@ -368,7 +385,7 @@ export default function BasicConceptsPage() {
             <div
               style={{
                 display: 'flex',
-                flexDirection: 'row',
+                flexDirection: isMobile ? 'column' : 'row',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 'clamp(10px, 2vw, 20px)',
@@ -378,17 +395,18 @@ export default function BasicConceptsPage() {
               <div
                 style={{
                   flex: '0 0 auto',
-                  width: 'min(24%, 146px)',
+                  width: isMobile ? '100%' : 'min(24%, 146px)',
                   display: 'flex',
                   justifyContent: 'center',
                 }}
               >
                 <ArrowCardTravel
                   Svg={TutorialBotSpreadSvg}
-                  widthPct={100}
+                  widthPct={isMobile ? 46 : 100}
                   svgStyle={themedStyle}
                   pulseInterval={4000}
                   onPulse={handlePulse}
+                  matchDrawnCards={isMobile}
                 />
               </div>
               <div
@@ -396,15 +414,17 @@ export default function BasicConceptsPage() {
                   flex: '1 1 0px',
                   minWidth: 0,
                   maxWidth: 420,
+                  width: isMobile ? '100%' : undefined,
                   display: 'flex',
                   justifyContent: 'center',
                 }}
               >
                 <ArrowCardTravel
                   Svg={TribeTutorialSvg}
-                  widthPct={100}
+                  widthPct={isMobile ? 92 : 100}
                   svgStyle={themedStyle}
                   pulseInterval={4000}
+                  matchDrawnCards={isMobile}
                 />
               </div>
               <div
@@ -448,7 +468,12 @@ export default function BasicConceptsPage() {
 
         <Section title={t('hierarchy_info.section_tutorial_title', 'Manipülasyon Riski')}>
           <VisualStage>
-            <ArrowCardTravel Svg={TutorialSvg} widthPct={68} svgStyle={themedStyle} />
+            <ArrowCardTravel
+              Svg={TutorialSvg}
+              widthPct={isMobile ? 100 : 68}
+              svgStyle={themedStyle}
+              matchDrawnCards={isMobile}
+            />
           </VisualStage>
           <TextColumn>
             <Description>
@@ -462,7 +487,11 @@ export default function BasicConceptsPage() {
 
         <Section title={t('hierarchy_info.section_card_limit_title', 'Kart Atama Limiti')}>
           <VisualStage>
-            <CardConveyor Svg={CardBotBlockSvg} svgStyle={themedStyle} widthPct={40} />
+            <CardConveyor
+              Svg={CardBotBlockSvg}
+              svgStyle={themedStyle}
+              widthPct={isMobile ? 92 : 40}
+            />
           </VisualStage>
           <TextColumn>
             <Description>
@@ -489,7 +518,7 @@ export default function BasicConceptsPage() {
               <div
                 style={{
                   position: 'relative',
-                  width: '35%',
+                  width: isMobile ? '86%' : '35%',
                   minWidth: 260,
                   maxWidth: 360,
                   flexShrink: 0,
@@ -534,7 +563,7 @@ export default function BasicConceptsPage() {
             <Description>
               {t(
                 'hierarchy_info.lock_cards_desc',
-                'Atadığınız kartları kilitleyebilirsiniz bu kilitlenmiş olan kartların site içerisinde dinamik olarak gezimleri esnasında bu kilitli kart slottan asla çıkmaz özellikle çıkarmadığınız sürece bu bottan.'
+                'Bir bota atadığınız Kişilik Kartını kilitleyebilirsiniz. Bota yeni bir kart ataması, botun Kart Atanma Limitini aştığında kilitlenmemiş en eski atama otomatik olarak kaldırılır. Kilitli kartlar bu işlemden korunur ve siz kilidi kaldırana veya kartı el ile çıkarana kadar botun kişilik setinde kalır.'
               )}
             </Description>
           </TextColumn>
@@ -547,7 +576,7 @@ export default function BasicConceptsPage() {
             <div
               style={{
                 display: 'flex',
-                flexDirection: 'row',
+                flexDirection: isMobile ? 'column' : 'row',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 'clamp(16px, 3vw, 36px)',
@@ -559,6 +588,7 @@ export default function BasicConceptsPage() {
                   flex: '1.1 1 0px',
                   minWidth: 0,
                   maxWidth: 520,
+                  width: isMobile ? '100%' : undefined,
                   display: 'flex',
                   justifyContent: 'center',
                 }}
@@ -570,6 +600,7 @@ export default function BasicConceptsPage() {
                   className="dormant-tutorial-container"
                   dormantArrowIds={TUTORIAL_DORMANT_ARROWS}
                   fossilBotIds={TUTORIAL_FOSSIL_BOTS}
+                  matchDrawnCards={isMobile}
                 />
               </div>
               <div
@@ -577,6 +608,7 @@ export default function BasicConceptsPage() {
                   flex: '0.9 1 0px',
                   minWidth: 0,
                   maxWidth: 440,
+                  width: isMobile ? '100%' : undefined,
                   display: 'flex',
                   justifyContent: 'center',
                 }}
@@ -588,6 +620,7 @@ export default function BasicConceptsPage() {
                   className="dormant-tribe-container"
                   dormantArrowIds={TRIBE_DORMANT_ARROWS}
                   fossilBotIds={TRIBE_FOSSIL_BOTS}
+                  matchDrawnCards={isMobile}
                 />
               </div>
             </div>
@@ -608,7 +641,7 @@ export default function BasicConceptsPage() {
             <Description style={{ marginTop: 8 }}>
               {t(
                 'hierarchy_info.seasonal_reset_desc_3',
-                "İçerisinde insan üye barındıran klanlar ise topluluk bağlarını korumak adına bu tasfiyeden muaf tutulur. Bu dengeli döngü, Bletchly'nin geçmiş mirasını korurken rekabetin sürekli taze, dinamik ve canlı kalmasını sağlar."
+                "İçerisinde kullanıcı üye barındıran klanlar ise topluluk bağlarını korumak adına bu tasfiyeden muaf tutulur. Bu dengeli döngü, Bletchly'nin geçmiş mirasını korurken rekabetin sürekli taze, dinamik ve canlı kalmasını sağlar."
               )}
             </Description>
           </TextColumn>

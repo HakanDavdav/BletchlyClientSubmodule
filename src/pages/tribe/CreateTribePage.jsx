@@ -18,6 +18,7 @@ import PersonalityCard from '../../components/card/PersonalityCard'
 import AvatarUpload from '../../components/common/AvatarUpload'
 import ModelGlassToggle from '../../components/common/ModelGlassToggle'
 import { normalizeCardId } from '../../utils/cardOwnership'
+import { TopicTypes } from '../../constants/TopicTypes'
 
 const RANDOM_TRIBE_NAMES = ['Comrades', 'Femboys', 'LGBT', 'Incels', 'Doomers']
 
@@ -47,6 +48,7 @@ export default function CreateTribePage() {
     imageUrl: '',
     mission: '',
     preferredModel: 0,
+    topicTypes: [],
     personalityCardName: '',
     personalityCardPrompt: '',
     personalityCardConfirmed: false,
@@ -81,6 +83,7 @@ export default function CreateTribePage() {
   const canSubmit =
     formData.tribeName.trim() !== '' &&
     formData.mission.trim() !== '' &&
+    (formData.topicTypes || []).length >= 3 &&
     hasAtLeastOneCard &&
     !mutation.isPending
 
@@ -92,6 +95,10 @@ export default function CreateTribePage() {
         toast.error(t('tribe_settings.name_required', 'Klan adı gereklidir.'))
       } else if (!formData.mission.trim()) {
         toast.error(t('tribe_settings.mission_required', 'Klan misyonu gereklidir.'))
+      } else if ((formData.topicTypes || []).length < 3) {
+        toast.error(
+          t('tribe.interests_min', 'En az 3 ilgi alanı seçilmelidir.')
+        )
       } else if (!hasAtLeastOneCard) {
         toast.error(
           t('tribe_settings.card_required', 'En az bir kişilik kartı onaylanmalı veya seçilmelidir.')
@@ -127,6 +134,17 @@ export default function CreateTribePage() {
         ? current.filter((selectedId) => selectedId !== lowerId)
         : [...current, lowerId]
     )
+  }
+
+  const handleTopicToggle = (value) => {
+    setFormData((prev) => {
+      const exists = prev.topicTypes.includes(value)
+      if (exists) {
+        return { ...prev, topicTypes: prev.topicTypes.filter((t) => t !== value) }
+      } else {
+        return { ...prev, topicTypes: [...prev.topicTypes, value] }
+      }
+    })
   }
 
   const handlePersonalityCardChange = (field, value) => {
@@ -389,6 +407,61 @@ export default function CreateTribePage() {
           />
           <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
             {t('tribe_settings.additional_personality_cards_desc')}
+          </p>
+        </div>
+
+        <div>
+          <label
+            style={{
+              display: 'block',
+              fontSize: 13,
+              fontWeight: 600,
+              color: 'var(--color-text-secondary)',
+              marginBottom: 10,
+              letterSpacing: '0.02em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {t('tribe.interests', 'Alanlar')}
+          </label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {TopicTypes.map((topic) => {
+              const isSelected = formData.topicTypes.includes(topic.value)
+              return (
+                <div
+                  key={topic.value}
+                  onClick={() => {
+                    if (!mutation.isPending && !mutation.isSuccess) {
+                      handleTopicToggle(topic.value)
+                    }
+                  }}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 20,
+                    fontSize: 13,
+                    fontWeight: 500,
+                    cursor: mutation.isPending || mutation.isSuccess ? 'default' : 'pointer',
+                    background: isSelected
+                      ? 'var(--color-primary)'
+                      : 'var(--color-surface-raised, var(--color-surface))',
+                    color: isSelected ? '#fff' : 'var(--color-text-secondary)',
+                    border: `1px solid ${isSelected ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                    transition: 'all 0.2s',
+                    boxShadow: isSelected
+                      ? '0 2px 8px rgba(var(--color-primary-rgb, 99,102,241), 0.25)'
+                      : 'none',
+                  }}
+                >
+                  {t(`topics.${topic.key || topic.enumName?.toLowerCase()}`, topic.label)}
+                </div>
+              )
+            })}
+          </div>
+          <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--color-text-faint)' }}>
+            {t(
+              'tribe.interests_desc',
+              'Klanın odaklanacağı alanları seçebilirsiniz.'
+            )}
           </p>
         </div>
 

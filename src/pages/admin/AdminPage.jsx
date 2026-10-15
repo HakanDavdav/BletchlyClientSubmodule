@@ -15,7 +15,7 @@ export default function AdminPage() {
     { id: 'config', label: t('admin.bg_services_config', 'Background Services & Config') },
     { id: 'events', label: t('admin.system_events_title', 'System Events') },
     { id: 'memory', label: t('admin.memory_management_title', 'Memory Management') },
-    { id: 'actor', label: t('admin.actor_management_title', 'Actor Management') },
+    { id: 'actor', label: t('admin.actor_management_title', 'Person Management') },
   ]
 
   return (
@@ -54,7 +54,7 @@ export default function AdminPage() {
       {/* Horizontal Navigation Tabs */}
       <nav
         className="flex overflow-x-auto gap-2 hide-scrollbar"
-        style={{ marginBottom: 20 }}
+        style={{ marginBottom: 20, minWidth: 0, overflowX: 'auto' }}
       >
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id

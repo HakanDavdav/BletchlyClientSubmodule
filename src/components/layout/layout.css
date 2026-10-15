@@ -145,6 +145,12 @@
     margin-right: 6px;
   }
 
+  /* Çıkış yapılmışken (avatar yerine Giriş/Kayıt butonları varken)
+     kontroller sağdaki butonlara biraz daha yaklaşır */
+  .topbar-mobile-controls:has(+ div:last-child) {
+    margin-right: -2px;
+  }
+
   .topbar-mobile-controls__btn {
     width: 30px;
     height: 30px;
@@ -169,6 +175,9 @@
   }
 
   .topbar-mobile-controls__caret {
+    display: inline-block;
+    font-size: 9px;
+    line-height: 1;
     transition: transform var(--transition-fast);
   }
 
@@ -259,6 +268,12 @@
     border-color: var(--color-text-primary);
   }
 
+  /* Premium olmayanlarda varsayılan dışı renkler görünür ama seçilemez */
+  .topbar-mobile-controls__swatch.is-locked {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
   .topbar-mobile-controls__palette-footer {
     display: flex;
     align-items: center;
@@ -268,6 +283,7 @@
   }
 
   .topbar-mobile-controls__palette-custom {
+    position: relative;
     width: 26px;
     height: 26px;
     border-radius: 50%;
@@ -278,6 +294,12 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    padding: 0;
+  }
+
+  .topbar-mobile-controls__palette-custom.is-locked {
+    opacity: 0.65;
+    cursor: not-allowed;
   }
 
   .topbar-mobile-controls__color-input {
@@ -344,7 +366,7 @@
     left: 0;
     bottom: 0;
     width: min(85vw, 340px);
-    z-index: 101;
+    z-index: 105;
     padding-top: env(safe-area-inset-top, 0px);
     /* Marka barının arkasında sayfa görünsün diye ilk 44px şeffaf,
        altı opak tema zemini (bar yarı şeffaf + blur) */
@@ -355,24 +377,44 @@
       var(--color-bg) calc(44px + env(safe-area-inset-top, 0px)),
       var(--color-bg) 100%
     );
-    overflow-y: auto;
-    /* Kaydırma göstergesi (scrollbar) drawer'ın solunda görünsün */
-    direction: rtl;
-    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
     display: flex;
     flex-direction: column;
     animation: mobile-drawer-slide-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
+  /* Sağ kenar gölgesi: row1'in (44px) altından başlar; üst barın en sağ
+     üstünde renk farkı yaratmaz. Drawer'la birlikte kayar. */
+  .layout-left-drawer::after {
+    content: '';
+    position: absolute;
+    left: 100%;
+    top: calc(44px + env(safe-area-inset-top, 0px));
+    bottom: 0;
+    width: 26px;
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.18), transparent);
+    pointer-events: none;
+  }
+
+  /* Kaydırılan bölge bar'ın ALTINDA başlar; içerik bar'ın (şeffaf üst
+     kısmın) altından geçmez, üst kısım sabit görünür */
+  .layout-left-drawer__scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* Kaydırma göstergesi (scrollbar) drawer'ın solunda görünsün */
+    direction: rtl;
+  }
+
   /* rtl yalnızca scrollbar konumu için; içerik normal (ltr) kalsın */
-  .layout-left-drawer > * {
+  .layout-left-drawer__scroll > * {
     direction: ltr;
   }
 
   .mobile-drawer-overlay {
     animation: mobile-drawer-overlay-in 0.28s ease;
-    /* Cam bar'ın (üst 44px) arkasında ham sayfa kalsın: overlay topbar
-       1. satırının altından başlar */
+    /* Yalnızca row1 (cam bar hizası, 44px) net kalsın; row2
+       (Klanlar/Botlar/Kartlar) diğer ögeler gibi blurlanır */
     top: calc(44px + env(safe-area-inset-top, 0px));
   }
 
@@ -451,19 +493,20 @@
     /* Topbar 1. satırıyla (44px) aynı yükseklikte hizalanır */
     height: 44px;
     padding: 0 10px 0 14px;
-    /* Neredeyse şeffaf, blursuz cam: arkadaki sayfa doğrudan görünür,
-       logo ve "letchly" net kalır */
-    background: color-mix(in srgb, var(--color-bg) 10%, transparent);
-    border-bottom: 1px solid var(--color-border);
+    /* Tamamen şeffaf: arkadaki topbar hiçbir perde/çizgi olmadan birebir
+       görünür (renk değişmez), yalnızca "letchly" eklenir */
+    background: transparent;
+    border-bottom: none;
   }
 
   .layout-left-drawer__brand {
+    position: relative;
     display: inline-flex;
     align-items: center;
     gap: 2px;
     /* Arkadaki (camdan görünen) sayfa logosunun B harfinin hemen bitişiğine
        hizalanır: B + letchly tek logo gibi görünür */
-    margin-left: 22px;
+    margin-left: 21px;
     padding: 0;
     border: none;
     background: none;
@@ -472,6 +515,19 @@
     font-weight: 800;
     color: var(--color-primary);
     cursor: pointer;
+  }
+
+  .season-remaining-badge--drawer {
+    position: absolute;
+    bottom: -3px;
+    right: -17px;
+    z-index: 2;
+    padding: 1px 3.5px;
+    font-size: 8px;
+    line-height: 1.1;
+    transform: rotate(-25deg) scale(0.92);
+    transform-origin: center;
+    display: inline-flex !important;
   }
 
   /* Sadece X ikonu: kare arka plan/çerçeve yok */
@@ -534,17 +590,36 @@
   }
 
   .mobile-tab-bar__item svg {
-    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), stroke-width 0.22s ease;
   }
 
-  /* Seçili sekme: renk + üstte beliren kısa çizgi + hafif büyüyen ikon */
+  .mobile-tab-bar__item svg path,
+  .mobile-tab-bar__item svg circle,
+  .mobile-tab-bar__item svg line,
+  .mobile-tab-bar__item svg polyline,
+  .mobile-tab-bar__item svg polygon,
+  .mobile-tab-bar__item svg rect {
+    transition: stroke-width 0.22s ease;
+  }
+
+  /* Seçili sekme: renk + kalınlaşan çizgiler + üstte beliren kısa çizgi + hafif belirginleşen ikon */
   .mobile-tab-bar__item.is-active {
     color: var(--color-primary);
     font-weight: 600;
   }
 
   .mobile-tab-bar__item.is-active svg {
-    transform: translateY(-1px) scale(1.12);
+    stroke-width: 2.65px !important;
+    transform: translateY(-1px) scale(1.08);
+  }
+
+  .mobile-tab-bar__item.is-active svg path,
+  .mobile-tab-bar__item.is-active svg circle,
+  .mobile-tab-bar__item.is-active svg line,
+  .mobile-tab-bar__item.is-active svg polyline,
+  .mobile-tab-bar__item.is-active svg polygon,
+  .mobile-tab-bar__item.is-active svg rect {
+    stroke-width: 2.65px !important;
   }
 
   .mobile-tab-bar__item::before {
@@ -606,25 +681,41 @@
   .mobile-search-form__modes {
     display: flex;
     gap: 6px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+
+  .mobile-search-form__modes::-webkit-scrollbar {
+    display: none;
   }
 
   .mobile-search-form__mode {
-    padding: 6px 12px;
+    flex-shrink: 0;
+    padding: 6px 14px;
     border-radius: 999px;
     border: 1px solid var(--color-border);
-    background: transparent;
+    background: var(--color-surface);
     color: var(--color-text-secondary);
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     font-family: inherit;
+    white-space: nowrap;
+    transition: all var(--transition-fast, 0.18s ease);
+  }
+
+  .mobile-search-form__mode:hover:not(.is-active) {
+    background: var(--color-surface-2);
+    color: var(--color-text-primary);
   }
 
   .mobile-search-form__mode.is-active {
+    background: var(--color-primary);
     border-color: var(--color-primary);
-    color: var(--color-primary);
-    background: var(--color-primary-alpha, rgba(59, 130, 246, 0.08));
+    color: #fff;
   }
 
   /* Drawer alt bölümü (tema + dil + linkler) */
@@ -711,15 +802,42 @@
     transition: color var(--transition-fast);
   }
 
-  .mobile-tab-bar__quick-btn .mobile-tab-bar__quick-caret {
-    font-size: 14px;
-    line-height: 1;
-    display: inline-block;
-    transition: transform var(--transition-fast);
+  /* Bütünleşik bot ikonu; varsayılan rengi diğer ikonlarla aynı (text-muted) */
+  .mobile-tab-bar__quick-bot {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+    transform: translateY(-2.5px) rotate(180deg);
+    transition: transform var(--transition-fast), color var(--transition-fast);
   }
 
-  .mobile-tab-bar__quick-btn.is-open .mobile-tab-bar__quick-caret {
-    transform: rotate(180deg);
+  /* Yalnızca açılır menü açıkken (aktifken) tema rengine boyanır; kapalıyken default renge döner */
+  .mobile-tab-bar__quick-btn.is-open .mobile-tab-bar__quick-bot {
+    color: var(--color-primary);
+    transform: translateY(-2.5px) rotate(0deg) scale(1.06);
+  }
+
+  .mobile-tab-bar__quick-btn:not(.is-open) .mobile-tab-bar__quick-bot {
+    color: var(--color-text-muted) !important;
+  }
+
+  .mobile-tab-bar__quick-btn.is-open .mobile-tab-bar__quick-bot svg [stroke] {
+    stroke-width: 22px;
+  }
+
+  /* MobilBottomMiddleBot.svg stroke ve dolguları buton rengiyle uyumludur */
+  .mobile-tab-bar__quick-bot svg [stroke] {
+    stroke: currentColor;
+    transition: stroke var(--transition-fast);
+  }
+
+  .mobile-tab-bar__quick-bot svg [fill="black"],
+  .mobile-tab-bar__quick-bot svg [fill="currentColor"],
+  .mobile-tab-bar__quick-bot svg path[fill] {
+    fill: currentColor;
+    transition: fill var(--transition-fast);
   }
 
   .mobile-tab-bar__quick-dropdown {
@@ -848,5 +966,57 @@
   .mobile-drawer-extras__copyright {
     font-size: 11px;
     color: var(--color-text-faint);
+  }
+
+  /* Hakan Davdav sosyal blok (üst bardaki masaüstü bloğunun mobil karşılığı) */
+  .mobile-drawer-extras__social {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 10px;
+  }
+
+  .mobile-drawer-extras__social-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+  }
+
+  .mobile-drawer-extras__social a {
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    transform: translateY(-1px);
+  }
+}
+
+/* ─── Login/Register (AuthWelcomeBackground) — mobil ───────────────────── */
+@media (max-width: 640px) {
+  /* Kart mobilde biraz yukarıda konumlanır (inline 60px margin ezilir) ve
+     hafif şeffaflaşır; arkadaki Welcome.svg deseni/kayan kartlar belli olur */
+  .auth-welcome-bg .card-surface {
+    margin-top: 0 !important;
+    /* Bletchly logosunun üstündeki boş şeffaf bant daraltılır */
+    padding-top: 20px !important;
+    background: color-mix(in srgb, var(--color-surface) 40%, transparent) !important;
+  }
+
+  /* Welcome.svg deseni mobilde kartın çevresinde (yan oluklar + alt bant)
+     görünür olsun diye katman karttan geniş ve aşağı taşacak şekilde
+     ortalanır; desen ölçeği masaüstüyle (~%52) aynı kalır */
+  .auth-welcome-bg__layer {
+    left: 50% !important;
+    right: auto !important;
+    top: 110px !important;
+    bottom: auto !important;
+    width: 800px !important;
+    height: 570px !important;
+    margin-left: -400px !important;
+  }
+
+  /* Taşan arka plan katmanı yatay kaydırma yaratmasın diye viewport
+     genişliğinde kırpılır (yalnızca auth sayfalarında) */
+  .layout-center-inner:has(.auth-welcome-bg) {
+    overflow-x: clip;
   }
 }

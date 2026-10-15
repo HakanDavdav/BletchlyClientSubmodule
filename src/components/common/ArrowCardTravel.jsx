@@ -107,6 +107,9 @@ export default function ArrowCardTravel({
   dormantArrowIds = [],
   fossilBotIds = [],
   className = '',
+  // true ise kartlar SVG içindeki çizili kartlarla (BackCardWrappers) aynı
+  // görsel boyuta ölçeklenir (küçük/orta ekranlarda orantı korunur)
+  matchDrawnCards = false,
 }) {
   const containerRef = useRef(null)
   const cardMapRef = useRef(new Map())
@@ -115,6 +118,7 @@ export default function ArrowCardTravel({
   const [cards, setCards] = useState([])
   const [fossils, setFossils] = useState([])
   const [sizeScale, setSizeScale] = useState(1)
+  const [drawnCardWidth, setDrawnCardWidth] = useState(null)
 
   // Mobilde kartlar SVG ölçeğiyle orantılı küçülür; masaüstü boyutları korunur
   useEffect(() => {
@@ -144,6 +148,23 @@ export default function ArrowCardTravel({
     if (!svg) return
     const vb = svg.viewBox.baseVal
     if (!vb || !vb.width || !vb.height) return
+
+    // SVG içinde çizili kartların (BackCardWrappers) CSS ölçeğindeki genişliği
+    const measureDrawnCards = () => {
+      if (!matchDrawnCards) return
+      const wrapper = svg.querySelector('[id^="BackCardWrappers"]')
+      if (!wrapper) return
+      try {
+        const b = wrapper.getBBox()
+        if (b.width > 0) {
+          const scale = container.getBoundingClientRect().width / vb.width
+          setDrawnCardWidth(Math.round(b.width * scale * 0.95 * 10) / 10)
+        }
+      } catch {
+        // getBBox bazı durumlarda hata verebilir; mevcut boyut korunur
+      }
+    }
+    measureDrawnCards()
 
     const infos = []
     svg.querySelectorAll('g[id^="arrow"], g[id^="Arrow"]').forEach(g => {
@@ -533,7 +554,10 @@ export default function ArrowCardTravel({
 
     let ro
     if (typeof ResizeObserver !== 'undefined') {
-      ro = new ResizeObserver(() => commitCards(computeSegments()))
+      ro = new ResizeObserver(() => {
+        measureDrawnCards()
+        commitCards(computeSegments())
+      })
       ro.observe(container)
     }
 
@@ -544,9 +568,12 @@ export default function ArrowCardTravel({
         el.style.visibility = ''
       })
     }
-  }, [Svg, cardWidth, speed, offset, spacing, cardColor, flowMode, flowModeOverrides, pulseInterval, onPulse, maxCards, rerandomizeInterval, crownedChance, purchasedChance, dormantArrowIds.join(','), fossilBotIds.join(',')])
+  }, [Svg, cardWidth, speed, offset, spacing, cardColor, flowMode, flowModeOverrides, pulseInterval, onPulse, maxCards, rerandomizeInterval, crownedChance, purchasedChance, dormantArrowIds.join(','), fossilBotIds.join(','), matchDrawnCards])
 
-  const effectiveCardWidth = Math.round(cardWidth * sizeScale * 10) / 10
+  const effectiveCardWidth =
+    matchDrawnCards && drawnCardWidth
+      ? drawnCardWidth
+      : Math.round(cardWidth * sizeScale * 10) / 10
   const cardHeight = effectiveCardWidth * CARD_ASPECT
 
   return (

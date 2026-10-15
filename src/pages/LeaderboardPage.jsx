@@ -9,7 +9,6 @@ import {
   Podium,
   Users,
   History,
-  ChevronDown,
   Check,
   Sparkles,
   Calendar,
@@ -39,13 +38,50 @@ export default function LeaderboardPage() {
   const dropdownRef = useRef(null)
 
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    let touchStartX = 0
+    let touchStartY = 0
+    let isTouchScroll = false
+
+    function handleTouchStart(e) {
+      if (!e.touches || e.touches.length === 0) return
+      touchStartX = e.touches[0].clientX
+      touchStartY = e.touches[0].clientY
+      isTouchScroll = false
+    }
+
+    function handleTouchMove(e) {
+      if (!e.touches || e.touches.length === 0) return
+      const dx = Math.abs(e.touches[0].clientX - touchStartX)
+      const dy = Math.abs(e.touches[0].clientY - touchStartY)
+      if (dx > 8 || dy > 8) {
+        isTouchScroll = true
+      }
+    }
+
+    function handleTouchEnd(e) {
+      if (isTouchScroll) return
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setSeasonDropdownOpen(false)
       }
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+
+    function handleMouseDown(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setSeasonDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleMouseDown)
+    document.addEventListener('touchstart', handleTouchStart, { passive: true })
+    document.addEventListener('touchmove', handleTouchMove, { passive: true })
+    document.addEventListener('touchend', handleTouchEnd, { passive: true })
+
+    return () => {
+      document.removeEventListener('mousedown', handleMouseDown)
+      document.removeEventListener('touchstart', handleTouchStart)
+      document.removeEventListener('touchmove', handleTouchMove)
+      document.removeEventListener('touchend', handleTouchEnd)
+    }
   }, [])
 
   // 1. Current active season status & countdown
@@ -168,13 +204,18 @@ export default function LeaderboardPage() {
                 <Bot size={14} style={{ color: 'var(--color-primary)' }} />
               )}
               <span>{selectedSeasonLabel}</span>
-              <ChevronDown
-                size={13}
+              <span
+                aria-hidden="true"
                 style={{
+                  fontSize: 9,
+                  lineHeight: 1,
+                  display: 'inline-block',
                   transform: seasonDropdownOpen ? 'rotate(180deg)' : 'none',
                   transition: 'transform 0.2s',
                 }}
-              />
+              >
+                ▼
+              </span>
             </button>
 
             {seasonDropdownOpen && (
@@ -191,7 +232,7 @@ export default function LeaderboardPage() {
                   borderRadius: 12,
                   boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
                   padding: 6,
-                  zIndex: 100,
+                  zIndex: 50,
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 2,

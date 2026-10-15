@@ -26,12 +26,35 @@ export function getNodeLabelText(label, isRoot = false, isTribeContext = false) 
     return i18n.t('mind.labels.tribe', 'Tribe')
   }
   if (label === 'Actor' || label === 'User' || label === 'Bot') {
-    return i18n.t('mind.labels.actor', 'Someone')
+    return i18n.t('mind.labels.actor', 'Person')
   }
   if (label === 'GeneralThought' || label === 'Topic' || label === 'Concept' || label === 'Thought') {
     return i18n.t('mind.labels.general_thought', 'GeneralThought')
   }
   return label || ''
+}
+
+// Ağ boyutuna (düğüm sayısı ve uzamsal yarıçap) ve ekran genişliğine göre en uygun taban kamera mesafesini hesapla
+export function computeOptimalCameraDistance(nodes = [], isMobile = false) {
+  const count = nodes?.length || 0
+  // Yakın ve etkileyici görsel perspektif: mobilde ~850-980, masaüstünde ~580-720 birim taban
+  const base = isMobile ? 820 : 560
+  const countDistance = base + Math.sqrt(Math.max(1, count)) * (isMobile ? 50 : 35)
+
+  let maxR = 0
+  for (const n of nodes) {
+    if (n.x != null && n.y != null && n.z != null) {
+      const r = Math.hypot(n.x, n.y, n.z)
+      if (r > maxR) maxR = r
+    }
+  }
+  const spatialDistance = maxR > 0
+    ? Math.round(maxR * (isMobile ? 1.7 : 1.3) + (isMobile ? 140 : 100))
+    : 0
+
+  const dist = Math.max(countDistance, spatialDistance)
+
+  return Math.min(1800, Math.max(isMobile ? 800 : 550, Math.round(dist)))
 }
 
 // Nöron renk paleti — Koyu arka planda biyolüminesans tonlar
@@ -820,138 +843,196 @@ function NodeDetailPanel({ node, onClose, isTribeContext = false }) {
   const isRoot = node.label === 'Persona' || (node.label === 'Tribe' && node.isRoot)
   const { core, glow } = getNeuronColor(node.label, isRoot)
 
+  const visibleEntries = Object.entries(node).filter(([key, value]) => {
+    if (
+      [
+        'id', 'x', 'y', 'z', 'vx', 'vy', 'vz', 'fx', 'fy', 'fz',
+        'index', 'name', 'label', 'val', 'color', 'isRoot',
+        'embedding', '__indexColor', '__threeObj', 'isActive', 'isTribeContext'
+      ].includes(key) ||
+      typeof value === 'object'
+    )
+      return false
+    return true
+  })
+
   return (
     <div
-      className="mind-node-panel"
+      className="mind-node-backdrop"
+      onClick={onClose}
       style={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 600,
-        maxHeight: '85vh',
-        overflowY: 'auto',
-        background: isDarkMode ? 'rgba(10, 5, 20, 0.75)' : 'rgba(255, 255, 255, 0.85)',
-        backdropFilter: 'blur(32px)',
-        WebkitBackdropFilter: 'blur(32px)',
-        border: isDarkMode ? `1px solid rgba(192,132,252,0.2)` : `1px solid rgba(0,0,0,0.1)`,
-        borderTop: `4px solid ${core}`,
-        borderRadius: 24,
-        padding: 32,
-        color: isDarkMode ? '#f0e6ff' : '#000000',
-        boxShadow: isDarkMode ? `0 32px 80px rgba(0,0,0,0.9), inset 0 0 40px rgba(192,132,252,0.1)` : `0 32px 80px rgba(0,0,0,0.1)`,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 24,
+        position: 'fixed',
+        inset: 0,
         zIndex: 1000,
-        fontFamily: 'Inter, sans-serif',
+        background: 'rgba(0, 0, 0, 0.58)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+        animation: 'fadeIn 0.15s ease',
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div
-            style={{
-              width: 16,
-              height: 16,
-              borderRadius: '50%',
-              background: core,
-              boxShadow: `0 0 16px ${glow}`,
-              flexShrink: 0,
-            }}
-          />
-          <div>
-            <div
-              style={{
-                fontSize: 11,
-                color: core,
-                fontWeight: 800,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-              }}
-            >
-              {node.label}
-            </div>
-            <div style={{ fontSize: 20, fontWeight: 700, marginTop: 4, lineHeight: 1.2 }}>
-              {node.name || t('mind.unknown_node', 'Unknown Node')}
-            </div>
-          </div>
-        </div>
-        <button
-          onClick={onClose}
-          style={{
-            background: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-            border: 'none',
-            borderRadius: '50%',
-            width: 32,
-            height: 32,
-            color: isDarkMode ? '#fff' : '#000',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'background 0.2s',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)')}
-        >
-          ✕
-        </button>
-      </div>
-
       <div
+        className="mind-node-panel"
+        onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',
-          height: 1,
-          background: 'linear-gradient(90deg, rgba(59,130,246,0.3) 0%, transparent 100%)',
+          maxWidth: 540,
+          maxHeight: 'min(82vh, 660px)',
+          display: 'flex',
+          flexDirection: 'column',
+          background: isDarkMode ? 'rgba(12, 7, 24, 0.94)' : 'rgba(255, 255, 255, 0.96)',
+          backdropFilter: 'blur(36px)',
+          WebkitBackdropFilter: 'blur(36px)',
+          border: isDarkMode ? '1px solid rgba(192, 132, 252, 0.25)' : '1px solid rgba(0, 0, 0, 0.12)',
+          borderTop: `4px solid ${core}`,
+          borderRadius: 20,
+          boxShadow: isDarkMode
+            ? '0 24px 64px rgba(0, 0, 0, 0.85), inset 0 0 24px rgba(192, 132, 252, 0.08)'
+            : '0 24px 64px rgba(0, 0, 0, 0.15)',
+          overflow: 'hidden',
+          fontFamily: 'Inter, sans-serif',
+          color: isDarkMode ? '#f0e6ff' : '#111827',
         }}
-      />
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {Object.entries(node).map(([key, value]) => {
-          // Grafik içi gereksiz 3D koordinat ve dahili durum bilgilerini filtrele
-          if (
-            ['id', 'x', 'y', 'z', 'vx', 'vy', 'vz', 'fx', 'fy', 'fz', 'index', 'name', 'label', 'val', 'color', 'isRoot', 'embedding', '__indexColor', '__threeObj'].includes(key) ||
-            typeof value === 'object'
-          )
-            return null
-          return (
+      >
+        {/* Modal Başlığı */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            padding: '22px 24px 18px 24px',
+            borderBottom: isDarkMode ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(0, 0, 0, 0.07)',
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
             <div
-              key={key}
               style={{
-                background: isDarkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.03)',
-                padding: '12px 16px',
-                borderRadius: 12,
-                border: isDarkMode ? '1px solid rgba(255,255,255,0.03)' : '1px solid rgba(0,0,0,0.05)',
+                width: 14,
+                height: 14,
+                borderRadius: '50%',
+                background: core,
+                boxShadow: `0 0 16px ${glow}`,
+                flexShrink: 0,
               }}
-            >
+            />
+            <div style={{ minWidth: 0 }}>
               <div
                 style={{
                   fontSize: 11,
-                  color: isDarkMode ? 'rgba(192,132,252,0.7)' : 'rgba(0,0,0,0.5)',
-                  marginBottom: 6,
+                  color: core,
+                  fontWeight: 800,
+                  letterSpacing: '0.08em',
                   textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  fontWeight: 600,
                 }}
               >
-                {key === 'lastUpdated' ? t('mind.last_updated', 'Son Güncelleme') : key}
+                {getNodeLabelText(node.label, isRoot, isTribeContext)}
               </div>
               <div
                 style={{
-                  fontSize: 14,
-                  color: isDarkMode ? '#e0d4f5' : '#374151',
-                  lineHeight: 1.6,
+                  fontSize: 19,
+                  fontWeight: 700,
+                  marginTop: 2,
+                  lineHeight: 1.3,
                   wordBreak: 'break-word',
-                  whiteSpace: 'pre-wrap',
                 }}
               >
-                {key === 'lastUpdated' && typeof value === 'number' 
-                  ? new Date(value).toLocaleString() 
-                  : String(value)}
+                {node.name || t('mind.unknown_node', 'Unknown Node')}
               </div>
             </div>
-          )
-        })}
+          </div>
+          <button
+            onClick={onClose}
+            aria-label={t('common.close', 'Kapat')}
+            style={{
+              background: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
+              border: 'none',
+              borderRadius: '50%',
+              width: 32,
+              height: 32,
+              color: isDarkMode ? '#fff' : '#000',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              marginLeft: 12,
+              transition: 'background 0.15s ease',
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Kaydırılabilir İçerik */}
+        <div
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: '20px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+          }}
+        >
+          {visibleEntries.length === 0 ? (
+            <div
+              style={{
+                textAlign: 'center',
+                padding: '24px 12px',
+                color: isDarkMode ? 'rgba(240, 230, 255, 0.5)' : 'rgba(0, 0, 0, 0.45)',
+                fontSize: 13,
+              }}
+            >
+              {t('mind.no_extra_props', 'Bu düğüm için ek özellik bulunmuyor.')}
+            </div>
+          ) : (
+            visibleEntries.map(([key, value]) => (
+              <div
+                key={key}
+                style={{
+                  background: isDarkMode ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)',
+                  padding: '12px 16px',
+                  borderRadius: 12,
+                  border: isDarkMode ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.06)',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: isDarkMode ? 'rgba(192, 132, 252, 0.75)' : 'rgba(0, 0, 0, 0.55)',
+                    marginBottom: 6,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    fontWeight: 700,
+                  }}
+                >
+                  {key === 'lastUpdated'
+                    ? t('mind.last_updated', 'Son Güncelleme')
+                    : key === 'description'
+                    ? t('mind.description', 'Açıklama')
+                    : key}
+                </div>
+                <div
+                  style={{
+                    fontSize: 14,
+                    color: isDarkMode ? '#e0d4f5' : '#374151',
+                    lineHeight: 1.6,
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                  }}
+                >
+                  {key === 'lastUpdated' && typeof value === 'number'
+                    ? new Date(value).toLocaleString()
+                    : String(value)}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   )
@@ -1104,15 +1185,49 @@ export default function MindPage() {
 
   const fgRef = useRef()
   const containerRef = useRef()
+  const memBtnRef = useRef(null)
   const isInitialZoomRef = useRef(true)
   const hoveredLinkRef = useRef(null)
   const selectedLinkRef = useRef(null)
   const selectedNodeRef = useRef(null)
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
+  const [dimensions, setDimensions] = useState(() => ({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1200,
+    height: typeof window !== 'undefined' ? Math.max(400, window.innerHeight - 56) : 800,
+  }))
+  const [windowWidth, setWindowWidth] = useState(
+    () => (typeof window !== 'undefined' ? window.innerWidth : 1200)
+  )
+  useEffect(() => {
+    const onResize = () => setWindowWidth(window.innerWidth)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+  const isMobileScreen = windowWidth <= 768
+
+  // Mobilde "Anılar" paneli butonun hemen altında açılsın (container'a göre üst offset)
+  const [memPanelTop, setMemPanelTop] = useState(null)
 
   useEffect(() => {
     selectedNodeRef.current = selectedNode
   }, [selectedNode])
+
+  useEffect(() => {
+    if (isNodeListCollapsed) return undefined
+    const compute = () => {
+      const btn = memBtnRef.current
+      const cont = containerRef.current
+      if (!btn || !cont || window.innerWidth > 640) {
+        setMemPanelTop(null)
+        return
+      }
+      const btnRect = btn.getBoundingClientRect()
+      const contRect = cont.getBoundingClientRect()
+      setMemPanelTop(Math.round(btnRect.bottom - contRect.top + 6))
+    }
+    compute()
+    window.addEventListener('resize', compute)
+    return () => window.removeEventListener('resize', compute)
+  }, [isNodeListCollapsed])
 
   // Shader'lar için global zaman sayacı ve animasyonlar
   useEffect(() => {
@@ -1169,7 +1284,9 @@ export default function MindPage() {
     const observer = new ResizeObserver((entries) => {
       if (entries[0]) {
         const { width, height } = entries[0].contentRect
-        setDimensions({ width, height })
+        if (width > 0 && height > 0) {
+          setDimensions({ width, height })
+        }
       }
     })
     observer.observe(containerRef.current)
@@ -1302,6 +1419,28 @@ export default function MindPage() {
     })
   }, [graphData.nodes])
 
+  const baseDistance = useMemo(() => {
+    return computeOptimalCameraDistance(graphData.nodes, isMobileScreen)
+  }, [graphData.nodes, isMobileScreen])
+
+  const baseDistanceRef = useRef(baseDistance)
+  useEffect(() => {
+    baseDistanceRef.current = baseDistance
+  }, [baseDistance])
+
+  const applyInitialCameraPosition = useCallback((fgInstance) => {
+    const fg = fgInstance || fgRef.current
+    if (!fg) return
+    const targetDist = baseDistanceRef.current || baseDistance
+    if (typeof fg.cameraPosition === 'function') {
+      fg.cameraPosition({ x: 0, y: 0, z: targetDist }, { x: 0, y: 0, z: 0 }, 0)
+    }
+  }, [baseDistance])
+
+  useEffect(() => {
+    isInitialZoomRef.current = true
+  }, [actorId, tribeId])
+
   // Active Synapse: highlightIds veya focusNode varsa yükleme sonrası toast + ilk aktif node'a zoom & detay paneli açma
   const highlightedActiveNodes = useMemo(
     () => graphData.nodes.filter((n) => n.isActive),
@@ -1324,15 +1463,15 @@ export default function MindPage() {
 
       const first = highlightedActiveNodes[0]
 
-      // Node pozisyonları yerleştikten sonra ilk aktif node'a hızlıca zoom yap
+      // Kamera ağ boyutuna göre hesaplanan dengeli taban mesafeden başlar; aktif düğüm parlayarak öne çıkar
       const tid = setTimeout(() => {
-        if (!fgRef.current || first.x == null) return
+        if (!fgRef.current) return
         fgRef.current.cameraPosition(
-          { x: first.x * 1.3, y: (first.y ?? 0) * 1.3 + 80, z: (first.z ?? 0) * 1.3 + 350 },
-          { x: first.x, y: first.y ?? 0, z: first.z ?? 0 },
-          1200
+          { x: 0, y: 0, z: baseDistance },
+          { x: 0, y: 0, z: 0 },
+          900
         )
-      }, 350)
+      }, 300)
       return () => clearTimeout(tid)
     } else if ((highlightIds.size > 0 && highlightedActiveNodes.length === 0) || focusNodeParam) {
       if (hasHandledHighlightRef.current) return
@@ -1377,10 +1516,10 @@ export default function MindPage() {
   }, [])
 
   // Grafik yüklenince iç D3 node'larına Fibonacci küre pozisyonu ata
-  // useEffect + setTimeout: ForceGraph3D'nin kendi iç veri yapısını hazırlamasını bekle
   useEffect(() => {
     if (graphData.nodes.length === 0) return
-    const tid = setTimeout(() => {
+
+    const setupPhysicsAndPositions = () => {
       if (!fgRef.current) return
       const fg = fgRef.current
 
@@ -1431,7 +1570,17 @@ export default function MindPage() {
       if (typeof fg.d3ReheatSimulation === 'function') {
         fg.d3ReheatSimulation()
       }
-    }, 150)
+
+      // Kamerayı hemen ağın boyutuna göre hesaplanan taban mesafeye sabitle (0 gecikme)
+      const optimalDist = computeOptimalCameraDistance(internalNodes, window.innerWidth <= 768)
+      if (typeof fg.cameraPosition === 'function') {
+        fg.cameraPosition({ x: 0, y: 0, z: optimalDist }, { x: 0, y: 0, z: 0 }, 0)
+      }
+    }
+
+    // İlk mount anında hemen çağır, bileşen henüz bağlanmadıysa 60ms sonra tekrar dene
+    setupPhysicsAndPositions()
+    const tid = setTimeout(setupPhysicsAndPositions, 60)
     return () => clearTimeout(tid)
   }, [graphData.nodes.length])
 
@@ -1467,29 +1616,35 @@ export default function MindPage() {
   }, [])
 
   useEffect(() => {
-    if (!fgRef.current || graphData.nodes.length === 0) return
+    if (graphData.nodes.length === 0) return
     let angle = 0
     const id = setInterval(() => {
       // Bir düğüm veya bağlantı seçiliyken ya da kullanıcı etkileşim halindeyken rotasyonu durdur
       if (!fgRef.current || userInteractingRef.current || selectedNodeRef.current || selectedLinkRef.current) return
       
       const cam = fgRef.current.camera?.()
+      const curRadius = baseDistanceRef.current || baseDistance
       if (cam) {
         angle = Math.atan2(cam.position.x, cam.position.z) + 0.002
       } else {
         angle += 0.002
       }
-      fgRef.current.cameraPosition({ x: 600 * Math.sin(angle), z: 600 * Math.cos(angle) })
+      fgRef.current.cameraPosition(
+        { x: curRadius * Math.sin(angle), y: 0, z: curRadius * Math.cos(angle) },
+        { x: 0, y: 0, z: 0 }
+      )
     }, 30)
     return () => clearInterval(id)
-  }, [graphData.nodes.length])
+  }, [graphData.nodes.length, baseDistance])
 
   const handleResetView = () => {
     selectedNodeRef.current = null
     setSelectedNode(null)
     selectedLinkRef.current = null
     if (fgRef.current && typeof fgRef.current.cameraPosition === 'function') {
-      fgRef.current.cameraPosition({ x: 0, y: 0, z: 800 }, { x: 0, y: 0, z: 0 }, 1000)
+      const internalNodes = fgRef.current.graphData?.()?.nodes || graphData.nodes
+      const optimalDist = computeOptimalCameraDistance(internalNodes, window.innerWidth <= 768)
+      fgRef.current.cameraPosition({ x: 0, y: 0, z: optimalDist }, { x: 0, y: 0, z: 0 }, 1000)
     }
   }
 
@@ -1602,6 +1757,7 @@ export default function MindPage() {
           {/* Orta: Tetiklenen Anıların Bağlantılı Olduğu Başlık (Sade, tırnak içinde, özel sarı bloksuz) */}
           {contextTitle && (
             <div
+              className="mind-context-title"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -1691,11 +1847,11 @@ export default function MindPage() {
             {/* Durum ile Düğüm Tipleri arasındaki ince ayırıcı */}
             <span style={{ width: 1, height: 18, background: 'var(--color-border)', margin: '0 2px' }} />
 
-            {/* 2. Düğüm Tipleri (Persona, Tribe, Someone, Thought) */}
+            {/* 2. Düğüm Tipleri (Persona, Tribe, Person, Thought) */}
             {[
               { color: accent.activeGlow, label: tribeId ? t('mind.labels.tribe_root', 'Tribe (Root)') : t('mind.labels.persona', 'Persona') },
               { color: NEURON_COLORS.Tribe.core, label: tribeId ? t('mind.labels.other_tribes', 'Other Tribes') : t('mind.labels.tribe', 'Tribe') },
-              { color: NEURON_COLORS.Actor.core, label: t('mind.labels.actor', 'Someone') },
+              { color: NEURON_COLORS.Actor.core, label: t('mind.labels.actor', 'Person') },
               { color: NEURON_COLORS.GeneralThought.core, label: t('mind.labels.general_thought', 'Thought') },
             ].map(({ color, label }, idx) => (
               <span key={label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -1741,6 +1897,7 @@ export default function MindPage() {
           {/* Mobil: Anılar paneli tetikleyicisi (legend satırının sağında) */}
           <button
             type="button"
+            ref={memBtnRef}
             className="mind-memories-btn"
             onClick={() => setIsNodeListCollapsed((prev) => !prev)}
             aria-label={t('mind.memories_title', 'Anılar')}
@@ -1811,7 +1968,12 @@ export default function MindPage() {
             dimensions.width > 0 &&
             dimensions.height > 0 && (
               <ForceGraph3D
-                ref={fgRef}
+                ref={(el) => {
+                  fgRef.current = el
+                  if (el) {
+                    applyInitialCameraPosition(el)
+                  }
+                }}
                 width={dimensions.width}
                 height={dimensions.height}
                 graphData={graphData}
@@ -1828,12 +1990,19 @@ export default function MindPage() {
                 d3AlphaDecay={0.02}
                 warmupTicks={0}
                 cooldownTicks={200}
-                onEngineStop={() => {
+                onEngineTick={() => {
                   if (isInitialZoomRef.current && fgRef.current) {
-                    // zoomToFit çok uzağa attığı için sabit, daha yakın ve şık bir açı kullanıyoruz
-                    fgRef.current.cameraPosition({ x: 0, y: 0, z: 800 }, { x: 0, y: 0, z: 0 }, 1000)
+                    const cam = fgRef.current.camera?.()
+                    const targetDist = baseDistanceRef.current || baseDistance
+                    // Eğer kamera henüz taban mesafede değilse (örn. kütüphanenin varsayılan yakın konumu) anında taban mesafeye sabitle
+                    if (cam && Math.abs(cam.position.z - targetDist) > 30) {
+                      applyInitialCameraPosition(fgRef.current)
+                    }
                     isInitialZoomRef.current = false
                   }
+                }}
+                onEngineStop={() => {
+                  isInitialZoomRef.current = false
                 }}
                 onNodeDrag={handleNodeDrag}
                 onNodeClick={handleNodeClick}
@@ -1864,7 +2033,7 @@ export default function MindPage() {
             className={`mind-memories-wrap${isNodeListCollapsed ? ' is-collapsed' : ''}`}
             style={{
               position: 'absolute',
-              top: 24,
+              top: memPanelTop ?? 24,
               right: 24,
               zIndex: 100,
               display: 'flex',
@@ -1896,8 +2065,9 @@ export default function MindPage() {
                   fontFamily: 'Inter, sans-serif',
                 }}
               >
-                {/* Panel Başlığı */}
+                {/* Panel Başlığı (mobilde gizlenir; panel arama kutusundan başlar) */}
                 <div
+                  className="mind-memories-panel-header"
                   style={{
                     display: 'flex',
                     alignItems: 'center',
