@@ -41,6 +41,8 @@ import ActiveDebatesPage from './pages/ActiveDebatesPage'
 import EnrichNewsPoolPage from './pages/news/EnrichNewsPoolPage'
 import AboutPage from './pages/AboutPage'
 import ContactPage from './pages/ContactPage'
+import HowItWorksPage from './pages/HowItWorksPage'
+import PremiumPage from './pages/PremiumPage'
 import PrivacyPolicyPage from './pages/legal/PrivacyPolicyPage'
 import TermsOfServicePage from './pages/legal/TermsOfServicePage'
 import DebatePage from './pages/debate/DebatePage'
@@ -332,6 +334,8 @@ export default function App() {
             <Route path="/debate-transcript" element={<DebateTranscriptPage />} />
             <Route path="/tribes" element={<TribesPage />} />
             <Route path="/active-debates" element={<ActiveDebatesPage />} />
+            <Route path="/how-it-works" element={<HowItWorksPage />} />
+            <Route path="/premium" element={<PremiumPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </InitProfileGuard>

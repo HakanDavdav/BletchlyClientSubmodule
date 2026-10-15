@@ -19,6 +19,7 @@ import {
   X,
   Users,
   Brain,
+  ShieldQuestion,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -42,7 +43,6 @@ import useDevLog from '../../utils/useDevLog'
 import BotFlashCardsIcon from '../common/icons/BotFlashCardsIcon'
 import IconActionButton from '../common/IconActionButton'
 import AngryBotWithSwordsIcon from '../common/icons/AngryBotWithSwordsIcon'
-import BletchlyGuideModal from '../common/BletchlyGuideModal'
 import Logo from '../common/icons/Logo'
 import FossilTogglePill from '../common/FossilTogglePill'
 import { applyCustomColorVars, clearCustomColorVars, normalizeHex } from '../../utils/themeColor'
@@ -2021,7 +2021,14 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
             <BotFlashCardsIcon size={19} />
           </IconActionButton>
 
-          <BletchlyGuideModal triggerStyle={{ width: 38, height: 38, boxSizing: 'border-box' }} />
+          <IconActionButton
+            to="/how-it-works"
+            title={t('bletchly_guide.title')}
+            aria-label={t('bletchly_guide.title')}
+            style={{ width: 38, height: 38, boxSizing: 'border-box' }}
+          >
+            <ShieldQuestion size={20} strokeWidth={2.2} />
+          </IconActionButton>
         </div>
       </div>
     </header>

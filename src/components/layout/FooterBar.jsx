@@ -11,6 +11,10 @@ export default function FooterBar() {
         {t('footer.about', 'Hakkımızda')}
       </Link>
       •
+      <Link to="/how-it-works" style={{ color: 'inherit', textDecoration: 'none' }}>
+        {t('footer.how_it_works', 'Nasıl Çalışır?')}
+      </Link>
+      •
       <Link to="/contact" style={{ color: 'inherit', textDecoration: 'none' }}>
         {t('footer.contact', 'İletişim')}
       </Link>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { Network, Edit2, Brain } from 'lucide-react'
 import SynapseBrainIcon from '../common/SynapseBrainIcon'
 import { useQuery } from '@tanstack/react-query'
@@ -10,7 +10,6 @@ import useMyEntitiesStore from '../../store/myEntitiesStore'
 import useDevLog from '../../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 import SelectionMarker from '../common/SelectionMarker'
-import PremiumModal from '../common/PremiumModal'
 import ModifierArrowSvg from '../../assets/FigmaNew/modifierarrow.svg?react'
 import CardIcon from '../common/icons/CardIcon'
 import KingIcon from '../common/icons/KingIcon'
@@ -50,7 +49,6 @@ export default function ActorMinimalCard({
   const { t } = useTranslation()
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
   const currentUserId = useAuthStore((s) => s.actorId)
-  const [isPremiumOpen, setIsPremiumOpen] = useState(false)
 
   const isUltraCompact =
     ultraCompact ||
@@ -388,13 +386,11 @@ export default function ActorMinimalCard({
         </button>
       )}
       {showEditBtn && !selectable && isOwner && !isDormant && (
-        <button
-          type="button"
+        <Link
+          to="/premium"
           className="actor-chip-premium-btn"
           onClick={(e) => {
-            e.preventDefault()
             e.stopPropagation()
-            setIsPremiumOpen(true)
           }}
           aria-label={isPremiumOwner ? t('premium.active', 'Pro Aktif') : t('premium.title', 'Pro')}
         >
@@ -408,7 +404,7 @@ export default function ActorMinimalCard({
               style={{ display: 'block' }}
             />
           )}
-        </button>
+        </Link>
       )}
       {showPoint && actor.actorPoint != null && (
         <span
@@ -494,10 +490,5 @@ export default function ActorMinimalCard({
     </div>
   )
 
-  return (
-    <>
-      {chipContent}
-      <PremiumModal isOpen={isPremiumOpen} onClose={() => setIsPremiumOpen(false)} />
-    </>
-  )
+  return chipContent
 }

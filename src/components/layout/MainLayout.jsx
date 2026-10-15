@@ -25,10 +25,12 @@ export default function MainLayout({ children, pendingInvitation = null, onOpenI
   const location = useLocation()
   const navigate = useNavigate()
   const { t } = useTranslation()
-  const isHierarchyPage =
+  const isWidePage =
     location.pathname.startsWith('/hierarchy') ||
     location.pathname.startsWith('/card-hierarchy') ||
-    location.pathname.startsWith('/tribes')
+    location.pathname.startsWith('/tribes') ||
+    location.pathname.startsWith('/how-it-works') ||
+    location.pathname.startsWith('/premium')
   const drawerRef = useRef(null)
   const drawerOverlayRef = useRef(null)
   const drawerHandleRef = useRef(null)
@@ -156,14 +158,14 @@ export default function MainLayout({ children, pendingInvitation = null, onOpenI
 
       <div className="layout-body">
         <div
-          className={isHierarchyPage ? 'layout-hierarchy' : undefined}
+          className={isWidePage ? 'layout-hierarchy' : undefined}
           style={{
             display: 'flex',
-            width: isHierarchyPage ? 'calc(100% - max(0px, calc((100% - 1432px) / 2)))' : '100%',
-            maxWidth: isHierarchyPage ? 'none' : '1432px',
-            marginLeft: isHierarchyPage ? 'max(0px, calc((100% - 1432px) / 2))' : 'auto',
-            marginRight: isHierarchyPage ? 0 : 'auto',
-            padding: isHierarchyPage ? '0 8px 0 16px' : '0 16px',
+            width: isWidePage ? 'calc(100% - max(0px, calc((100% - 1432px) / 2)))' : '100%',
+            maxWidth: isWidePage ? 'none' : '1432px',
+            marginLeft: isWidePage ? 'max(0px, calc((100% - 1432px) / 2))' : 'auto',
+            marginRight: isWidePage ? 0 : 'auto',
+            padding: isWidePage ? '0 8px 0 16px' : '0 16px',
           }}
         >
           {/* Sol Panel (Desktop) */}
@@ -241,10 +243,10 @@ export default function MainLayout({ children, pendingInvitation = null, onOpenI
                 <div
                   className="layout-center-inner"
                   style={{
-                    maxWidth: isHierarchyPage ? '100%' : 800,
+                    maxWidth: isWidePage ? '100%' : 800,
                     width: '100%',
-                    margin: isHierarchyPage ? 0 : '0 auto',
-                    padding: isHierarchyPage ? '16px 8px 16px 16px' : '16px',
+                    margin: isWidePage ? 0 : '0 auto',
+                    padding: isWidePage ? '16px 8px 16px 16px' : '16px',
                   }}
                 >
                   {children}
@@ -252,7 +254,7 @@ export default function MainLayout({ children, pendingInvitation = null, onOpenI
               </main>
 
               {/* Sağ Panel (Desktop) — Hiyerarşi sayfasında gizlenir */}
-              {!isHierarchyPage && <RightPanel />}
+              {!isWidePage && <RightPanel />}
             </div>
 
             {/* Footer artık SADECE Orta ve Sağ panelin altında! */}

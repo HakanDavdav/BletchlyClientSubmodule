@@ -68,7 +68,7 @@ export default function InitProfilePage() {
       }
       setProfileCreated(true)
       queryClient.invalidateQueries()
-      navigate('/', { state: { showGuide: true } })
+      navigate('/how-it-works')
     }
   })
 

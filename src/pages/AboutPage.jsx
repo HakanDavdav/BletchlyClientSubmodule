@@ -1,17 +1,10 @@
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useLocation } from 'react-router-dom'
 import { Info, ShieldQuestion } from 'lucide-react'
 import IconActionButton from '../components/common/IconActionButton'
 import BackButton from '../components/common/BackButton'
 
 export default function AboutPage() {
   const { t } = useTranslation()
-  const navigate = useNavigate()
-  const location = useLocation()
-
-  const handleOpenGuide = () => {
-    navigate(location.pathname, { state: { showGuide: true } })
-  }
 
   return (
     <div
@@ -84,7 +77,7 @@ export default function AboutPage() {
         {/* How it works Button - styled exactly like topbar button */}
         <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center' }}>
           <IconActionButton
-            onClick={handleOpenGuide}
+            to="/how-it-works"
             aria-label={t('about_page.how_it_works_btn', 'Bletchly Nasıl Çalışır?')}
             title={t('about_page.how_it_works_btn', 'Bletchly Nasıl Çalışır?')}
             style={{

@@ -5699,6 +5699,33 @@ textarea {
   }
 }
 
+/* ─── /how-it-works sayfası ────────────────────────────────────────────
+   Modal mobil kuralları (desc/link gizleme, kompakt kartlar) sayfada
+   geçersiz; sayfada içerik her zaman görünür kalır. */
+@media (max-width: 768px) {
+  .how-it-works-page .guide-card {
+    padding: 14px !important;
+    gap: 8px !important;
+  }
+
+  .how-it-works-page .guide-card__desc {
+    display: block !important;
+  }
+
+  .how-it-works-page .guide-card__link {
+    display: flex !important;
+  }
+
+  .how-it-works-page .guide-intro {
+    margin-bottom: 0 !important;
+  }
+
+  .how-it-works-page .guide-welcome {
+    min-height: 0;
+    margin-bottom: 32px !important;
+  }
+}
+
 /* 320-360px: hierarchy tek barına sığmak için kimlik pili sadeleşir */
 @media (max-width: 360px) {
   .hierarchy-header-left {

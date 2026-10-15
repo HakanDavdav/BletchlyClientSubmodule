@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
-import { ArrowLeft, Home, Podium, Search, User, Users } from 'lucide-react'
+import { ArrowLeft, Home, Podium, Search, ShieldQuestion, User, Users } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import useAuthStore from '../../store/authStore'
 import useUIStore from '../../store/uiStore'
 import { useTranslation } from 'react-i18next'
 import BotFlashCardsIcon from '../common/icons/BotFlashCardsIcon'
 import AngryBotWithSwordsIcon from '../common/icons/AngryBotWithSwordsIcon'
-import BletchlyGuideModal from '../common/BletchlyGuideModal'
 import MobilBottomMiddleBotSvg from '../../assets/FigmaNew/MobilBottomMiddleBot.svg?react'
 
 /**
@@ -77,6 +76,12 @@ export default function MobileTabBar() {
       label: t('card.marketplace', 'Kart Marketi'),
       icon: <BotFlashCardsIcon size={19} />,
       to: '/marketplace',
+    },
+    {
+      key: 'guide',
+      label: t('bletchly_guide.title'),
+      icon: <ShieldQuestion size={19} strokeWidth={2.2} />,
+      to: '/how-it-works',
     },
   ]
 
@@ -177,8 +182,6 @@ export default function MobileTabBar() {
                   {l.icon}
                 </Link>
               ))}
-              {/* Guide modalı açıkken dropdown açık kalır (drawer davranışıyla aynı) */}
-              <BletchlyGuideModal triggerStyle={{ width: '100%', height: '100%' }} />
             </motion.div>
           )}
         </AnimatePresence>

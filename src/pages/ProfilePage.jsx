@@ -30,7 +30,7 @@ import BotFlashCardsIcon from '../components/common/icons/BotFlashCardsIcon'
 import CardContingencyIcon from '../components/common/icons/CardContingencyIcon'
 import CardContingencyModifierIcon from '../components/common/icons/CardContingencyModifierIcon'
 import toast from 'react-hot-toast'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { actorApi } from '../api/actorApi'
 import { personalityCardApi } from '../api/personalityCardApi'
 import { BotCapabilities, UserCapabilities, Theme } from '../constants/enums'
@@ -413,12 +413,11 @@ export default function ProfilePage() {
 
   const renderThemeSelector = () => (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-      <button
-        type="button"
+      <Link
+        to="/premium"
         className={
           isCurrentUserPremium ? 'btn btn-sm' : 'btn btn-primary btn-sm profile-premium-btn'
         }
-        onClick={() => setIsPremiumOpen(true)}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -432,6 +431,7 @@ export default function ProfilePage() {
           cursor: 'pointer',
           paddingTop: 6,
           paddingBottom: 6,
+          textDecoration: 'none',
         }}
       >
         {isCurrentUserPremium ? (
@@ -440,7 +440,7 @@ export default function ProfilePage() {
           <ModifierArrowSvg width={10} height={14} style={{ display: 'block' }} />
         )}
         {t('premium.button', 'Pro')}
-      </button>
+      </Link>
       <div
         style={{
           display: 'flex',
