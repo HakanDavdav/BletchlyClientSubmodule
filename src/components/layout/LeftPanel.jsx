@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { PenSquare, Flame, Clock8, ThumbsUp, Skull, PackageOpen, Swords, Eye } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { searchApi, parseCacheResponse } from '../../api/searchApi'
 import { actorApi } from '../../api/actorApi'
 import PostMinimalCard from '../content/PostMinimalCard'
@@ -185,9 +185,8 @@ export default function LeftPanel() {
       {/* ─── Create Post Button ── */}
       {isLoggedIn && (
         <div style={{ padding: '0 12px 8px' }}>
-          <button
-            type="button"
-            onClick={() => navigate('/create-post')}
+          <Link
+            to="/create-post"
             style={{
               width: '100%',
               display: 'flex',
@@ -206,6 +205,7 @@ export default function LeftPanel() {
               cursor: 'pointer',
               transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
               letterSpacing: '0.01em',
+              textDecoration: 'none',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-1.5px)'
@@ -226,15 +226,14 @@ export default function LeftPanel() {
               }}
             />
             <span>{t('left_panel.new_topic')}</span>
-          </button>
+          </Link>
         </div>
       )}
 
       {/* ─── Enrich News Pool Button (always visible) ── */}
       <div style={{ padding: '0 12px 12px' }}>
-        <button
-          type="button"
-          onClick={() => navigate('/enrich-news')}
+        <Link
+          to="/enrich-news"
           style={{
             width: '100%',
             display: 'flex',
@@ -253,6 +252,7 @@ export default function LeftPanel() {
             cursor: 'pointer',
             transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
             letterSpacing: '0.01em',
+            textDecoration: 'none',
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-1.5px)'
@@ -273,7 +273,7 @@ export default function LeftPanel() {
             }}
           />
           <span>{t('left_panel.enrich_news')}</span>
-        </button>
+        </Link>
       </div>
 
       <hr className="divider" style={{ margin: '4px 0' }} />
@@ -521,20 +521,20 @@ export default function LeftPanel() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <button
+            <Link
               className="btn btn-outline"
-              style={{ width: '100%', fontSize: 13 }}
-              onClick={() => navigate('/login')}
+              style={{ width: '100%', fontSize: 13, textDecoration: 'none' }}
+              to="/login"
             >
               {t('left_panel.login')}
-            </button>
-            <button
+            </Link>
+            <Link
               className="btn btn-primary"
-              style={{ width: '100%', fontSize: 13 }}
-              onClick={() => navigate('/register')}
+              style={{ width: '100%', fontSize: 13, textDecoration: 'none' }}
+              to="/register"
             >
               {t('left_panel.register')}
-            </button>
+            </Link>
           </div>
         )}
       </div>

@@ -27,7 +27,7 @@ import { tribeApi } from '../../api/tribeApi'
 import { searchApi } from '../../api/searchApi'
 import { actorApi } from '../../api/actorApi'
 import { identityApi } from '../../api/identityApi'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { OrderType, OrderTypeLabels, UserCapabilities } from '../../constants/enums'
 import TribeMinimalCard from '../tribe/TribeMinimalCard'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
@@ -547,7 +547,8 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
             flexShrink: 0,
           }}
         >
-          <div
+          <Link
+            to="/"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -558,8 +559,8 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
               zIndex: 3,
               transform: 'scale(0.85)',
               transformOrigin: 'left center',
+              textDecoration: 'none',
             }}
-            onClick={() => navigate('/')}
           >
             <Logo width={36} height={48} fill="var(--color-primary)" />
             {!isMobile && (
@@ -576,20 +577,20 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                 letchly
               </span>
             )}
-          </div>
+          </Link>
 
           {seasonStatus && typeof seasonStatus.daysRemaining === 'number' && (
-            <button
-              type="button"
+            <Link
+              to="/leaderboard"
               className="season-remaining-badge season-remaining-badge--floating"
-              onClick={() => navigate('/leaderboard')}
+              style={{ textDecoration: 'none' }}
             >
               <span>
                 {seasonStatus.daysRemaining > 0
                   ? t('common.days_remaining_short', { count: seasonStatus.daysRemaining, defaultValue: `${seasonStatus.daysRemaining} GÜN!` })
                   : t('common.hours_remaining_short', { count: seasonStatus.hoursRemaining ?? 0, defaultValue: `${seasonStatus.hoursRemaining ?? 0} SAAT!` })}
               </span>
-            </button>
+            </Link>
           )}
         </div>
 
@@ -1142,14 +1143,14 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
         </form>
 
         {/* Mobil arama ikonu (≤900px) */}
-        <button
-          type="button"
+        <Link
+          to="/search"
           className="btn-icon topbar-search-icon-btn"
-          onClick={() => navigate('/search')}
+          style={{ textDecoration: 'none' }}
           aria-label={t('topbar.search')}
         >
           <Search size={20} />
-        </button>
+        </Link>
 
         {/* Right: user info */}
         <div
@@ -1599,20 +1600,20 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
             </>
           ) : (
             <div style={{ display: 'flex', gap: 5 }}>
-              <button
+              <Link
+                to="/login"
                 className="btn btn-ghost btn-sm"
-                onClick={() => navigate('/login')}
-                style={{ fontSize: 12.5, padding: '4px 10px', height: 30 }}
+                style={{ fontSize: 12.5, padding: '4px 10px', height: 30, textDecoration: 'none' }}
               >
                 {t('topbar.login')}
-              </button>
-              <button
+              </Link>
+              <Link
+                to="/register"
                 className="btn btn-primary btn-sm"
-                onClick={() => navigate('/register')}
-                style={{ fontSize: 12.5, padding: '4px 10px', height: 30 }}
+                style={{ fontSize: 12.5, padding: '4px 10px', height: 30, textDecoration: 'none' }}
               >
                 {t('topbar.register')}
-              </button>
+              </Link>
             </div>
           )}
         </div>
@@ -1779,9 +1780,9 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                           marginBottom: 4,
                         }}
                       >
-                        <button
+                        <Link
+                          to="/create-tribe"
                           onClick={() => {
-                            navigate('/create-tribe')
                             setIsMyTribesOpen(false)
                             setTribesDropdownPos(null)
                           }}
@@ -1793,11 +1794,12 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
+                            textDecoration: 'none',
                           }}
                           aria-label={t('topbar.new_tribe')}
                         >
                           <CirclePlus size={19} strokeWidth={2.4} />
-                        </button>
+                        </Link>
                       </div>
                     </motion.div>
                   )}
@@ -1909,9 +1911,9 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                           marginBottom: 4,
                         }}
                       >
-                        <button
+                        <Link
+                          to="/create-bot"
                           onClick={() => {
-                            navigate('/create-bot')
                             setIsMyBotsOpen(false)
                             setBotsDropdownPos(null)
                           }}
@@ -1923,41 +1925,44 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
+                            textDecoration: 'none',
                           }}
                           aria-label={t('topbar.new_bot')}
                         >
                           <CirclePlus size={19} strokeWidth={2.4} />
-                        </button>
+                        </Link>
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
 
-                <button
+                <Link
+                  to="/cards"
                   className="btn btn-outline topbar-my-entity-btn"
                   style={{
                     width: isMobile ? 104 : 84,
                     padding: isMobile ? '3px 6px' : '3px 6px',
                     fontSize: isMobile ? 12.5 : 11,
+                    textDecoration: 'none',
                   }}
-                onClick={() => navigate('/cards')}
-              >
-                {t('card.cards', 'Cards')}
-              </button>
+                >
+                  {t('card.cards', 'Cards')}
+                </Link>
 
               {import.meta.env.VITE_IS_ADMIN_BUILD === 'true' && isAdmin && (
-                <button
+                <Link
+                  to="/admin/panel"
                   className="btn btn-outline topbar-my-entity-btn"
                   style={{
                     width: isMobile ? 104 : 84,
                     padding: isMobile ? '3px 6px' : '3px 6px',
                     fontSize: isMobile ? 12.5 : 11,
+                    textDecoration: 'none',
                   }}
-                  onClick={() => navigate('/admin/panel')}
                 >
                   Admin
-                </button>
+                </Link>
               )}
             </div>
           </>
@@ -1981,7 +1986,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
           }}
         >
           <IconActionButton
-            onClick={() => navigate('/leaderboard?type=user')}
+            to="/leaderboard?type=user"
             title={t('topbar.leaderboard', 'Liderlik Tablosu')}
             aria-label={t('topbar.leaderboard', 'Liderlik Tablosu')}
             style={{ width: 38, height: 38, boxSizing: 'border-box' }}
@@ -1990,7 +1995,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
           </IconActionButton>
 
           <IconActionButton
-            onClick={() => navigate('/tribes')}
+            to="/tribes"
             title={t('topbar.tribes', 'Klanlar')}
             aria-label={t('topbar.tribes', 'Klanlar')}
             style={{ width: 38, height: 38, boxSizing: 'border-box' }}
@@ -1999,7 +2004,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
           </IconActionButton>
 
           <IconActionButton
-            onClick={() => navigate('/active-debates')}
+            to="/active-debates"
             title={t('topbar.active_debates', 'Aktif Meydan Okumalar')}
             aria-label={t('topbar.active_debates', 'Aktif Meydan Okumalar')}
             style={{ width: 38, height: 38, boxSizing: 'border-box' }}
@@ -2008,7 +2013,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
           </IconActionButton>
 
           <IconActionButton
-            onClick={() => navigate('/marketplace')}
+            to="/marketplace"
             title={t('card.marketplace', 'Kart Marketi')}
             aria-label={t('card.marketplace', 'Kart Marketi')}
             style={{ width: 36, height: 36, boxSizing: 'border-box' }}

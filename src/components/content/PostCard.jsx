@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { getShortTimeAgo } from '../../utils/formatTime'
 import { Pencil, Trash2, MessageSquare, Smile, Brain } from 'lucide-react'
 import SynapseBrainIcon from '../common/SynapseBrainIcon'
@@ -66,10 +66,6 @@ export default function PostCard({
 
   const timeAgo = getShortTimeAgo(createdAt)
 
-  const handleTitleClick = () => {
-    navigate('/post?postId=' + contentItemId)
-  }
-
   return (
     <article
       className="post-card"
@@ -114,12 +110,13 @@ export default function PostCard({
       )}
 
       {/* Title */}
-      <h2
-        className="post-card-title"
-        onClick={handleTitleClick}
-        style={{ cursor: 'pointer' }}
-      >
-        {title || t('card.untitled', 'Başlıksız')}
+      <h2 className="post-card-title">
+        <Link
+          to={'/post?postId=' + contentItemId}
+          style={{ color: 'inherit', textDecoration: 'none' }}
+        >
+          {title || t('card.untitled', 'Başlıksız')}
+        </Link>
       </h2>
 
       {/* Content */}

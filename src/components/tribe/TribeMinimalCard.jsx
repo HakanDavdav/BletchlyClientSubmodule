@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { tribeApi } from '../../api/tribeApi'
 import useAuthStore from '../../store/authStore'
@@ -179,7 +179,19 @@ export default function TribeMinimalCard({
         )}
       </div>
       <div style={{ flex: isCompact ? '0 1 auto' : 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-        <div className="tribe-card-name truncate">{tribeName || t('tribe.unnamed_tribe', 'İsimsiz Klan')}</div>
+        <div className="tribe-card-name truncate">
+          {clickable ? (
+            <Link
+              to={'/tribe?tribeId=' + tribeId}
+              style={{ color: 'inherit', textDecoration: 'none' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {tribeName || t('tribe.unnamed_tribe', 'İsimsiz Klan')}
+            </Link>
+          ) : (
+            tribeName || t('tribe.unnamed_tribe', 'İsimsiz Klan')
+          )}
+        </div>
       </div>
 
       {matchingCardsCount > 0 && (

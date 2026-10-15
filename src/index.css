@@ -3489,6 +3489,8 @@ html.dark .fossil-stamp-icon path {
   background: transparent;
   border-radius: 6px;
   cursor: pointer;
+  text-decoration: none;
+  color: inherit;
   transition: background var(--transition-fast) ease;
   gap: 16px;
 }

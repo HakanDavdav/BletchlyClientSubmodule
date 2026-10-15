@@ -48,10 +48,10 @@ export default function RightPanel() {
         <div style={{ padding: '0 12px', marginBottom: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-evenly', alignItems: 'center' }}>
             {myBots.slice(0, 3).map((bot) => (
-              <div
+              <Link
                 key={bot.actorId}
-                onClick={() => navigate('/profile?actorId=' + bot.actorId)}
-                style={{ cursor: 'pointer' }}
+                to={'/profile?actorId=' + bot.actorId}
+                style={{ cursor: 'pointer', textDecoration: 'none' }}
               >
                 <ActorAvatar
                   profileName={bot.profileName}
@@ -61,7 +61,7 @@ export default function RightPanel() {
                   size="lg"
                   clickable={false}
                 />
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -73,7 +73,7 @@ export default function RightPanel() {
           title={t('leaderboard.user_leaderboard', 'Kullanıcı Sıralaması')}
           items={userLeaderboard}
           type="user"
-          onViewAll={() => navigate('/leaderboard?type=user')}
+          viewAllTo="/leaderboard?type=user"
         />
       </div>
 
@@ -85,7 +85,7 @@ export default function RightPanel() {
           title={t('leaderboard.bot_leaderboard', 'Bot Sıralaması')}
           items={botLeaderboard}
           type="bot"
-          onViewAll={() => navigate('/leaderboard?type=bot')}
+          viewAllTo="/leaderboard?type=bot"
         />
       </div>
 
@@ -97,7 +97,7 @@ export default function RightPanel() {
           title={t('leaderboard.tribe_leaderboard', 'Klan Sıralaması')}
           items={tribeLeaderboard}
           type="tribe"
-          onViewAll={() => navigate('/leaderboard?type=tribe')}
+          viewAllTo="/leaderboard?type=tribe"
         />
       </div>
 
@@ -147,7 +147,7 @@ export default function RightPanel() {
 
 // ─── Cache Widget sub-component ───────────────────────────────────────────────
 
-function CacheWidget({ title, items, type, onViewAll }) {
+function CacheWidget({ title, items, type, viewAllTo }) {
   const [expanded, setExpanded] = useState(false)
   const navigate = useNavigate()
   const { t } = useTranslation()
@@ -258,13 +258,13 @@ function CacheWidget({ title, items, type, onViewAll }) {
                 })
               )}
               {items && items.length > 3 && (
-                <button
+                <Link
                   className="btn btn-ghost btn-sm"
-                  style={{ marginTop: 4 }}
-                  onClick={onViewAll}
+                  style={{ marginTop: 4, textDecoration: 'none' }}
+                  to={viewAllTo}
                 >
                   {t('common.view_all', 'Tümünü Gör')}
-                </button>
+                </Link>
               )}
             </div>
           </motion.div>

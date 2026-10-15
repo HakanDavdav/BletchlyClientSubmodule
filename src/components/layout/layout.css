@@ -586,6 +586,7 @@
     cursor: pointer;
     padding: 4px 2px;
     font-family: inherit;
+    text-decoration: none;
     transition: color 0.22s ease;
   }
 

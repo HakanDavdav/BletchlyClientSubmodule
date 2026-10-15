@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { Network, Edit2, Brain } from 'lucide-react'
 import SynapseBrainIcon from '../common/SynapseBrainIcon'
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { actorApi } from '../../api/actorApi'
 import ActorAvatar from './ActorAvatar'
 import useAuthStore from '../../store/authStore'
@@ -291,7 +291,17 @@ export default function ActorMinimalCard({
             whiteSpace: 'nowrap',
           }}
         >
-          {profileName || t('actor.unnamed', 'İsimsiz')}
+          {clickable && !selectable ? (
+            <Link
+              to={'/profile?actorId=' + actorId}
+              style={{ color: 'inherit', textDecoration: 'none' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {profileName || t('actor.unnamed', 'İsimsiz')}
+            </Link>
+          ) : (
+            profileName || t('actor.unnamed', 'İsimsiz')
+          )}
         </span>
       </div>
 

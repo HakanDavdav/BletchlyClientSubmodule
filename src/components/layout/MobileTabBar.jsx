@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { ArrowLeft, Home, Podium, Search, User, Users } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import useAuthStore from '../../store/authStore'
@@ -40,11 +40,6 @@ export default function MobileTabBar() {
   useEffect(() => {
     setIsQuickOpen(false)
   }, [path])
-
-  const go = (to) => {
-    closeDrawers()
-    navigate(to)
-  }
 
   const goBack = () => {
     closeDrawers()
@@ -99,21 +94,21 @@ export default function MobileTabBar() {
       label: t('tab_bar.home', 'Ana Sayfa'),
       icon: (active) => <Home size={21} strokeWidth={active ? 2.65 : 2.0} />,
       active: path === '/',
-      onClick: () => go('/'),
+      to: '/',
     },
     {
       key: 'search',
       label: t('tab_bar.search', 'Ara'),
       icon: (active) => <Search size={21} strokeWidth={active ? 2.65 : 2.0} />,
       active: isActive('/search'),
-      onClick: () => go('/search'),
+      to: '/search',
     },
     {
       key: 'profile',
       label: t('tab_bar.profile', 'Profil'),
       icon: (active) => <User size={21} strokeWidth={active ? 2.65 : 2.0} />,
       active: isProfileActive,
-      onClick: () => go(isLoggedIn && actorId ? `/profile?actorId=${actorId}` : '/login'),
+      to: isLoggedIn && actorId ? `/profile?actorId=${actorId}` : '/login',
     },
   ]
 
@@ -128,16 +123,16 @@ export default function MobileTabBar() {
         <ArrowLeft size={21} strokeWidth={2.0} />
       </button>
       {tabs.slice(0, 1).map((tab) => (
-        <button
+        <Link
           key={tab.key}
-          type="button"
+          to={tab.to}
           className={`mobile-tab-bar__item${tab.active ? ' is-active' : ''}`}
-          onClick={tab.onClick}
+          onClick={closeDrawers}
           aria-label={tab.label}
           aria-current={tab.active ? 'page' : undefined}
         >
           {typeof tab.icon === 'function' ? tab.icon(tab.active) : tab.icon}
-        </button>
+        </Link>
       ))}
 
       {/* Tam ortada: hızlı bağlantı "v" butonu (dropdown yukarı açılır) */}
@@ -168,19 +163,19 @@ export default function MobileTabBar() {
               onMouseDown={(e) => e.stopPropagation()}
             >
               {quickLinks.map((l) => (
-                <button
+                <Link
                   key={l.key}
-                  type="button"
+                  to={l.to}
                   className="mobile-drawer-quick-link"
                   title={l.label}
                   aria-label={l.label}
                   onClick={() => {
                     setIsQuickOpen(false)
-                    go(l.to)
+                    closeDrawers()
                   }}
                 >
                   {l.icon}
-                </button>
+                </Link>
               ))}
               {/* Guide modalı açıkken dropdown açık kalır (drawer davranışıyla aynı) */}
               <BletchlyGuideModal triggerStyle={{ width: '100%', height: '100%' }} />
@@ -190,16 +185,16 @@ export default function MobileTabBar() {
       </div>
 
       {tabs.slice(1).map((tab) => (
-        <button
+        <Link
           key={tab.key}
-          type="button"
+          to={tab.to}
           className={`mobile-tab-bar__item${tab.active ? ' is-active' : ''}`}
-          onClick={tab.onClick}
+          onClick={closeDrawers}
           aria-label={tab.label}
           aria-current={tab.active ? 'page' : undefined}
         >
           {typeof tab.icon === 'function' ? tab.icon(tab.active) : tab.icon}
-        </button>
+        </Link>
       ))}
     </nav>
   )
