@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { X, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -11,10 +12,26 @@ import { TopicColors } from '../constants/enums'
 
 const EXPLORE_PAGE_COUNT = 4
 
-const resolveTopicValue = (topicTypeName) => {
-  if (topicTypeName == null) return null
-  if (typeof topicTypeName === 'number') return topicTypeName
-  const found = TopicTypes.find((x) => x.enumName === topicTypeName)
+const resolveTopicValue = (topicInput) => {
+  if (topicInput == null) return null
+  if (typeof topicInput === 'number') {
+    const foundByVal = TopicTypes.find((x) => x.value === topicInput)
+    return foundByVal ? foundByVal.value : null
+  }
+  const str = String(topicInput).trim()
+  if (!str) return null
+  if (/^\d+$/.test(str)) {
+    const num = parseInt(str, 10)
+    const foundNum = TopicTypes.find((x) => x.value === num)
+    if (foundNum) return foundNum.value
+  }
+  const lower = str.toLowerCase()
+  const found = TopicTypes.find(
+    (x) =>
+      x.enumName?.toLowerCase() === lower ||
+      x.key?.toLowerCase() === lower ||
+      x.label?.toLowerCase() === lower
+  )
   return found ? found.value : null
 }
 
@@ -26,13 +43,59 @@ const getTribeTopicValues = (tr) => {
 
 export default function TribesPage() {
   const { t } = useTranslation()
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // Parse initial topic/area from search params
+  const parseUrlTopics = useCallback(() => {
+    const rawList = [
+      ...searchParams.getAll('topic'),
+      ...searchParams.getAll('area'),
+      ...searchParams.getAll('topics'),
+      ...searchParams.getAll('areas'),
+    ]
+    const values = []
+    rawList.forEach((item) => {
+      if (!item) return
+      item.split(',').forEach((sub) => {
+        const val = resolveTopicValue(sub)
+        if (val != null && !values.includes(val)) {
+          values.push(val)
+        }
+      })
+    })
+    return values
+  }, [searchParams])
 
   // Area (TopicType) filters — multi-select
-  const [activeAreas, setActiveAreas] = useState([])
+  const [activeAreas, setActiveAreas] = useState(() => parseUrlTopics())
+
+  // Keep activeAreas in sync if URL search params change externally
+  useEffect(() => {
+    const fromUrl = parseUrlTopics()
+    setActiveAreas((prev) => {
+      const isSame =
+        prev.length === fromUrl.length &&
+        prev.every((v) => fromUrl.includes(v))
+      return isSame ? prev : fromUrl
+    })
+  }, [parseUrlTopics])
 
   // Areas strip horizontal navigation
   const areasStripRef = useRef(null)
   const [areasArrows, setAreasArrows] = useState({ canLeft: false, canRight: false })
+
+  // Auto-scroll selected topic into view in the horizontal strip
+  useEffect(() => {
+    if (activeAreas.length > 0 && areasStripRef.current) {
+      const firstActiveVal = activeAreas[0]
+      const targetBtn = areasStripRef.current.querySelector(
+        `[data-topic-value="${firstActiveVal}"]`
+      )
+      if (targetBtn) {
+        targetBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+      }
+    }
+  }, [activeAreas])
 
   const updateAreasArrows = useCallback(() => {
     const el = areasStripRef.current
@@ -79,7 +142,7 @@ export default function TribesPage() {
     staleTime: 60_000,
   })
 
-  const featuredTribes = useMemo(() => exploreTribes.slice(0, 8), [exploreTribes])
+  const featuredTribes = useMemo(() => exploreTribes.slice(0, 12), [exploreTribes])
 
   const areaSections = useMemo(() => {
     const map = new Map()
@@ -101,17 +164,20 @@ export default function TribesPage() {
     return [...map.values()].sort((a, b) => b.tribes.length - a.tribes.length)
   }, [exploreTribes])
 
-  // Explore sections: cards fill 2 rows per area (columns measured from width)
+  // Explore sections: cards fill 2 rows per area (3 columns on web = 6 cards)
   const sectionsRef = useRef(null)
-  const [sectionColumns, setSectionColumns] = useState(4)
+  const [sectionColumns, setSectionColumns] = useState(3)
 
   const computeSectionColumns = useCallback(() => {
     const el = sectionsRef.current
     if (!el) return
     const width = el.clientWidth
-    const minCard = 280
-    const gap = 12
-    setSectionColumns(Math.max(1, Math.floor((width + gap) / (minCard + gap))))
+    if (width <= 600 || window.innerWidth <= 600) {
+      setSectionColumns(2)
+      return
+    }
+    // Web version: 3 columns x 2 rows = 6 cards per block
+    setSectionColumns(3)
   }, [])
 
   useEffect(() => {
@@ -120,7 +186,11 @@ export default function TribesPage() {
     if (!el) return
     const observer = new ResizeObserver(computeSectionColumns)
     observer.observe(el)
-    return () => observer.disconnect()
+    window.addEventListener('resize', computeSectionColumns)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', computeSectionColumns)
+    }
   }, [computeSectionColumns, hasActiveFilter, areaSections.length])
 
   const maxSectionCards = sectionColumns * 2
@@ -189,24 +259,57 @@ export default function TribesPage() {
     }
   }, [visibleCount, allFetchedTribes.length, hasNextPage, isFetchingNextPage, fetchNextPage])
 
-  const handleAreaToggle = (area) => {
-    setActiveAreas((current) =>
-      current.includes(area.value)
-        ? current.filter((value) => value !== area.value)
-        : [...current, area.value]
-    )
+  const updateUrlWithAreas = (nextAreas) => {
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('topic')
+    nextParams.delete('area')
+    nextParams.delete('topics')
+    nextParams.delete('areas')
+
+    if (nextAreas.length === 1) {
+      const topicObj = TopicTypes.find((x) => x.value === nextAreas[0])
+      nextParams.set('topic', topicObj?.enumName || nextAreas[0])
+    } else if (nextAreas.length > 1) {
+      const names = nextAreas.map((val) => {
+        const topicObj = TopicTypes.find((x) => x.value === val)
+        return topicObj?.enumName || val
+      })
+      nextParams.set('topic', names.join(','))
+    }
+    setSearchParams(nextParams, { replace: true })
   }
 
-  const clearAreas = () => setActiveAreas([])
+  const handleAreaToggle = (area) => {
+    setActiveAreas((current) => {
+      const next = current.includes(area.value)
+        ? current.filter((value) => value !== area.value)
+        : [...current, area.value]
+      updateUrlWithAreas(next)
+      return next
+    })
+  }
+
+  const clearAreas = () => {
+    setActiveAreas([])
+    updateUrlWithAreas([])
+  }
+
+  const selectSingleArea = (value) => {
+    setActiveAreas([value])
+    updateUrlWithAreas([value])
+  }
 
   const renderTribeCard = (tr) => (
     <TribeMinimalCard
       key={tr.tribeId || tr.TribeId}
+      tribe={tr}
       tribeId={tr.tribeId || tr.TribeId}
       tribeName={tr.tribeName || tr.TribeName}
       tribePoint={tr.tribePoint ?? tr.tribeActorPoint ?? tr.TribeActorPoint}
       imageUrl={tr.imageUrl || tr.ImageUrl}
       isDormant={tr.isDormant ?? tr.IsDormant ?? false}
+      mission={tr.mission ?? tr.Mission}
+      showMission={true}
     />
   )
 
@@ -289,6 +392,7 @@ export default function TribesPage() {
           return (
             <button
               key={topic.value}
+              data-topic-value={topic.value}
               type="button"
               onClick={() => handleAreaToggle(topic)}
               style={{
@@ -378,13 +482,14 @@ export default function TribesPage() {
               <div className="spinner spinner-lg" />
             </div>
           ) : visibleTribes.length === 0 ? (
-            <p className="empty-state">{t('tribes_page.empty', 'Henüz klan bulunmuyor.')}</p>
+            <p className="empty-state">{t('common.nothing_here_yet')}</p>
           ) : (
             <div
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
                 gap: 16,
+                alignItems: 'start',
               }}
             >
               {visibleTribes.map(renderTribeCard)}
@@ -404,7 +509,7 @@ export default function TribesPage() {
           <div className="spinner spinner-lg" />
         </div>
       ) : exploreTribes.length === 0 ? (
-        <p className="empty-state">{t('tribes_page.empty', 'Henüz klan bulunmuyor.')}</p>
+        <p className="empty-state">{t('common.nothing_here_yet')}</p>
       ) : (
         <div ref={sectionsRef}>
           {/* Featured */}
@@ -439,7 +544,7 @@ export default function TribesPage() {
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
-                  onClick={() => setActiveAreas([section.value])}
+                  onClick={() => selectSingleArea(section.value)}
                 >
                   {t('tribes_page.see_all', 'Tümünü Gör')}
                 </button>

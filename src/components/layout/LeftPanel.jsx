@@ -91,6 +91,7 @@ export default function LeftPanel() {
 
   const markReadMutation = useMutation({
     mutationFn: (ids) => actorApi.markActivitiesRead(ids),
+    meta: { showErrorToast: true },
     onSuccess: () => {
       queryClient.invalidateQueries(['activities'])
       queryClient.invalidateQueries(['activities-unread'])

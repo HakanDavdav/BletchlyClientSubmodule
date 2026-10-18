@@ -831,11 +831,12 @@
   left: 50%;
   z-index: 1; /* Above rings, but behind content */
   pointer-events: none;
-  color: #9ca3af;
+  color: var(--color-primary);
 }
 
-.dark .scattered-bot-positioner {
-  color: rgba(255, 255, 255, 0.5); /* or var(--color-primary-light) */
+.dark .scattered-bot-positioner,
+:root.dark .scattered-bot-positioner {
+  color: var(--color-primary-dark, var(--color-primary));
 }
 
 .scattered-bot-animator {

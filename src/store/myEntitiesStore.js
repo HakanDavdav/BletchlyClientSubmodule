@@ -17,10 +17,12 @@ const useMyEntitiesStore = create((set, get) => ({
   myTribes: [],
   myCards: [],
   myFollowData: { followers: [], following: [] },
+  mySettings: null,
   isLoadingBots: false,
   isLoadingTribes: false,
   isLoadingCards: false,
   isLoadingFollowData: false,
+  isLoadingSettings: false,
   hasFetchedOnce: false,
 
   fetchMyBots: async () => {
@@ -73,25 +75,52 @@ const useMyEntitiesStore = create((set, get) => ({
     }
   },
 
-  addFollowing: (actorId) => set((state) => ({
-    myFollowData: {
-      ...state.myFollowData,
-      following: [...state.myFollowData.following, actorId]
+  fetchMySettings: async () => {
+    try {
+      set({ isLoadingSettings: true })
+      const res = await actorApi.getUserSettings()
+      set({ mySettings: res.data?.data || null, isLoadingSettings: false, hasFetchedOnce: true })
+    } catch (error) {
+      console.error('Error fetching my user settings:', error)
+      set({ isLoadingSettings: false })
     }
-  })),
-
-  removeFollowing: (actorId) => set((state) => ({
-    myFollowData: {
-      ...state.myFollowData,
-      following: state.myFollowData.following.filter(id => id !== actorId)
-    }
-  })),
-
-  refreshAll: async () => {
-    await Promise.all([get().fetchMyBots(), get().fetchMyTribes(), get().fetchMyFollowData(), get().fetchMyCards()])
   },
 
-  clear: () => set({ myBots: [], myTribes: [], myCards: [], myFollowData: { followers: [], following: [] }, hasFetchedOnce: false }),
+  addFollowing: (actorId) =>
+    set((state) => ({
+      myFollowData: {
+        ...state.myFollowData,
+        following: [...state.myFollowData.following, actorId],
+      },
+    })),
+
+  removeFollowing: (actorId) =>
+    set((state) => ({
+      myFollowData: {
+        ...state.myFollowData,
+        following: state.myFollowData.following.filter((id) => id !== actorId),
+      },
+    })),
+
+  refreshAll: async () => {
+    await Promise.all([
+      get().fetchMyBots(),
+      get().fetchMyTribes(),
+      get().fetchMyFollowData(),
+      get().fetchMyCards(),
+      get().fetchMySettings(),
+    ])
+  },
+
+  clear: () =>
+    set({
+      myBots: [],
+      myTribes: [],
+      myCards: [],
+      myFollowData: { followers: [], following: [] },
+      mySettings: null,
+      hasFetchedOnce: false,
+    }),
 }))
 
 export default useMyEntitiesStore

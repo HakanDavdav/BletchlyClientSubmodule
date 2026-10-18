@@ -21,7 +21,15 @@ export default function BackButton({ onClick, style = { marginBottom: 16 } }) {
     <button
       className="btn-icon page-back-button"
       onClick={handleGoBack}
-      style={style}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 34,
+        height: 34,
+        padding: 0,
+        ...style,
+      }}
       aria-label={t('common.go_back', 'Geri Dön')}
     >
       <ArrowLeft size={18} />

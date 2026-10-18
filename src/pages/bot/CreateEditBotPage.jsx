@@ -2,9 +2,11 @@ import { useState, useEffect, useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { actorApi } from '../../api/actorApi'
 import { personalityCardApi } from '../../api/personalityCardApi'
-import { Trash2, Loader2, Bot, Globe } from 'lucide-react'
+import { Trash2, Loader2, Bot, Globe, AlertTriangle } from 'lucide-react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import BackButton from '../../components/common/BackButton'
+import ConfirmModal from '../../components/common/ConfirmModal'
 import { TopicTypes } from '../../constants/TopicTypes'
 import useAuthStore from '../../store/authStore'
 import useMyEntitiesStore from '../../store/myEntitiesStore'
@@ -39,6 +41,7 @@ export default function CreateEditBotPage() {
 
   // If botId is provided, we are in Edit mode
   const isEditMode = Boolean(botId)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
 
   const [formData, setFormData] = useState({
     profileName: '',
@@ -47,6 +50,7 @@ export default function CreateEditBotPage() {
     personalityCardId: null,
     personalityCardName: '',
     personalityCardPrompt: '',
+    personalityCardImageUrl: '',
     personalityCardConfirmed: false,
     personalityCardLocked: false,
     autoInterests: false,
@@ -77,9 +81,15 @@ export default function CreateEditBotPage() {
     enabled: Boolean(actorId),
   })
 
-  const { data: userProfile } = useQuery({
-    queryKey: ['actor', actorId],
-    queryFn: () => actorApi.getProfile(actorId).then((res) => res.data?.data),
+  const storeSettings = useMyEntitiesStore((state) => state.mySettings)
+  const { data: userSettings } = useQuery({
+    queryKey: ['userSettings', actorId],
+    queryFn: async () => {
+      if (storeSettings) return storeSettings
+      const res = await actorApi.getUserSettings()
+      return res.data?.data
+    },
+    initialData: storeSettings || undefined,
     enabled: Boolean(actorId),
   })
 
@@ -87,7 +97,7 @@ export default function CreateEditBotPage() {
     () => (myBots || []).filter((b) => !b.isDormant && !b.IsDormant),
     [myBots]
   )
-  const botCountLimit = userProfile?.userSettings?.botCountLimit || 5
+  const botCountLimit = userSettings?.botCountLimit ?? storeSettings?.botCountLimit ?? 5
   const isBotLimitReached = !isEditMode && activeBots.length >= botCountLimit
 
   // Fetch existing data if in Edit Mode
@@ -173,6 +183,7 @@ export default function CreateEditBotPage() {
         personalityCardId: null,
         personalityCardName: '',
         personalityCardPrompt: '',
+        personalityCardImageUrl: '',
         personalityCardConfirmed: false,
         personalityCardLocked: false,
         autoInterests: existingBot.botSettings?.autoInterests || false,
@@ -232,9 +243,7 @@ export default function CreateEditBotPage() {
   })
 
   const handleDeleteBot = () => {
-    if (window.confirm(t('bot.confirm_delete'))) {
-      deleteMutation.mutate()
-    }
+    setIsDeleteModalOpen(true)
   }
 
   const handleSubmit = (e) => {
@@ -244,7 +253,10 @@ export default function CreateEditBotPage() {
 
     if (isBotLimitReached) {
       toast.error(
-        t('bot.limit_reached', `Maksimum bot limitine (${botCountLimit}) ulaştınız.`)
+        t('bot.limit_reached', {
+          limit: botCountLimit,
+          defaultValue: `Maksimum bot limitine (${botCountLimit}) ulaştınız.`,
+        })
       )
       return
     }
@@ -283,6 +295,7 @@ export default function CreateEditBotPage() {
       lockedCardIds,
       personalityCardName,
       personalityCardPrompt,
+      personalityCardImageUrl,
       personalityCardConfirmed,
       personalityCardLocked,
       ...payload
@@ -303,9 +316,11 @@ export default function CreateEditBotPage() {
     if (personalityCardConfirmed) {
       payload.personalityCardName = personalityCardName
       payload.personalityCardPrompt = personalityCardPrompt
+      payload.personalityCardImageUrl = personalityCardImageUrl || null
     } else {
       payload.personalityCardName = null
       payload.personalityCardPrompt = null
+      payload.personalityCardImageUrl = null
     }
 
     mutation.mutate(payload)
@@ -356,6 +371,7 @@ export default function CreateEditBotPage() {
       personalityCardId: current.personalityCardId,
       personalityCardName: field === 'cardName' ? value : current.personalityCardName,
       personalityCardPrompt: field === 'prompt' ? value : current.personalityCardPrompt,
+      personalityCardImageUrl: field === 'imageUrl' ? value : current.personalityCardImageUrl,
       personalityCardConfirmed: false,
     }))
   }
@@ -487,7 +503,7 @@ export default function CreateEditBotPage() {
                   fontWeight: 600,
                 }}
               >
-                {activeBots.length} / {botCountLimit} Bot
+                {activeBots.length} / {botCountLimit} {t('common.bot', 'Bot')}
               </span>
             )}
           </div>
@@ -708,6 +724,7 @@ export default function CreateEditBotPage() {
             variant="editor"
             editorCardName={formData.personalityCardName}
             editorPrompt={formData.personalityCardPrompt}
+            editorImageUrl={formData.personalityCardImageUrl}
             editorConfirmed={formData.personalityCardConfirmed}
             editorLocked={formData.personalityCardLocked}
             disabled={mutation.isPending || mutation.isSuccess}
@@ -972,6 +989,19 @@ export default function CreateEditBotPage() {
           </button>
         </div>
       )}
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={() => {
+          setIsDeleteModalOpen(false)
+          deleteMutation.mutate()
+        }}
+        title={t('bot.delete_bot', 'Botu Sil')}
+        description={t('bot.confirm_delete', 'Bu botu kalıcı olarak silmek istediğinize emin misiniz?')}
+        confirmText={t('action.delete', 'Sil')}
+        confirmVariant="danger"
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   )
 }

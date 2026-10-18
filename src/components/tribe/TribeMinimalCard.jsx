@@ -25,6 +25,9 @@ export default function TribeMinimalCard({
   IsDormant: propIsDormantUpper,
   assignedCardIds: propAssignedCardIds,
   AssignedCardIds: propAssignedCardIdsUpper,
+  mission: propMission,
+  Mission: propMissionUpper,
+  showMission = false,
   clickable = true,
   showPoint = true,
   showMindBtn = true,
@@ -39,6 +42,9 @@ export default function TribeMinimalCard({
   const imageUrl = propImageUrl || tribe?.imageUrl || tribe?.ImageUrl
   const isDormant = propIsDormant ?? tribe?.isDormant
   const IsDormant = propIsDormantUpper ?? tribe?.IsDormant
+  const mission = propMission ?? propMissionUpper ?? tribe?.mission ?? tribe?.Mission
+  const rawMissionText = typeof mission === 'string' ? mission.trim() : ''
+  const hasMission = Boolean(rawMissionText)
   useDevLog('TribeMinimalCard', arguments[0] || {})
   const [failedUrl, setFailedUrl] = useState(null)
   const showImage = Boolean(imageUrl) && failedUrl !== imageUrl
@@ -113,6 +119,8 @@ export default function TribeMinimalCard({
     navigate('/tribe/settings?tribeId=' + tribeId)
   }
 
+  const shouldShowMission = showMission && !isCompact && !isUltraCompact && hasMission
+
   return (
     <div
       className={`tribe-card ${isCompact ? 'tribe-card--compact' : 'tribe-card--expanded'}${isDormantTribe ? ' tribe-card--dormant' : ''}`}
@@ -122,6 +130,8 @@ export default function TribeMinimalCard({
         maxWidth: '100%',
         cursor: clickable ? 'pointer' : 'default',
         margin: 0,
+        flexWrap: shouldShowMission ? 'wrap' : undefined,
+        alignSelf: 'start',
         ...style,
       }}
     >
@@ -272,6 +282,15 @@ export default function TribeMinimalCard({
         >
           {tribePoint.toLocaleString()} P
         </span>
+      )}
+
+      {shouldShowMission && (
+        <div
+          className="tribe-card-mission"
+          title={rawMissionText}
+        >
+          {rawMissionText}
+        </div>
       )}
     </div>
   )

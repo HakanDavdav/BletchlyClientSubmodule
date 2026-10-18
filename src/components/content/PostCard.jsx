@@ -58,6 +58,7 @@ export default function PostCard({
 
   const deleteMutation = useMutation({
     mutationFn: () => contentItemApi.deletePost(contentItemId),
+    meta: { showErrorToast: true },
     onSuccess: () => {
       queryClient.invalidateQueries(['feed'])
       if (onDelete) onDelete()

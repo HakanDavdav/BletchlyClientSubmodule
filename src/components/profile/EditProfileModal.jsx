@@ -70,6 +70,7 @@ export default function EditProfileModal({ isOpen, onClose }) {
 
   const editUserMutation = useMutation({
     mutationFn: (data) => actorApi.editUser(data),
+    meta: { showErrorToast: true },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['actorProfile', actorId] })
       onClose()

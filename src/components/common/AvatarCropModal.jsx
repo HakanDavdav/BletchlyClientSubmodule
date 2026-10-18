@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import Cropper from 'react-easy-crop'
 import { ZoomIn, ZoomOut } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -102,15 +103,16 @@ export default function AvatarCropModal({
   }
 
   if (!open || !imageSrc) return null
+  if (typeof document === 'undefined') return null
 
-  return (
+  return createPortal(
     <div
       className="avatar-crop-backdrop"
       onClick={handleBackdropClick}
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 9999,
+        zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -225,6 +227,7 @@ export default function AvatarCropModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

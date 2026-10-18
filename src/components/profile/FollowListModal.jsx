@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { X } from 'lucide-react'
 import { actorApi } from '../../api/actorApi'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
+import ModalHeader from '../common/ModalHeader'
 import useDevLog from '../../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 
@@ -56,17 +56,25 @@ export default function FollowListModal({ actorId, type, isOpen, onClose }) {
       <div 
         className="modal-box" 
         onClick={(e) => e.stopPropagation()} 
-        style={{ maxWidth: 400, height: '60vh', display: 'flex', flexDirection: 'column' }}
+        style={{
+          maxWidth: 420,
+          height: '65vh',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '24px 20px 20px',
+          borderRadius: 16,
+          background: 'var(--color-bg)',
+          border: '1px solid var(--color-border)',
+        }}
       >
-        <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 600 }}>
-            {type === 'followers' ? t('profile.followers', 'Takipçiler') : t('profile.following', 'Takip Edilenler')}
-          </h3>
-          <button className="btn-icon" onClick={onClose}><X size={18} /></button>
-        </div>
+        <ModalHeader
+          title={type === 'followers' ? t('profile.followers', 'Takipçiler') : t('profile.following', 'Takip Edilenler')}
+          onClose={onClose}
+          style={{ padding: '0 0 12px 0', marginBottom: 14 }}
+        />
 
         <div 
-          style={{ flex: 1, overflowY: 'auto', paddingRight: 8 }}
+          style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}
           onScroll={handleScroll}
         >
           {isLoading ? (

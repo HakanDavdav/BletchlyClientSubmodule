@@ -213,6 +213,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
     fetchMyBots,
     fetchMyFollowData,
     fetchMyCards,
+    fetchMySettings,
     hasFetchedOnce,
     clear: clearEntities,
   } = useMyEntitiesStore()
@@ -268,8 +269,9 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
       fetchMyBots()
       fetchMyFollowData()
       fetchMyCards()
+      fetchMySettings()
     }
-  }, [isLoggedIn, hasFetchedOnce, fetchMyTribes, fetchMyBots, fetchMyFollowData, fetchMyCards])
+  }, [isLoggedIn, hasFetchedOnce, fetchMyTribes, fetchMyBots, fetchMyFollowData, fetchMyCards, fetchMySettings])
 
   // Current user profile
   const { data: myProfile } = useQuery({
@@ -362,6 +364,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
 
   const logoutMutation = useMutation({
     mutationFn: () => identityApi.logout(),
+    meta: { showErrorToast: true },
     onSuccess: () => {
       storeLogout()
       clearEntities()
@@ -1769,7 +1772,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                       ))}
                       {(!myTribes || myTribes.length === 0) && (
                         <p className="text-muted" style={{ padding: 8, textAlign: 'center' }}>
-                          {t('topbar.no_tribe')}
+                          {t('common.nothing_here_yet')}
                         </p>
                       )}
                       <div
@@ -1900,7 +1903,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                       ))}
                       {(!myBots || myBots.length === 0) && (
                         <p className="text-muted" style={{ padding: 8, textAlign: 'center' }}>
-                          {t('topbar.no_bot')}
+                          {t('common.nothing_here_yet')}
                         </p>
                       )}
                       <div
@@ -1937,6 +1940,8 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                 </AnimatePresence>
               </div>
 
+              {/* Cards */}
+              <div style={{ position: 'relative' }}>
                 <Link
                   to="/cards"
                   className="btn btn-outline topbar-my-entity-btn"
@@ -1944,25 +1949,36 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                     width: isMobile ? 104 : 84,
                     padding: isMobile ? '3px 6px' : '3px 6px',
                     fontSize: isMobile ? 12.5 : 11,
+                    lineHeight: 'normal',
                     textDecoration: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
                   {t('card.cards', 'Cards')}
                 </Link>
+              </div>
 
               {import.meta.env.VITE_IS_ADMIN_BUILD === 'true' && isAdmin && (
-                <Link
-                  to="/admin/panel"
-                  className="btn btn-outline topbar-my-entity-btn"
-                  style={{
-                    width: isMobile ? 104 : 84,
-                    padding: isMobile ? '3px 6px' : '3px 6px',
-                    fontSize: isMobile ? 12.5 : 11,
-                    textDecoration: 'none',
-                  }}
-                >
-                  Admin
-                </Link>
+                <div style={{ position: 'relative' }}>
+                  <Link
+                    to="/admin/panel"
+                    className="btn btn-outline topbar-my-entity-btn"
+                    style={{
+                      width: isMobile ? 104 : 84,
+                      padding: isMobile ? '3px 6px' : '3px 6px',
+                      fontSize: isMobile ? 12.5 : 11,
+                      lineHeight: 'normal',
+                      textDecoration: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    Admin
+                  </Link>
+                </div>
               )}
             </div>
           </>

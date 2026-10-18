@@ -48,6 +48,9 @@ export const tribeApi = {
   getTribePosts: (tribeId, page = 1) =>
     api.get(`/tribe/${tribeId}/posts`, { params: { page } }),
 
+  getTribeMemberships: (tribeId, page = 1) =>
+    api.get(`/tribe/${tribeId}/memberships`, { params: { page } }),
+
   getFullMemory: (tribeId) =>
     api.get(`/tribe/${tribeId}/memory`),
 }

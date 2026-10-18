@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import {
@@ -8,19 +9,98 @@ import {
   ArrowRight,
   Podium,
 } from 'lucide-react'
-import BackButton from '../components/common/BackButton'
 import BotFlashCardsIcon from '../components/common/icons/BotFlashCardsIcon'
 import AngryBotWithSwordsIcon from '../components/common/icons/AngryBotWithSwordsIcon'
-import Logo from '../components/common/icons/Logo'
 import ArrowCardTravel from '../components/common/ArrowCardTravel'
 import InfoCard from '../components/common/InfoCard'
 import useIsMobile from '../hooks/useIsMobile'
+import useContentCenterLeft from '../hooks/useContentCenterLeft'
 import WelcomeSvg from '../assets/FigmaNew/Welcome.svg?react'
 import ModifierArrowSvg from '../assets/FigmaNew/modifierarrow.svg?react'
+import BackButton from '../components/common/BackButton'
 
 export default function HowItWorksPage() {
   const { t } = useTranslation()
   const isMobile = useIsMobile()
+  const centerLeft = useContentCenterLeft()
+
+  const welcomeRef = useRef(null)
+  const sectionsRef = useRef(null)
+  const [showScrollBtn, setShowScrollBtn] = useState(true)
+  // Giriş metnini görünür alanın tam ortasına oturtmak için hesaplanan yükseklik
+  const [introHeight, setIntroHeight] = useState(null)
+
+  const getTopbarHeight = () =>
+    document.querySelector('.layout-topbar')?.offsetHeight ?? 64
+
+  // Görünür içerik alanı: sabit topbar'ın altından başlar, mobilde tab bar'ın
+  // üstünde biter. Merkez/üst konumları buna göre hesaplanır ki bloklar
+  // görsel olarak tam ortalanabilsin.
+  const getViewportMetrics = () => {
+    const topbarH = getTopbarHeight()
+    const tabbarH = window.innerWidth <= 900 ? 56 : 0
+    return {
+      visTop: topbarH + 16,
+      visCenter: (topbarH + (window.innerHeight - tabbarH)) / 2,
+    }
+  }
+
+  // Sıradaki hedef: önce karşılama (SVG) bloğu, ortalanmadıysa; sonra kartlar
+  // bölümü, üstü görünür alana ulaşmadıysa. Kartlar ekrandan uzun olduğu için
+  // hedeflendiğinde üstten hizalanır (ilk karttan itibaren görünür).
+  const getNextTarget = () => {
+    const { visCenter, visTop } = getViewportMetrics()
+    const welcome = welcomeRef.current
+    if (welcome) {
+      const rect = welcome.getBoundingClientRect()
+      if (rect.top + rect.height / 2 > visCenter + 20) return welcome
+    }
+    const sections = sectionsRef.current
+    if (sections) {
+      const rect = sections.getBoundingClientRect()
+      if (rect.top > visTop + 20) return sections
+    }
+    return null
+  }
+
+  const scrollToNext = () => {
+    const target = getNextTarget()
+    if (!target) return
+    const { visTop, visCenter } = getViewportMetrics()
+    const rect = target.getBoundingClientRect()
+    const isSections = target === sectionsRef.current
+    const anchorY = isSections ? rect.top : rect.top + rect.height / 2
+    const desiredY = isSections ? visTop : visCenter
+    window.scrollTo({
+      top: Math.round(window.scrollY + (anchorY - desiredY)),
+      behavior: 'smooth',
+    })
+  }
+
+  // Giriş bölümünü, metni görünür alanın dikey ortasına getirecek yükseklikte
+  // ayarla (modal'daki introHeight mantığının sayfa karşılığı).
+  useEffect(() => {
+    const recompute = () => {
+      const topbarH = getTopbarHeight()
+      const tabbarH = window.innerWidth <= 900 ? 56 : 0
+      const height = window.innerHeight - topbarH - tabbarH - 32
+      setIntroHeight(Math.max(200, Math.round(height)))
+    }
+    recompute()
+    window.addEventListener('resize', recompute)
+    return () => window.removeEventListener('resize', recompute)
+  }, [])
+
+  useEffect(() => {
+    const update = () => setShowScrollBtn(getNextTarget() !== null)
+    const timer = setTimeout(update, 60)
+    update()
+    window.addEventListener('scroll', update, { passive: true })
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('scroll', update)
+    }
+  }, [])
 
   const sections = [
     {
@@ -37,12 +117,6 @@ export default function HowItWorksPage() {
       desc: t('bletchly_guide.bots_desc'),
       linkText: t('bletchly_guide.bots_link'),
       path: '/create-bot',
-      paragraphs: [
-        t('bot.how_it_works_1'),
-        t('bot.how_it_works_2'),
-        t('bot.how_it_works_3'),
-        t('bot.how_it_works_4'),
-      ],
     },
     {
       icon: <Users size={22} color="var(--color-primary)" />,
@@ -50,11 +124,6 @@ export default function HowItWorksPage() {
       desc: t('bletchly_guide.tribes_desc'),
       linkText: t('bletchly_guide.tribes_link'),
       path: '/create-tribe',
-      paragraphs: [
-        t('tribe.how_it_works_1'),
-        t('tribe.how_it_works_2'),
-        t('tribe.how_it_works_3'),
-      ],
     },
     {
       icon: <BotFlashCardsIcon size={22} style={{ color: 'var(--color-primary)' }} />,
@@ -62,12 +131,6 @@ export default function HowItWorksPage() {
       desc: t('bletchly_guide.cards_desc'),
       linkText: t('bletchly_guide.cards_link'),
       path: '/marketplace',
-      paragraphs: [
-        t('card.how_it_works_1'),
-        t('card.how_it_works_2'),
-        t('card.how_it_works_3'),
-        t('card.how_it_works_4'),
-      ],
     },
     {
       icon: <PackageOpen size={22} color="var(--color-primary)" />,
@@ -75,7 +138,6 @@ export default function HowItWorksPage() {
       desc: t('bletchly_guide.news_desc'),
       linkText: t('bletchly_guide.news_link'),
       path: '/enrich-news',
-      paragraphs: [t('news.how_it_works_1')],
     },
     {
       icon: <Podium size={22} color="var(--color-primary)" />,
@@ -83,13 +145,6 @@ export default function HowItWorksPage() {
       desc: t('bletchly_guide.leaderboard_desc'),
       linkText: t('bletchly_guide.leaderboard_link'),
       path: '/leaderboard',
-      paragraphs: [
-        t('leaderboard.how_it_works_1'),
-        t('leaderboard.how_it_works_2'),
-        t('leaderboard.how_it_works_3'),
-        t('leaderboard.how_it_works_4'),
-        t('leaderboard.how_it_works_5'),
-      ],
     },
     {
       icon: <AngryBotWithSwordsIcon size={22} color="var(--color-primary)" />,
@@ -97,11 +152,6 @@ export default function HowItWorksPage() {
       desc: t('bletchly_guide.debates_desc'),
       linkText: t('bletchly_guide.debates_link'),
       path: '/active-debates',
-      paragraphs: [
-        t('active_debates.how_it_works_1'),
-        t('active_debates.how_it_works_2'),
-        t('active_debates.how_it_works_3'),
-      ],
     },
     {
       icon: (
@@ -126,48 +176,32 @@ export default function HowItWorksPage() {
   return (
     <div
       className="how-it-works-page flex-col gap-4"
-      style={{ paddingBottom: 60, width: '100%' }}
+      style={{ paddingBottom: 60, width: '100%', position: 'relative' }}
     >
-      {/* Back Button */}
-      <div className="flex items-center gap-3 px-2" style={{ marginBottom: 16 }}>
+      <div
+        className="flex items-center gap-3 px-2"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          zIndex: 10,
+        }}
+      >
         <BackButton style={{ marginBottom: 0 }} />
       </div>
 
-      {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 14,
-          marginBottom: 16,
-          paddingBottom: 24,
-          borderBottom: '1px solid var(--color-border)',
-        }}
-      >
-        <div className="page-header-icon">
-          <Logo width={22} height={22} fill="#fff" />
-        </div>
-        <div>
-          <h1
-            style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
-          >
-            {t('bletchly_guide.title')}
-          </h1>
-        </div>
-      </div>
-
-      {/* Intro */}
+      {/* Intro — metin görünür alanın tam ortasında (modal'daki gibi) */}
       <div
         className="guide-intro"
         style={{
+          height: introHeight || 620,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '24px 0 40px',
-          marginBottom: 0,
+          marginBottom: 48,
         }}
       >
-        <p
+        <h1
           style={{
             margin: 0,
             fontSize: 24,
@@ -179,11 +213,12 @@ export default function HowItWorksPage() {
           }}
         >
           {t('bletchly_guide.intro')}
-        </p>
+        </h1>
       </div>
 
       {/* Welcome hierarchy animation */}
       <div
+        ref={welcomeRef}
         className="guide-welcome"
         style={{
           display: 'flex',
@@ -232,6 +267,7 @@ export default function HowItWorksPage() {
 
       {/* Section cards */}
       <div
+        ref={sectionsRef}
         className="guide-grid"
         style={{
           display: 'grid',
@@ -295,19 +331,6 @@ export default function HowItWorksPage() {
               >
                 {sec.desc}
               </p>
-              {sec.paragraphs?.map((p, i) => (
-                <p
-                  key={i}
-                  style={{
-                    margin: 0,
-                    fontSize: 12.5,
-                    color: 'var(--color-text-secondary)',
-                    lineHeight: 1.65,
-                  }}
-                >
-                  {p}
-                </p>
-              ))}
               <div
                 className="guide-card__link"
                 style={{
@@ -318,7 +341,6 @@ export default function HowItWorksPage() {
                   fontSize: 13,
                   fontWeight: 600,
                   marginTop: 'auto',
-                  paddingTop: 8,
                 }}
               >
                 {sec.linkText}
@@ -328,6 +350,22 @@ export default function HowItWorksPage() {
           </Link>
         ))}
       </div>
+
+      {showScrollBtn && (
+        <button
+          type="button"
+          onClick={scrollToNext}
+          aria-label={t('bletchly_guide.scroll_down', 'Aşağı kaydır')}
+          className="page-scroll-btn"
+          style={{
+            position: 'fixed',
+            bottom: 'var(--page-scroll-btn-bottom, 18px)',
+            left: centerLeft ?? '50%',
+          }}
+        >
+          <span aria-hidden="true">▼</span>
+        </button>
+      )}
     </div>
   )
 }

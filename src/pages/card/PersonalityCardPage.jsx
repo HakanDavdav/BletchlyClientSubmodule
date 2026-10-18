@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { personalityCardApi } from '../../api/personalityCardApi'
 import { actorApi } from '../../api/actorApi'
 import { Plus, HelpCircle, X, Check, Save } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import BackButton from '../../components/common/BackButton'
 import useAuthStore from '../../store/authStore'
 import useMyEntitiesStore from '../../store/myEntitiesStore'
@@ -18,12 +18,15 @@ import CardEditComponent from '../../components/card/CardEditComponent'
 
 export default function PersonalityCardPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { actorId } = useAuthStore()
 
   const [isCreating, setIsCreating] = useState(false)
   const [editingCard, setEditingCard] = useState(null)
+  const lastHandledKeyRef = useRef(null)
   const [formData, setFormData] = useState({
     cardName: '',
     personalityPrompt: '',
@@ -45,7 +48,12 @@ export default function PersonalityCardPage() {
     enabled: Boolean(actorId),
   })
 
-  const cardOwnershipLimit = userProfile?.userSettings?.cardOwnershipLimit || 10
+  const storeSettings = useMyEntitiesStore((state) => state.mySettings)
+  const cardOwnershipLimit =
+    userProfile?.userSettings?.cardOwnershipLimit ||
+    storeSettings?.cardOwnershipLimit ||
+    10
+  const isCardLimitReached = myCards.length >= cardOwnershipLimit
 
   const { data: myBots = [], isLoading: isBotsLoading } = useQuery({
     queryKey: ['myBots', actorId],
@@ -53,6 +61,40 @@ export default function PersonalityCardPage() {
     enabled: Boolean(actorId),
     meta: { showErrorToast: true },
   })
+
+  const targetEditCardId = location.state?.editCardId || searchParams.get('editCardId')
+  const passedCard = location.state?.editCard || null
+
+  useEffect(() => {
+    if (!targetEditCardId && !passedCard) return
+    if (lastHandledKeyRef.current === location.key) return
+
+    if (myCards.length > 0 && targetEditCardId) {
+      const match = myCards.find((c) => {
+        const id =
+          c?.personalityCardId ||
+          c?.cardId ||
+          c?.card?.personalityCardId ||
+          c?.card?.cardId ||
+          c?.ownership?.originalCard?.personalityCardId
+        return id && String(id).toLowerCase() === String(targetEditCardId).toLowerCase()
+      })
+      if (match) {
+        lastHandledKeyRef.current = location.key
+        setIsCreating(false)
+        setEditingCard(match)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        return
+      }
+    }
+
+    if (!isCardsLoading && passedCard) {
+      lastHandledKeyRef.current = location.key
+      setIsCreating(false)
+      setEditingCard(passedCard)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [targetEditCardId, passedCard, myCards, isCardsLoading, location.key])
 
   const createMutation = useMutation({
     mutationFn: (data) => personalityCardApi.createCard(data),
@@ -163,12 +205,27 @@ export default function PersonalityCardPage() {
         <div className="page-header-icon page-header-icon--card">
           <BotFlashCardsIcon size={30} color="#fff" />
         </div>
-        <div>
-          <h1
-            style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
-          >
-            {t('card.my_cards', 'Kişilik Kartlarım')}
-          </h1>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <h1
+              style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
+            >
+              {t('card.my_cards', 'Kişilik Kartlarım')}
+            </h1>
+            <span
+              style={{
+                fontSize: 12,
+                padding: '2px 8px',
+                borderRadius: 12,
+                background: isCardLimitReached ? 'rgba(239,68,68,0.15)' : 'var(--color-surface-raised)',
+                color: isCardLimitReached ? '#ef4444' : 'var(--color-text-secondary)',
+                border: `1px solid ${isCardLimitReached ? '#ef4444' : 'var(--color-border)'}`,
+                fontWeight: 600,
+              }}
+            >
+              {myCards.length} / {cardOwnershipLimit} {t('common.card', 'Kart')}
+            </span>
+          </div>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
             {t('card.my_cards_desc', 'Oluşturduğunuz ve satın aldığınız kişilik kartları')}
           </p>

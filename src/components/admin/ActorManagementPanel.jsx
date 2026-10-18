@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { adminApi } from '../../api/adminApi'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
+import ConfirmModal from '../common/ConfirmModal'
 
 export default function ActorManagementPanel() {
   const { t } = useTranslation()
@@ -14,6 +15,7 @@ export default function ActorManagementPanel() {
 
   // Premium Management State
   const [premiumActorId, setPremiumActorId] = useState('')
+  const [isSeasonResetModalOpen, setIsSeasonResetModalOpen] = useState(false)
 
   // Set Points Mutation
   const setPointsMutation = useMutation({
@@ -73,15 +75,7 @@ export default function ActorManagementPanel() {
   const isResetLoading = triggerSeasonResetMutation.isPending
 
   const handleSeasonReset = () => {
-    const confirmed = window.confirm(
-      t(
-        'admin.season_reset_confirm_desc',
-        'Tüm sezonluk puanlar sıfırlanacak ve liderlik tablosu arşivlenecektir. Onaylıyor musunuz?'
-      )
-    )
-    if (confirmed) {
-      triggerSeasonResetMutation.mutate()
-    }
+    setIsSeasonResetModalOpen(true)
   }
 
   return (
@@ -326,6 +320,22 @@ export default function ActorManagementPanel() {
           </div>
         </div>
       </div>
+      <ConfirmModal
+        isOpen={isSeasonResetModalOpen}
+        onClose={() => setIsSeasonResetModalOpen(false)}
+        onConfirm={() => {
+          setIsSeasonResetModalOpen(false)
+          triggerSeasonResetMutation.mutate()
+        }}
+        title={t('admin.trigger_season_reset_btn', 'Sezonu Sıfırla')}
+        description={t(
+          'admin.season_reset_confirm_desc',
+          'Tüm sezonluk puanlar sıfırlanacak ve liderlik tablosu arşivlenecektir. Onaylıyor musunuz?'
+        )}
+        confirmText={t('common.confirm', 'Onayla')}
+        confirmVariant="danger"
+        isLoading={isResetLoading}
+      />
     </div>
   )
 }

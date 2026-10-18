@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   LogOut,
   UserPlus,
@@ -54,14 +55,32 @@ export default function TribePage() {
   const [tribeImgFailed, setTribeImgFailed] = useState(false)
   // Fosil (dormant) üyeler varsayılan olarak gizli.
   const [showFossilMembers, setShowFossilMembers] = useState(false)
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false)
   // Limitler & Miras paneli açma/kapama durumu (ProfilePage ile ORTAK global state)
   const { isLimitsExpanded, toggleLimits } = useUIStore()
+
+  // Ekstra yüklenen klan üyeleri
+  const [extraMembers, setExtraMembers] = useState([])
+  const [membersPage, setMembersPage] = useState(1)
+  const [hasMoreMembers, setHasMoreMembers] = useState(true)
+  const [isLoadingMoreMembers, setIsLoadingMoreMembers] = useState(false)
 
   const { data: tribe, isLoading } = useQuery({
     queryKey: ['tribe', tribeId],
     queryFn: () => tribeApi.getTribe(tribeId).then((r) => r.data?.data ?? null),
     enabled: !!tribeId,
   })
+
+  // Birleştirilmiş üyeler listesi (default gelen ilk 10 + sonradan loadMore ile çekilenler)
+  const allMembers = useMemo(() => {
+    const base = tribe?.tribeMemberships || []
+    if (extraMembers.length === 0) return base
+    const seen = new Set(base.map((m) => m.actor?.actorId).filter(Boolean))
+    const uniqueExtras = extraMembers.filter(
+      (m) => m.actor?.actorId && !seen.has(m.actor.actorId)
+    )
+    return [...base, ...uniqueExtras]
+  }, [tribe?.tribeMemberships, extraMembers])
 
   const sortedTribeCards = useMemo(
     () => sortCardsOwnedFirst(tribe?.personalityCards || [], buildOwnedCardIdSet(myCards || [])),
@@ -74,15 +93,38 @@ export default function TribePage() {
   const visibleMembers = useMemo(
     () =>
       showFossilMembers
-        ? tribe?.tribeMemberships || []
-        : (tribe?.tribeMemberships || []).filter((m) => !isDormantMember(m)),
-    [tribe, showFossilMembers]
+        ? allMembers
+        : allMembers.filter((m) => !isDormantMember(m)),
+    [allMembers, showFossilMembers]
   )
 
   const fossilMemberCount = useMemo(
-    () => (tribe?.tribeMemberships || []).filter((m) => isDormantMember(m)).length,
-    [tribe]
+    () => allMembers.filter((m) => isDormantMember(m)).length,
+    [allMembers]
   )
+
+  const handleLoadMoreMembers = async () => {
+    if (isLoadingMoreMembers || !hasMoreMembers) return
+    setIsLoadingMoreMembers(true)
+    const nextPage = membersPage + 1
+    try {
+      const res = await tribeApi.getTribeMemberships(tribeId, nextPage)
+      const data = res.data?.data || []
+      if (data.length < 10) {
+        setHasMoreMembers(false)
+      }
+      if (data.length > 0) {
+        setExtraMembers((prev) => [...prev, ...data])
+        setMembersPage(nextPage)
+      } else {
+        setHasMoreMembers(false)
+      }
+    } catch {
+      setHasMoreMembers(false)
+    } finally {
+      setIsLoadingMoreMembers(false)
+    }
+  }
 
   const { data: postsData, isLoading: isPostsLoading } = useQuery({
     queryKey: ['tribe-posts', tribeId, postsPage],
@@ -92,6 +134,7 @@ export default function TribePage() {
 
   const joinMutation = useMutation({
     mutationFn: () => tribeApi.joinTribe(tribeId),
+    meta: { showErrorToast: true },
     onSuccess: () => {
       queryClient.invalidateQueries(['tribe', tribeId])
       useMyEntitiesStore.getState().fetchMyTribes()
@@ -100,6 +143,7 @@ export default function TribePage() {
 
   const leaveMutation = useMutation({
     mutationFn: () => tribeApi.leaveTribe(tribeId),
+    meta: { showErrorToast: true },
     onSuccess: () => {
       queryClient.invalidateQueries(['tribe', tribeId])
       useMyEntitiesStore.getState().fetchMyTribes()
@@ -193,10 +237,59 @@ export default function TribePage() {
     <div className="flex-col gap-4">
       <div className="flex items-center gap-3 px-2" style={{ marginBottom: 8 }}>
         <BackButton style={{ marginBottom: 0 }} />
+        <button
+          type="button"
+          className="btn-icon"
+          onClick={() => setIsHeaderCollapsed((prev) => !prev)}
+          title={isHeaderCollapsed ? t('common.expand', 'Genişlet') : t('common.collapse', 'Daralt')}
+          aria-label={isHeaderCollapsed ? t('common.expand', 'Genişlet') : t('common.collapse', 'Daralt')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 34,
+            height: 34,
+            padding: 0,
+            cursor: 'pointer',
+          }}
+        >
+          <span
+            aria-hidden="true"
+            style={{
+              fontSize: 13,
+              lineHeight: 1,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transform: isHeaderCollapsed ? 'none' : 'rotate(180deg)',
+              transformOrigin: '50% 50%',
+              transition: 'transform 0.2s ease',
+            }}
+          >
+            ▼
+          </span>
+        </button>
       </div>
 
-      {/* ─── Tribe Header ─── */}
-      <div className={`profile-header-card${isDormant ? ' profile-header-card--dormant' : ''}`}>
+      {/* ─── Collapsible Tribe Header & Members Block ─── */}
+      <AnimatePresence initial={false}>
+        {!isHeaderCollapsed && (
+          <motion.div
+            key="tribe-header-collapsible"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            style={{
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 16,
+              marginBottom: 16,
+            }}
+          >
+            {/* ─── Tribe Header ─── */}
+            <div className={`profile-header-card${isDormant ? ' profile-header-card--dormant' : ''}`}>
         <div
           className="flex justify-between profile-header-row"
           style={{ gap: 20, width: '100%', alignItems: 'stretch', marginBottom: -6 }}
@@ -245,6 +338,8 @@ export default function TribePage() {
               {tribe.topicTypes && tribe.topicTypes.length > 0 && (
                 <div style={{ marginTop: 12 }}>
                   <TopicTagList
+                    clickable
+                    max={20}
                     topicTypes={tribe.topicTypes
                       .map((tt) => {
                         const match = TopicTypes.find(
@@ -555,7 +650,7 @@ export default function TribePage() {
             className="profile-limits-toggle"
             onClick={toggleLimits}
             aria-expanded={isLimitsExpanded}
-            aria-label={isLimitsExpanded ? 'Limitleri Gizle' : 'Limitleri Göster'}
+            aria-label={isLimitsExpanded ? t('profile.hide_limits', 'Limitleri Gizle') : t('profile.show_limits', 'Limitleri Göster')}
           >
             <span
               aria-hidden="true"
@@ -730,7 +825,7 @@ export default function TribePage() {
 
       <div className="flex-col gap-2">
         {visibleMembers.length === 0 && fossilMemberCount === 0 ? (
-          <p className="empty-state">{t('tribe.no_members')}</p>
+          <p className="empty-state">{t('common.nothing_here_yet')}</p>
         ) : (
           visibleMembers.map((member) =>
             member.actor ? (
@@ -756,10 +851,45 @@ export default function TribePage() {
             ) : null
           )
         )}
+
+        {/* ─── Daha Fazla Üye Yükleme Butonu (Site genelindeki standart ▼ icon butonu) ─── */}
+        {hasMoreMembers && (tribe.memberCount ?? 0) > visibleMembers.length && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10, width: '100%' }}>
+            <button
+              type="button"
+              className="profile-limits-toggle"
+              onClick={handleLoadMoreMembers}
+              disabled={isLoadingMoreMembers}
+              aria-label={t('common.load_more', 'Daha Fazla Göster')}
+              style={{
+                width: '100%',
+                padding: '10px 0',
+                marginTop: 6,
+                marginBottom: 0,
+                opacity: isLoadingMoreMembers ? 0.6 : 1,
+              }}
+            >
+              <span
+                aria-hidden="true"
+                className="profile-limits-toggle__chevron"
+                style={{
+                  fontSize: 13,
+                  display: 'inline-block',
+                  animation: isLoadingMoreMembers ? 'pulse 1s infinite' : 'none',
+                }}
+              >
+                ▼
+              </span>
+            </button>
+          </div>
+        )}
       </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ─── Posts Section ─── */}
-      <div className="profile-tabs-container" style={{ marginTop: 24 }}>
+      <div className="profile-tabs-container" style={{ marginTop: 8 }}>
         <div className="profile-tab-group">
           <button className="profile-tab-btn active" style={{ cursor: 'default' }}>
             {t('profile.posts')} ({tribe.postCount ?? 0})
@@ -795,7 +925,7 @@ export default function TribePage() {
         {isPostsLoading ? (
           <div className="spinner spinner-md" style={{ margin: '40px auto', display: 'block' }} />
         ) : !postsData || postsData.length === 0 ? (
-          <p className="empty-state">{t('tribe.empty_posts')}</p>
+          <p className="empty-state">{t('common.nothing_here_yet')}</p>
         ) : (
           <div className="flex-col gap-4">
             {postsData.map((p) => (

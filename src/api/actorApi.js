@@ -4,8 +4,7 @@ import api from './axios'
 
 export const actorApi = {
   // ─── Profile ─────────────────────────────────────────────────────────────
-  getProfile: (actorId) =>
-    api.get(`/actor/profile/${actorId}`),
+  getProfile: (actorId) => api.get(`/actor/profile/${actorId}`),
 
   getProfileEntries: (actorId, page = 1) =>
     api.get(`/actor/profile/${actorId}/entries`, { params: { page } }),
@@ -32,79 +31,60 @@ export const actorApi = {
   // ─── Follow ──────────────────────────────────────────────────────────────
   getFollowData: () => api.get('/actor/follow-data'),
 
-  follow: (actorId) =>
-    api.post(`/actor/follow/${actorId}`),
+  follow: (actorId) => api.post(`/actor/follow/${actorId}`),
 
-  unfollow: (actorId) =>
-    api.delete(`/actor/unfollow/${actorId}`),
+  unfollow: (actorId) => api.delete(`/actor/unfollow/${actorId}`),
 
   // ─── Activities ──────────────────────────────────────────────────────────
-  getActivities: (actorId, page = 1) =>
-    api.get('/actor/activities', { params: { actorId, page } }),
+  getActivities: (actorId, page = 1) => api.get('/actor/activities', { params: { actorId, page } }),
 
-  getUnreadActivityCount: () =>
-    api.get('/actor/activities/unread-count'),
+  getUnreadActivityCount: () => api.get('/actor/activities/unread-count'),
 
-  markActivitiesRead: (activityIds) =>
-    api.post('/actor/activities/mark-read', activityIds),
+  markActivitiesRead: (activityIds) => api.post('/actor/activities/mark-read', activityIds),
 
   // ─── Bot ─────────────────────────────────────────────────────────────────
-  createBot: (dto) =>
-    api.post('/actor/create-bot', dto),
+  createBot: (dto) => api.post('/actor/create-bot', dto),
 
-  editBot: (botId, dto) =>
-    api.put(`/actor/edit-bot/${botId}`, dto),
+  editBot: (botId, dto) => api.put(`/actor/edit-bot/${botId}`, dto),
 
-  deleteBot: (botId) =>
-    api.delete(`/actor/delete-bot/${botId}`),
+  deleteBot: (botId) => api.delete(`/actor/delete-bot/${botId}`),
 
   // ─── User Profile Edit ───────────────────────────────────────────────────
-  editUser: (dto) =>
-    api.put('/actor/edit-user', dto),
+  editUser: (dto) => api.put('/actor/edit-user', dto),
 
   // ─── My Bots ─────────────────────────────────────────────────────────────
-  getMyBots: () =>
-    api.get('/actor/my-bots'),
+  getMyBots: () => api.get('/actor/my-bots'),
 
   // ─── Memory ──────────────────────────────────────────────────────────────
-  getFullMemory: (actorId) =>
-    api.get(`/actor/full-memory/${actorId}`),
+  getFullMemory: (actorId) => api.get(`/actor/full-memory/${actorId}`),
 
   // ─── News Pool ───────────────────────────────────────────────────────────
   enrichNewsPool: (content) =>
     api.post('/actor/enrich-news-pool', JSON.stringify(content), {
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
     }),
 
   // ─── Debate ──────────────────────────────────────────────────────────────
-  triggerDebate: (dto) =>
-    api.post('/actor/trigger-debate', dto),
+  triggerDebate: (dto) => api.post('/actor/trigger-debate', dto),
 
-  acceptDebate: (debateId) =>
-    api.post(`/actor/accept-debate/${debateId}`),
+  acceptDebate: (debateId) => api.post(`/actor/accept-debate/${debateId}`),
 
-  declineDebate: (debateId) =>
-    api.post(`/actor/decline-debate/${debateId}`),
+  declineDebate: (debateId) => api.post(`/actor/decline-debate/${debateId}`),
 
-  getDebates: (actorId, page = 1) =>
-    api.get('/actor/debates', { params: { actorId, page } }),
+  getDebates: (actorId, page = 1) => api.get('/actor/debates', { params: { actorId, page } }),
 
-  getMyDebates: (actorId, page = 1) =>
-    api.get('/actor/my-debates', { params: { actorId, page } }),
+  getMyDebates: (actorId, page = 1) => api.get('/actor/my-debates', { params: { actorId, page } }),
 
-  getDebateById: (debateId) =>
-    api.get(`/actor/debate/${debateId}`),
+  getDebateById: (debateId) => api.get(`/actor/debate/${debateId}`),
 
   // ─── Settings ────────────────────────────────────────────────────────────
-  getUserSettings: () =>
-    api.get('/actor/user-settings'),
+  getUserSettings: () => api.get('/actor/user-settings'),
 
-  getBotSettings: (botId) =>
-    api.get(`/actor/bot-settings/${botId}`),
+  getBotSettings: (botId) => api.get(`/actor/bot-settings/${botId}`),
 
   // ─── Theme ───────────────────────────────────────────────────────────────
   selectTheme: (theme, targetActorId = null) =>
     api.put(`/actor/select-theme/${theme}`, null, {
-      params: targetActorId ? { targetActorId } : {}
+      params: targetActorId ? { targetActorId } : {},
     }),
 }

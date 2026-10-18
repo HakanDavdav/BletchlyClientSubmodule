@@ -1,510 +1,502 @@
-      "Space"
-    ]
+[2026-10-16T18:55:15.133Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T18:55:16.105Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T18:55:16.118Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T18:55:16.136Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
   }
 }
-[2026-10-14T04:33:00.866Z] [LOG] [API ✓] GET /tribe/load {
-  "data": [
-    {
-      "tribeId": "b99deab0-bcf1-4abd-aa67-3c4e41070039",
-      "tribeActorPoint": 1280,
-      "tribeGrade": 4,
-      "tribeName": "Ledner - Jerde3bey",
-      "imageUrl": "https://ipfs.io/ipfs/Qmd3W5DuhgHirLHGVixi6V76LhCkZUz6pnFt5AJBiyvHye/avatar/30.jpg",
-      "isDormant": false,
-      "assignedCardIds": [
-        "7e7bd742-251c-4a04-882a-b01543f9f9ed"
-      ],
-      "topicTypes": [
-        {
-          "topicTypeId": "0585a4b6-8f26-4203-a9f7-be6bbb15128d",
-          "topicTypeName": 512
-        },
-        {
-          "topicTypeId": "2a991ccc-5fbe-40af-897e-8abb1bc51a06",
-          "topicTypeName": 16
-        },
-        {
-          "topicTypeId": "49187760-2636-4e1a-bbe2-aef762886c34",
-          "topicTypeName": 32
-        }
-      ]
-    },
-    {
-      "tribeId": "01a0e896-f8d5-7a9e-b8f0-7bf76b0f626e",
-      "tribeActorPoint": 1330,
-      "tribeGrade": 4,
-      "tribeName": "TestTribe_00921291",
-      "imageUrl": null,
-      "isDormant": false,
-      "assignedCardIds": [
-        "3357ddfe-a8b8-43ce-a9a0-622bf1d72be8"
-      ],
-      "topicTypes": [
-        {
-          "topicTypeId": "f9f521b5-61b5-4a0f-a173-17b78337da79",
-          "topicTypeName": 65536
-        },
-        {
-          "topicTypeId": "2874613d-3c5e-4915-ad21-a879c5b60b2a",
-          "topicTypeName": 16384
-        },
-        {
-          "topicTypeId": "8f2c87de-9f1a-4a0d-bc69-48ebf9957810",
-          "topicTypeName": 256
-        }
-      ]
-    },
-    {
-      "tribeId": "614120f2-484a-4b63-ad52-068e36cfb98e",
-      "tribeActorPoint": 0,
-      "tribeGrade": 4,
-      "tribeName": "Green - Dachdtm2",
-      "imageUrl": "https://ipfs.io/ipfs/Qmd3W5DuhgHirLHGVixi6V76LhCkZUz6pnFt5AJBiyvHye/avatar/435.jpg",
-      "isDormant": false,
-      "assignedCardIds": [],
-      "topicTypes": [
-        {
-          "topicTypeId": "8f2c87de-9f1a-4a0d-bc69-48ebf9957810",
-          "topicTypeName": 256
-        },
-        {
-          "topicTypeId": "ac0432b2-b1fe-40e5-bdfa-e53ed9730a71",
-          "topicTypeName": 2048
-        },
-        {
-          "topicTypeId": "49187760-2636-4e1a-bbe2-aef762886c34",
-          "topicTypeName": 32
-        }
-      ]
-    },
-    {
-      "tribeId": "907e3607-2965-4d9b-b3de-1c236b37846d",
-      "tribeActorPoint": 0,
-      "tribeGrade": 4,
-      "tribeName": "Wehner, Klein and Kreiger",
-      "imageUrl": "https://ipfs.io/ipfs/Qmd3W5DuhgHirLHGVixi6V76LhCkZUz6pnFt5AJBiyvHye/avatar/330.jpg",
-      "isDormant": false,
-      "assignedCardIds": [],
-      "topicTypes": [
-        {
-          "topicTypeId": "d37a329f-a2b2-4a5f-8b0f-f7936dc8cb0e",
-          "topicTypeName": 1
-        },
-        {
-          "topicTypeId": "49187760-2636-4e1a-bbe2-aef762886c34",
-          "topicTypeName": 32
-        },
-        {
-          "topicTypeId": "0bdc6025-1295-41e4-8a06-e61f650f4ac0",
-          "topicTypeName": 1024
-        }
-      ]
-    },
-    {
-      "tribeId": "c08b771f-2b86-43ec-a4e3-616ada3ce18c",
-      "tribeActorPoint": 1280,
-      "tribeGrade": 4,
-      "tribeName": "Jenkins - Hansenu1f7",
-      "imageUrl": "https://ipfs.io/ipfs/Qmd3W5DuhgHirLHGVixi6V76LhCkZUz6pnFt5AJBiyvHye/avatar/904.jpg",
-      "isDormant": false,
-      "assignedCardIds": [],
-      "topicTypes": [
-        {
-          "topicTypeId": "49187760-2636-4e1a-bbe2-aef762886c34",
-          "topicTypeName": 32
-        },
-        {
-          "topicTypeId": "d37a329f-a2b2-4a5f-8b0f-f7936dc8cb0e",
-          "topicTypeName": 1
-        },
-        {
-          "topicTypeId": "90e398bf-c5e6-446f-93d6-f48b6bc24977",
-          "topicTypeName": 64
-        }
-      ]
-    },
-    {
-      "tribeId": "480e9ea2-4728-4b34-b1ae-877d4906c3fb",
-      "tribeActorPoint": 0,
-      "tribeGrade": 4,
-      "tribeName": "Lesch - Gaylord5kqy",
-      "imageUrl": "https://ipfs.io/ipfs/Qmd3W5DuhgHirLHGVixi6V76LhCkZUz6pnFt5AJBiyvHye/avatar/1200.jpg",
-      "isDormant": false,
-      "assignedCardIds": [],
-      "topicTypes": [
-        {
-          "topicTypeId": "c7e3f775-81c4-4b9c-81f3-d3dec6caa18f",
-          "topicTypeName": 4096
-        },
-        {
-          "topicTypeId": "8f2c87de-9f1a-4a0d-bc69-48ebf9957810",
-          "topicTypeName": 256
-        },
-        {
-          "topicTypeId": "d37a329f-a2b2-4a5f-8b0f-f7936dc8cb0e",
-          "topicTypeName": 1
-        }
-      ]
-    },
-    {
-      "tribeId": "27c03fb0-f847-400c-b831-df1f4ae54943",
-      "tribeActorPoint": 0,
-      "tribeGrade": 4,
-      "tribeName": "The Echoists",
-      "imageUrl": "/avatars/50902cf816f448fc9ed4482cd8d5254a.png",
-      "isDormant": true,
-      "assignedCardIds": [
-        "a096361b-946b-4f11-acd4-073a24f0dbe5"
-      ],
-      "topicTypes": [
-        {
-          "topicTypeId": "31caffd7-bf4a-4d2c-8900-d65fc3bb63c7",
-          "topicTypeName": 128
-        },
-        {
-          "topicTypeId": "c7e3f775-81c4-4b9c-81f3-d3dec6caa18f",
-          "topicTypeName": 4096
-        },
-        {
-          "topicTypeId": "8f2c87de-9f1a-4a0d-bc69-48ebf9957810",
-          "topicTypeName": 256
-        }
-      ]
-    },
-    {
-      "tribeId": "8ca4ef0e-5565-4fbf-95a9-641fd626b5e7",
-      "tribeActorPoint": 2610,
-      "tribeGrade": 4,
-      "tribeName": "The Veilkeepers",
-      "imageUrl": "/avatars/e8818c36e82d455088ff8b3e1ec5c94c.png",
-      "isDormant": false,
-      "assignedCardIds": [
-        "45cd8c6b-431b-4d42-b8df-57b675ca6bbd"
-      ],
-      "topicTypes": [
-        {
-          "topicTypeId": "0bdc6025-1295-41e4-8a06-e61f650f4ac0",
-          "topicTypeName": 1024
-        },
-        {
-          "topicTypeId": "f9f521b5-61b5-4a0f-a173-17b78337da79",
-          "topicTypeName": 65536
-        },
-        {
-          "topicTypeId": "49187760-2636-4e1a-bbe2-aef762886c34",
-          "topicTypeName": 32
-        }
-      ]
-    },
-    {
-      "tribeId": "af5e5c9b-e79f-4a4c-9665-5d9c03c868b0",
-      "tribeActorPoint": 0,
-      "tribeGrade": 4,
-      "tribeName": "The Obsidian Lens",
-      "imageUrl": "/avatars/0529a53bbd96485cba0def1b7d232409.png",
-      "isDormant": true,
-      "assignedCardIds": [
-        "afe0a9d4-3f2b-4138-89ea-5303e0e43275"
-      ],
-      "topicTypes": [
-        {
-          "topicTypeId": "f9f521b5-61b5-4a0f-a173-17b78337da79",
-          "topicTypeName": 65536
-        },
-        {
-          "topicTypeId": "8f2c87de-9f1a-4a0d-bc69-48ebf9957810",
-          "topicTypeName": 256
-        },
-        {
-          "topicTypeId": "d37a329f-a2b2-4a5f-8b0f-f7936dc8cb0e",
-          "topicTypeName": 1
-        }
-      ]
-    },
-    {
-      "tribeId": "07302cbc-f899-488f-a81b-6e85bc503e5b",
-      "tribeActorPoint": 1280,
-      "tribeGrade": 4,
-      "tribeName": "Velvet Rebellion",
-      "imageUrl": "/avatars/34498c07d0444e238e3747db32437d3f.png",
-      "isDormant": false,
-      "assignedCardIds": [
-        "4e5f7386-0091-4de1-a8c6-bc8346974ae3"
-      ],
-      "topicTypes": [
-        {
-          "topicTypeId": "d37a329f-a2b2-4a5f-8b0f-f7936dc8cb0e",
-          "topicTypeName": 1
-        },
-        {
-          "topicTypeId": "1390e27b-1986-4b6b-8839-ecc57d169a2c",
-          "topicTypeName": 32768
-        },
-        {
-          "topicTypeId": "49187760-2636-4e1a-bbe2-aef762886c34",
-          "topicTypeName": 32
-        }
-      ]
-    },
-    {
-      "tribeId": "10822189-1007-42ed-a881-eebaeea40c0e",
-      "tribeActorPoint": 0,
-      "tribeGrade": 4,
-      "tribeName": "Turcotte, Lynch and Stant",
-      "imageUrl": "https://ipfs.io/ipfs/Qmd3W5DuhgHirLHGVixi6V76LhCkZUz6pnFt5AJBiyvHye/avatar/59.jpg",
-      "isDormant": true,
-      "assignedCardIds": [],
-      "topicTypes": [
-        {
-          "topicTypeId": "8f2c87de-9f1a-4a0d-bc69-48ebf9957810",
-          "topicTypeName": 256
-        },
-        {
-          "topicTypeId": "9a43bfbb-494d-40fb-8e42-e8d0ddc485b7",
-          "topicTypeName": 4
-        },
-        {
-          "topicTypeId": "0bdc6025-1295-41e4-8a06-e61f650f4ac0",
-          "topicTypeName": 1024
-        }
-      ]
-    },
-    {
-      "tribeId": "26b6d0ec-a5aa-45a0-be73-336b541e0a9c",
-      "tribeActorPoint": 1280,
-      "tribeGrade": 4,
-      "tribeName": "The Shadow Lure",
-      "imageUrl": "/avatars/afb0797ba9fc49eba4556ad9340f5613.png",
-      "isDormant": false,
-      "assignedCardIds": [
-        "d830b1c5-881d-424f-bbad-31191e4213df"
-      ],
-      "topicTypes": [
-        {
-          "topicTypeId": "f9f521b5-61b5-4a0f-a173-17b78337da79",
-          "topicTypeName": 65536
-        },
-        {
-          "topicTypeId": "8f2c87de-9f1a-4a0d-bc69-48ebf9957810",
-          "topicTypeName": 256
-        },
-        {
-          "topicTypeId": "1390e27b-1986-4b6b-8839-ecc57d169a2c",
-          "topicTypeName": 32768
-        }
-      ]
-    },
-    {
-      "tribeId": "2b47fa5f-14e6-4489-9873-aa032b873cb2",
-      "tribeActorPoint": 0,
-      "tribeGrade": 4,
-      "tribeName": "Harber and Sonsr4iv",
-      "imageUrl": "https://ipfs.io/ipfs/Qmd3W5DuhgHirLHGVixi6V76LhCkZUz6pnFt5AJBiyvHye/avatar/644.jpg",
-      "isDormant": true,
-      "assignedCardIds": [],
-      "topicTypes": [
-        {
-          "topicTypeId": "49187760-2636-4e1a-bbe2-aef762886c34",
-          "topicTypeName": 32
-        },
-        {
-          "topicTypeId": "ac0432b2-b1fe-40e5-bdfa-e53ed9730a71",
-          "topicTypeName": 2048
-        },
-        {
-          "topicTypeId": "f9f521b5-61b5-4a0f-a173-17b78337da79",
-          "topicTypeName": 65536
-        }
-      ]
-    },
-    {
-      "tribeId": "92ad9263-958d-4113-86e5-f55f6f3520f9",
-      "tribeActorPoint": 0,
-      "tribeGrade": 4,
-      "tribeName": "Feeney - Schoenss7u",
-      "imageUrl": "https://ipfs.io/ipfs/Qmd3W5DuhgHirLHGVixi6V76LhCkZUz6pnFt5AJBiyvHye/avatar/246.jpg",
-      "isDormant": true,
-      "assignedCardIds": [],
-      "topicTypes": [
-        {
-          "topicTypeId": "2a991ccc-5fbe-40af-897e-8abb1bc51a06",
-          "topicTypeName": 16
-        },
-        {
-          "topicTypeId": "49187760-2636-4e1a-bbe2-aef762886c34",
-          "topicTypeName": 32
-        },
-        {
-          "topicTypeId": "f9521e47-6cc7-4b0e-8133-93b92c767f7f",
-          "topicTypeName": 8
-        }
-      ]
-    },
-    {
-      "tribeId": "934eb0cd-29f2-44de-abe0-e005a92cfc6b",
-      "tribeActorPoint": 0,
-      "tribeGrade": 4,
-      "tribeName": "Anderson - Schimmelxhh6",
-      "imageUrl": "https://ipfs.io/ipfs/Qmd3W5DuhgHirLHGVixi6V76LhCkZUz6pnFt5AJBiyvHye/avatar/1178.jpg",
-      "isDormant": true,
-      "assignedCardIds": [],
-      "topicTypes": [
-        {
-          "topicTypeId": "8f2c87de-9f1a-4a0d-bc69-48ebf9957810",
-          "topicTypeName": 256
-        },
-        {
-          "topicTypeId": "ac0432b2-b1fe-40e5-bdfa-e53ed9730a71",
-          "topicTypeName": 2048
-        },
-        {
-          "topicTypeId": "f9f521b5-61b5-4a0f-a173-17b78337da79",
-          "topicTypeName": 65536
-        }
-      ]
-    },
-    {
-      "tribeId": "9627b7bf-7e69-4ef4-ab75-873bc67e5dd9",
-      "tribeActorPoint": 0,
-      "tribeGrade": 4,
-      "tribeName": "Dicki LLColcm",
-      "imageUrl": "https://ipfs.io/ipfs/Qmd3W5DuhgHirLHGVixi6V76LhCkZUz6pnFt5AJBiyvHye/avatar/456.jpg",
-      "isDormant": true,
-      "assignedCardIds": [],
-      "topicTypes": [
-        {
-          "topicTypeId": "2a991ccc-5fbe-40af-897e-8abb1bc51a06",
-          "topicTypeName": 16
-        },
-        {
-          "topicTypeId": "8f2c87de-9f1a-4a0d-bc69-48ebf9957810",
-          "topicTypeName": 256
-        },
-        {
-          "topicTypeId": "90e398bf-c5e6-446f-93d6-f48b6bc24977",
-          "topicTypeName": 64
-        }
-      ]
-    },
-    {
-      "tribeId": "a4a5616a-0c5e-42f8-a15b-87a321684b7f",
-      "tribeActorPoint": 0,
-      "tribeGrade": 4,
-      "tribeName": "Jakubowski and Sonsuguz",
-      "imageUrl": "https://ipfs.io/ipfs/Qmd3W5DuhgHirLHGVixi6V76LhCkZUz6pnFt5AJBiyvHye/avatar/313.jpg",
-      "isDormant": true,
-      "assignedCardIds": [],
-      "topicTypes": [
-        {
-          "topicTypeId": "f9f521b5-61b5-4a0f-a173-17b78337da79",
-          "topicTypeName": 65536
-        },
-        {
-          "topicTypeId": "49187760-2636-4e1a-bbe2-aef762886c34",
-          "topicTypeName": 32
-        },
-        {
-          "topicTypeId": "31caffd7-bf4a-4d2c-8900-d65fc3bb63c7",
-          "topicTypeName": 128
-        }
-      ]
-    },
-    {
-      "tribeId": "b225e7ca-aed4-4a4d-b8a8-92d6c703e570",
-      "tribeActorPoint": 0,
-      "tribeGrade": 4,
-      "tribeName": "Alabama Sweethearts",
-      "imageUrl": "/avatars/c0f9b7d56f69406dae1f455eba7dbdc5.png",
-      "isDormant": true,
-      "assignedCardIds": [
-        "3db9f886-9d77-4063-a4e6-1cc83dfdd444"
-      ],
-      "topicTypes": [
-        {
-          "topicTypeId": "f6df4648-f163-4e9b-83f1-c91305311843",
-          "topicTypeName": 8192
-        },
-        {
-          "topicTypeId": "8f2c87de-9f1a-4a0d-bc69-48ebf9957810",
-          "topicTypeName": 256
-        },
-        {
-          "topicTypeId": "2a991ccc-5fbe-40af-897e-8abb1bc51a06",
-          "topicTypeName": 16
-        }
-      ]
-    },
-    {
-      "tribeId": "b726410b-2d58-424e-8e1e-a03b1f2ce679",
-      "tribeActorPoint": 0,
-      "tribeGrade": 4,
-      "tribeName": "Heidenreich and Sons2q91",
-      "imageUrl": "https://ipfs.io/ipfs/Qmd3W5DuhgHirLHGVixi6V76LhCkZUz6pnFt5AJBiyvHye/avatar/436.jpg",
-      "isDormant": true,
-      "assignedCardIds": [],
-      "topicTypes": [
-        {
-          "topicTypeId": "f6df4648-f163-4e9b-83f1-c91305311843",
-          "topicTypeName": 8192
-        },
-        {
-          "topicTypeId": "d37a329f-a2b2-4a5f-8b0f-f7936dc8cb0e",
-          "topicTypeName": 1
-        },
-        {
-          "topicTypeId": "49187760-2636-4e1a-bbe2-aef762886c34",
-          "topicTypeName": 32
-        }
-      ]
-    },
-    {
-      "tribeId": "c4b4e230-040b-4a89-b680-cd94d9a047de",
-      "tribeActorPoint": 0,
-      "tribeGrade": 4,
-      "tribeName": "The Obsidian Echo",
-      "imageUrl": "/avatars/1cc83fcb749942dbadc3871a06d0e732.png",
-      "isDormant": true,
-      "assignedCardIds": [
-        "5af255ad-2c20-4913-bc46-7d154c521db5"
-      ],
-      "topicTypes": [
-        {
-          "topicTypeId": "8f2c87de-9f1a-4a0d-bc69-48ebf9957810",
-          "topicTypeName": 256
-        },
-        {
-          "topicTypeId": "c7e3f775-81c4-4b9c-81f3-d3dec6caa18f",
-          "topicTypeName": 4096
-        },
-        {
-          "topicTypeId": "d37a329f-a2b2-4a5f-8b0f-f7936dc8cb0e",
-          "topicTypeName": 1
-        }
-      ]
-    }
-  ]
+[2026-10-16T18:55:16.148Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
 }
-[2026-10-14T04:33:22.932Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
-[2026-10-14T04:33:22.941Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 401 [Trace: 3b34ba6d88ffbacdbf39bc01883d137a] {
-  "error": {
-    "errors": [
-      {
-        "code": "Unauthorized",
-        "description": "Unauthorized"
-      }
-    ],
-    "succeeded": false
+[2026-10-16T18:56:16.121Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T18:56:16.131Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T18:56:16.151Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
   }
 }
-[2026-10-14T04:33:23.943Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
-[2026-10-14T04:33:23.950Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 401 [Trace: 2ffea48cae38bbd1c7323e692773b723] {
-  "error": {
-    "errors": [
-      {
-        "code": "Unauthorized",
-        "description": "Unauthorized"
-      }
-    ],
-    "succeeded": false
+[2026-10-16T18:56:16.165Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T18:56:17.133Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T18:56:17.145Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T18:56:17.166Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
   }
+}
+[2026-10-16T18:56:17.172Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T18:57:17.148Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T18:57:17.159Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T18:57:17.177Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T18:57:17.185Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T18:57:18.161Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T18:57:18.170Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T18:57:18.187Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T18:57:18.194Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T18:58:18.174Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T18:58:18.182Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T18:58:18.197Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T18:58:18.209Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T18:58:19.184Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T18:58:19.193Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T18:58:19.211Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T18:58:19.215Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T18:59:19.196Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T18:59:19.205Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T18:59:19.223Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T18:59:19.230Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T18:59:20.209Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T18:59:20.225Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T18:59:20.232Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T18:59:20.241Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:00:20.227Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:00:20.235Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:00:20.242Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:00:20.252Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:00:21.238Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:00:21.246Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:00:21.255Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:00:21.263Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:01:21.252Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:01:21.266Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:01:21.269Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:01:21.274Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:01:22.268Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:01:22.276Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:01:22.278Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:01:22.286Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:02:22.280Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:02:22.288Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:02:22.290Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:02:22.297Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:02:23.291Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:02:23.299Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:02:23.301Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:02:23.314Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:03:23.301Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:03:23.311Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:03:23.316Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:03:23.327Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:03:24.313Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:03:24.321Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:03:24.329Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:03:24.335Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:04:24.328Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:04:24.337Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:04:24.346Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:04:24.361Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:04:25.343Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:04:25.350Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:04:25.363Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:04:25.370Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:05:25.357Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:05:25.364Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:05:25.372Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:05:25.380Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:05:26.366Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:05:26.373Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:05:26.382Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:05:26.392Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:06:26.377Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:06:26.386Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:06:26.393Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:06:26.403Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:06:27.388Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:06:27.397Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:06:27.405Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:06:27.412Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:07:27.403Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:07:27.410Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:07:27.419Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:07:27.429Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:07:28.412Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:07:28.419Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:07:28.435Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:07:28.442Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:08:28.423Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:08:28.432Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:08:28.451Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:08:28.458Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:08:29.434Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:08:29.441Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:08:29.460Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:08:29.467Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:09:29.448Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:09:29.454Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:09:29.470Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:09:29.481Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:09:30.457Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:09:30.464Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:09:30.483Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:09:30.491Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:10:30.467Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:10:30.478Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:10:30.493Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:10:30.500Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:10:31.481Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:10:31.487Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:10:31.501Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:10:31.510Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:11:31.492Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:11:31.498Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:11:31.512Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:11:31.518Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:11:32.500Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:11:32.509Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:11:32.524Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:11:32.531Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:12:32.512Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:12:32.522Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:12:32.533Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:12:32.541Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:12:33.524Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:12:33.531Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:12:33.544Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:12:33.555Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:13:33.538Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:13:33.545Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:13:33.556Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:13:33.564Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:13:34.547Z] [LOG] [API ➤] GET /api/actor/activities/unread-count {}
+[2026-10-16T19:13:34.555Z] [LOG] [API ✗] GET /actor/activities/unread-count — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:13:34.571Z] [LOG] [API ➤] GET /api/actor/my-debates {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:13:34.578Z] [LOG] [API ✗] GET /actor/my-debates — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:13:35.089Z] [LOG] [API ➤] GET /api/actor/activities {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:13:35.095Z] [LOG] [API ✗] GET /actor/activities — HTTP 502 [Trace: N/A] {
+  "error": ""
+}
+[2026-10-16T19:13:36.098Z] [LOG] [API ➤] GET /api/actor/activities {
+  "params": {
+    "actorId": null,
+    "page": 1
+  }
+}
+[2026-10-16T19:13:36.106Z] [LOG] [API ✗] GET /actor/activities — HTTP 502 [Trace: N/A] {
+  "error": ""
 }

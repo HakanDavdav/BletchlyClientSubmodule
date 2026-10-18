@@ -219,14 +219,21 @@
   top: 0;
   right: 0;
   left: 0;
-  height: 4px;
+  height: 14px;
   border-radius: 13px 13px 0 0;
   background: linear-gradient(
     90deg,
     color-mix(in srgb, var(--color-primary) 65%, var(--color-surface)),
     color-mix(in srgb, var(--color-primary-gradient-end) 65%, var(--color-surface))
   );
+  -webkit-mask-image: linear-gradient(to bottom, #000 4px, transparent 4px);
+  mask-image: linear-gradient(to bottom, #000 4px, transparent 4px);
   content: '';
+}
+
+.personality-card--filled::after,
+.personality-card--tribe-assigned::after {
+  border-radius: 12px 12px 0 0;
 }
 
 .personality-card--filled {
@@ -2173,10 +2180,15 @@ html.dark .bot-capability-emblem--fossil path {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 20px 24px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-bg);
   position: relative;
+}
+
+.modal-header--compact,
+.modal-header--no-subtitle {
+  padding: 11px 20px 10px 20px;
 }
 
 .modal-header-left {
@@ -2200,10 +2212,11 @@ html.dark .bot-capability-emblem--fossil path {
 
 .modal-header-title {
   margin: 0;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--color-text-primary);
   letter-spacing: -0.02em;
+  line-height: 1.25;
   overflow-wrap: anywhere;
 }
 
@@ -3282,6 +3295,27 @@ html.dark .fossil-stamp-icon path {
   font-weight: 500;
 }
 
+.tribe-card:has(.tribe-card-mission) {
+  flex-wrap: wrap;
+}
+
+.tribe-card-mission {
+  width: 100%;
+  flex-basis: 100%;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+  word-break: break-word;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Tribe chip inside PostCard header & PersonalityCard — compact inline variant */
 .tribe-card.tribe-card--compact,
 .post-card .tribe-card,
@@ -3900,15 +3934,17 @@ html.dark .fossil-stamp-icon path {
   transition: all var(--transition-base) ease;
 }
 
-/* Ambient bot / welcome / mind arka planı: kart içeriğini üstte tut */
-.profile-header-card > *:not(.ambient-bots):not(.welcome-ambience):not(.mind-ambience) {
+/* Ambient bot / welcome / mind / rainbow arka planı: kart içeriğini üstte tut */
+.profile-header-card
+  > *:not(.ambient-bots):not(.welcome-ambience):not(.mind-ambience):not(.rainbow-cards-ambience) {
   position: relative;
   z-index: 1;
 }
 
 .profile-header-card > .ambient-bots,
 .profile-header-card > .welcome-ambience,
-.profile-header-card > .mind-ambience {
+.profile-header-card > .mind-ambience,
+.profile-header-card > .rainbow-cards-ambience {
   position: absolute;
   top: 0;
   left: 0;
@@ -3920,6 +3956,110 @@ html.dark .fossil-stamp-icon path {
   pointer-events: none;
   -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
   mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+}
+
+.rainbow-cards-ambience .rc-liquid-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  filter: saturate(1.65) brightness(1.06);
+  -webkit-mask-image: url(#rc-cards-mask);
+  mask-image: url(#rc-cards-mask);
+}
+
+.profile-header-card > .ambient-bots,
+.ambient-bots {
+  color: var(--color-primary);
+}
+
+:root.dark .profile-header-card > .ambient-bots,
+:root.dark .ambient-bots {
+  color: var(--color-primary-dark, var(--color-primary));
+}
+
+.rainbow-cards-ambience .rc-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--rc-w, 40px);
+  height: var(--rc-h, 76px);
+  border-radius: var(--rc-r, 6px);
+  background: color-mix(in srgb, var(--color-surface, #ffffff) 92%, transparent);
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-primary);
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.38),
+    0 0 0 1px color-mix(in srgb, var(--color-primary) 35%, transparent) inset;
+  isolation: isolate;
+}
+
+:root.dark .rainbow-cards-ambience .rc-card {
+  background: color-mix(in srgb, var(--color-surface, #18181b) 94%, transparent);
+  color: var(--color-primary-dark, var(--color-primary));
+  border: 1.5px solid var(--color-primary-dark, var(--color-primary));
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.65),
+    0 0 0 1px color-mix(in srgb, var(--color-primary-dark, var(--color-primary)) 45%, transparent) inset;
+}
+
+/* Profil sayfasındaki gökkuşağı sıvısı olmayan salt tema renkli kartlar (içi transparan, çizgileri belirgin) */
+.rainbow-cards-ambience--theme-only {
+  filter: blur(1.4px) !important;
+}
+
+.rainbow-cards-ambience--theme-only .rc-card {
+  background: transparent;
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-primary);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.18),
+    0 0 0 1px color-mix(in srgb, var(--color-primary) 35%, transparent) inset;
+  transform: scale(0.88);
+  transform-origin: center center;
+}
+
+:root.dark .rainbow-cards-ambience--theme-only .rc-card {
+  background: transparent;
+  color: var(--color-primary-dark, var(--color-primary));
+  border: 1.5px solid var(--color-primary-dark, var(--color-primary));
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.45),
+    0 0 0 1px color-mix(in srgb, var(--color-primary-dark, var(--color-primary)) 45%, transparent) inset;
+}
+
+.rainbow-cards-ambience .rc-card::before {
+  position: absolute;
+  inset: 2.5px;
+  border: 1px solid currentColor;
+  border-radius: max(2px, calc(var(--rc-r, 6px) - 2px));
+  content: '';
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.rainbow-cards-ambience .rc-card::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 4px;
+  border-radius: var(--rc-r, 6px) var(--rc-r, 6px) 0 0;
+  background: currentColor;
+  -webkit-mask-image: linear-gradient(to bottom, #000 2px, transparent 2px);
+  mask-image: linear-gradient(to bottom, #000 2px, transparent 2px);
+  content: '';
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+@media (max-width: 640px) {
+  .rainbow-cards-ambience {
+    --rc-card-w: 28px;
+    --rc-card-h: 54px;
+  }
 }
 
 :root.dark .profile-header-card {
@@ -4592,12 +4732,27 @@ textarea {
   font-size: var(--font-size-xs);
   font-weight: 500;
   white-space: nowrap;
-  cursor: pointer;
-  transition: opacity var(--transition-fast);
+  user-select: none;
+  transition: opacity var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .topic-tag:hover {
-  opacity: 0.8;
+  opacity: 0.85;
+}
+
+.topic-tag--clickable {
+  cursor: pointer;
+}
+
+.topic-tag--clickable:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  filter: brightness(1.1);
+}
+
+.topic-tag--clickable:active {
+  transform: translateY(0);
 }
 
 .topic-tag-list {
@@ -4845,6 +5000,11 @@ textarea {
 
   .modal-header {
     padding: 14px 16px;
+  }
+
+  .modal-header--compact,
+  .modal-header--no-subtitle {
+    padding: 10px 14px;
   }
 
   /* Tepki / araç çubukları */
@@ -5550,15 +5710,25 @@ textarea {
     min-width: 70%;
   }
 
-  .tribe-card:not(.layout-topbar *):has(.actor-chip-hier-btn) {
+  .tribe-card:not(.layout-topbar *):has(.actor-chip-hier-btn),
+  .tribe-card:not(.layout-topbar *):has(.tribe-card-mission) {
     flex-wrap: wrap;
     justify-content: flex-start;
     row-gap: 4px;
     padding: 6px 10px 8px;
   }
 
-  .tribe-card:not(.layout-topbar *):has(.actor-chip-hier-btn) > *:nth-child(2) {
+  .tribe-card:not(.layout-topbar *):has(.actor-chip-hier-btn) > *:nth-child(2),
+  .tribe-card:not(.layout-topbar *):has(.tribe-card-mission) > *:nth-child(2) {
     flex: 1 1 calc(100% - 52px) !important;
+  }
+
+  .tribe-card-mission {
+    font-size: 11px;
+    line-height: 1.4;
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px solid var(--color-border);
   }
 
   /* PC gibi: chip daralıp isim kısalsın, fosil pill her zaman üst kartın sağında kalsın */
@@ -5624,7 +5794,8 @@ textarea {
     margin-bottom: 72px !important;
   }
 
-  .guide-intro p {
+  .guide-intro p,
+  .guide-intro h1 {
     font-size: 19px !important;
   }
 
@@ -5699,6 +5870,50 @@ textarea {
   }
 }
 
+/* ─── Yüzen aşağı kaydırma butonu (how-it-works / premium sayfaları) ───
+   Modal'lardaki ▼ butonunun sayfa karşılığı; içerik alanına göre
+   ortalanır (left inline verilir) ve zıplama animasyonuyla dikkat çeker. */
+.page-scroll-btn {
+  --page-scroll-btn-bottom: 18px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
+  z-index: 30;
+  animation: pageScrollBounce 2s ease-in-out infinite;
+}
+
+/* Mobilde buton, alt tab bar'ın üstünde kalsın */
+@media (max-width: 900px) {
+  .page-scroll-btn {
+    --page-scroll-btn-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 14px);
+  }
+}
+
+.page-scroll-btn span {
+  font-size: 20px;
+  line-height: 1;
+  display: inline-block;
+  transform: translateY(1.5px);
+}
+
+@keyframes pageScrollBounce {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    transform: translateX(-50%) translateY(8px);
+  }
+}
+
 /* ─── /how-it-works sayfası ────────────────────────────────────────────
    Modal mobil kuralları (desc/link gizleme, kompakt kartlar) sayfada
    geçersiz; sayfada içerik her zaman görünür kalır. */
@@ -5714,15 +5929,6 @@ textarea {
 
   .how-it-works-page .guide-card__link {
     display: flex !important;
-  }
-
-  .how-it-works-page .guide-intro {
-    margin-bottom: 0 !important;
-  }
-
-  .how-it-works-page .guide-welcome {
-    min-height: 0;
-    margin-bottom: 32px !important;
   }
 }
 
@@ -5921,6 +6127,13 @@ textarea {
   margin-top: 2px;
 }
 
+.premium-profile-preview-card > .ambient-bots,
+.premium-profile-preview-card > .welcome-ambience,
+.premium-profile-preview-card > .mind-ambience,
+.premium-profile-preview-card > .rainbow-cards-ambience {
+  height: 100% !important;
+}
+
 @media (max-width: 640px) {
   .card-detail-modal-body {
     padding: 8px 16px 20px;
@@ -6110,6 +6323,7 @@ textarea {
 /* ─── Tribes Explore Page ─────────────────────────────────────────────────── */
 .tribes-explore-grid {
   display: grid;
+  align-items: start;
   gap: 12px;
 }
 

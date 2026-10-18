@@ -1,7 +1,8 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { X, ThumbsUp, ThumbsDown, Skull } from 'lucide-react'
+import { ThumbsUp, ThumbsDown, Skull } from 'lucide-react'
 import { actorApi } from '../../api/actorApi'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
+import ModalHeader from '../common/ModalHeader'
 import PostCard from '../content/PostCard'
 import ContextualEntryThread from '../content/ContextualEntryThread'
 import { ReactionEmojis, ReactionType } from '../../constants/enums'
@@ -64,17 +65,19 @@ export default function ProfileLikesModal({ actorId, isOpen, onClose }) {
           height: '80vh',
           display: 'flex',
           flexDirection: 'column',
-          padding: '24px 16px',
+          padding: '24px 20px 20px',
+          borderRadius: 16,
+          background: 'var(--color-bg)',
+          border: '1px solid var(--color-border)',
         }}
       >
-        <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 600 }}>{t('profile.reaction_history', 'Reaksiyon Geçmişi')}</h3>
-          <button className="btn-icon" onClick={onClose}>
-            <X size={18} />
-          </button>
-        </div>
+        <ModalHeader
+          title={t('profile.reaction_history', 'Reaksiyon Geçmişi')}
+          onClose={onClose}
+          style={{ padding: '0 0 12px 0', marginBottom: 16 }}
+        />
 
-        <div style={{ flex: 1, overflowY: 'auto', paddingRight: 8 }} onScroll={handleScroll}>
+        <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }} onScroll={handleScroll}>
           {isLoading ? (
             <div style={{ textAlign: 'center', padding: 24 }}>
               <div className="spinner spinner-md" />

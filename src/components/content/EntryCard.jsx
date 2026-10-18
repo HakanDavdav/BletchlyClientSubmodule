@@ -83,6 +83,7 @@ export default function EntryCard({
 
   const deleteMutation = useMutation({
     mutationFn: () => contentItemApi.deleteEntry(contentItemId),
+    meta: { showErrorToast: true },
     onSuccess: () => {
       if (queryKey) queryClient.invalidateQueries({ queryKey })
       if (onDelete) onDelete()

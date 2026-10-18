@@ -6,6 +6,7 @@ import { ShoppingCart, Search as SearchIcon, Filter, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import BackButton from '../../components/common/BackButton'
+import ConfirmModal from '../../components/common/ConfirmModal'
 import PersonalityCard from '../../components/card/PersonalityCard'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
@@ -21,6 +22,9 @@ export default function MarketplacePage() {
   const queryClient = useQueryClient()
   const { isLoggedIn } = useAuthStore()
   const myCards = useMyEntitiesStore((s) => s.myCards)
+  const storeSettings = useMyEntitiesStore((s) => s.mySettings)
+  const cardOwnershipLimit = storeSettings?.cardOwnershipLimit || 10
+  const isLimitReached = (myCards || []).length >= cardOwnershipLimit
 
   const [buyModal, setBuyModal] = useState({ isOpen: false, cardId: null, price: null, cardName: '' })
 
@@ -558,35 +562,30 @@ export default function MarketplacePage() {
         </div>
       )}
 
-      <AnimatePresence>
-        {buyModal.isOpen && (
-          <div className="modal-overlay" onClick={() => setBuyModal({ isOpen: false, cardId: null, price: null, cardName: '' })} style={{ zIndex: 500 }}>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="modal-box"
-              onClick={(e) => e.stopPropagation()}
-              style={{ maxWidth: 400, padding: 24, textAlign: 'center' }}
-            >
-              <h3 style={{ marginTop: 0, marginBottom: 16, fontSize: 18, color: 'var(--color-text-primary)' }}>
-                {t('card.buy_confirm_title', 'Satın Alma Onayı')}
-              </h3>
-              <p style={{ color: 'var(--color-text-secondary)', marginBottom: 24, fontSize: 14 }}>
-                <strong>{buyModal.cardName || 'Bu'}</strong> {t('card.buy_confirm_desc', 'adlı kartı')} <strong style={{ color: 'var(--color-primary)' }}>{buyModal.price} AP</strong> {t('card.buy_confirm_desc_2', 'karşılığında satın almak istediğinize emin misiniz?')}
-              </p>
-              <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-                <button className="btn btn-outline" onClick={() => setBuyModal({ isOpen: false, cardId: null, price: null, cardName: '' })}>
-                  {t('common.cancel', 'İptal')}
-                </button>
-                <button className="btn btn-primary" onClick={confirmBuy} disabled={buyMutation.isPending}>
-                  {t('card.confirm_buy_btn', 'Evet, Satın Al')}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <ConfirmModal
+        isOpen={buyModal.isOpen}
+        onClose={() => setBuyModal({ isOpen: false, cardId: null, price: null, cardName: '' })}
+        onConfirm={confirmBuy}
+        title={t('card.buy_confirm_title', 'Satın Alma Onayı')}
+        description={t('card.buy_confirm_desc', {
+          cardName: buyModal.cardName || t('card.card', 'Kişilik Kartı'),
+          price: buyModal.price,
+          defaultValue: `"${buyModal.cardName || ''}" adlı kişilik kartını ${buyModal.price} AP karşılığında satın almak istediğinize emin misiniz?`,
+        })}
+        warning={
+          isLimitReached
+            ? t('card.buy_limit_reached_warning', {
+                limit: cardOwnershipLimit,
+                oldestCard: t('card.oldest_card', 'En eski kartınız'),
+                defaultValue: `Dikkat: Kart limitinize (${cardOwnershipLimit}) ulaştınız! Bu kartı satın aldığınızda, sahip olduğunuz en eski kart olan "${t('card.oldest_card', 'En eski kartınız')}" otomatik ve kalıcı olarak silinecektir.`,
+              })
+            : null
+        }
+        confirmText={t('card.confirm_buy_btn', 'Evet, Satın Al')}
+        cancelText={t('common.cancel', 'İptal')}
+        confirmVariant="primary"
+        isLoading={buyMutation.isPending}
+      />
     </div>
   )
 }

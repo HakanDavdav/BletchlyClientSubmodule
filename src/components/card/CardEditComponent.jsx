@@ -10,13 +10,18 @@ import SelectionMarker from '../common/SelectionMarker'
 import BotIcon from '../common/icons/BotIcon'
 import AvatarUpload from '../common/AvatarUpload'
 import ImageWithLoader from '../common/ImageWithLoader'
+import ConfirmModal from '../common/ConfirmModal'
 
 export default function CardEditComponent({ card, myBots = [], onClose, onSaved }) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
 
   const cardData = card?.card || card?.originalCard || card
-  const isCreator = card?.acquisitionType === 0 || cardData?.acquisitionType === 0
+  const isCreator =
+    card?.acquisitionType === 0 ||
+    cardData?.acquisitionType === 0 ||
+    card?.ownership?.acquisitionType === 0 ||
+    card?.ownership?.originalCard?.acquisitionType === 0
   const cardId = cardData?.personalityCardId ?? card?.cardId
 
   const [editFormData, setEditFormData] = useState({
@@ -26,6 +31,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
     isListedOnMarketplace: false,
     assignedBotIds: [],
   })
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
 
   const [isConfirmed, setIsConfirmed] = useState(false)
   const canConfirm = !isCreator || (Boolean(editFormData.cardName.trim()) && Boolean(editFormData.personalityPrompt.trim()))
@@ -105,19 +111,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
 
   const handleDelete = () => {
     if (!cardId) return
-    const confirmMessage = isCreator
-      ? t(
-          'card.confirm_delete_creator',
-          'Bu kişilik kartını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.'
-        )
-      : t(
-          'card.confirm_delete_purchaser',
-          'Bu kartın sahipliğini bırakıp envanterinizden silmek istediğinize emin misiniz?'
-        )
-
-    if (window.confirm(confirmMessage)) {
-      deleteMutation.mutate()
-    }
+    setIsDeleteModalOpen(true)
   }
 
   if (!card) return null
@@ -678,6 +672,33 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
           </div>
         </div>
       </div>
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={() => {
+          setIsDeleteModalOpen(false)
+          deleteMutation.mutate()
+        }}
+        title={
+          isCreator
+            ? t('card.delete_card', 'Kişilik Kartını Sil')
+            : t('card.delete_ownership', 'Kartı Envanterden Sil')
+        }
+        description={
+          isCreator
+            ? t(
+                'card.confirm_delete_creator',
+                'Bu kişilik kartını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.'
+              )
+            : t(
+                'card.confirm_delete_purchaser',
+                'Bu kartın sahipliğini bırakıp envanterinizden silmek istediğinize emin misiniz?'
+              )
+        }
+        confirmText={t('action.delete', 'Sil')}
+        confirmVariant="danger"
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   )
 }

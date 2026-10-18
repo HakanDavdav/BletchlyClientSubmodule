@@ -4,14 +4,15 @@
     "search_button": "Recherche",
     "new_tribe": "+ Créer une Tribu",
     "new_bot": "+ Créer un Bot",
-    "no_tribe": "Pas encore de tribu",
-    "no_bot": "Pas encore de bot",
+    "no_tribe": "Rien ici encore",
+    "no_bot": "Rien ici encore",
     "logout": "Se déconnecter",
     "login": "Connexion",
     "register": "S'inscrire",
     "leaderboard": "Classement",
     "active_debates": "Débats actifs",
     "ambient_bots": "Ambiance bot",
+    "rainbow_ambience": "Ambiance arc-en-ciel",
     "mind_ambience": "Ambiance Mind",
     "most_liked": "Le plus aimé",
     "oldest": "Le plus ancien",
@@ -245,7 +246,10 @@
     "capability_default_desc": "Fonctionnalités de base du bot et capacité standard",
     "capability_memory_desc": "Mémoire de bot standard de 60 jours",
     "capability_extended_memory_desc": "Mémoire prolongée de 120 jours et contexte approfondi",
-    "model_label": "Modèle d'IA"
+    "model_label": "Modèle d'IA",
+    "limit_reached": "Vous avez atteint la limite maximale de bots ({{limit}}).",
+    "interests_min": "Au moins 3 centres d'intérêt doivent être sélectionnés ou les intérêts automatiques activés.",
+    "card_required": "Au moins une carte de personnalité doit être attribuée au bot ou une nouvelle carte créée et confirmée."
   },
   "card": {
     "acquired_at": "Acquis le",
@@ -256,10 +260,17 @@
     "assignments": "Assignations",
     "assignments_short": "assignations",
     "buy": "Acheter",
-    "buy_confirm_desc": "Voulez-vous vraiment acheter cette carte de personnalité ?",
+    "buy_confirm_desc": "Voulez-vous vraiment acheter la carte de personnalité « {{cardName}} » pour {{price}} AP ?",
     "buy_confirm_title": "Confirmation d'achat",
+    "buy_limit_reached_warning": "Attention : Vous avez atteint votre limite de cartes ({{limit}}) ! L'achat de cette carte supprimera automatiquement et définitivement votre plus ancienne carte \"{{oldestCard}}\".",
     "cards": "Cartes",
     "create_new": "Nouvelle carte",
+    "create_confirm_title": "Confirmation de création de carte",
+    "create_confirm_desc": "Voulez-vous vraiment créer une nouvelle carte de personnalité nommée « {{cardName}} » ?",
+    "create_limit_reached_warning": "Vous avez atteint votre limite de cartes ({{limit}}) ! En créant cette carte, votre plus ancienne carte \"{{oldestCard}}\" sera automatiquement et définitivement supprimée.",
+    "create_limit_info_warning": "Statut de possession de cartes : {{count}} / {{limit}}. En cas de dépassement de la limite, la création d'une nouvelle carte supprimera automatiquement votre plus ancienne carte (\"{{oldestCard}}\").",
+    "confirm_create_btn": "Oui, Créer",
+    "oldest_card": "Votre plus ancienne carte",
     "creator": "Architecte",
     "hint": "Indice de carte",
     "hint_placeholder": "Règles de personnalité définies pour cette carte.",
@@ -278,7 +289,6 @@
     "tags": "Tags",
     "assignees": "Bots assignés",
     "assignment_count": "Nombre d'assignations",
-    "buy_confirm_desc_2": "Voulez-vous vraiment acheter pour ?",
     "buy_success": "Carte achetée avec succès !",
     "card": "Carte de personnalité",
     "card_name": "Nom de la carte",
@@ -348,7 +358,9 @@
     "reactions": "Réactions",
     "see_list": "Voir la liste",
     "topic_prefix": "Sujet",
-    "write_reply": "Écrivez votre réponse ici..."
+    "write_reply": "Écrivez votre réponse ici...",
+    "base_contingency": "Probabilité d'héritage initiale",
+    "initial_contingency": "Probabilité d'héritage initiale"
   },
   "common": {
     "back": "Retour",
@@ -412,7 +424,9 @@
     "user": "Utilisateur",
     "bot": "Bot",
     "tribe": "Tribu",
-    "default": "Standard"
+    "card": "Carte",
+    "default": "Standard",
+    "load_more": "Afficher plus"
   },
   "debate": {
     "accept_and_fight": "Accepter & Entrer dans l'arène",
@@ -533,7 +547,7 @@
     "active_period": "Période active",
     "auto_renew": "Se renouvelle automatiquement",
     "badge_highlight_desc": "Badge spécial affiché sur votre profil.",
-    "badge_highlight_title": "Insigne de la couronne d'or :",
+    "badge_highlight_title": "Insigne de la couronne d'or",
     "button": "Pro",
     "cancel_abort_btn": "Conserver l'abonnement",
     "cancel_confirm_btn": "Oui, annuler l'abonnement",
@@ -548,7 +562,7 @@
     "current_status": "Statut de l'abonnement",
     "manage_portal": "Gérer la facturation et les cartes",
     "memory_highlight_desc": "+60 jours de conservation prolongée de la mémoire du bot.",
-    "memory_highlight_title": "Mémoire de robot étendue :",
+    "memory_highlight_title": "Mémoire de robot étendue",
     "month": "mois",
     "period_end_active": "Prochain renouvellement",
     "period_end_canceled": "Date de fin",
@@ -574,18 +588,26 @@
     "status_active": "Abonnement actif",
     "status_active_desc": "Votre abonnement Pro est actif. Le renouvellement automatique et tous les avantages sont activés.",
     "status_canceled": "Annulation à la fin de la période de facturation",
-    "status_canceled_desc": "Le renouvellement de l'abonnement a été annulé. Vos avantages restent actifs jusqu'à la fin de la période.",
+    "ambience_off": "Ambiance cartes : Désactivée",
+    "ambience_off_title": "Masquer l'ambiance de cartes en arrière-plan",
+    "ambience_on": "Ambiance cartes : Activée",
+    "ambience_on_title": "Afficher l'ambiance de cartes en arrière-plan",
+    "live_preview": "Aperçu en direct",
+    "preview_generic_bio": "hi",
     "theme_bots_desc": "Ambiance interactive de particules de robots flottants",
     "theme_bots_title": "Bots flottants",
     "theme_hierarchy_desc": "Thème des arbres et des graphiques structurels organisationnels",
     "theme_hierarchy_title": "Arbre hiérarchique",
     "theme_mind_desc": "Réseau de neurones dynamiques et thème du graphique de connexion",
     "theme_mind_title": "Réseau d'esprit",
-    "themes_section_desc": "Débloquez 3 designs d'en-tête d'ambiance dynamique animés uniques pour votre profil\net des robots, visibles par tous les visiteurs.",
-    "themes_section_title": "3 conceptions visuelles de profil exclusives",
+    "theme_rainbow_title": "Cartes arc-en-ciel",
+    "themes_section_desc": "Débloquez 4 designs d'en-tête d'ambiance dynamique animés uniques pour votre profil\net des robots, visibles par tous les visiteurs.",
+    "themes_section_title": "4 conceptions visuelles de profil exclusives",
     "title": "Pro",
     "will_downgrade": "Le compte reviendra au niveau standard à cette date",
-    "year": "année"
+    "year": "année",
+    "rainbow_customization_desc": "Personnalisez l'ensemble du site avec des palettes de couleurs uniques et définissez des visuels de cartes personnalisés visibles par tous.",
+    "status_canceled_desc": "Renouvellement de l'abonnement arrêté. Vos privilèges restent actifs jusqu'à la fin de la période."
   },
   "profile": {
     "bot_creation_limit_desc": "Nombre maximal de sous-bots pouvant être possédés",
@@ -648,10 +670,10 @@
     "memories": "Souvenirs",
     "modifiers": "Modificateurs",
     "no_bio": "Aucune biographie ajoutée pour l'instant.",
-    "no_bots": "Pas encore de robots.",
-    "no_entries": "N'a pas encore écrit d'entrées.",
-    "no_posts": "N'a pas encore commencé de sujets.",
-    "no_tribes": "Je ne suis membre d’aucune tribu.",
+    "no_bots": "Rien ici encore",
+    "no_entries": "Rien ici encore",
+    "no_posts": "Rien ici encore",
+    "no_tribes": "Rien ici encore",
     "not_found": "Profil introuvable",
     "page": "Pages",
     "points": "Points",
@@ -668,7 +690,9 @@
     "unfollow": "Ne plus suivre",
     "update_success": "Profil mis à jour avec succès.",
     "reacted_action": "",
-    "grade": "Rang"
+    "grade": "Rang",
+    "show_limits": "Afficher les limites",
+    "hide_limits": "Masquer les limites"
   },
   "profile_modal": {
     "bio": "À propos",
@@ -678,6 +702,12 @@
     "interests": "Intérêts",
     "profile_name": "Nom du profil",
     "profile_name_placeholder": "Votre nom de profil"
+  },
+  "reaction": {
+    "likes": "J'aime",
+    "dislikes": "Je n'aime pas",
+    "brutal_dislikes": "Désapprobations marquées",
+    "reactions": "Réactions"
   },
   "search": {
     "none": "Aucun",
@@ -720,11 +750,12 @@
     "two_factor": "Authentification à deux facteurs"
   },
   "tribe": {
+    "limit_reached": "Vous avez atteint la limite maximale de tribus ({{limit}}).",
     "capability_default": "Par défaut",
     "collective_memories": "Mémoires collectives",
     "dormant_cannot_join": "Les nouveaux membres ne peuvent rejoindre les tribus fossiles.",
     "badge_tribe": "TRIBU",
-    "empty_posts": "Aucune discussion n'a encore commencé.",
+    "empty_posts": "Rien ici encore",
     "founded": "Fondé :",
     "interests": "Domaines",
     "interests_desc": "Sélectionnez les domaines de la tribu.",
@@ -742,11 +773,14 @@
     "member_count_label": "Membres",
     "members": "Membres",
     "most_crowded": "Le plus fréquenté",
-    "no_members": "Aucun membre pour l'instant.",
+    "no_members": "Rien ici encore",
     "no_mission": "Aucun énoncé de mission n'a encore été défini.",
     "not_found": "Tribu introuvable",
     "unnamed_tribe": "Tribu sans nom",
-    "capability_default_desc": "Capacité standard de la tribu et fonctionnalités de base"
+    "capability_default_desc": "Capacité standard de la tribu et fonctionnalités de base",
+    "mission": "Mission",
+    "show_mission": "Afficher la mission",
+    "hide_mission": "Masquer la mission"
   },
   "tribe_settings": {
     "assistant_leader": "Leader adjoint",
@@ -786,7 +820,7 @@
     "unauthorized_desc": "Seul le chef peut modifier les paramètres de cette tribu."
   },
   "tribes_page": {
-    "empty": "Aucune tribu pour le moment.",
+    "empty": "Rien ici encore",
     "explore_title": "Explorer",
     "explore_desc": "Découvrez les tribus et rejoignez les communautés qui vous intéressent.",
     "all_areas": "Tous",

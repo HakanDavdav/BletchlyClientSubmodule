@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Network,
   Search,
@@ -26,6 +27,7 @@ import AngryBotWithSwordsIcon from '../components/common/icons/AngryBotWithSword
 import AmbientBots from '../components/common/ambiances/AmbientBots'
 import WelcomeAmbience from '../components/common/ambiances/WelcomeAmbience'
 import MindAmbience from '../components/common/ambiances/MindAmbience'
+import RainbowCardsAmbience from '../components/common/ambiances/RainbowCardsAmbience'
 import BotFlashCardsIcon from '../components/common/icons/BotFlashCardsIcon'
 import CardContingencyIcon from '../components/common/icons/CardContingencyIcon'
 import CardContingencyModifierIcon from '../components/common/icons/CardContingencyModifierIcon'
@@ -131,6 +133,13 @@ function FramedThemeIcon({ type, isLocked, size = 20 }) {
             <path d="M9 13v2" />
           </>
         )}
+        {type === 'rainbow' && (
+          <>
+            <path d="M3 16.5 A 9 9 0 0 1 21 16.5" />
+            <path d="M6.75 16.5 A 5.25 5.25 0 0 1 17.25 16.5" />
+            <path d="M10.25 16.5 A 1.75 1.75 0 0 1 13.75 16.5" />
+          </>
+        )}
       </g>
 
       {/* Premium yoksa üstü çizili (1.5px Sarı Çizik) */}
@@ -162,6 +171,7 @@ export default function ProfilePage() {
   const [showFossilProfileTribes, setShowFossilProfileTribes] = useState(false)
   const [postsPage, setPostsPage] = useState(1)
   const [entriesPage, setEntriesPage] = useState(1)
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false)
   const inferredPerPage = 5
   const { t } = useTranslation()
   // Limitler & Miras paneli açma/kapama durumu (TribePage ile ORTAK global state)
@@ -510,6 +520,35 @@ export default function ProfilePage() {
         </button>
         <button
           type="button"
+          className={`btn btn-sm ${activeProfileTheme === Theme.Rainbow ? 'btn-primary' : 'btn-outline'}`}
+          onClick={() => handleSelectTheme(Theme.Rainbow)}
+          disabled={themeMutation.isPending}
+          aria-label={t('topbar.rainbow_ambience', 'Gökkuşağı Arka Planı')}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            padding: '4px 0',
+            height: 30,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 0,
+            marginLeft: -1,
+            position: 'relative',
+            zIndex: activeProfileTheme === Theme.Rainbow ? 2 : 1,
+            ...(activeProfileTheme === Theme.Rainbow
+              ? {}
+              : {
+                  borderColor: 'var(--color-border-light)',
+                  color: 'var(--color-text-muted)',
+                  background: 'var(--color-surface)',
+                }),
+          }}
+        >
+          <FramedThemeIcon type="rainbow" isLocked={!isCurrentUserPremium} size={20} />
+        </button>
+        <button
+          type="button"
           className={`btn btn-sm ${activeProfileTheme === Theme.Bots ? 'btn-primary' : 'btn-outline'}`}
           onClick={() => handleSelectTheme(Theme.Bots)}
           disabled={themeMutation.isPending}
@@ -545,17 +584,25 @@ export default function ProfilePage() {
 
   const followMutation = useMutation({
     mutationFn: () => actorApi.follow(actorId),
+    meta: { showErrorToast: true },
     onSuccess: () => {
       addFollowing(actorId)
       queryClient.invalidateQueries({ queryKey: ['actorProfile', actorId] })
+    },
+    onError: () => {
+      setLocalIsFollowing(false)
     },
   })
 
   const unfollowMutation = useMutation({
     mutationFn: () => actorApi.unfollow(actorId),
+    meta: { showErrorToast: true },
     onSuccess: () => {
       removeFollowing(actorId)
       queryClient.invalidateQueries({ queryKey: ['actorProfile', actorId] })
+    },
+    onError: () => {
+      setLocalIsFollowing(true)
     },
   })
 
@@ -776,16 +823,65 @@ export default function ProfilePage() {
     <div className="flex-col gap-4">
       <div className="flex items-center gap-3 px-2" style={{ marginBottom: 8 }}>
         <BackButton style={{ marginBottom: 0 }} />
+        <button
+          type="button"
+          className="btn-icon"
+          onClick={() => setIsHeaderCollapsed((prev) => !prev)}
+          title={isHeaderCollapsed ? t('common.expand', 'Genişlet') : t('common.collapse', 'Daralt')}
+          aria-label={isHeaderCollapsed ? t('common.expand', 'Genişlet') : t('common.collapse', 'Daralt')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 34,
+            height: 34,
+            padding: 0,
+            cursor: 'pointer',
+          }}
+        >
+          <span
+            aria-hidden="true"
+            style={{
+              fontSize: 13,
+              lineHeight: 1,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transform: isHeaderCollapsed ? 'none' : 'rotate(180deg)',
+              transformOrigin: '50% 50%',
+              transition: 'transform 0.2s ease',
+            }}
+          >
+            ▼
+          </span>
+        </button>
       </div>
 
-      {/* ─── Profile Header ─── */}
-      <div className={`profile-header-card${isDormant ? ' profile-header-card--dormant' : ''}`}>
+      {/* ─── Collapsible Profile Header Block ─── */}
+      <AnimatePresence initial={false}>
+        {!isHeaderCollapsed && (
+          <motion.div
+            key="profile-header-collapsible"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            style={{
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 16,
+            }}
+          >
+            {/* ─── Profile Header ─── */}
+            <div className={`profile-header-card${isDormant ? ' profile-header-card--dormant' : ''}`}>
         <AmbientBots active={activeProfileTheme === Theme.Bots} />
         <WelcomeAmbience active={activeProfileTheme === Theme.Welcome} />
         <MindAmbience
           profileName={profile?.profileName}
           active={activeProfileTheme === Theme.Mind}
         />
+        <RainbowCardsAmbience active={activeProfileTheme === Theme.Rainbow} showLiquid={false} />
         <div
           className="flex justify-between profile-header-row"
           style={{ gap: 20, width: '100%', alignItems: 'stretch', marginBottom: -6 }}
@@ -954,6 +1050,8 @@ export default function ProfilePage() {
             {!isEditing && profile.topicTypes && profile.topicTypes.length > 0 && (
               <div style={{ marginBottom: 12 }}>
                 <TopicTagList
+                  clickable
+                  max={20}
                   topicTypes={profile.topicTypes
                     .map((t) => {
                       const match = TOPIC_TYPES.find(
@@ -1335,12 +1433,7 @@ export default function ProfilePage() {
               className="profile-limits-toggle"
               onClick={toggleLimits}
               aria-expanded={isLimitsExpanded}
-              aria-label={t(
-                'profile.limits_header_desc',
-                isLimitsExpanded
-                  ? 'Limitler ve miras detaylarını gizle'
-                  : 'Limitler ve miras detaylarını göster'
-              )}
+              aria-label={isLimitsExpanded ? t('profile.hide_limits', 'Limitleri Gizle') : t('profile.show_limits', 'Limitleri Göster')}
             >
             <span
               aria-hidden="true"
@@ -1605,8 +1698,11 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* ─── Profile Activities Panel ─── */}
-      <ProfileActivitiesPanel actorId={actorId} profileName={profile.profileName} />
+            {/* ─── Profile Activities Panel ─── */}
+            <ProfileActivitiesPanel actorId={actorId} profileName={profile.profileName} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ─── Tabs & Pagination ─── */}
       <div className="profile-tabs-container">
@@ -1694,7 +1790,7 @@ export default function ProfilePage() {
           (isPostsLoading ? (
             <div className="spinner spinner-md" style={{ margin: '40px auto', display: 'block' }} />
           ) : !postsData || postsData.length === 0 ? (
-            <p className="empty-state">{t('profile.no_posts')}</p>
+            <p className="empty-state">{t('common.nothing_here_yet')}</p>
           ) : (
             <div className="flex-col gap-4">
               {postsData.map((p) => (
@@ -1707,7 +1803,7 @@ export default function ProfilePage() {
           (isEntriesLoading ? (
             <div className="spinner spinner-md" style={{ margin: '40px auto', display: 'block' }} />
           ) : !entriesData || entriesData.length === 0 ? (
-            <p className="empty-state">{t('profile.no_entries')}</p>
+            <p className="empty-state">{t('common.nothing_here_yet')}</p>
           ) : (
             <div className="flex-col gap-6">
               {entriesData.map((e) => (
@@ -1719,7 +1815,7 @@ export default function ProfilePage() {
         {activeTab === 'bots' && (
           <div className="flex-col gap-2">
             {visibleProfileBots.length === 0 && fossilProfileBotCount === 0 ? (
-              <p className="empty-state">{t('profile.no_bots')}</p>
+              <p className="empty-state">{t('common.nothing_here_yet')}</p>
             ) : (
               visibleProfileBots.map((bot) => (
                 <div key={bot.actorId} className="lb-card" style={{ padding: '8px 16px' }}>
@@ -1735,7 +1831,7 @@ export default function ProfilePage() {
         {activeTab === 'tribes' && (
           <div className="flex-col gap-2">
             {visibleProfileTribes.length === 0 && fossilProfileTribeCount === 0 ? (
-              <p className="empty-state">{t('profile.no_tribes')}</p>
+              <p className="empty-state">{t('common.nothing_here_yet')}</p>
             ) : (
               visibleProfileTribes.map((tribe) => <TribeMinimalCard key={tribe.tribeId} {...tribe} />)
             )}

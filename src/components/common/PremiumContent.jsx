@@ -11,12 +11,15 @@ import {
   Check,
   AlertTriangle,
   Calendar,
+  CalendarFold,
   ExternalLink,
   ShieldCheck,
   Sparkles,
   Palette,
   Edit2,
   UploadCloud,
+  Network,
+  Sliders,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import CardContingencyIcon from './icons/CardContingencyIcon'
@@ -30,16 +33,22 @@ import SelectionMarker from './SelectionMarker'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { paymentApi } from '../../api/paymentApi'
+import { actorApi } from '../../api/actorApi'
 import useAuthStore from '../../store/authStore'
 import useThemeStore from '../../store/themeStore'
 import useIsMobile from '../../hooks/useIsMobile'
+import useContentCenterLeft from '../../hooks/useContentCenterLeft'
 import { derivePersonalityCardVars, derivePrimaryVars } from '../../utils/themeColor'
 import PersonalityCard from '../card/PersonalityCard'
+import ActorAvatar from '../actor/ActorAvatar'
 import { UserCapabilities } from '../../constants/enums'
 import { trackBeginCheckout } from '../../utils/analytics'
-import mindThemeImg from '../../assets/media_1789577512893.jpg'
-import hierarchyThemeImg from '../../assets/media_1789577513208.jpg'
-import botsThemeImg from '../../assets/media_1789577513370.jpg'
+import {
+  WelcomeAmbience,
+  MindAmbience,
+  AmbientBots,
+  RainbowCardsAmbience,
+} from './ambiances'
 import fallenAngelImg from '../../assets/CardExamples/Alexandre_Cabanel_-_Fallen_Angel.jpg'
 import adamCreationImg from '../../assets/CardExamples/Michelangelo_-_Creation_of_Adam_(cropped).jpg'
 import cavalierImg from '../../assets/CardExamples/Cavalier_soldier_Hals-1624x.jpg'
@@ -49,7 +58,7 @@ import jfif1Img from '../../assets/CardExamples/images (1).jfif'
 import jfif2Img from '../../assets/CardExamples/images.jfif'
 import ImageWithLoader from './ImageWithLoader'
 
-function FramedThemeIcon({ type, size = 20 }) {
+export function FramedThemeIcon({ type, size = 20 }) {
   return (
     <svg
       width={size}
@@ -84,6 +93,13 @@ function FramedThemeIcon({ type, size = 20 }) {
             <rect x="9" y="2" width="6" height="6" rx="1" />
             <path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3" />
             <path d="M12 12V8" />
+          </>
+        )}
+        {type === 'rainbow' && (
+          <>
+            <path d="M3 16.5 A 9 9 0 0 1 21 16.5" />
+            <path d="M6.75 16.5 A 5.25 5.25 0 0 1 17.25 16.5" />
+            <path d="M10.25 16.5 A 1.75 1.75 0 0 1 13.75 16.5" />
           </>
         )}
         {type === 'bot' && (
@@ -198,15 +214,17 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
   const modalColorInputRef = useRef(null)
 
   const [isLoading, setIsLoading] = useState(false)
-  const [activeThemeIndex, setActiveThemeIndex] = useState(0)
+  const [activeThemeIndex, setActiveThemeIndex] = useState(3)
   const [billingCycle, setBillingCycle] = useState('annual')
   const [isConfirmingCancel, setIsConfirmingCancel] = useState(false)
   // Mobilde gökkuşağı kartına dokununca masaüstündeki hover önizlemesi gibi büyüsün
   const [activeRainbowIdx, setActiveRainbowIdx] = useState(null)
 
-  // Aktif kullanıcı profil bilgisi (UserCapabilities.Premium kontrolü)
+  // Aktif kullanıcı profil bilgisi (UserCapabilities.Premium kontrolü ve canlı önizleme)
   const { data: userProfile } = useQuery({
     queryKey: ['actorProfile', actorId],
+    queryFn: () =>
+      actorId ? actorApi.getProfile(actorId).then((r) => r.data?.data ?? null) : null,
     enabled: !!actorId && (isOpen || variant === 'page'),
     staleTime: 30000,
   })
@@ -240,8 +258,18 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
   const footerRef = useRef(null)
   const [showScrollBtn, setShowScrollBtn] = useState(true)
   const [footerHeight, setFooterHeight] = useState(100)
+  const centerLeft = useContentCenterLeft()
 
   const scrollToNext = () => {
+    if (variant === 'page') {
+      const totalScrollable = Math.max(
+        0,
+        document.scrollingElement.scrollHeight - window.innerHeight
+      )
+      const scrollAmount = Math.max(700, Math.round(totalScrollable * 0.5))
+      window.scrollBy({ top: scrollAmount, behavior: 'smooth' })
+      return
+    }
     const el = scrollRef.current
     if (!el) return
     const totalScrollable = Math.max(0, el.scrollHeight - el.clientHeight)
@@ -251,6 +279,19 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
 
   useEffect(() => {
     if (!isOpen) return undefined
+    if (variant === 'page') {
+      const update = () => {
+        const doc = document.scrollingElement
+        setShowScrollBtn(doc.scrollHeight - window.scrollY - window.innerHeight > 35)
+      }
+      const timer = setTimeout(update, 60)
+      update()
+      window.addEventListener('scroll', update, { passive: true })
+      return () => {
+        clearTimeout(timer)
+        window.removeEventListener('scroll', update)
+      }
+    }
     const el = scrollRef.current
     if (!el) return undefined
     const update = () => setShowScrollBtn(el.scrollHeight - el.scrollTop - el.clientHeight > 35)
@@ -261,7 +302,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
       clearTimeout(timer)
       el.removeEventListener('scroll', update)
     }
-  }, [isOpen, isPremiumActive, billingCycle])
+  }, [isOpen, isPremiumActive, billingCycle, variant])
 
   useEffect(() => {
     if (!isOpen) return undefined
@@ -320,22 +361,86 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
     {
       id: 'mind',
       title: t('premium.theme_mind_title', 'Mind Network'),
-      desc: t('premium.theme_mind_desc', 'Dinamik nöron ağı ve bağlantı grafiği teması'),
-      img: mindThemeImg,
+      type: 'brain',
     },
     {
       id: 'hierarchy',
       title: t('premium.theme_hierarchy_title', 'Hiyerarşi Ağacı'),
-      desc: t('premium.theme_hierarchy_desc', 'Ağaç ve organizasyonel yapı grafiği teması'),
-      img: hierarchyThemeImg,
+      type: 'hierarchy',
+    },
+    {
+      id: 'rainbow',
+      title: t('premium.theme_rainbow_title', 'Gökkuşağı Kartları'),
+      type: 'rainbow',
     },
     {
       id: 'bots',
       title: t('premium.theme_bots_title', 'Yüzen Botlar'),
-      desc: t('premium.theme_bots_desc', 'Etkileşimli süzülen bot parçacıkları ambiyansı'),
-      img: botsThemeImg,
+      type: 'bot',
     },
   ]
+
+  const genericPreviewProfile = {
+    profileName: 'Bob01',
+    bio: t('premium.preview_generic_bio', 'hi'),
+    createdAt: '2026-01-15T10:00:00Z',
+    discriminator: 'User',
+    actorPoint: 4850,
+    likeCount: 142,
+    followerCount: 268,
+    followedCount: 94,
+    imageUrl: null,
+    userSettings: {
+      userGrades: 0,
+      userCapabilities: UserCapabilities.Premium,
+    },
+  }
+
+  const previewProfile =
+    isLoggedIn && userProfile
+      ? {
+          ...userProfile,
+          profileName: userProfile.profileName || 'Bletchly Member',
+          bio: userProfile.bio || t('profile.no_bio', 'Henüz bir biyografi eklenmedi.'),
+          actorPoint: userProfile.actorPoint ?? 0,
+          likeCount: userProfile.likeCount ?? 0,
+          followerCount: userProfile.followerCount ?? 0,
+          followedCount: userProfile.followedCount ?? 0,
+          discriminator: userProfile.discriminator || 'User',
+          createdAt: userProfile.createdAt || '2026-01-01T00:00:00Z',
+          imageUrl: userProfile.imageUrl,
+          userSettings: userProfile.userSettings || {
+            userGrades: 0,
+            userCapabilities: UserCapabilities.Premium,
+          },
+        }
+      : genericPreviewProfile
+
+  const rawPreviewGrade =
+    previewProfile.discriminator === 'Bot'
+      ? previewProfile.botSettings?.botGrade
+      : previewProfile.userSettings?.userGrades
+  const previewGradeMap = {
+    0: 'A',
+    1: 'B',
+    2: 'C',
+    3: 'D',
+    4: 'F',
+    A: 'A',
+    B: 'B',
+    C: 'C',
+    D: 'D',
+    F: 'F',
+  }
+  const previewGradeLetter = previewGradeMap[rawPreviewGrade] || 'A'
+  const previewGradeColors = {
+    A: '#22C55E',
+    B: '#84CC16',
+    C: '#F59E0B',
+    D: '#F97316',
+    F: '#EF4444',
+  }
+  const previewBadgeColor = previewGradeColors[previewGradeLetter] || '#22C55E'
 
   const handleCheckout = async () => {
     if (!isLoggedIn) {
@@ -494,11 +599,10 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                 position: 'relative',
                 overflow: 'hidden',
                 flexShrink: 0,
-                background:
-                  'radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.16) 0%, rgba(59, 130, 246, 0.08) 55%, var(--color-surface) 100%)',
+                background: 'var(--color-bg)',
                 border:
                   '1px solid color-mix(in srgb, var(--color-warning) 35%, var(--color-border))',
-                boxShadow: '0 12px 36px -10px rgba(245, 158, 11, 0.22)',
+                boxShadow: 'none',
               }}
             >
               {/* Arka Plan Işık Halkası */}
@@ -554,13 +658,13 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
               className="premium-active-card"
               style={{
                 borderRadius: 16,
-                background: 'var(--color-surface)',
+                background: 'var(--color-bg)',
                 border: '1px solid var(--color-border)',
                 padding: '16px 18px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 14,
-                boxShadow: '0 4px 16px -4px rgba(0, 0, 0, 0.15)',
+                boxShadow: 'none',
                 flexShrink: 0,
               }}
             >
@@ -656,7 +760,8 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                 {/* Plan Bilgisi */}
                 <div
                   style={{
-                    background: 'var(--color-surface-2)',
+                    background: 'var(--color-bg)',
+                    border: '1px solid var(--color-border)',
                     padding: '10px 14px',
                     borderRadius: 10,
                     display: 'flex',
@@ -680,7 +785,8 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                 {/* Bitiş / Yenilenme Tarihi */}
                 <div
                   style={{
-                    background: 'var(--color-surface-2)',
+                    background: 'var(--color-bg)',
+                    border: '1px solid var(--color-border)',
                     padding: '10px 14px',
                     borderRadius: 10,
                     display: 'flex',
@@ -708,7 +814,8 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                 {/* Ödeme Altyapısı */}
                 <div
                   style={{
-                    background: 'var(--color-surface-2)',
+                    background: 'var(--color-bg)',
+                    border: '1px solid var(--color-border)',
                     padding: '10px 14px',
                     borderRadius: 10,
                     display: 'flex',
@@ -936,9 +1043,14 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
               style={{
                 marginTop: 2,
                 marginBottom: isMobile ? 8 : 12,
+                position: 'relative',
+                overflow: 'hidden',
               }}
             >
-              <p className="premium-rainbow-showcase-desc">
+              {/* Uçuşan kartcıklar ambiyansı yalnızca bu gökkuşağı bloğunun arkasında */}
+              <RainbowCardsAmbience active={true} fadeBottom={false} cardCount={isMobile ? 8 : 12} />
+
+              <p className="premium-rainbow-showcase-desc" style={{ position: 'relative', zIndex: 2 }}>
                 {t(
                   'premium.rainbow_customization_desc',
                   'Personalize your entire site with unique color palettes, and assign custom card visuals visible to everyone.'
@@ -983,6 +1095,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                       gap: isMobile ? 6 : 20,
                       width: '100%',
                       position: 'relative',
+                      zIndex: 2,
                       marginTop: 2,
                       marginBottom: isMobile ? 8 : 16,
                     }}
@@ -1218,23 +1331,372 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
               })()}
             </div>
 
+            {/* Exclusive Profile Themes Showcase */}
+            <div ref={themesRef} className="premium-themes-showcase-card">
+              <div className="premium-themes-showcase-header">
+                <div className="premium-themes-title-row">
+                  <div className="premium-themes-title">
+                    {t('premium.themes_section_title', '4 Farklı Profil Görsel Tasarımı')}
+                  </div>
+
+                  <div className="premium-themes-toggle-group">
+                    {profileThemes.map((theme, idx) => {
+                      const isActive = activeThemeIndex === idx
+                      const isFirst = idx === 0
+                      const isLast = idx === profileThemes.length - 1
+                      return (
+                        <button
+                          key={theme.id}
+                          type="button"
+                          className={`btn btn-sm ${isActive ? 'btn-primary' : 'btn-outline'}`}
+                          onClick={() => setActiveThemeIndex(idx)}
+                          aria-label={theme.title}
+                          title={theme.title}
+                          style={{
+                            width: isMobile ? 33 : 38,
+                            height: isMobile ? 26 : 30,
+                            minWidth: 0,
+                            padding: isMobile ? '3px 0' : '4px 0',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderTopLeftRadius: isFirst ? undefined : 0,
+                            borderBottomLeftRadius: isFirst ? undefined : 0,
+                            borderTopRightRadius: isLast ? undefined : 0,
+                            borderBottomRightRadius: isLast ? undefined : 0,
+                            marginLeft: isFirst ? 0 : -1,
+                            position: 'relative',
+                            zIndex: isActive ? 2 : 1,
+                            ...(isActive
+                              ? {}
+                              : {
+                                  borderColor: 'var(--color-border-light)',
+                                  color: 'var(--color-text-muted)',
+                                  background: 'var(--color-surface-2)',
+                                }),
+                          }}
+                        >
+                          <FramedThemeIcon type={theme.type} size={isMobile ? 17 : 20} />
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div className="premium-themes-desc">
+                  {t(
+                    'premium.themes_section_desc',
+                    'Profiliniz ve botlarınız için herkes tarafından görülebilen\n4 benzersiz animasyonlu dinamik ambiyans başlık tasarımının kilidini açın.'
+                  )}
+                  <div
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: 'var(--color-primary)',
+                      marginTop: 4,
+                    }}
+                  >
+                    {profileThemes[activeThemeIndex].title}
+                  </div>
+                </div>
+              </div>
+
+              {/* Real Profile Header Live Preview */}
+              <div
+                className="profile-header-card premium-profile-preview-card"
+                style={{
+                  width: '100%',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  margin: 0,
+                  boxSizing: 'border-box',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-xl)',
+                  background: 'var(--color-bg)',
+                  userSelect: 'none',
+                }}
+              >
+                <MindAmbience
+                  profileName={previewProfile.profileName}
+                  active={activeThemeIndex === 0}
+                />
+                <WelcomeAmbience active={activeThemeIndex === 1} />
+                <RainbowCardsAmbience active={activeThemeIndex === 2} showLiquid={false} cardCount={16} />
+                <AmbientBots active={activeThemeIndex === 3} />
+
+                <div
+                  className="flex justify-between profile-header-row"
+                  style={{ gap: 20, width: '100%', alignItems: 'stretch', marginBottom: -6 }}
+                >
+                  {/* ─── LEFT COLUMN ─── */}
+                  <div
+                    className="profile-header-left"
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      paddingBottom: 0,
+                    }}
+                  >
+                    <div className="flex items-center" style={{ gap: 16 }}>
+                      <h3
+                        style={{
+                          fontSize: isMobile ? 20 : 22,
+                          fontWeight: 800,
+                          margin: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          flex: 1,
+                          minWidth: 0,
+                        }}
+                      >
+                        <span
+                          style={{
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {previewProfile.profileName}
+                        </span>
+                      </h3>
+                    </div>
+
+                    <p
+                      className="text-muted"
+                      style={{
+                        margin: '8px 0',
+                        lineHeight: 1.5,
+                        maxWidth: 600,
+                        fontSize: isMobile ? 13 : 14,
+                      }}
+                    >
+                      {previewProfile.bio}
+                    </p>
+
+                    {previewProfile.createdAt && (
+                      <p
+                        className="text-muted"
+                        style={{
+                          margin: '4px 0 12px 0',
+                          fontSize: 13,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}
+                      >
+                        <CalendarFold size={14} />
+                        <span>
+                          {t('profile.joined', 'Katıldı:')}{' '}
+                          {new Date(previewProfile.createdAt).toLocaleDateString()}
+                        </span>
+                      </p>
+                    )}
+
+                    {/* Capability Emblems */}
+                    <div style={{ marginTop: 0, marginBottom: 0, maxWidth: 600 }}>
+                      <div className="bot-capability-emblems" style={{ marginBottom: 0 }}>
+                        <span
+                          className="bot-capability-emblem bot-capability-emblem--default"
+                          aria-label={t('user.capability_default', 'Varsayılan')}
+                          title={`${t('user.capability_default', 'Varsayılan')}: ${t('user.capability_default_desc', 'Standart kullanıcı özellikleri ve temel limitler')}`}
+                        >
+                          <ShieldCheck size={25} strokeWidth={2.2} aria-hidden="true" />
+                        </span>
+                        <span
+                          className="bot-capability-emblem bot-capability-emblem--premium"
+                          aria-label={t('user.capability_premium', 'Pro')}
+                          title={`${t('user.capability_premium', 'Pro')}: ${t('user.capability_premium_desc', 'Yükseltilmiş limitler ve ayrıcalıklı Pro özellikleri')}`}
+                        >
+                          <KingIcon size={25} strokeWidth={2.2} aria-hidden="true" />
+                        </span>
+                      </div>
+                    </div>
+
+                    <div style={{ flexGrow: 1 }} />
+
+                    <div
+                      className="flex flex-wrap gap-2 hscroll-strip profile-header-actions"
+                      style={{ paddingTop: 12, paddingBottom: 0 }}
+                    >
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-sm"
+                        style={{ pointerEvents: 'none', opacity: 0.9 }}
+                        tabIndex={-1}
+                      >
+                        <Network size={14} /> {t('profile.hierarchy', 'Hierarchy')}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* ─── VERTICAL DIVIDER ─── */}
+                  <div
+                    className="profile-header-divider"
+                    style={{
+                      width: 0,
+                      borderLeft:
+                        '1px solid color-mix(in srgb, var(--color-primary) 50%, transparent)',
+                      marginTop: 0,
+                      marginBottom: 0,
+                    }}
+                  />
+
+                  {/* ─── RIGHT COLUMN ─── */}
+                  <div
+                    className="profile-header-right"
+                    style={{
+                      width: 144,
+                      flexShrink: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      paddingBottom: 0,
+                    }}
+                  >
+                    <div style={{ pointerEvents: 'none' }}>
+                      <ActorAvatar
+                        profileName={previewProfile.profileName}
+                        imageUrl={previewProfile.imageUrl}
+                        discriminator={previewProfile.discriminator || 'User'}
+                        actorId={previewProfile.actorId}
+                        botGrade={previewProfile.botSettings?.botGrade}
+                        userGrade={previewProfile.userSettings?.userGrades ?? 0}
+                        size="xxxl"
+                        clickable={false}
+                        onClick={(id, e) => {
+                          e?.preventDefault?.()
+                          e?.stopPropagation?.()
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* ─── HORIZONTAL DIVIDER ─── */}
+                <div
+                  style={{
+                    width: '100%',
+                    height: 0,
+                    borderTop:
+                      '1px solid color-mix(in srgb, var(--color-primary) 50%, transparent)',
+                    margin: '2px 0 0px 0',
+                  }}
+                />
+
+                {/* ─── BOTTOM MODULE (STATS GRID) ─── */}
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    width: '100%',
+                    paddingBottom: 0,
+                    marginTop: -16,
+                  }}
+                >
+                  <div className="profile-stats-grid" style={{ width: '100%' }}>
+                    <div className="profile-stat-box" style={{ cursor: 'default' }}>
+                      <span className="profile-stat-value">{previewProfile.likeCount ?? 0}</span>
+                      <span className="profile-stat-label">{t('profile.reaction', 'Etkileşim')}</span>
+                    </div>
+                    <div className="profile-stat-box" style={{ cursor: 'default' }}>
+                      <span className="profile-stat-value">
+                        {(previewProfile.actorPoint ?? 0).toLocaleString()}
+                      </span>
+                      <span className="profile-stat-label">{t('profile.points', 'Puan')}</span>
+                    </div>
+                    <div className="profile-stat-box" style={{ cursor: 'default' }}>
+                      <span className="profile-stat-value">
+                        {previewProfile.followerCount ?? 0}
+                      </span>
+                      <span className="profile-stat-label">{t('profile.followers', 'Takipçi')}</span>
+                    </div>
+                    <div className="profile-stat-box" style={{ cursor: 'default' }}>
+                      <span className="profile-stat-value">
+                        {previewProfile.followedCount ?? 0}
+                      </span>
+                      <span className="profile-stat-label">{t('profile.following', 'Takip')}</span>
+                    </div>
+                    <div
+                      className="profile-stat-box profile-stat-box--wide"
+                      style={{ cursor: 'default' }}
+                    >
+                      <span
+                        className="profile-stat-value"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 5,
+                          fontSize: 15,
+                        }}
+                      >
+                        <Sliders size={14} style={{ color: 'var(--color-primary)' }} />
+                        <span>{t('profile.grade', 'Derece')}</span>
+                        <span
+                          style={{
+                            width: 19,
+                            height: 19,
+                            borderRadius: '50%',
+                            background: previewBadgeColor,
+                            color: '#fff',
+                            fontWeight: 900,
+                            fontSize: 11,
+                            lineHeight: 1,
+                            border: '1.5px solid var(--color-surface)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.25)',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {previewGradeLetter}
+                        </span>
+                      </span>
+                      <span className="profile-stat-label">
+                        {t('profile.modifiers', 'Modifikatörler')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
             {/* Perks & Highlights List */}
             <div ref={perksRef} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {/* Extra Highlights (Gold Crown Badge & Extended Bot Memory) */}
               <div
                 className="premium-highlight-card"
                 style={{
-                  padding: '9px 14px',
+                  padding: '7px 14px',
                   borderRadius: 10,
-                  background: 'color-mix(in srgb, var(--color-warning) 8%, var(--color-surface))',
+                  minHeight: 42,
+                  background: 'var(--color-bg)',
                   border:
                     '1px solid color-mix(in srgb, var(--color-warning) 24%, var(--color-border))',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 10,
+                  gap: 12,
                 }}
               >
-                <KingIcon size={16} style={{ flexShrink: 0 }} />
+                <div
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 7,
+                    background: 'transparent',
+                    border:
+                      '1px solid color-mix(in srgb, var(--color-warning) 24%, var(--color-border))',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <KingIcon size={16} />
+                </div>
                 <div
                   style={{
                     fontSize: 12,
@@ -1245,26 +1707,44 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                   }}
                 >
                   <strong style={{ color: 'var(--color-text-primary)' }}>
-                    {t('premium.badge_highlight_title', 'Altın Taç Rozeti:')}
-                  </strong>{' '}
-                  {t('premium.badge_highlight_desc', 'Profilinizde özel rozet gösterilir.')}
+                    {t('premium.badge_highlight_title', 'Altın Taç Rozeti')}
+                  </strong>
+                  <span style={{ marginLeft: 8 }}>
+                    — {t('premium.badge_highlight_desc', 'Profilinizde özel rozet gösterilir.')}
+                  </span>
                 </div>
               </div>
 
               <div
                 className="premium-highlight-card"
                 style={{
-                  padding: '9px 14px',
+                  padding: '7px 14px',
                   borderRadius: 10,
-                  background: 'color-mix(in srgb, var(--color-warning) 8%, var(--color-surface))',
+                  minHeight: 42,
+                  background: 'var(--color-bg)',
                   border:
                     '1px solid color-mix(in srgb, var(--color-warning) 24%, var(--color-border))',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 10,
+                  gap: 12,
                 }}
               >
-                <Brain size={18} color="var(--color-warning)" style={{ flexShrink: 0 }} />
+                <div
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 7,
+                    background: 'transparent',
+                    border:
+                      '1px solid color-mix(in srgb, var(--color-warning) 24%, var(--color-border))',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Brain size={16} color="var(--color-warning)" />
+                </div>
                 <div
                   style={{
                     fontSize: 12,
@@ -1275,9 +1755,11 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                   }}
                 >
                   <strong style={{ color: 'var(--color-text-primary)' }}>
-                    {t('premium.memory_highlight_title', 'Genişletilmiş Bot Hafızası:')}
-                  </strong>{' '}
-                  {t('premium.memory_highlight_desc', '+30 gün uzatılmış bot hafıza süresi.')}
+                    {t('premium.memory_highlight_title', 'Genişletilmiş Bot Hafızası')}
+                  </strong>
+                  <span style={{ marginLeft: 8 }}>
+                    — {t('premium.memory_highlight_desc', '+30 gün uzatılmış bot hafıza süresi.')}
+                  </span>
                 </div>
               </div>
 
@@ -1287,9 +1769,10 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                   key={index}
                   className="premium-perk-card"
                   style={{
-                    padding: '9px 14px',
+                    padding: '7px 14px',
                     borderRadius: 10,
-                    background: 'var(--color-surface)',
+                    minHeight: 42,
+                    background: 'var(--color-bg)',
                     border: '1px solid var(--color-border)',
                     display: 'flex',
                     alignItems: 'center',
@@ -1305,7 +1788,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                         width: 28,
                         height: 28,
                         borderRadius: 7,
-                        background: 'var(--color-surface-2)',
+                        background: 'transparent',
                         border: '1px solid var(--color-border)',
                         display: 'flex',
                         alignItems: 'center',
@@ -1345,148 +1828,6 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
               ))}
             </div>
 
-            {/* 3 Exclusive Profile Themes Showcase */}
-            <div ref={themesRef} className="premium-themes-showcase-card">
-              <div className="premium-themes-showcase-header">
-                <div className="premium-themes-title-row">
-                  <div className="premium-themes-title">
-                    {t('premium.themes_section_title', '3 Farklı Profil Görsel Tasarımı')}
-                  </div>
-
-                  <div className="premium-themes-toggle-group">
-                    <button
-                      type="button"
-                      className={`btn btn-sm ${activeThemeIndex === 0 ? 'btn-primary' : 'btn-outline'}`}
-                      onClick={() => setActiveThemeIndex(0)}
-                      aria-label={t('topbar.mind_ambience', 'Mind Arka Planı')}
-                      style={{
-                        width: isMobile ? 33 : 38,
-                        height: isMobile ? 26 : 30,
-                        minWidth: 0,
-                        padding: isMobile ? '3px 0' : '4px 0',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderTopRightRadius: 0,
-                        borderBottomRightRadius: 0,
-                        position: 'relative',
-                        zIndex: activeThemeIndex === 0 ? 2 : 1,
-                        ...(activeThemeIndex === 0
-                          ? {}
-                          : {
-                              borderColor: 'var(--color-border-light)',
-                              color: 'var(--color-text-muted)',
-                              background: 'var(--color-surface-2)',
-                            }),
-                      }}
-                    >
-                      <FramedThemeIcon type="brain" size={isMobile ? 17 : 20} />
-                    </button>
-                    <button
-                      type="button"
-                      className={`btn btn-sm ${activeThemeIndex === 1 ? 'btn-primary' : 'btn-outline'}`}
-                      onClick={() => setActiveThemeIndex(1)}
-                      aria-label={t('topbar.welcome_ambience', 'Welcome Arka Planı')}
-                      style={{
-                        width: isMobile ? 33 : 38,
-                        height: isMobile ? 26 : 30,
-                        minWidth: 0,
-                        padding: isMobile ? '3px 0' : '4px 0',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: 0,
-                        marginLeft: -1,
-                        position: 'relative',
-                        zIndex: activeThemeIndex === 1 ? 2 : 1,
-                        ...(activeThemeIndex === 1
-                          ? {}
-                          : {
-                              borderColor: 'var(--color-border-light)',
-                              color: 'var(--color-text-muted)',
-                              background: 'var(--color-surface-2)',
-                            }),
-                      }}
-                    >
-                      <FramedThemeIcon type="hierarchy" size={isMobile ? 17 : 20} />
-                    </button>
-                    <button
-                      type="button"
-                      className={`btn btn-sm ${activeThemeIndex === 2 ? 'btn-primary' : 'btn-outline'}`}
-                      onClick={() => setActiveThemeIndex(2)}
-                      aria-label={t('topbar.ambient_bots', 'Bot Arka Planı')}
-                      style={{
-                        width: isMobile ? 33 : 38,
-                        height: isMobile ? 26 : 30,
-                        minWidth: 0,
-                        padding: isMobile ? '3px 0' : '4px 0',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderTopLeftRadius: 0,
-                        borderBottomLeftRadius: 0,
-                        marginLeft: -1,
-                        position: 'relative',
-                        zIndex: activeThemeIndex === 2 ? 2 : 1,
-                        ...(activeThemeIndex === 2
-                          ? {}
-                          : {
-                              borderColor: 'var(--color-border-light)',
-                              color: 'var(--color-text-muted)',
-                              background: 'var(--color-surface-2)',
-                            }),
-                      }}
-                    >
-                      <FramedThemeIcon type="bot" size={isMobile ? 17 : 20} />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="premium-themes-desc">
-                  {t(
-                    'premium.themes_section_desc',
-                    'Profiliniz ve botlarınız için herkes tarafından görülebilen\n3 benzersiz animasyonlu dinamik ambiyans başlık tasarımının kilidini açın.'
-                  )}
-                </div>
-              </div>
-
-              {/* Visual Image Preview */}
-              <div
-                style={{
-                  position: 'relative',
-                  borderRadius: 10,
-                  overflow: 'hidden',
-                  border: '1px solid var(--color-border)',
-                  background: '#000',
-                  width: '100%',
-                  position: 'relative',
-                  minHeight: 180,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <ImageWithLoader
-                  src={profileThemes[activeThemeIndex].img}
-                  alt={profileThemes[activeThemeIndex].title}
-                  spinnerSize="md"
-                  spinnerOpacity={0.45}
-                  wrapperStyle={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                  style={{
-                    width: '100%',
-                    height: 'auto',
-                    display: 'block',
-                    transition: 'opacity 0.25s ease',
-                  }}
-                />
-              </div>
-            </div>
           </div>
         )}
 
@@ -1494,12 +1835,21 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
         <div
           ref={footerRef}
           style={{
-            padding: '14px 24px 18px',
+            padding: isMobile ? '12px 16px 14px' : '14px 24px 18px',
             borderTop: '1px solid var(--color-border)',
             background: 'var(--color-bg)',
             display: 'flex',
             flexDirection: 'column',
             gap: 10,
+            ...(variant === 'page'
+              ? {
+                  position: 'sticky',
+                  bottom: isMobile ? 'calc(56px + env(safe-area-inset-bottom, 0px))' : 0,
+                  zIndex: 35,
+                  borderRadius: 16,
+                  boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.08)',
+                }
+              : {}),
           }}
         >
           {isPremiumActive ? (
@@ -1739,49 +2089,26 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
           )}
         </div>
 
-        <style>{`
-          @keyframes guideBounce {
-            0%, 100% { transform: translateX(-50%) translateY(0); }
-            50% { transform: translateX(-50%) translateY(8px); }
-          }
-        `}</style>
-
-        {variant === 'modal' && showScrollBtn && (
+        {showScrollBtn && !isPremiumActive && (
           <button
             type="button"
             onClick={scrollToNext}
             aria-label={t('bletchly_guide.scroll_down', 'Aşağı kaydır')}
-            style={{
-              position: 'absolute',
-              bottom: footerHeight + 14,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: 48,
-              height: 48,
-              borderRadius: '50%',
-              background: 'var(--color-primary)',
-              color: '#fff',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.28)',
-              zIndex: 20,
-              animation: 'guideBounce 2s ease-in-out infinite',
-            }}
+            className="page-scroll-btn"
+            style={
+              variant === 'modal'
+                ? { position: 'absolute', bottom: footerHeight + 14, left: '50%' }
+                : {
+                    position: 'fixed',
+                    bottom: isMobile
+                      ? `calc(56px + ${footerHeight}px + 14px + env(safe-area-inset-bottom, 0px))`
+                      : `${footerHeight + 16}px`,
+                    left: centerLeft ?? '50%',
+                    zIndex: 45,
+                  }
+            }
           >
-            <span
-              aria-hidden="true"
-              style={{
-                fontSize: 20,
-                lineHeight: 1,
-                display: 'inline-block',
-                transform: 'translateY(1.5px)',
-              }}
-            >
-              ▼
-            </span>
+            <span aria-hidden="true">▼</span>
           </button>
         )}
     </>

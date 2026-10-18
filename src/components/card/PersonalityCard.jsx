@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Bot,
   Check,
@@ -12,6 +13,7 @@ import {
   Lock,
   LockOpen,
   Network,
+  AlertTriangle,
 } from 'lucide-react'
 import CardActorListModal from './CardActorListModal'
 import CardDetailModal from './CardDetailModal'
@@ -24,6 +26,8 @@ import FossilTogglePill from '../common/FossilTogglePill'
 import BotIcon from '../common/icons/BotIcon'
 import AvatarUpload from '../common/AvatarUpload'
 import ImageWithLoader from '../common/ImageWithLoader'
+import ConfirmModal from '../common/ConfirmModal'
+import useMyEntitiesStore from '../../store/myEntitiesStore'
 
 export default function PersonalityCard({
   card,
@@ -64,11 +68,32 @@ export default function PersonalityCard({
 }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const myOwnedCards = useMyEntitiesStore((s) => s.myCards)
+  const storeSettings = useMyEntitiesStore((s) => s.mySettings)
   const [modalType, setModalType] = useState(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [showFossilSources, setShowFossilSources] = useState(false)
   const [showFossilTargets, setShowFossilTargets] = useState(false)
   const [showFossilAssigned, setShowFossilAssigned] = useState(false)
+  const [isEditorConfirmModalOpen, setIsEditorConfirmModalOpen] = useState(false)
+
+  const cardOwnershipLimit = storeSettings?.cardOwnershipLimit || 10
+
+  const oldestOwnedCard = useMemo(() => {
+    if (!myOwnedCards || myOwnedCards.length === 0) return null
+    return [...myOwnedCards].sort((a, b) => {
+      const dateA = new Date(a.acquiredAt || a.card?.createdAt || 0).getTime()
+      const dateB = new Date(b.acquiredAt || b.card?.createdAt || 0).getTime()
+      return dateA - dateB
+    })[0]
+  }, [myOwnedCards])
+
+  const oldestCardName =
+    oldestOwnedCard?.card?.cardName ||
+    oldestOwnedCard?.cardName ||
+    t('card.oldest_card', 'En eski kartınız')
+
+  const isCardLimitReached = (myOwnedCards || []).length >= cardOwnershipLimit
 
   if (variant === 'distribute') {
     const actorData = actor || card?.actor || card?.winnerActor || {}
@@ -164,6 +189,20 @@ export default function PersonalityCard({
 
   if (variant === 'editor') {
     const canConfirm = editorCardName.trim() !== '' && editorPrompt.trim() !== ''
+
+    const handleEditorConfirmTrigger = () => {
+      if (editorConfirmed) {
+        onEditorEdit?.()
+        return
+      }
+      if (!canConfirm) return
+
+      if (isCardLimitReached) {
+        setIsEditorConfirmModalOpen(true)
+      } else {
+        onEditorConfirm?.()
+      }
+    }
 
     return (
       <div
@@ -289,7 +328,7 @@ export default function PersonalityCard({
                     editorConfirmed
                       ? () => onEditorEdit?.()
                       : canConfirm
-                        ? () => onEditorConfirm?.()
+                        ? handleEditorConfirmTrigger
                         : undefined
                   }
                   disabled={disabled}
@@ -332,7 +371,7 @@ export default function PersonalityCard({
           <button
             type="button"
             className="btn btn-primary btn-sm personality-card-editor__confirm"
-            onClick={editorConfirmed ? onEditorEdit : onEditorConfirm}
+            onClick={handleEditorConfirmTrigger}
             disabled={disabled || (!editorConfirmed && !canConfirm)}
           >
             {editorConfirmed ? (
@@ -346,6 +385,29 @@ export default function PersonalityCard({
             )}
           </button>
         </div>
+
+        <ConfirmModal
+          isOpen={isCardLimitReached && isEditorConfirmModalOpen}
+          onClose={() => setIsEditorConfirmModalOpen(false)}
+          onConfirm={() => {
+            setIsEditorConfirmModalOpen(false)
+            onEditorConfirm?.()
+          }}
+          title={t('card.create_confirm_title', 'Kart Oluşturma Onayı')}
+          description={t('card.create_confirm_desc', {
+            cardName: editorCardName,
+            defaultValue: `"${editorCardName}" adlı yeni bir kişilik kartı oluşturmak istediğinize emin misiniz?`,
+          })}
+          warning={t('card.create_limit_reached_warning', {
+            limit: cardOwnershipLimit,
+            oldestCard: oldestCardName,
+            defaultValue: `Kart limitinize (${cardOwnershipLimit}) ulaştınız! Bu kartı oluşturduğunuzda, en eski sahip olduğunuz kart olan "${oldestCardName}" otomatik ve kalıcı olarak silinecektir.`,
+          })}
+          confirmText={t('card.confirm_create_btn', 'Evet, Oluştur')}
+          cancelText={t('common.cancel', 'İptal')}
+          confirmVariant="danger"
+          isLoading={disabled}
+        />
       </div>
     )
   }
@@ -423,7 +485,28 @@ export default function PersonalityCard({
     null
 
   const innerCard = card?.card ?? card?.ownership?.originalCard ?? card
-  const currentAcqType = innerCard?.acquisitionType ?? null
+  const rawAcqType =
+    card?.acquisitionType ??
+    card?.card?.acquisitionType ??
+    card?.ownership?.acquisitionType ??
+    card?.ownership?.originalCard?.acquisitionType ??
+    innerCard?.acquisitionType ??
+    null
+
+  const storeMatch =
+    rawAcqType == null && personalityCardId && Array.isArray(myOwnedCards)
+      ? myOwnedCards.find((mc) => {
+          const mId =
+            mc?.cardId ||
+            mc?.personalityCardId ||
+            mc?.id ||
+            (typeof mc === 'string' ? mc : null)
+          return mId && String(mId).toLowerCase() === String(personalityCardId).toLowerCase()
+        })
+      : null
+
+  const currentAcqType =
+    rawAcqType ?? (storeMatch ? (storeMatch?.acquisitionType ?? 0) : null)
 
   const isAssignedCard = Boolean(
     card?.assignmentId || card?.botId || card?.tribeId || card?.assignedTribeId || tribeAssigned
@@ -807,12 +890,22 @@ export default function PersonalityCard({
             )}
           </IconActionButton>
         )}
-        {onEditClick && filled && (currentAcqType === 0 || currentAcqType === 1) ? (
+        {filled && (onEditClick || currentAcqType === 0 || currentAcqType === 1) && !selectable ? (
           <IconActionButton
             className="personality-card__edit-action"
             onClick={(e) => {
               e.stopPropagation()
-              onEditClick(card)
+              if (onEditClick) {
+                onEditClick(card)
+              } else {
+                const targetId =
+                  personalityCardId ||
+                  card?.cardId ||
+                  card?.personalityCardId ||
+                  innerCard?.personalityCardId ||
+                  innerCard?.cardId
+                navigate('/cards', { state: { editCardId: targetId, editCard: card } })
+              }
             }}
             aria-label={t('action.edit', 'Düzenle')}
             style={{

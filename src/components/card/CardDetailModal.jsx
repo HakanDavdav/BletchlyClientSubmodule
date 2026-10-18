@@ -1,10 +1,12 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { useNavigate } from 'react-router-dom'
 import { BookOpen, Bot, CalendarFold, Hash, Tag, Users, X, Crown, Edit2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
 import TribeMinimalCard from '../tribe/TribeMinimalCard'
 import BotFlashCardsIcon from '../common/icons/BotFlashCardsIcon'
+import CardContingencyIcon from '../common/icons/CardContingencyIcon'
 import IconActionButton from '../common/IconActionButton'
 import ModalHeader from '../common/ModalHeader'
 
@@ -29,6 +31,14 @@ function formatDate(value) {
   return `${datePart} / ${timePart}`
 }
 
+function formatContingency(contingency, isEn) {
+  if (contingency === null || contingency === undefined) return null
+  const num = Number(contingency)
+  if (Number.isNaN(num)) return null
+  const percent = Number((num <= 1 ? num * 100 : num).toFixed(2))
+  return isEn ? `${percent}%` : `%${percent}`
+}
+
 function DetailRow({ icon: Icon, label, value, multiline = false, iconSize = 14 }) {
   if (value === null || value === undefined || value === '') return null
 
@@ -46,6 +56,7 @@ function DetailRow({ icon: Icon, label, value, multiline = false, iconSize = 14 
 }
 
 export default function CardDetailModal({ card, isOpen, onClose, onEditClick = null }) {
+  const navigate = useNavigate()
   const { t } = useTranslation()
 
   useEffect(() => {
@@ -85,6 +96,13 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
 
   const ownershipCount = cardData.ownershipCount ?? card.ownershipCount
   const assignmentCount = cardData.assignmentCount ?? card.assignmentCount
+  const contingency =
+    cardData.contingency ??
+    card.contingency ??
+    card?.ownership?.card?.contingency ??
+    card?.ownership?.originalCard?.contingency ??
+    null
+  const isEn = Boolean(i18n.language && i18n.language.startsWith('en'))
 
   const detailRows = [
     {
@@ -131,6 +149,12 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
     },
     { icon: Users, label: t('card.ownership_count', 'Sahiplik Sayısı'), value: ownershipCount },
     { icon: Bot, label: t('card.assignment_count', 'Atama Sayısı'), value: assignmentCount },
+    {
+      icon: CardContingencyIcon,
+      iconSize: 12,
+      label: t('card.initial_contingency', 'Başlangıç Miras Olasılığı'),
+      value: formatContingency(contingency, isEn),
+    },
     { icon: Hash, label: 'Card ID', value: cardId },
     { icon: Hash, label: 'Ownership ID', value: ownershipId },
     { icon: Hash, label: 'Actor ID', value: actorId },
@@ -166,7 +190,16 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
         aria-modal="true"
         aria-labelledby="personality-card-detail-title"
         onClick={(event) => event.stopPropagation()}
-        style={{ maxWidth: 680, maxHeight: '88vh', padding: 0, overflow: 'hidden' }}
+        style={{
+          maxWidth: 680,
+          maxHeight: '88vh',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '24px 20px 20px',
+          borderRadius: 16,
+          background: 'var(--color-bg)',
+          border: '1px solid var(--color-border)',
+        }}
       >
         <ModalHeader
           icon={<BotFlashCardsIcon size={28} style={{ color: 'var(--color-primary)' }} />}
@@ -174,12 +207,24 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
           subtitle={t('card.details', 'Kart Detayları')}
           titleId="personality-card-detail-title"
           onClose={onClose}
+          style={{ padding: '0 0 14px 0', marginBottom: 16 }}
           actions={
-            onEditClick && isOwnerCard ? (
+            isOwnerCard ? (
               <IconActionButton
                 onClick={() => {
                   onClose()
-                  onEditClick(card)
+                  if (onEditClick) {
+                    onEditClick(card)
+                  } else {
+                    const targetId =
+                      card?.personalityCardId ||
+                      card?.cardId ||
+                      card?.card?.personalityCardId ||
+                      card?.card?.cardId ||
+                      cardData?.personalityCardId ||
+                      cardData?.cardId
+                    navigate('/cards', { state: { editCardId: targetId, editCard: card } })
+                  }
                 }}
                 aria-label={t('action.edit', 'Düzenle')}
                 style={{ width: 36, height: 36, borderRadius: 'var(--radius-md)' }}
@@ -190,7 +235,7 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
           }
         />
 
-        <div className="card-detail-modal-body">
+        <div className="card-detail-modal-body" style={{ flex: 1, padding: '0 4px 0 0', maxHeight: 'none' }}>
           <div>
             {detailRows.map((row) => (
               <DetailRow key={row.label} {...row} />

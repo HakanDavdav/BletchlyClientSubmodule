@@ -273,4 +273,5 @@ export const Theme = {
   Mind: 1,
   Welcome: 2,
   Bots: 3,
+  Rainbow: 4,
 }

@@ -5,6 +5,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { tribeApi } from '../api/tribeApi'
 import { personalityCardApi } from '../api/personalityCardApi'
 import BackButton from '../components/common/BackButton'
+import ConfirmModal from '../components/common/ConfirmModal'
 import BotFlashCardsIcon from '../components/common/icons/BotFlashCardsIcon'
 import CardSelectionSlots from '../components/card/CardSelectionSlots'
 import PersonalityCard from '../components/card/PersonalityCard'
@@ -45,6 +46,8 @@ export default function TribeSettingsPage() {
   const [lockedCardIds, setLockedCardIds] = useState([])
   const [hasSubmitted, setHasSubmitted] = useState(false)
   const [focused, setFocused] = useState(null)
+  const [isDeleteTribeModalOpen, setIsDeleteTribeModalOpen] = useState(false)
+  const [expelTargetMember, setExpelTargetMember] = useState(null)
 
   // Fetch Tribe
   const { data: tribe, isLoading } = useQuery({
@@ -62,6 +65,7 @@ export default function TribeSettingsPage() {
   })
 
   const storeMyCards = useMyEntitiesStore((state) => state.myCards)
+
   const ownedCardIdSet = useMemo(
     () => buildOwnedCardIdSet([...(myCards || []), ...(storeMyCards || [])]),
     [myCards, storeMyCards]
@@ -301,9 +305,7 @@ export default function TribeSettingsPage() {
   }
 
   const handleDeleteTribe = () => {
-    if (window.confirm(t('tribe_settings.confirm_delete'))) {
-      deleteMutation.mutate()
-    }
+    setIsDeleteTribeModalOpen(true)
   }
 
   const inputStyle = {
@@ -554,10 +556,7 @@ export default function TribeSettingsPage() {
         </div>
 
         <div
-          aria-label={t(
-            'card.selected_count',
-            `${selectedCardIds.length + (formData.personalityCardConfirmed ? 1 : 0)} kart seçildi`
-          )}
+          aria-label={`${selectedCardIds.length + (formData.personalityCardConfirmed ? 1 : 0)} ${t('card.selected_count', 'kart seçildi')}`}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -701,11 +700,7 @@ export default function TribeSettingsPage() {
                         <button
                           className="btn btn-ghost btn-sm"
                           style={{ color: '#ef4444' }}
-                          onClick={() => {
-                            if (window.confirm(t('tribe_settings.confirm_expel'))) {
-                              expelMutation.mutate(member.actor.actorId)
-                            }
-                          }}
+                          onClick={() => setExpelTargetMember(member)}
                           disabled={expelMutation.isPending}
                         >
                           <UserMinus size={14} /> {t('tribe_settings.expel')}
@@ -762,6 +757,40 @@ export default function TribeSettingsPage() {
         </button>
         </div>
       )}
+      <ConfirmModal
+        isOpen={Boolean(expelTargetMember)}
+        onClose={() => setExpelTargetMember(null)}
+        onConfirm={() => {
+          if (expelTargetMember?.actor?.actorId) {
+            expelMutation.mutate(expelTargetMember.actor.actorId)
+            setExpelTargetMember(null)
+          }
+        }}
+        title={t('tribe_settings.expel', 'Üyeyi Çıkar')}
+        description={t(
+          'tribe_settings.confirm_expel',
+          'Bu üyeyi klandan çıkarmak istediğinize emin misiniz?'
+        )}
+        confirmText={t('action.delete', 'Çıkar')}
+        confirmVariant="danger"
+        isLoading={expelMutation.isPending}
+      />
+      <ConfirmModal
+        isOpen={isDeleteTribeModalOpen}
+        onClose={() => setIsDeleteTribeModalOpen(false)}
+        onConfirm={() => {
+          setIsDeleteTribeModalOpen(false)
+          deleteMutation.mutate()
+        }}
+        title={t('tribe_settings.delete_tribe', 'Klanı Sil')}
+        description={t(
+          'tribe_settings.confirm_delete',
+          'Bu klanı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.'
+        )}
+        confirmText={t('action.delete', 'Sil')}
+        confirmVariant="danger"
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   )
 }

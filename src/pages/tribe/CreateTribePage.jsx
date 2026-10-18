@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { tribeApi } from '../../api/tribeApi'
 import { personalityCardApi } from '../../api/personalityCardApi'
+import { actorApi } from '../../api/actorApi'
 import { useNavigate } from 'react-router-dom'
-import { Users, Loader2 } from 'lucide-react'
+import { Users, Loader2, AlertTriangle } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import BackButton from '../../components/common/BackButton'
 import CardSelectionSlots from '../../components/card/CardSelectionSlots'
 import useAuthStore from '../../store/authStore'
@@ -43,6 +45,33 @@ export default function CreateTribePage() {
     meta: { showErrorToast: true },
   })
 
+  const storeMyTribes = useMyEntitiesStore((state) => state.myTribes)
+  const { data: myTribes = storeMyTribes } = useQuery({
+    queryKey: ['myTribes', actorId],
+    queryFn: () => tribeApi.getMyTribes().then((res) => res.data?.data || []),
+    initialData: storeMyTribes.length > 0 ? storeMyTribes : undefined,
+    enabled: Boolean(actorId),
+  })
+
+  const storeSettings = useMyEntitiesStore((state) => state.mySettings)
+  const { data: userSettings } = useQuery({
+    queryKey: ['userSettings', actorId],
+    queryFn: async () => {
+      if (storeSettings) return storeSettings
+      const res = await actorApi.getUserSettings()
+      return res.data?.data
+    },
+    initialData: storeSettings || undefined,
+    enabled: Boolean(actorId),
+  })
+
+  const activeTribes = useMemo(
+    () => (myTribes || []).filter((t) => !t.isDormant && !t.IsDormant),
+    [myTribes]
+  )
+  const tribeCountLimit = userSettings?.tribeCountLimit ?? storeSettings?.tribeCountLimit ?? 3
+  const isTribeLimitReached = activeTribes.length >= tribeCountLimit
+
   const [formData, setFormData] = useState({
     tribeName: '',
     imageUrl: '',
@@ -51,6 +80,7 @@ export default function CreateTribePage() {
     topicTypes: [],
     personalityCardName: '',
     personalityCardPrompt: '',
+    personalityCardImageUrl: '',
     personalityCardConfirmed: false,
     personalityCardLocked: false,
   })
@@ -85,10 +115,24 @@ export default function CreateTribePage() {
     formData.mission.trim() !== '' &&
     (formData.topicTypes || []).length >= 3 &&
     hasAtLeastOneCard &&
+    !isTribeLimitReached &&
     !mutation.isPending
 
   const handleSubmit = (e) => {
     e.preventDefault()
+
+    if (mutation.isPending) return
+
+    if (isTribeLimitReached) {
+      toast.error(
+        t('tribe.limit_reached', {
+          limit: tribeCountLimit,
+          defaultValue: `Maksimum klan limitine (${tribeCountLimit}) ulaştınız.`,
+        })
+      )
+      return
+    }
+
     if (!canSubmit) {
       setHasSubmitted(true)
       if (!formData.tribeName.trim()) {
@@ -113,6 +157,7 @@ export default function CreateTribePage() {
     const {
       personalityCardName,
       personalityCardPrompt,
+      personalityCardImageUrl,
       personalityCardConfirmed,
       personalityCardLocked,
       ...payload
@@ -122,6 +167,7 @@ export default function CreateTribePage() {
       assignedCardIds: selectedCardIds,
       personalityCardName: personalityCardConfirmed ? personalityCardName : null,
       personalityCardPrompt: personalityCardConfirmed ? personalityCardPrompt : null,
+      personalityCardImageUrl: personalityCardConfirmed ? personalityCardImageUrl : null,
       lockPersonalityCard: personalityCardConfirmed ? Boolean(personalityCardLocked) : false,
     })
   }
@@ -152,6 +198,7 @@ export default function CreateTribePage() {
       ...current,
       personalityCardName: field === 'cardName' ? value : current.personalityCardName,
       personalityCardPrompt: field === 'prompt' ? value : current.personalityCardPrompt,
+      personalityCardImageUrl: field === 'imageUrl' ? value : current.personalityCardImageUrl,
       personalityCardConfirmed: false,
     }))
   }
@@ -192,11 +239,26 @@ export default function CreateTribePage() {
           <Users size={22} color="#fff" />
         </div>
         <div style={{ minWidth: 0 }}>
-          <h1
-            style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
-          >
-            {t('tribe_settings.create_tribe')}
-          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <h1
+              style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
+            >
+              {t('tribe_settings.create_tribe')}
+            </h1>
+            <span
+              style={{
+                fontSize: 12,
+                padding: '2px 8px',
+                borderRadius: 12,
+                background: isTribeLimitReached ? 'rgba(239,68,68,0.15)' : 'var(--color-surface-raised)',
+                color: isTribeLimitReached ? '#ef4444' : 'var(--color-text-secondary)',
+                border: `1px solid ${isTribeLimitReached ? '#ef4444' : 'var(--color-border)'}`,
+                fontWeight: 600,
+              }}
+            >
+              {activeTribes.length} / {tribeCountLimit} {t('common.tribe', 'Klan')}
+            </span>
+          </div>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
             {t('tribe_settings.create_tribe_desc')}
           </p>
@@ -331,6 +393,7 @@ export default function CreateTribePage() {
             variant="editor"
             editorCardName={formData.personalityCardName}
             editorPrompt={formData.personalityCardPrompt}
+            editorImageUrl={formData.personalityCardImageUrl}
             editorConfirmed={formData.personalityCardConfirmed}
             editorLocked={formData.personalityCardLocked}
             disabled={mutation.isPending || mutation.isSuccess}
@@ -466,10 +529,7 @@ export default function CreateTribePage() {
         </div>
 
         <div
-          aria-label={t(
-            'card.selected_count',
-            `${selectedCardIds.length + (formData.personalityCardConfirmed ? 1 : 0)} kart seçildi`
-          )}
+          aria-label={`${selectedCardIds.length + (formData.personalityCardConfirmed ? 1 : 0)} ${t('card.selected_count', 'kart seçildi')}`}
           style={{
             display: 'flex',
             alignItems: 'center',
