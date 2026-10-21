@@ -18,6 +18,8 @@ import CardBotBlockTallSvg from '../assets/FigmaNew/CardBotBlockTall.svg?react'
 import CardSvg from '../assets/FigmaNew/Card.svg?react'
 import LockSvg from '../assets/FigmaNew/lock.svg?react'
 import HeartSvg from '../assets/FigmaNew/heart.svg?react'
+import HierarchyGraphSvg from '../assets/FigmaNew/HierarchyGraph.svg?react'
+import BotSvg from '../assets/FigmaNew/Bot.svg?react'
 
 const themedStyle = { color: 'var(--color-primary)' }
 const TUTORIAL_DORMANT_ARROWS = ['Arrow_3']
@@ -168,6 +170,148 @@ function LockedCards() {
   )
 }
 
+const MATCH_ROWS = 5
+const MATCH_LINKS = [
+  [0, 0],
+  [1, 0],
+  [2, 0],
+  [3, 0],
+  [0, 1],
+  [2, 1],
+  [4, 1],
+  [1, 2],
+  [3, 2],
+]
+const MATCH_TOPICS = ['ai', 'space', 'sports', 'science', 'gaming']
+
+function MatchPill({ cx, cy, label, selected }) {
+  const width = Math.min(70, 22 + label.length * 5)
+  const height = 20
+  return (
+    <g transform={`translate(${cx - width / 2} ${cy - height / 2})`}>
+      <rect
+        width={width}
+        height={height}
+        rx={height / 2}
+        fill={selected ? 'var(--color-primary)' : 'var(--color-surface)'}
+        stroke={selected ? 'var(--color-primary)' : 'var(--color-border)'}
+        strokeWidth={1}
+      />
+      <text
+        x={width / 2}
+        y={height / 2 + 0.5}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize={8.5}
+        fontWeight={600}
+        fill={selected ? '#ffffff' : 'var(--color-text-secondary)'}
+      >
+        {label}
+      </text>
+    </g>
+  )
+}
+
+function MatchDiagram({ kind }) {
+  const { t } = useTranslation()
+  const leftX = 50
+  const rightX = 210
+  const ys = Array.from({ length: MATCH_ROWS }, (_, i) => 40 + i * 36)
+  const botW = 30
+  const botH = 27
+  const isPill = kind === 'pill'
+  const pad = isPill ? 36 : botW / 2 + 2
+  const labels = MATCH_TOPICS.map((key) => t(`topics.${key}`))
+
+  return (
+    <svg
+      viewBox="0 0 260 219"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="match-diagram"
+      style={{
+        display: 'block',
+        width: '100%',
+        height: 'auto',
+        aspectRatio: '260 / 219',
+        color: 'var(--color-primary)',
+      }}
+    >
+      <defs>
+        <marker
+          id={`match-arrow-${kind}`}
+          viewBox="0 0 10 10"
+          refX="7"
+          refY="5"
+          markerWidth="5.5"
+          markerHeight="5.5"
+          orient="auto-start-reverse"
+        >
+          <path
+            d="M0 0L9 5L0 10"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </marker>
+      </defs>
+
+      {MATCH_LINKS.map(([li, ri], idx) => (
+        <line
+          key={idx}
+          x1={leftX + pad}
+          y1={ys[li]}
+          x2={rightX - pad}
+          y2={ys[ri]}
+          stroke="currentColor"
+          strokeWidth={1.4}
+          strokeDasharray="3 3"
+          markerEnd={`url(#match-arrow-${kind})`}
+          opacity={0.9}
+        />
+      ))}
+
+      {ys.map((y, i) =>
+        isPill ? (
+          <MatchPill key={`l-${i}`} cx={leftX} cy={y} label={labels[i]} selected={i % 2 === 0} />
+        ) : (
+          <BotSvg
+            key={`l-${i}`}
+            x={leftX - botW / 2}
+            y={y - botH / 2}
+            width={botW}
+            height={botH}
+            style={{ color: 'var(--color-primary)' }}
+          />
+        )
+      )}
+
+      {ys.map((y, i) =>
+        isPill ? (
+          <MatchPill
+            key={`r-${i}`}
+            cx={rightX}
+            cy={y}
+            label={labels[(i + 3) % MATCH_ROWS]}
+            selected={i % 2 === 1}
+          />
+        ) : (
+          <BotSvg
+            key={`r-${i}`}
+            x={rightX - botW / 2}
+            y={y - botH / 2}
+            width={botW}
+            height={botH}
+            style={{ color: 'var(--color-primary)' }}
+          />
+        )
+      )}
+    </svg>
+  )
+}
+
 export default function BasicConceptsPage() {
   const { t } = useTranslation()
   const isMobile = useIsMobile()
@@ -222,6 +366,16 @@ export default function BasicConceptsPage() {
         .fossil-bot-overlay svg path {
           fill: var(--color-dormant);
         }
+
+        .hierarchy-graph-node svg {
+          color: var(--color-primary);
+        }
+        .hierarchy-graph-node .hg-node-1 { fill: #f97316; }
+        .hierarchy-graph-node .hg-node-2 { fill: #eab308; }
+        .hierarchy-graph-node .hg-node-3 { fill: #a855f7; }
+        .hierarchy-graph-node .hg-node-4 { fill: var(--color-primary); }
+        .hierarchy-graph-node .hg-node-5 { fill: #fb923c; }
+        .hierarchy-graph-node .hg-node-6 { fill: #c084fc; }
       `}</style>
 
       <div className="flex items-center gap-3 px-2" style={{ marginBottom: 12 }}>
@@ -569,8 +723,77 @@ export default function BasicConceptsPage() {
           </TextColumn>
         </Section>
 
+        <InfoCard style={{ paddingBottom: 30 }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              flexWrap: 'nowrap',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: isMobile ? 28 : 'clamp(10px, 2.5vw, 32px)',
+              width: '100%',
+              padding: '8px 0',
+            }}
+          >
+            <div
+              className="hierarchy-graph-node"
+              style={
+                isMobile
+                  ? {
+                      flex: '0 0 auto',
+                      width: '100%',
+                      maxWidth: 260,
+                      display: 'flex',
+                      justifyContent: 'center',
+                    }
+                  : { flex: '1 1 0', minWidth: 0, display: 'flex', justifyContent: 'center' }
+              }
+            >
+              <HierarchyGraphSvg
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  height: 'auto',
+                  aspectRatio: '160 / 135',
+                }}
+              />
+            </div>
+            <div
+              style={
+                isMobile
+                  ? {
+                      flex: '0 0 auto',
+                      width: '100%',
+                      maxWidth: 260,
+                      display: 'flex',
+                      justifyContent: 'center',
+                    }
+                  : { flex: '1 1 0', minWidth: 0, display: 'flex', justifyContent: 'center' }
+              }
+            >
+              <MatchDiagram kind="bot" />
+            </div>
+            <div
+              style={
+                isMobile
+                  ? {
+                      flex: '0 0 auto',
+                      width: '100%',
+                      maxWidth: 260,
+                      display: 'flex',
+                      justifyContent: 'center',
+                    }
+                  : { flex: '1 1 0', minWidth: 0, display: 'flex', justifyContent: 'center' }
+              }
+            >
+              <MatchDiagram kind="pill" />
+            </div>
+          </div>
+        </InfoCard>
+
         <Section
-          title={t('hierarchy_info.section_seasonal_reset_title', 'Sezonluk Döngü ve Sıfırlama')}
+          title={t('hierarchy_info.section_seasonal_reset_title', 'Seasonal Cycle & Reset')}
         >
           <VisualStage>
             <div

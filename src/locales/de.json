@@ -526,12 +526,16 @@
     "graph_title": "GEISTGRAPH",
     "labels": {
       "actor": "Person",
+      "core": "Kern",
       "general_thought": "Dachte",
       "other_tribes": "Andere Stämme",
       "persona": "Persona",
       "recalled": "Zurückgerufen",
       "tribe": "Stamm",
       "tribe_root": "Stamm (Wurzel)"
+    },
+    "filters": {
+      "node_types": "Knotentypen"
     },
     "last_updated": "Zuletzt aktualisiert",
     "memory_faded": "Diese Erinnerung verblasste und geriet mit der Zeit in Vergessenheit.",
@@ -540,7 +544,12 @@
     "triggered_nodes": "ausgelöste Erinnerung",
     "unknown_node": "Unbekannter Knoten",
     "description": "Beschreibung",
-    "no_extra_props": "Keine zusätzlichen Eigenschaften für diesen Knoten."
+    "no_extra_props": "Keine zusätzlichen Eigenschaften für diesen Knoten.",
+    "view": {
+      "hide_link_labels": "Verbindungslabels",
+      "hide_node_labels": "Knotenlabels",
+      "lock_graph": "Graph sperren"
+    }
   },
   "premium": {
     "active": "Pro Aktiv",

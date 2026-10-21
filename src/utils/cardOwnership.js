@@ -22,9 +22,7 @@ export function buildOwnedCardIdSet(ownedCards) {
 }
 
 export function isCardOwned(card, ownedIdSet) {
-  const innerCard = card?.card ?? card?.ownership?.originalCard ?? card
-  if (innerCard?.acquisitionType != null) return true
-  if (!ownedIdSet) return false
+  if (!card || !ownedIdSet) return false
   const id = normalizeCardId(card)
   return id ? ownedIdSet.has(id) : false
 }

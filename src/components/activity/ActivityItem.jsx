@@ -46,7 +46,8 @@ export default function ActivityItem({ activity, onMarkRead, currentProfileName,
 
   return (
     <div className={`activity-item ${isRead ? '' : 'unread'}`} onClick={handleClick}>
-      {!isRead && <div className="activity-dot" />}
+      {/* Nokta her zaman DOM'da kalır (yerleşim kaymasın); okununca CSS ile yumuşakça söner */}
+      <div className="activity-dot" aria-hidden="true" />
       <div style={{ flex: 1, minWidth: 0 }}>
         <p className="activity-message">{message || t('activity.new_activity')}</p>
         <span className="activity-time">{timeAgo}</span>

@@ -622,12 +622,16 @@
     "id_missing": "व्यक्ति या जनजाति आईडी गायब है.",
     "labels": {
       "actor": "व्यक्ति",
+      "core": "कोर",
       "general_thought": "सोचा",
       "other_tribes": "अन्य जनजातियाँ",
       "persona": "व्यक्तित्व",
       "recalled": "स्मरण",
       "tribe": "जनजाति",
       "tribe_root": "जनजाति (जड़)"
+    },
+    "filters": {
+      "node_types": "नोड प्रकार"
     },
     "last_updated": "आखरी अपडेट",
     "memories_title": "यादें",
@@ -641,7 +645,12 @@
     "unknown_memory": "याद",
     "unknown_node": "अज्ञात नोड",
     "description": "विवरण",
-    "no_extra_props": "इस नोड के लिए कोई अतिरिक्त विशेषताएँ नहीं हैं।"
+    "no_extra_props": "इस नोड के लिए कोई अतिरिक्त विशेषताएँ नहीं हैं।",
+    "view": {
+      "hide_link_labels": "लिंक लेबल",
+      "hide_node_labels": "नोड लेबल",
+      "lock_graph": "ग्राफ़ लॉक करें"
+    }
   },
   "news": {
     "content_label": "सामग्री",

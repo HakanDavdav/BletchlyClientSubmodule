@@ -3408,6 +3408,25 @@ html.dark .fossil-stamp-icon path {
   position: relative;
 }
 
+.personality-card__assignment-node-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+
+.personality-card__assignment-node-row > .actor-chip,
+.personality-card__assignment-node-row > .tribe-card {
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.personality-card__assignment-node-row > .vtree-fossil-pill {
+  flex-shrink: 0;
+}
+
 .personality-card__assignment-row--branch {
   position: relative;
   padding-left: 18px;
@@ -4260,7 +4279,11 @@ html.dark .fossil-stamp-icon path {
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all var(--transition-fast) ease;
+  transition:
+    background-color 350ms ease,
+    border-color 350ms ease,
+    box-shadow 350ms ease,
+    transform var(--transition-fast) ease;
   position: relative;
 }
 
@@ -4287,6 +4310,24 @@ html.dark .fossil-stamp-icon path {
   background: var(--color-primary);
   flex-shrink: 0;
   box-shadow: 0 0 6px var(--color-primary);
+  opacity: 1;
+  transform: scale(1);
+  transition:
+    width 350ms ease,
+    margin-right 350ms ease,
+    opacity 350ms ease,
+    transform 350ms ease,
+    box-shadow 350ms ease;
+}
+
+/* Okunduğunda nokta sönerken kapladığı alan da (8px + 12px gap) yumuşakça kapanır;
+   metin ışınlanmadan sola kayar. margin-right negatifi flex gap'ini nötralize eder. */
+.activity-item:not(.unread) .activity-dot {
+  width: 0;
+  margin-right: calc(-1 * var(--space-3));
+  opacity: 0;
+  transform: scale(0.2);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
 }
 
 .activity-message {
@@ -4867,6 +4908,7 @@ textarea {
     display: none !important;
   }
 
+
   /* Hierarchy üst blokları: araç çubuğu tam genişlikte ikinci satıra iner,
      kalp göstergesi sağ alta sabitlenir (ağacın üstünü kapatmasın) */
   .hierarchy-header {
@@ -4917,7 +4959,7 @@ textarea {
   }
 }
 
-/* Hierarchy sayfası: mobilde topbar + tab bar + iç boşluklara göre yükseklik */
+
 @media (min-width: 641px) and (max-width: 900px) {
   .hierarchy-page-root {
     height: calc(100vh - var(--topbar-height) - 96px - env(safe-area-inset-bottom, 0px)) !important;
@@ -5163,6 +5205,211 @@ textarea {
 /* Mind: legend + Anılar satır sarmalayıcısı masaüstünde şeffaf (contents) */
 .mind-legend-row {
   display: contents;
+}
+
+/* Mind: bağlantılı anı başlığı kimliğin hemen sağında kalsın;
+   kalan boşluk sağda toplanır (kontroller sağa yaslı kalır) */
+.mind-context-title {
+  margin-right: auto;
+}
+
+/* Masaüstünde tek satır korunur: kimlik | başlık (flex ile kısalır) | kontroller.
+   Kontroller bloğu eşik altında kendi içinde 2 satıra iner ve içeriğine göre
+   daralır (sağda boş alan kalmaz). Mobil (<=640) düzeni ayrıca tanımlanır. */
+@media (min-width: 901px) {
+  .mind-controls {
+    flex-wrap: wrap;
+    row-gap: 6px;
+    margin-left: auto;
+  }
+  /* Recalled memory sayfası (bağlantılı anı başlığı varken) her zaman 2 satır */
+  .mind-controls.is-context {
+    width: min-content;
+    max-width: 100%;
+  }
+}
+
+/* PC eşiği: bu genişliğin altında kontroller 2 satırlı yapıya geçer
+   (en geniş satır kadar genişler, devasa boşluk oluşmaz) */
+@media (min-width: 901px) and (max-width: 1280px) {
+  .mind-controls {
+    width: min-content;
+    max-width: 100%;
+  }
+}
+
+/* Tablet (641-900) artık mobil yapıyı kullanır (aşağıdaki <=900 bloğu) */
+
+/* Mind üst barı (mobil/tablet <=900): tek bütünleşik bar ve mobil 3+ satır yapı */
+@media (max-width: 900px) {
+  /* Mind üst barı: iki ayrık pil yerine tek bütünleşik bar */
+  .mind-header {
+    margin: 8px 12px 0 14px;
+    padding: 8px 10px !important;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.1));
+    row-gap: 6px;
+  }
+
+  /* "MIND GRAPH" etiketi gizlenir, isim görünür kalır */
+  .mind-header-label,
+  .mind-header-bullet {
+    display: none;
+  }
+
+  /* Kimlik pili bar içinde erir */
+  .mind-header > div:first-child {
+    order: 1;
+    flex: 1 1 100%;
+    gap: 8px !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Bağlantılı anı başlığı her zaman 2. satırda, tam genişlikte */
+  .mind-context-title {
+    order: 3;
+    flex: 1 1 100%;
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+
+  /* Mobilde legend + Anılar aynı satırda gruplanır */
+  .mind-legend-row {
+    order: 4;
+    display: flex;
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  /* Legend satırı iki satıra bölünür:
+     - 1. satır: görünüm anahtarları (Link/Node labels, Lock) + Varsayılan
+     - 2. satır: legend ögeleri (Recalled/Persona/...) + Anılar
+     .mind-controls display:contents ile çocukları doğrudan bu flex satırına katılır. */
+  .mind-header .mind-controls {
+    display: contents !important;
+  }
+
+  .mind-header .mind-controls span[style*='width: 1px'] {
+    display: none;
+  }
+
+  /* Legend ögeleri: tek satır, yatay kaydırılır */
+  .mind-header .mind-legend-items {
+    order: 3;
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mind-header .mind-legend-items::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Görünüm anahtarları + Varsayılan: 2. satır, tek sıra (gerekirse yatay kaydırılır) */
+  .mind-header .mind-actions {
+    order: 1;
+    flex: 1 1 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mind-header .mind-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Mobilde anahtarlar ve Varsayılan butonu daha ince (dikey uzunluk azaltılır) */
+  .mind-header .mind-actions button {
+    height: 26px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .mind-header .mind-view-toggles button {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .mind-header .mind-view-toggles {
+    order: 1;
+    display: flex !important;
+  }
+
+  /* Varsayılan butonu mobilde 2. satırda, anahtarların sağında */
+  .mind-header .mind-default-desktop {
+    order: 2;
+    display: flex !important;
+    flex-shrink: 0;
+  }
+
+  /* Üst satırdaki mobil kopya artık kullanılmıyor (2. satırda gösteriliyor) */
+  .mind-default-mobile {
+    display: none !important;
+  }
+
+  /* Anılar tetikleyicisi: legend satırının sağında küçük pill */
+  .mind-memories-btn {
+    order: 4;
+    display: flex !important;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    height: 26px;
+    padding: 0 9px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    color: var(--color-text-secondary);
+    font-size: 11px;
+    font-weight: 700;
+    font-family: inherit;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .mind-memories-btn svg {
+    color: var(--color-primary);
+  }
+
+  /* Standart dropdown üçgeni (topbar butonlarındakiyle aynı) sağda, soluk renkte */
+  .mind-memories-caret {
+    font-size: 9px;
+    line-height: 1;
+    display: inline-block;
+    color: var(--color-text-muted);
+    transition: transform 0.2s ease;
+  }
+
+  /* Anılar paneli mobilde yalnızca açıkken görünür (butonla açılır) */
+  .mind-memories-wrap.is-collapsed {
+    display: none !important;
+  }
+
+  /* Panelin en üst başlık bloğu mobilde gizlenir: panel "Ara..." kutusundan başlar */
+  .mind-memories-panel-header {
+    display: none !important;
+  }
 }
 
 @media (max-width: 640px) {
@@ -5498,131 +5745,8 @@ textarea {
     padding-top: 88px !important;
   }
 
-  /* Mind üst barı: iki ayrık pil yerine tek bütünleşik bar */
-  .mind-header {
-    margin: 8px 12px 0 14px;
-    padding: 8px 10px !important;
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 12px;
-    box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.1));
-    row-gap: 6px;
-  }
 
-  /* "MIND GRAPH" etiketi gizlenir, isim görünür kalır */
-  .mind-header-label,
-  .mind-header-bullet {
-    display: none;
-  }
 
-  /* Kimlik pili bar içinde erir */
-  .mind-header > div:first-child {
-    order: 1;
-    flex: 1 1 auto;
-    gap: 8px !important;
-    max-width: none !important;
-    min-height: 0 !important;
-    padding: 0 !important;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-
-  /* Bağlantılı anı başlığı her zaman 2. satırda, tam genişlikte */
-  .mind-context-title {
-    order: 3;
-    flex: 1 1 100%;
-    max-width: 100% !important;
-    padding: 0 !important;
-  }
-
-  /* Mobilde legend + Anılar aynı satırda gruplanır */
-  .mind-legend-row {
-    order: 4;
-    display: flex;
-    flex: 1 1 100%;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-  }
-
-  /* Legend şeridi bar içinde: orijinal boyutlar korunur, yatay kaydırılır.
-     Kenar boşlukları nokta ışımasının kırpılmaması için bırakılır. */
-  .mind-header .mind-controls {
-    flex: 1 1 0%;
-    min-width: 0;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-    row-gap: 0;
-    min-height: 0 !important;
-    padding: 4px 8px !important;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-
-  .mind-header .mind-controls::-webkit-scrollbar {
-    display: none;
-  }
-
-  .mind-header .mind-controls span[style*='width: 1px'] {
-    display: none;
-  }
-
-  /* Varsayılan artık üst satırda; şeritteki kopya mobilde gizlenir */
-  .mind-header .mind-controls > button {
-    display: none !important;
-  }
-
-  .mind-default-mobile {
-    order: 2;
-    display: flex !important;
-    flex-shrink: 0;
-  }
-
-  /* Anılar tetikleyicisi: legend satırının sağında küçük pill */
-  .mind-memories-btn {
-    display: flex !important;
-    align-items: center;
-    gap: 4px;
-    flex-shrink: 0;
-    height: 26px;
-    padding: 0 9px;
-    border-radius: 8px;
-    border: 1px solid var(--color-border);
-    background: var(--color-bg);
-    color: var(--color-text-secondary);
-    font-size: 11px;
-    font-weight: 700;
-    font-family: inherit;
-    white-space: nowrap;
-    cursor: pointer;
-  }
-
-  .mind-memories-btn svg {
-    color: var(--color-primary);
-  }
-
-  /* Standart dropdown üçgeni (topbar butonlarındakiyle aynı) sağda, soluk renkte */
-  .mind-memories-caret {
-    font-size: 9px;
-    line-height: 1;
-    display: inline-block;
-    color: var(--color-text-muted);
-    transition: transform 0.2s ease;
-  }
-
-  /* Anılar paneli mobilde yalnızca açıkken görünür (butonla açılır) */
-  .mind-memories-wrap.is-collapsed {
-    display: none !important;
-  }
-
-  /* Panelin en üst başlık bloğu mobilde gizlenir: panel "Ara..." kutusundan başlar */
-  .mind-memories-panel-header {
-    display: none !important;
-  }
 
   /* Mind düğüm detay modalı: mobilde tam ortalanır, ekrandan ve bardan taşmaz */
   .mind-node-backdrop {
@@ -5739,9 +5863,6 @@ textarea {
   .personality-card__assignment-node-row > .actor-chip,
   .personality-card__assignment-node-row > .tribe-card {
     min-width: 0;
-  }
-
-  .personality-card__assignment-node-row > .tribe-card {
     flex-shrink: 1;
   }
 

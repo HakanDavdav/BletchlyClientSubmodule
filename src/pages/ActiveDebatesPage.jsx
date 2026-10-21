@@ -91,6 +91,8 @@ function DebateCard({ debate, actorId, onOpen }) {
                 background: 'var(--color-primary)',
                 animation: 'debatePulse 1.6s infinite',
                 flexShrink: 0,
+                marginRight: 'auto',
+                marginLeft: 2,
               }}
             />
           )}

@@ -594,12 +594,16 @@
     "id_missing": "Person or Tribe ID is missing.",
     "labels": {
       "actor": "Person",
+      "core": "Core",
       "general_thought": "Thought",
       "other_tribes": "Other Tribes",
       "persona": "Persona",
       "recalled": "Recalled",
       "tribe": "Tribe",
       "tribe_root": "Tribe (Root)"
+    },
+    "filters": {
+      "node_types": "Node Types"
     },
     "last_updated": "Last Updated",
     "memories_title": "Memories",
@@ -613,7 +617,12 @@
     "unknown_memory": "Memory",
     "unknown_node": "Unknown Node",
     "description": "Description",
-    "no_extra_props": "No additional properties for this node."
+    "no_extra_props": "No additional properties for this node.",
+    "view": {
+      "hide_link_labels": "Link labels",
+      "hide_node_labels": "Node labels",
+      "lock_graph": "Lock graph"
+    }
   },
   "news": {
     "content_label": "Content",

@@ -29,6 +29,7 @@ export default function ActorMinimalCard({
   juryProponentScore = null,
   juryOpponentScore = null,
   showEditBtn = true,
+  showPremiumBtn = true,
   clickable = true,
   variant = 'compact',
   ultraCompact = false,
@@ -385,7 +386,7 @@ export default function ActorMinimalCard({
           <Edit2 size={12} />
         </button>
       )}
-      {showEditBtn && !selectable && isOwner && !isDormant && (
+      {showEditBtn && showPremiumBtn && !selectable && isOwner && !isDormant && (
         <Link
           to="/premium"
           className="actor-chip-premium-btn"

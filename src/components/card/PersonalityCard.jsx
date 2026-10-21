@@ -28,6 +28,7 @@ import AvatarUpload from '../common/AvatarUpload'
 import ImageWithLoader from '../common/ImageWithLoader'
 import ConfirmModal from '../common/ConfirmModal'
 import useMyEntitiesStore from '../../store/myEntitiesStore'
+import useAuthStore from '../../store/authStore'
 
 export default function PersonalityCard({
   card,
@@ -69,6 +70,7 @@ export default function PersonalityCard({
   const { t } = useTranslation()
   const navigate = useNavigate()
   const myOwnedCards = useMyEntitiesStore((s) => s.myCards)
+  const currentActorId = useAuthStore((s) => s.actorId)
   const storeSettings = useMyEntitiesStore((s) => s.mySettings)
   const [modalType, setModalType] = useState(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
@@ -484,17 +486,8 @@ export default function PersonalityCard({
     card?.cardId ??
     null
 
-  const innerCard = card?.card ?? card?.ownership?.originalCard ?? card
-  const rawAcqType =
-    card?.acquisitionType ??
-    card?.card?.acquisitionType ??
-    card?.ownership?.acquisitionType ??
-    card?.ownership?.originalCard?.acquisitionType ??
-    innerCard?.acquisitionType ??
-    null
-
   const storeMatch =
-    rawAcqType == null && personalityCardId && Array.isArray(myOwnedCards)
+    personalityCardId && Array.isArray(myOwnedCards)
       ? myOwnedCards.find((mc) => {
           const mId =
             mc?.cardId ||
@@ -504,9 +497,6 @@ export default function PersonalityCard({
           return mId && String(mId).toLowerCase() === String(personalityCardId).toLowerCase()
         })
       : null
-
-  const currentAcqType =
-    rawAcqType ?? (storeMatch ? (storeMatch?.acquisitionType ?? 0) : null)
 
   const isAssignedCard = Boolean(
     card?.assignmentId || card?.botId || card?.tribeId || card?.assignedTribeId || tribeAssigned
@@ -523,6 +513,25 @@ export default function PersonalityCard({
     card?.actorId ||
     ownerActor?.actorId ||
     null
+
+  const isDirectOwner = Boolean(
+    ownerActorId &&
+    currentActorId &&
+    String(ownerActorId).toLowerCase() === String(currentActorId).toLowerCase()
+  )
+
+  let currentAcqType = null
+  if (storeMatch) {
+    currentAcqType = storeMatch?.acquisitionType ?? 0
+  } else if (isDirectOwner) {
+    currentAcqType =
+      card?.acquisitionType ??
+      card?.card?.acquisitionType ??
+      card?.ownership?.acquisitionType ??
+      0
+  } else if (card?.isOwned && card?.acquisitionType != null) {
+    currentAcqType = card.acquisitionType
+  }
 
   const rawAssignments = Array.isArray(card?.assignments) ? card.assignments : []
   const rawAssignedBots =

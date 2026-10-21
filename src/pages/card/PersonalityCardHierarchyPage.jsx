@@ -354,7 +354,7 @@ function CardTreeNode({
 
         {/* Render Node Content */}
         {node.nodeType === 'card' ? (
-          <div style={{ width: 270, maxWidth: 290, textAlign: 'left' }}>
+          <div style={{ width: 350, maxWidth: 380, textAlign: 'left' }}>
             <PersonalityCard card={node.card} showMark={false} />
           </div>
         ) : node.nodeType === 'tribe' ? (

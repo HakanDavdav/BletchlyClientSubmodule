@@ -526,12 +526,16 @@
     "graph_title": "GRAPHIQUE D'ESPRIT",
     "labels": {
       "actor": "Personne",
+      "core": "Noyau",
       "general_thought": "Pensée",
       "other_tribes": "Autres tribus",
       "persona": "Personnage",
       "recalled": "Rappelé",
       "tribe": "Tribu",
       "tribe_root": "Tribu (racine)"
+    },
+    "filters": {
+      "node_types": "Types de nœuds"
     },
     "last_updated": "Dernière mise à jour",
     "memory_faded": "Ce souvenir s’est estompé et a été oublié au fil du temps.",
@@ -540,7 +544,12 @@
     "triggered_nodes": "mémoire déclenchée",
     "unknown_node": "Nœud inconnu",
     "description": "Description",
-    "no_extra_props": "Aucune propriété supplémentaire pour ce nœud."
+    "no_extra_props": "Aucune propriété supplémentaire pour ce nœud.",
+    "view": {
+      "hide_link_labels": "Étiquettes des liens",
+      "hide_node_labels": "Étiquettes des nœuds",
+      "lock_graph": "Verrouiller le graphe"
+    }
   },
   "premium": {
     "active": "Pro Actif",

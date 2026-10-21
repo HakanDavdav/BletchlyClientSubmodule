@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { BookOpen, Bot, CalendarFold, Hash, Tag, Users, X, Crown, Edit2 } from 'lucide-react'
@@ -9,6 +9,8 @@ import BotFlashCardsIcon from '../common/icons/BotFlashCardsIcon'
 import CardContingencyIcon from '../common/icons/CardContingencyIcon'
 import IconActionButton from '../common/IconActionButton'
 import ModalHeader from '../common/ModalHeader'
+import useMyEntitiesStore from '../../store/myEntitiesStore'
+import { normalizeCardId } from '../../utils/cardOwnership'
 
 import i18n from '../../i18n'
 
@@ -80,8 +82,21 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
   const cardId = cardData.personalityCardId ?? card.cardId
   const ownershipId = card.ownershipId
   const actorId = card.actorId
+  const myOwnedCards = useMyEntitiesStore((s) => s.myCards)
+  const targetId = normalizeCardId(card) || normalizeCardId(cardData)
+  const ownedMatch = useMemo(() => {
+    if (!targetId || !Array.isArray(myOwnedCards)) return null
+    return myOwnedCards.find((mc) => normalizeCardId(mc) === targetId) || null
+  }, [targetId, myOwnedCards])
+
+  const isOwnerCard = Boolean(ownedMatch)
+  const effectiveAcqType = ownedMatch?.acquisitionType ?? (isOwnerCard ? (card.acquisitionType ?? cardData.acquisitionType) : null)
   const acquisitionType =
-    card.acquisitionType === 0 ? t('card.created', 'Oluşturuldu') : card.acquisitionType === 1 ? t('card.purchased', 'Satın Alındı') : null
+    effectiveAcqType === 0
+      ? t('card.created', 'Oluşturuldu')
+      : effectiveAcqType === 1
+        ? t('card.purchased', 'Satın Alındı')
+        : null
   const rawAssignedBots = card.assignedBots || cardData.assignedBots || []
   const rawAssignedTribes = card.assignedTribes || cardData.assignedTribes || []
 
@@ -176,11 +191,6 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
     },
   ]
 
-  const isOwnerCard =
-    card.acquisitionType === 0 ||
-    card.acquisitionType === 1 ||
-    cardData.acquisitionType === 0 ||
-    cardData.acquisitionType === 1
 
   return createPortal(
     <div className="modal-overlay" onClick={onClose} style={{ zIndex: 150 }} role="presentation">

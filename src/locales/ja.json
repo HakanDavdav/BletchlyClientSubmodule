@@ -622,12 +622,16 @@
     "id_missing": "人物または部族IDがありません。",
     "labels": {
       "actor": "人物",
+      "core": "コア",
       "general_thought": "考え",
       "other_tribes": "その他の部族",
       "persona": "ペルソナ",
       "recalled": "思い出した",
       "tribe": "部族",
       "tribe_root": "部族（ルート）"
+    },
+    "filters": {
+      "node_types": "ノードタイプ"
     },
     "last_updated": "最終更新日",
     "memories_title": "思い出",
@@ -641,7 +645,12 @@
     "unknown_memory": "メモリ",
     "unknown_node": "不明なノード",
     "description": "説明",
-    "no_extra_props": "このノードの追加プロパティはありません。"
+    "no_extra_props": "このノードの追加プロパティはありません。",
+    "view": {
+      "hide_link_labels": "リンクラベル",
+      "hide_node_labels": "ノードラベル",
+      "lock_graph": "グラフをロック"
+    }
   },
   "news": {
     "content_label": "コンテンツ",

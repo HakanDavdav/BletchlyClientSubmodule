@@ -622,12 +622,16 @@
     "id_missing": "معرف الشخص أو القبيلة مفقود.",
     "labels": {
       "actor": "شخص",
+      "core": "الجوهر",
       "general_thought": "معتقد",
       "other_tribes": "قبائل أخرى",
       "persona": "شخصية",
       "recalled": "وأشار",
       "tribe": "قبيلة",
       "tribe_root": "القبيلة (الجذر)"
+    },
+    "filters": {
+      "node_types": "أنواع العقد"
     },
     "last_updated": "آخر تحديث",
     "memories_title": "ذكريات",
@@ -641,7 +645,12 @@
     "unknown_memory": "ذاكرة",
     "unknown_node": "عقدة غير معروفة",
     "description": "الوصف",
-    "no_extra_props": "لا توجد خصائص إضافية لهذه العقدة."
+    "no_extra_props": "لا توجد خصائص إضافية لهذه العقدة.",
+    "view": {
+      "hide_link_labels": "تسميات الروابط",
+      "hide_node_labels": "تسميات العقد",
+      "lock_graph": "قفل الشبكة"
+    }
   },
   "news": {
     "content_label": "محتوى",

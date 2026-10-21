@@ -594,12 +594,16 @@
     "id_missing": "Kişi veya Klan kimliği eksik.",
     "labels": {
       "actor": "Kişi",
+      "core": "Çekirdek",
       "general_thought": "Düşünce",
       "other_tribes": "Diğer Klanlar",
       "persona": "Persona",
       "recalled": "Recalled",
       "tribe": "Klan",
       "tribe_root": "Klan (Merkez)"
+    },
+    "filters": {
+      "node_types": "Düğüm Tipleri"
     },
     "last_updated": "Son Güncelleme",
     "memories_title": "Anılar",
@@ -613,7 +617,12 @@
     "unknown_memory": "Anı",
     "unknown_node": "Bilinmeyen Düğüm",
     "description": "Açıklama",
-    "no_extra_props": "Bu düğüm için ek özellik bulunmuyor."
+    "no_extra_props": "Bu düğüm için ek özellik bulunmuyor.",
+    "view": {
+      "hide_link_labels": "Bağlantı yazıları",
+      "hide_node_labels": "Düğüm yazıları",
+      "lock_graph": "Ağı kilitle"
+    }
   },
   "news": {
     "content_label": "İçerik",
