@@ -501,6 +501,9 @@ export default function PersonalityCard({
   const isAssignedCard = Boolean(
     card?.assignmentId || card?.botId || card?.tribeId || card?.assignedTribeId || tribeAssigned
   )
+  const isIneffectiveAssignment =
+    isAssignedCard &&
+    (card?.isEffective === false || card?.assignment?.isEffective === false)
   const ownerActor = card?.ownership?.actor ?? card?.actor ?? null
   const ownershipId =
     card?.ownershipId ||
@@ -960,6 +963,33 @@ export default function PersonalityCard({
       </div>
 
       {hint && <p className="personality-card__hint">{hint}</p>}
+
+      {isIneffectiveAssignment && (
+        <div
+          title={t(
+            'card.incubating_not_effective_desc',
+            'Bu kart kuluçka süresinde atandığı için henüz aktif kişiliğe etki etmemiştir.'
+          )}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 5,
+            marginTop: 6,
+            padding: '3px 8px',
+            borderRadius: 999,
+            fontSize: 11,
+            fontWeight: 600,
+            color: '#f59e0b',
+            background: 'rgba(245, 158, 11, 0.14)',
+            border: '1px solid rgba(245, 158, 11, 0.35)',
+            width: 'fit-content',
+            zIndex: 2,
+          }}
+        >
+          <AlertTriangle size={12} strokeWidth={2.2} />
+          <span>{t('card.incubating_not_effective', 'Kuluçkada (Etki Etmedi)')}</span>
+        </div>
+      )}
 
       {tags.length > 0 && (
         <div className="personality-card__tags">

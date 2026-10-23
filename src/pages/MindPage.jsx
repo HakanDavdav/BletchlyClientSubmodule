@@ -7,7 +7,7 @@ import ForceGraph3D from 'react-force-graph-3d'
 import * as THREE from 'three'
 import { actorApi } from '../api/actorApi'
 import { tribeApi } from '../api/tribeApi'
-import { ArrowLeft, Loader2, Brain, Focus, Search, X, Tag, Lock, Unlock, Filter } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Loader2, Brain, Focus, Search, X, Tag, Lock, Unlock, Filter, Move, Type, Timer, BookOpen, CalendarFold } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
@@ -79,15 +79,147 @@ const NEURON_COLORS = {
 
 // ─── Kimlik Torbası (Identity Bag) geometrisi ─────────────────────────────────
 // Kök (Persona/Tribe) ve Core düğümlerini saran merkez küme.
-const BAG_RADIUS = 128 // Torba küresinin yarıçapı
-const CORE_ORBIT_RADIUS = 74 // Core düğümlerinin kök etrafındaki yörünge yarıçapı
+const BAG_RADIUS = 128 // Torba küresinin taban yarıçapı
+const BAG_RADIUS_MAX = 200 // Core sayısı arttıkça torbanın büyüyebileceği üst sınır
+const BAG_RADIUS_CORE_STEP = 4 // Taban üstü her core düğümü için ek yarıçap
+const BAG_RADIUS_FREE_CORES = 6 // Bu sayıya kadar core, taban yarıçapı kullanır
+const CORE_ORBIT_RADIUS = 74 // Core düğümlerinin kök etrafındaki yörünge yarıçapı (taban)
+const CORE_ORBIT_RATIO = CORE_ORBIT_RADIUS / BAG_RADIUS
+const CORE_NODE_MARGIN = 26 // Core merkezinin torba yüzeyine bırakması gereken pay
 const OUTER_ORBIT_MIN = 230 // Dış (kavramsal) düğümlerin küre yarıçapı (min)
 const OUTER_ORBIT_STEP = 34 // Dış küre yarıçapı varyasyon adımı
+
+// Node aralığı (Space) modları: her basışta bir sonraki moda geçilir.
+// Ölçekler fizik kuvvetlerine (bağ mesafesi + itme) uygulanır.
+const SPACING_PRESETS = [
+  { key: 'compact', label: 'Dar', linkScale: 0.72, chargeScale: 0.65, coreOrbitScale: 0.85, outerOrbitScale: 0.82 },
+  { key: 'normal', label: 'Normal', linkScale: 1, chargeScale: 1, coreOrbitScale: 1, outerOrbitScale: 1 },
+  { key: 'wide', label: 'Geniş', linkScale: 1.5, chargeScale: 1.55, coreOrbitScale: 1.25, outerOrbitScale: 1.28 },
+  { key: 'xwide', label: 'Ekstra Geniş', linkScale: 2.3, chargeScale: 2.4, coreOrbitScale: 1.6, outerOrbitScale: 1.75 },
+]
+
+// Döngü sırası: önce "Otomatik", ardından 4 sabit mod.
+const SPACING_OPTIONS = ['auto', ...SPACING_PRESETS.map((p) => p.key)]
+
+// Otomatik aralık: node sayısına göre 4 moddan birini arka planda seç.
+function autoSpacingKey(nodeCount) {
+  if (nodeCount <= 60) return 'xwide'
+  if (nodeCount <= 150) return 'wide'
+  if (nodeCount <= 300) return 'normal'
+  return 'compact'
+}
+
+// Bağlantı etiketleri ilk girişte: düşük düğüm sayısında açık, yüksekte kapalı.
+const LINK_LABEL_AUTO_HIDE_NODE_COUNT = 100
+
+// Seçili ayarı (auto veya sabit mod) somut bir ön ayara çöz.
+function resolveSpacingPreset(setting, nodeCount) {
+  const key = setting === 'auto' ? autoSpacingKey(nodeCount) : setting
+  return SPACING_PRESETS.find((p) => p.key === key) || SPACING_PRESETS[1]
+}
+
+// Core sayısına göre kimlik torbasının (orb) yarıçapı.
+function computeBagRadius(coreCount = 0) {
+  const extra = Math.max(0, coreCount - BAG_RADIUS_FREE_CORES)
+  return Math.min(BAG_RADIUS_MAX, BAG_RADIUS + extra * BAG_RADIUS_CORE_STEP)
+}
+
+// Torbaya oranlı core yörünge yarıçapı.
+function computeCoreOrbitRadius(bagRadius) {
+  return Math.round(bagRadius * CORE_ORBIT_RATIO)
+}
+
+// Dış (kavramsal) düğümlerin torbanın dışında kalması için minimum yarıçap.
+function computeOuterOrbitMin(bagRadius) {
+  return Math.max(OUTER_ORBIT_MIN, bagRadius + 96)
+}
+
+// Fizik kuvvetlerini seçili aralık moduna göre uygula (bağ mesafesi + itme).
+function applySpacingForces(fg, preset) {
+  if (!fg || typeof fg.d3Force !== 'function') return
+  const p = preset || SPACING_PRESETS[1]
+  const lf = fg.d3Force('link')
+  if (lf) {
+    lf.distance((link) => {
+      const root = link.source?.isRoot ? link.source : link.target?.isRoot ? link.target : null
+      const bagRadius = root?.bagRadius ?? BAG_RADIUS
+      const coreOrbit = root?.coreOrbitRadius ?? CORE_ORBIT_RADIUS
+      if (link.isCoreLink) {
+        // Persona core'ları kendine çeker; mesafe her zaman orbun içinde kalır.
+        return Math.min(coreOrbit * p.coreOrbitScale, bagRadius - CORE_NODE_MARGIN)
+      }
+      if (link.isBagLink) return (root?.outerOrbitMin ?? OUTER_ORBIT_MIN) * p.outerOrbitScale
+      return 40 * p.linkScale
+    }).strength((link) => (link.isCoreLink ? 0.9 : 0.3))
+  }
+  const cf = fg.d3Force('charge')
+  // Kök düğüm core'ları dışa itmesin; çekim bağ kuvveti ve containment ile sağlanır.
+  if (cf) cf.strength((n) => (n.isRoot ? 0 : n.isCore ? -140 : -900) * p.chargeScale)
+  installCoreContainmentForce(fg)
+}
+
+// Persona ↔ core fiziği: core'ları yörünge çevresinde tutar, orb sınırına
+// yaklaştıkça kök merkezine doğru yay kuvveti uygular.
+function installCoreContainmentForce(fg) {
+  if (!fg || typeof fg.d3Force !== 'function' || typeof fg.graphData !== 'function') return
+  fg.d3Force('coreContainment', (alpha) => {
+    const nodes = fg.graphData()?.nodes
+    if (!nodes || nodes.length === 0) return
+    const root = nodes.find((n) => n.isRoot)
+    if (!root) return
+    const bagRadius = root.bagRadius ?? BAG_RADIUS
+    const coreOrbit = root.coreOrbitRadius ?? CORE_ORBIT_RADIUS
+    const hardLimit = bagRadius - CORE_NODE_MARGIN
+    const softLimit = Math.min(hardLimit, coreOrbit + 12)
+    const softPull = 0.12 * alpha
+    const hardPull = 0.9 * alpha
+    for (const n of nodes) {
+      if (!n.isCore || n.isRoot) continue
+      const dx = (n.x ?? 0) - (root.x ?? 0)
+      const dy = (n.y ?? 0) - (root.y ?? 0)
+      const dz = (n.z ?? 0) - (root.z ?? 0)
+      const d = Math.hypot(dx, dy, dz)
+      if (d < 0.001) continue
+      let pull = 0
+      if (d > hardLimit) pull = (d - hardLimit) * hardPull
+      else if (d > softLimit) pull = (d - softLimit) * softPull
+      if (pull === 0) continue
+      const f = pull / d
+      n.vx = (n.vx ?? 0) - dx * f
+      n.vy = (n.vy ?? 0) - dy * f
+      n.vz = (n.vz ?? 0) - dz * f
+    }
+  })
+}
+
+// Yatay kaydırılabilir bir ögenin kaydıraç konumunu izle (thumb %konumu + genişliği).
+function attachHorizontalScroll(el, setState) {
+  if (!el) return undefined
+  const update = () => {
+    const sw = el.scrollWidth
+    const cw = el.clientWidth
+    const scrollable = sw > cw + 1
+    const width = scrollable ? Math.max(14, (cw / sw) * 100 * 0.8) : 100
+    const maxScroll = sw - cw
+    const left = scrollable && maxScroll > 0 ? (el.scrollLeft / maxScroll) * (100 - width) : 0
+    setState({ scrollable, left, width })
+  }
+  update()
+  el.addEventListener('scroll', update, { passive: true })
+  const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(update) : null
+  if (ro) ro.observe(el)
+  window.addEventListener('resize', update)
+  return () => {
+    el.removeEventListener('scroll', update)
+    if (ro) ro.disconnect()
+    window.removeEventListener('resize', update)
+  }
+}
 
 // PC görünüm anahtarları: bağlantı/düğüm etiket bloklarını gizle.
 // Three.js nesneleri inşa anında bu bayrakları okur; toggle anında mevcut
 // nesnelerin .visible değeri güncellenir.
-const mindViewFlags = { hideLinkLabels: false, hideNodeLabels: false }
+const mindViewFlags = { hideLinkLabels: false, hideNodeLabels: false, lazyRender: false }
 
 function getActiveNeuronColor() {
   const { isGreenMode, customColor } = useThemeStore.getState()
@@ -314,7 +446,7 @@ function buildNodeBlock(node, core, glow, isPersona, r) {
 
   // Düğümün hemen üstünde estetik süzülme
   badgeMesh.position.set(0, r + meshH * 0.5 + 6, 0)
-  badgeMesh.renderOrder = 9999999
+  badgeMesh.renderOrder = isPersona ? 100000010 : 9999999
   badgeMesh.userData = { isBadge: true }
   badgeMesh.visible = !mindViewFlags.hideNodeLabels
 
@@ -344,6 +476,9 @@ function buildNeuronObject(node) {
 
   // Biyolüminesans süzülme için alt grup (MindAmbience mindFloatCenter)
   const visualGroup = new THREE.Group()
+  // Three.js Group.renderOrder -> groupOrder: three-forcegraph bağlantı
+  // gruplarını 10 yapar; persona 20 ile her zaman bağlantıların üstünde çizilir.
+  if (isPersona) visualGroup.renderOrder = 20
   visualGroup.userData = {
     isVisualGroup: true,
     isPersonaNode: isPersona,
@@ -378,6 +513,11 @@ function buildNeuronObject(node) {
   })
   const haloMesh = new THREE.Mesh(haloGeo, haloMat)
   haloMesh.userData = { isHalo: true, isPersona: isPersona, baseOpacity: haloOpacity }
+  if (isPersona) {
+    // Persona düğümü her zaman en üstte: bağlantıların arkasında kalmasın.
+    haloMat.depthTest = false
+    haloMesh.renderOrder = 99999900
+  }
   haloMesh.onBeforeRender = function (renderer, scene, camera) {
     this.quaternion.copy(camera.quaternion)
   }
@@ -402,12 +542,98 @@ function buildNeuronObject(node) {
     blending: isDark ? THREE.AdditiveBlending : THREE.NormalBlending,
     depthWrite: false,
   })
-  visualGroup.add(new THREE.Mesh(midHaloGeo, midHaloMat))
+  const midHaloMesh = new THREE.Mesh(midHaloGeo, midHaloMat)
+  if (isPersona) {
+    midHaloMat.depthTest = false
+    midHaloMesh.renderOrder = 99999901
+  }
+  visualGroup.add(midHaloMesh)
 
   // 3. 3D İç Fiziksel Çekirdek Küresi (Tıklama ve 3D derinlik)
   const coreSphereGeo = new THREE.SphereGeometry(r, 28, 28)
   const coreSphereMat = new THREE.MeshBasicMaterial({ color: core })
-  visualGroup.add(new THREE.Mesh(coreSphereGeo, coreSphereMat))
+  const coreSphereMesh = new THREE.Mesh(coreSphereGeo, coreSphereMat)
+  if (isPersona) {
+    // Şeffaf listede çizilsin ki üstteki bağlantılar onu örtmesin.
+    coreSphereMat.transparent = true
+    coreSphereMat.depthTest = false
+    coreSphereMat.depthWrite = false
+    coreSphereMesh.renderOrder = 99999902
+  }
+  visualGroup.add(coreSphereMesh)
+
+  // 3b. Persona avatarı — kök düğümün merkezinde bot/tribe görseli
+  if (isPersona && node.avatarUrl) {
+    const avatarSize = r * 1.02
+    const avatarMat = new THREE.MeshBasicMaterial({
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      depthTest: false,
+    })
+    const avatarMesh = new THREE.Mesh(new THREE.CircleGeometry(avatarSize, 48), avatarMat)
+    // Overlay her zaman en önde: bağlantı etiketleri (9999998/9999999) dahil
+    // sahnedeki her şeyin üstünde kalsın.
+    avatarMesh.renderOrder = 100000000
+    avatarMesh.userData = { isAvatar: true }
+    avatarMesh.onBeforeRender = function (renderer, scene, camera) {
+      this.quaternion.copy(camera.quaternion)
+    }
+    visualGroup.add(avatarMesh)
+
+    // Site global tema rengi filtresi — görselin üzerine hafif renk katmanı.
+    const avatarTintMat = new THREE.MeshBasicMaterial({
+      color: core,
+      transparent: true,
+      opacity: isDark ? 0.18 : 0.12,
+      depthWrite: false,
+      depthTest: false,
+    })
+    const avatarTintMesh = new THREE.Mesh(
+      new THREE.CircleGeometry(avatarSize, 48),
+      avatarTintMat
+    )
+    avatarTintMesh.renderOrder = 100000001
+    avatarTintMesh.onBeforeRender = function (renderer, scene, camera) {
+      this.quaternion.copy(camera.quaternion)
+    }
+    visualGroup.add(avatarTintMesh)
+
+    const avatarRingMat = new THREE.MeshBasicMaterial({
+      color: glow,
+      transparent: true,
+      opacity: isDark ? 0.85 : 0.6,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      depthTest: false,
+    })
+    const avatarRingMesh = new THREE.Mesh(
+      new THREE.RingGeometry(avatarSize * 1.03, avatarSize * 1.12, 48),
+      avatarRingMat
+    )
+    avatarRingMesh.renderOrder = 100000002
+    avatarRingMesh.onBeforeRender = function (renderer, scene, camera) {
+      this.quaternion.copy(camera.quaternion)
+    }
+    visualGroup.add(avatarRingMesh)
+
+    new THREE.TextureLoader().load(
+      node.avatarUrl,
+      (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace
+        avatarMat.map = tex
+        avatarMat.opacity = 1
+        avatarMat.needsUpdate = true
+        coreSphereMesh.visible = false
+      },
+      undefined,
+      () => {
+        avatarMesh.visible = false
+        avatarTintMesh.visible = false
+        avatarRingMesh.visible = false
+      }
+    )
+  }
 
   // 4. Biyolüminesans Pearl Yüzeyi ve Beyaz Parlaklık Merkezi (MindAmbience Glossy Pearl Face)
   // Kameraya dönük parlak pearl diski: Çekirdek rengi + sol üst beyaz parlaklık noktası (Specular Glint)
@@ -418,7 +644,8 @@ function buildNeuronObject(node) {
     depthWrite: false,
   })
   const pearlMesh = new THREE.Mesh(pearlGeo, pearlMat)
-  pearlMesh.renderOrder = 999
+  pearlMesh.renderOrder = isPersona ? 99999903 : 999
+  if (isPersona) pearlMat.depthTest = false
   pearlMesh.onBeforeRender = function (renderer, scene, camera) {
     this.quaternion.copy(camera.quaternion)
   }
@@ -441,6 +668,10 @@ function buildNeuronObject(node) {
     })
     const ringMesh = new THREE.Mesh(ringGeo, ringMat)
     ringMesh.userData = { isHalo: true, isPersona: false, baseOpacity: isDark ? 0.55 : 0.42 }
+    if (isPersona) {
+      ringMat.depthTest = false
+      ringMesh.renderOrder = 100000005
+    }
     ringMesh.onBeforeRender = function (renderer, scene, camera) {
       this.quaternion.copy(camera.quaternion)
     }
@@ -451,9 +682,10 @@ function buildNeuronObject(node) {
   // Kök düğüm (Persona/Tribe) merkezdeyken, Core'ları saran yarı saydam küme küresi.
   if (isRoot) {
     const bagOpacity = isDark ? 0.15 : 0.1
+    const bagRadius = node.bagRadius ?? BAG_RADIUS
 
     // 1. Torba gövdesi — yarı saydam, ışımalı küre (iç yüzey görünür)
-    const bagGeo = new THREE.SphereGeometry(BAG_RADIUS, 48, 36)
+    const bagGeo = new THREE.SphereGeometry(bagRadius, 48, 36)
     const bagMat = new THREE.MeshBasicMaterial({
       color: core,
       transparent: true,
@@ -469,7 +701,7 @@ function buildNeuronObject(node) {
 
     // 2. Hafif tel kafes kabuk — torbanın sınırını belirginleştirir
     const bagWireOpacity = isDark ? 0.055 : 0.045
-    const bagWireGeo = new THREE.SphereGeometry(BAG_RADIUS * 1.004, 16, 12)
+    const bagWireGeo = new THREE.SphereGeometry(bagRadius * 1.004, 16, 12)
     const bagWireMat = new THREE.MeshBasicMaterial({
       color: glow,
       wireframe: true,
@@ -684,10 +916,40 @@ function affinityVisualWeight(absAff) {
   return 0.2 + (absAff - 0.5) * 1.6
 }
 
-function getSynapseMaterials(affinity, isRecalled, isDark, accent) {
+// Relationship strength (0..2, başlangıç 1.0) → 0..1 görsel ağırlık
+function strengthVisualWeight(strength) {
+  const s = typeof strength === 'number' && Number.isFinite(strength) ? strength : 1.0
+  return Math.min(1, Math.max(0, s / 2))
+}
+
+// Kenar parlaklığı: affinity (A) ve relationship strength (S) birleşimi.
+// A görsel olarak baskın, S destekleyici katkı sağlar.
+function combinedSynapseWeight(absAff, strength) {
+  const affWeight = affinityVisualWeight(absAff)
+  const strWeight = strengthVisualWeight(strength)
+  return Math.min(1, affWeight * 0.65 + strWeight * 0.35)
+}
+
+// İlişki değeri kısa formatı: 0.8, -0.75, 1.25
+function formatRelValue(value) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null
+  return String(Number(value.toFixed(2)))
+}
+
+// Kenar etiketi: OPPOSES (A:0.8)(S:1.2) — A: affinity, S: relationship strength
+function buildRelationshipLabel(relType, affinity, strength) {
+  const parts = []
+  const a = formatRelValue(affinity)
+  const s = formatRelValue(strength)
+  if (a != null) parts.push(`(A:${a})`)
+  if (s != null) parts.push(`(S:${s})`)
+  return parts.length > 0 ? `${relType} ${parts.join('')}` : relType
+}
+
+function getSynapseMaterials(affinity, strength, isRecalled, isDark, accent) {
   const rawAff = typeof affinity === 'number' ? affinity : 0.0
   const absAff = Math.min(1.0, Math.max(0.0, Math.abs(rawAff)))
-  const weight = affinityVisualWeight(absAff)
+  const weight = combinedSynapseWeight(absAff, strength)
   const tier = Math.round(weight * 10)
   const key = `${isRecalled ? 'rec_' : ''}t${tier}_${isDark ? 'dark' : 'light'}_${accent.activeCore}`
 
@@ -915,21 +1177,29 @@ function buildCapillaryObject(link) {
   return g
 }
 
-// Kademeli render: simülasyon 200 tick boyunca çalışır, ancak düğüm + tüp
+// Kademeli render: simülasyon 100 tick boyunca çalışır, ancak düğüm + tüp
 // yalnızca belirlenen checkpoint tick'lerinde ekrana çizilir. Ara tick'lerde
 // nodePositionUpdate true döner (pozisyon güncellenmez), linkPositionUpdate
 // atlanır. Motor durduğunda her şey son kez tam kalitede çizilir.
 let _tickCount = 0
 let _engineRunning = true
 let _dragging = false
+// Lazy mod: yalnızca ilk oluşum simülasyonu bitene kadar nesneler gizlenir.
+let _initialSimDone = false
 const RENDER_CHECKPOINTS = new Set([
   2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50,
-  53, 56, 59, 62, 65, 68, 71, 74, 77, 80, 83, 86, 88, 90, 94, 98, 102, 106, 110, 114, 118, 123,
-  128, 133, 138, 143, 148, 154, 160, 166, 172, 178, 185, 192, 200,
+  52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84, 86, 88, 90, 92, 94, 96, 98,
+  100,
 ])
 
 // Temiz, organik kavisli sinaps hattı ve seyahat eden darbe küresi oluşturucu (MindAmbience stili)
 function updateCapillaryPosition(obj, { start, end }, link) {
+  // Lazy mod: ilk oluşum simülasyonu bitene kadar bağlantıları tamamen gizle.
+  if (mindViewFlags.lazyRender && !_initialSimDone && !_dragging) {
+    obj.visible = false
+    return true
+  }
+  obj.visible = true
   // Kademeli render: checkpoint değilse ve motor çalışıyorsa tüp geometrisini atla.
   // Drag sırasında her tick güncelle (düğümü takip etsin).
   if (_engineRunning && !_dragging && !RENDER_CHECKPOINTS.has(_tickCount)) {
@@ -946,9 +1216,10 @@ function updateCapillaryPosition(obj, { start, end }, link) {
       const rootV = new THREE.Vector3(rootNode.x || 0, rootNode.y || 0, rootNode.z || 0)
       const otherV = new THREE.Vector3(otherNode.x || 0, otherNode.y || 0, otherNode.z || 0)
       const dir = new THREE.Vector3().subVectors(otherV, rootV)
-      if (dir.length() > BAG_RADIUS) {
+      const bagRadius = rootNode.bagRadius ?? BAG_RADIUS
+      if (dir.length() > bagRadius) {
         dir.normalize()
-        const surface = rootV.clone().addScaledVector(dir, BAG_RADIUS)
+        const surface = rootV.clone().addScaledVector(dir, bagRadius)
         if (link.source?.isRoot) sv = surface
         else ev = surface
       }
@@ -962,14 +1233,15 @@ function updateCapillaryPosition(obj, { start, end }, link) {
 
   const rawAff = typeof link?.affinity === 'number' ? link.affinity : 0.0
   const absAff = Math.min(1.0, Math.max(0.0, Math.abs(rawAff)))
-  const weight = affinityVisualWeight(absAff)
+  const rawStrength = typeof link?.strength === 'number' ? link.strength : 1.0
+  const weight = combinedSynapseWeight(absAff, rawStrength)
 
   // Pozisyon cache — gereksiz yeniden çizimi önle
-  const posKey = `${start.x.toFixed(0)},${start.y.toFixed(0)},${start.z?.toFixed(0) || 0},${end.x.toFixed(0)},${end.y.toFixed(0)},${end.z?.toFixed(0) || 0}_${isRecalled}_${rawAff.toFixed(1)}`
+  const posKey = `${start.x.toFixed(0)},${start.y.toFixed(0)},${start.z?.toFixed(0) || 0},${end.x.toFixed(0)},${end.y.toFixed(0)},${end.z?.toFixed(0) || 0}_${isRecalled}_${rawAff.toFixed(1)}_${rawStrength.toFixed(2)}`
   if (obj.userData._posKey === posKey) return true
   obj.userData._posKey = posKey
   obj.userData.isRecalled = isRecalled
-  obj.userData.absAffinity = weight
+  obj.userData.synapseWeight = weight
 
   // Organik kavis için yay (MindAmbience beziere eğrisi gibi dışa doğru kavisli kubbe)
   const mid = new THREE.Vector3().addVectors(sv, ev).multiplyScalar(0.5)
@@ -1024,7 +1296,7 @@ function updateCapillaryPosition(obj, { start, end }, link) {
 
   const { isGreenMode, customColor, isDarkMode } = useThemeStore.getState()
   const accent = deriveAccentPalette({ isGreenMode, customColor })
-  const mats = getSynapseMaterials(rawAff, isRecalled, isDarkMode, accent)
+  const mats = getSynapseMaterials(rawAff, rawStrength, isRecalled, isDarkMode, accent)
 
   const intensity = isRecalled ? Math.max(0.7, weight) : weight
 
@@ -1101,11 +1373,22 @@ function updateCapillaryPosition(obj, { start, end }, link) {
 // TopBar yüksekliği — CSS değişkeninden okunuyor
 const TOPBAR_HEIGHT = 'var(--topbar-height)'
 
-function NodeDetailPanel({ node, onClose, isTribeContext = false }) {
+function NodeDetailPanel({ node, onClose, isTribeContext = false, relationships = [], onNavigate }) {
   const { t } = useTranslation()
   const { isDarkMode } = useThemeStore()
   const isRoot = node.label === 'Persona' || (node.label === 'Tribe' && node.isRoot)
   const { core, glow } = getNeuronColor(node.label, isRoot)
+
+  const relChipStyle = {
+    fontSize: 11,
+    fontWeight: 700,
+    color: isDarkMode ? '#cbd5e1' : '#374151',
+    background: 'transparent',
+    border: isDarkMode ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(59, 130, 246, 0.25)',
+    borderRadius: 999,
+    padding: '1px 7px',
+    flexShrink: 0,
+  }
 
   const visibleEntries = Object.entries(node).filter(([key, value]) => {
     if (
@@ -1126,6 +1409,7 @@ function NodeDetailPanel({ node, onClose, isTribeContext = false }) {
         'val',
         'color',
         'isRoot',
+        'isCore',
         'embedding',
         '__indexColor',
         '__threeObj',
@@ -1152,7 +1436,10 @@ function NodeDetailPanel({ node, onClose, isTribeContext = false }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '16px',
+        paddingTop: 'calc(var(--topbar-height, 112px) + 16px)',
+        paddingBottom: '16px',
+        paddingLeft: '16px',
+        paddingRight: '16px',
         animation: 'fadeIn 0.15s ease',
       }}
     >
@@ -1162,35 +1449,33 @@ function NodeDetailPanel({ node, onClose, isTribeContext = false }) {
         style={{
           width: '100%',
           maxWidth: 540,
-          maxHeight: 'min(82vh, 660px)',
+          maxHeight: '100%',
           display: 'flex',
           flexDirection: 'column',
-          background: isDarkMode ? 'rgba(12, 7, 24, 0.94)' : 'rgba(255, 255, 255, 0.96)',
+          background: isDarkMode ? 'rgba(9, 9, 11, 0.96)' : 'rgba(255, 255, 255, 0.96)',
           backdropFilter: 'blur(36px)',
           WebkitBackdropFilter: 'blur(36px)',
           border: isDarkMode
-            ? '1px solid rgba(192, 132, 252, 0.25)'
+            ? '1px solid rgba(255, 255, 255, 0.08)'
             : '1px solid rgba(0, 0, 0, 0.12)',
           borderTop: `4px solid ${core}`,
           borderRadius: 20,
           boxShadow: isDarkMode
-            ? '0 24px 64px rgba(0, 0, 0, 0.85), inset 0 0 24px rgba(192, 132, 252, 0.08)'
+            ? '0 24px 64px rgba(0, 0, 0, 0.85)'
             : '0 24px 64px rgba(0, 0, 0, 0.15)',
           overflow: 'hidden',
           fontFamily: 'Inter, sans-serif',
-          color: isDarkMode ? '#f0e6ff' : '#111827',
+          color: isDarkMode ? '#f8fafc' : '#111827',
         }}
       >
         {/* Modal Başlığı */}
         <div
+          className="mind-node-panel-header"
           style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'flex-start',
             padding: '22px 24px 18px 24px',
-            borderBottom: isDarkMode
-              ? '1px solid rgba(255, 255, 255, 0.08)'
-              : '1px solid rgba(0, 0, 0, 0.07)',
             flexShrink: 0,
           }}
         >
@@ -1234,7 +1519,7 @@ function NodeDetailPanel({ node, onClose, isTribeContext = false }) {
             onClick={onClose}
             aria-label={t('common.close', 'Kapat')}
             style={{
-              background: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
+              background: 'transparent',
               border: 'none',
               borderRadius: '50%',
               width: 32,
@@ -1258,7 +1543,8 @@ function NodeDetailPanel({ node, onClose, isTribeContext = false }) {
           style={{
             flex: 1,
             overflowY: 'auto',
-            padding: '20px 24px',
+            margin: '16px 24px 20px',
+            padding: '4px 4px 0 0',
             display: 'flex',
             flexDirection: 'column',
             gap: 12,
@@ -1269,57 +1555,155 @@ function NodeDetailPanel({ node, onClose, isTribeContext = false }) {
               style={{
                 textAlign: 'center',
                 padding: '24px 12px',
-                color: isDarkMode ? 'rgba(240, 230, 255, 0.5)' : 'rgba(0, 0, 0, 0.45)',
+                color: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.45)',
                 fontSize: 13,
               }}
             >
               {t('mind.no_extra_props', 'Bu düğüm için ek özellik bulunmuyor.')}
             </div>
           ) : (
-            visibleEntries.map(([key, value]) => (
-              <div
-                key={key}
-                style={{
-                  background: isDarkMode ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)',
-                  padding: '12px 16px',
-                  borderRadius: 12,
-                  border: isDarkMode
-                    ? '1px solid rgba(255, 255, 255, 0.05)'
-                    : '1px solid rgba(0, 0, 0, 0.06)',
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: isDarkMode ? 'rgba(192, 132, 252, 0.75)' : 'rgba(0, 0, 0, 0.55)',
-                    marginBottom: 6,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    fontWeight: 700,
-                  }}
-                >
-                  {key === 'lastUpdated'
-                    ? t('mind.last_updated', 'Son Güncelleme')
+            <div>
+              {visibleEntries.map(([key, value]) => {
+                const Icon = key === 'lastUpdated' ? CalendarFold : key === 'description' ? BookOpen : null
+                const label =
+                  key === 'lastUpdated'
+                    ? t('card.updated_at', 'Updated At')
                     : key === 'description'
                       ? t('mind.description', 'Açıklama')
-                      : key}
-                </div>
-                <div
-                  style={{
-                    fontSize: 14,
-                    color: isDarkMode ? '#e0d4f5' : '#374151',
-                    lineHeight: 1.6,
-                    wordBreak: 'break-word',
-                    whiteSpace: 'pre-wrap',
-                  }}
-                >
-                  {key === 'lastUpdated' && typeof value === 'number'
+                      : key
+                const displayValue =
+                  key === 'lastUpdated' && typeof value === 'number'
                     ? new Date(value).toLocaleString()
-                    : String(value)}
-                </div>
-              </div>
-            ))
+                    : String(value)
+                return (
+                  <div key={key} className="card-detail-row">
+                    <div className="card-detail-row__label">
+                      {Icon && <Icon size={14} className="card-detail-row__icon" style={{ flexShrink: 0 }} />}
+                      <span>{label}</span>
+                    </div>
+                    <div className={`card-detail-row__value${key === 'description' ? ' is-multiline' : ''}`}>
+                      {displayValue}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           )}
+
+          {/* İlişkiler: bu düğüme bağlı kenarlar + A (affinity) / S (strength) değerleri */}
+          <div>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 800,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: core,
+                marginBottom: 8,
+              }}
+            >
+              {t('mind.relationships', 'Relationships')} · {relationships.length}
+            </div>
+            {relationships.length === 0 ? (
+              <div
+                style={{
+                  fontSize: 13,
+                  color: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.45)',
+                }}
+              >
+                {t('mind.no_relationships', 'No relationships.')}
+              </div>
+            ) : (
+              relationships.map((rel) => {
+                const { core: relDot } = getNeuronColor(rel.otherLabel, rel.otherIsRoot)
+                const aff = formatRelValue(rel.affinity)
+                const str = formatRelValue(rel.strength)
+                return (
+                  <div
+                    key={rel.key}
+                    className="mind-rel-row"
+                    style={{
+                      background: 'transparent',
+                      border: isDarkMode
+                        ? '1px solid rgba(255, 255, 255, 0.08)'
+                        : '1px solid rgba(0, 0, 0, 0.08)',
+                      borderRadius: 10,
+                      padding: '9px 12px',
+                      marginBottom: 6,
+                    }}
+                  >
+                    <span
+                      className="mind-rel-type"
+                      style={{
+                        fontSize: 12.5,
+                        fontWeight: 800,
+                        color: core,
+                        letterSpacing: '0.02em',
+                      }}
+                    >
+                      {rel.relType}
+                    </span>
+                    <span style={{ display: 'flex', gap: 5, flexShrink: 0 }}>
+                      {aff != null && <span style={relChipStyle}>Affinity:{aff}</span>}
+                      {str != null && <span style={relChipStyle}>Strength:{str}</span>}
+                    </span>
+                    <span
+                      className="mind-rel-target"
+                      role={onNavigate ? 'button' : undefined}
+                      tabIndex={onNavigate ? 0 : undefined}
+                      style={{ cursor: onNavigate ? 'pointer' : undefined }}
+                      onClick={
+                        onNavigate
+                          ? (e) => {
+                              e.stopPropagation()
+                              onNavigate(rel.otherId)
+                            }
+                          : undefined
+                      }
+                      onKeyDown={
+                        onNavigate
+                          ? (e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                onNavigate(rel.otherId)
+                              }
+                            }
+                          : undefined
+                      }
+                    >
+                      {rel.direction === 'out' ? (
+                        <ArrowRight size={13} strokeWidth={2.2} style={{ opacity: 0.65, flexShrink: 0 }} />
+                      ) : (
+                        <ArrowLeft size={13} strokeWidth={2.2} style={{ opacity: 0.65, flexShrink: 0 }} />
+                      )}
+                      <span
+                        style={{
+                          width: 7,
+                          height: 7,
+                          borderRadius: '50%',
+                          background: relDot,
+                          boxShadow: `0 0 6px ${relDot}`,
+                          flexShrink: 0,
+                        }}
+                      />
+                      <span
+                        style={{
+                          fontSize: 12.5,
+                          fontWeight: 600,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {rel.otherName}
+                      </span>
+                    </span>
+                  </div>
+                )
+              })
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -1327,7 +1711,7 @@ function NodeDetailPanel({ node, onClose, isTribeContext = false }) {
 }
 
 // PC görünüm anahtarı: küçük, seçilebilir (checkbox benzeri) toggle butonu
-function MindToggle({ active, onClick, label, icon }) {
+function MindToggle({ active, onClick, label, icon, shortLabel }) {
   return (
     <button
       type="button"
@@ -1337,14 +1721,14 @@ function MindToggle({ active, onClick, label, icon }) {
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 6,
-        height: 32,
-        padding: '0 10px',
-        borderRadius: 8,
+        gap: 5,
+        height: 26,
+        padding: '0 8px',
+        borderRadius: 7,
         border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
         background: active ? 'var(--color-primary)' : 'transparent',
         color: active ? '#ffffff' : 'var(--color-text-secondary)',
-        fontSize: 11,
+        fontSize: 10.5,
         fontWeight: 600,
         letterSpacing: '0.02em',
         whiteSpace: 'nowrap',
@@ -1354,9 +1738,24 @@ function MindToggle({ active, onClick, label, icon }) {
       }}
     >
       {icon}
-      <span>{label}</span>
+      <span className="mind-toggle-label">{label}</span>
+      {shortLabel ? <span className="mind-toggle-label-short">{shortLabel}</span> : null}
     </button>
   )
+}
+
+// Legend tıklama filtresi: seçilen düğüm tipi dışındaki her şey görünmez olur
+const GRAPH_TYPE_MATCHERS = {
+  recalled: (n) => Boolean(n.isActive),
+  root: (n) => Boolean(n.isRoot),
+  core: (n) => n.label === 'Core',
+  tribe: (n) => n.label === 'Tribe' && !n.isRoot,
+  person: (n) => n.label === 'Actor' || n.label === 'User' || n.label === 'Bot',
+  thought: (n) =>
+    n.label === 'GeneralThought' ||
+    n.label === 'Topic' ||
+    n.label === 'Concept' ||
+    n.label === 'Thought',
 }
 
 export default function MindPage() {
@@ -1506,6 +1905,8 @@ export default function MindPage() {
   }, [accent, isDarkMode, isGreenMode])
 
   const [selectedNode, setSelectedNode] = useState(null)
+  // Legend tip filtresi: null → tümü görünür; seçili tip dışındakiler gizlenir
+  const [graphTypeFilter, setGraphTypeFilter] = useState(null)
   const [nodeSearch, setNodeSearch] = useState('')
   // Anılar paneli filtre durumu: düğüm tipi çipleri + sıralama
   const [memFilterOpen, setMemFilterOpen] = useState(false)
@@ -1517,26 +1918,63 @@ export default function MindPage() {
   )
 
   // PC/mobil görünüm anahtarları: bağlantı/düğüm etiketlerini gizle, ağı kilitle.
-  // Değerler localStorage'da saklanır (mind page için kalıcı).
-  const [hideLinkLabels, setHideLinkLabels] = useState(
-    () =>
-      typeof window !== 'undefined' && window.localStorage.getItem('mindView.hideLinkLabels') === '1'
-  )
-  const [hideNodeLabels, setHideNodeLabels] = useState(
-    () =>
-      typeof window !== 'undefined' && window.localStorage.getItem('mindView.hideNodeLabels') === '1'
-  )
-  const [lockGraph, setLockGraph] = useState(
-    () => typeof window !== 'undefined' && window.localStorage.getItem('mindView.lockGraph') === '1'
-  )
+  // Değerler localStorage'da saklanır (mind page için kalıcı). Kayıt yoksa null
+  // kalır; geçerli varsayılanlar aşağıdaki "effective" değerlerle belirlenir ve
+  // kullanıcı değiştirene kadar tarayıcıya yazılmaz.
+  const [hideLinkLabels, setHideLinkLabels] = useState(() => {
+    if (typeof window === 'undefined') return null
+    const raw = window.localStorage.getItem('mindView.hideLinkLabels')
+    return raw === null ? null : raw === '1'
+  })
+  const [hideNodeLabels, setHideNodeLabels] = useState(() => {
+    if (typeof window === 'undefined') return null
+    const raw = window.localStorage.getItem('mindView.hideNodeLabels')
+    return raw === null ? null : raw === '1'
+  })
+  const [lockGraph, setLockGraph] = useState(() => {
+    if (typeof window === 'undefined') return null
+    const raw = window.localStorage.getItem('mindView.lockGraph')
+    return raw === null ? null : raw === '1'
+  })
+  const [lazyRender, setLazyRender] = useState(() => {
+    if (typeof window === 'undefined') return null
+    const raw = window.localStorage.getItem('mindView.lazyRender')
+    return raw === null ? null : raw === '1'
+  })
+  // Lazy modda fizik tamamlanana kadar aynı yükleme göstergesi gösterilir.
+  const [initialPhysicsDone, setInitialPhysicsDone] = useState(false)
+  const [spacingSetting, setSpacingSetting] = useState(() => {
+    const raw =
+      typeof window !== 'undefined' ? window.localStorage.getItem('mindView.spacingSetting') : null
+    return SPACING_OPTIONS.includes(raw) ? raw : null
+  })
 
-  // Anahtar durumlarını localStorage'a yaz
+  // İlk giriş varsayılanları: düğüm yazıları açık, ağ kilitli, aralık otomatik.
+  const effectiveHideNodeLabels = hideNodeLabels ?? false
+  const effectiveLockGraph = lockGraph ?? true
+  const effectiveSpacingSetting = spacingSetting ?? 'auto'
+  const effectiveLazyRender = lazyRender ?? true
+  // Mobilde yatay kaydırılabilen görünüm anahtarları için kaydıraç durumu
+  const viewTogglesRef = useRef(null)
+  const [viewScroll, setViewScroll] = useState({ scrollable: false, left: 0, width: 100 })
+  // Mobilde yatay kaydırılabilen legend (Recalled/Persona/...) için kaydıraç durumu
+  const legendItemsRef = useRef(null)
+  const [legendScroll, setLegendScroll] = useState({ scrollable: false, left: 0, width: 100 })
+
+  // Kullanıcı bir anahtarı değiştirdiğinde (null değilken) localStorage'a yaz.
   useEffect(() => {
     if (typeof window === 'undefined') return
-    window.localStorage.setItem('mindView.hideLinkLabels', hideLinkLabels ? '1' : '0')
-    window.localStorage.setItem('mindView.hideNodeLabels', hideNodeLabels ? '1' : '0')
-    window.localStorage.setItem('mindView.lockGraph', lockGraph ? '1' : '0')
-  }, [hideLinkLabels, hideNodeLabels, lockGraph])
+    if (hideLinkLabels !== null)
+      window.localStorage.setItem('mindView.hideLinkLabels', hideLinkLabels ? '1' : '0')
+    if (hideNodeLabels !== null)
+      window.localStorage.setItem('mindView.hideNodeLabels', hideNodeLabels ? '1' : '0')
+    if (lockGraph !== null)
+      window.localStorage.setItem('mindView.lockGraph', lockGraph ? '1' : '0')
+    if (lazyRender !== null)
+      window.localStorage.setItem('mindView.lazyRender', lazyRender ? '1' : '0')
+    if (spacingSetting !== null)
+      window.localStorage.setItem('mindView.spacingSetting', spacingSetting)
+  }, [hideLinkLabels, hideNodeLabels, lockGraph, lazyRender, spacingSetting])
 
   const fgRef = useRef()
   const containerRef = useRef()
@@ -1560,22 +1998,6 @@ export default function MindPage() {
   }, [])
   const isMobileScreen = windowWidth <= 768
 
-  // Görünüm anahtarlarını mevcut Three.js etiket nesnelerine anında uygula
-  useEffect(() => {
-    mindViewFlags.hideLinkLabels = hideLinkLabels
-    mindViewFlags.hideNodeLabels = hideNodeLabels
-    const fg = fgRef.current
-    if (!fg || typeof fg.scene !== 'function') return
-    const scene = fg.scene()
-    if (!scene || typeof scene.traverse !== 'function') return
-    scene.traverse((obj) => {
-      const ud = obj.userData
-      if (!ud) return
-      if (ud.isBadge) obj.visible = !hideNodeLabels
-      else if (ud.isLinkLabel) obj.visible = !hideLinkLabels
-    })
-  }, [hideLinkLabels, hideNodeLabels])
-
   // Ağı kilitle: kütüphanede enableNodeDrag triggerUpdate:false olduğundan prop
   // değişimi drag kontrollerini yeniden kurmaz. lockGraph değişince graphData
   // referansını tazeleriz ki enableNodeDrag yeni değeriyle drag kontrolleri
@@ -1597,7 +2019,7 @@ export default function MindPage() {
       const nodes = fg.graphData()?.nodes
       if (nodes) {
         for (const n of nodes) {
-          if (lockGraph) {
+          if (effectiveLockGraph) {
             n.fx = n.x
             n.fy = n.y
             n.fz = n.z
@@ -1614,9 +2036,18 @@ export default function MindPage() {
     if (cooldownOverrideTimerRef.current) clearTimeout(cooldownOverrideTimerRef.current)
     cooldownOverrideTimerRef.current = setTimeout(() => setCooldownOverride(null), 150)
     setFgRefreshKey((k) => k + 1)
-  }, [lockGraph])
+  }, [effectiveLockGraph])
 
   useEffect(() => () => clearTimeout(cooldownOverrideTimerRef.current), [])
+
+  // Mobilde yatay kaydırılabilen görünüm anahtarları: kaydıraç konumunu takip et
+  useEffect(
+    () => attachHorizontalScroll(viewTogglesRef.current, setViewScroll),
+    [effectiveSpacingSetting]
+  )
+
+  // Mobilde legend (Recalled/Persona/Core/Tribe/Person/Thought) yatay kaydırma göstergesi
+  useEffect(() => attachHorizontalScroll(legendItemsRef.current, setLegendScroll), [])
 
   // Anılar paneli filtre dropdown'ı: dış tıklamada kapat
   useEffect(() => {
@@ -1641,13 +2072,13 @@ export default function MindPage() {
     const compute = () => {
       const btn = memBtnRef.current
       const cont = containerRef.current
-      if (!btn || !cont || window.innerWidth > 640) {
+      if (!btn || !cont || window.innerWidth > 900) {
         setMemPanelTop(null)
         return
       }
       const btnRect = btn.getBoundingClientRect()
       const contRect = cont.getBoundingClientRect()
-      setMemPanelTop(Math.round(btnRect.bottom - contRect.top + 6))
+      setMemPanelTop(Math.round(btnRect.bottom - contRect.top + 3))
     }
     compute()
     window.addEventListener('resize', compute)
@@ -1697,10 +2128,10 @@ export default function MindPage() {
               orb.visible = false
             } else {
               orb.visible = true
-              const affinitySpeedBoost = obj.userData.absAffinity
-                ? obj.userData.absAffinity * 0.35
+              const synapseSpeedBoost = obj.userData.synapseWeight
+                ? obj.userData.synapseWeight * 0.35
                 : 0
-              const speed = (obj.userData.isRecalled ? 0.62 : 0.38) + affinitySpeedBoost
+              const speed = (obj.userData.isRecalled ? 0.62 : 0.38) + synapseSpeedBoost
               const seed = obj.userData.seed || 0
               const t = (nowSec * speed + seed) % 1
               orb.position.copy(obj.userData.curve.getPoint(t))
@@ -1821,6 +2252,7 @@ export default function MindPage() {
           const rawRel = pathRels[i]
           const relType = typeof rawRel === 'object' ? rawRel?.type : rawRel
           const affinity = typeof rawRel === 'object' ? rawRel?.affinity : null
+          const strength = typeof rawRel === 'object' ? rawRel?.strength : null
 
           const linkKey = `${sourceId}-${relType}-${targetId}`
           if (!linksSet.has(linkKey)) {
@@ -1840,10 +2272,8 @@ export default function MindPage() {
               Boolean(sourceNode?.isRoot && targetNode && !targetNode.isCore) ||
               Boolean(targetNode?.isRoot && sourceNode && !sourceNode.isCore)
 
-            const displayName =
-              affinity != null && affinity !== 0
-                ? `${relType} (${affinity > 0 ? '+' : ''}${affinity})`
-                : relType
+            // Etiket formatı: OPPOSES (A:0.8)(S:1.2) — A: affinity, S: relationship strength
+            const displayName = buildRelationshipLabel(relType, affinity, strength)
 
             const isRecalledLink = Boolean(sourceNode?.isActive && targetNode?.isActive)
 
@@ -1853,6 +2283,7 @@ export default function MindPage() {
               name: displayName,
               relType,
               affinity,
+              strength,
               isRecalled: isRecalledLink,
               isCoreLink,
               isBagLink,
@@ -1885,13 +2316,20 @@ export default function MindPage() {
     const nodes = Array.from(nodesMap.values())
     const coreNodes = nodes.filter((n) => n.isCore && !n.isRoot)
     const outerNodes = nodes.filter((n) => !n.isRoot && !n.isCore)
+    const bagRadius = computeBagRadius(coreNodes.length)
+    const coreOrbitRadius = computeCoreOrbitRadius(bagRadius)
+    const outerOrbitMin = computeOuterOrbitMin(bagRadius)
 
-    // Kök merkezde sabit
+    // Kök merkezde sabit; orb geometrisi core sayısına göre ölçeklenir.
     nodes.forEach((node) => {
       if (node.isRoot) {
         node.x = 0
         node.y = 0
         node.z = 0
+        node.bagRadius = bagRadius
+        node.coreOrbitRadius = coreOrbitRadius
+        node.outerOrbitMin = outerOrbitMin
+        node.avatarUrl = profileData?.imageUrl || null
       }
     })
 
@@ -1900,9 +2338,9 @@ export default function MindPage() {
     coreNodes.forEach((node, i) => {
       const phi = Math.acos(1 - (2 * (i + 0.5)) / coreTotal)
       const theta = Math.PI * (1 + Math.sqrt(5)) * (i + 0.5)
-      node.x = CORE_ORBIT_RADIUS * Math.sin(phi) * Math.cos(theta)
-      node.y = CORE_ORBIT_RADIUS * Math.cos(phi)
-      node.z = CORE_ORBIT_RADIUS * Math.sin(phi) * Math.sin(theta)
+      node.x = coreOrbitRadius * Math.sin(phi) * Math.cos(theta)
+      node.y = coreOrbitRadius * Math.cos(phi)
+      node.z = coreOrbitRadius * Math.sin(phi) * Math.sin(theta)
     })
 
     // Diğer (kavramsal) düğümler dış küre üzerine dağıtılır
@@ -1910,7 +2348,7 @@ export default function MindPage() {
     outerNodes.forEach((node, i) => {
       const phi = Math.acos(-1 + (2 * i) / outerTotal)
       const theta = Math.sqrt(outerTotal * Math.PI) * phi
-      const r = OUTER_ORBIT_MIN + (i % 3) * OUTER_ORBIT_STEP
+      const r = outerOrbitMin + (i % 3) * OUTER_ORBIT_STEP
       node.x = r * Math.sin(phi) * Math.cos(theta)
       node.y = r * Math.sin(phi) * Math.sin(theta)
       node.z = r * Math.cos(phi)
@@ -1920,7 +2358,60 @@ export default function MindPage() {
       nodes,
       links: linksArr,
     }
-  }, [rawData, tribeId, actorId, rootName, highlightIds, focusNodeParam, isGreenMode, customColor])
+  }, [rawData, tribeId, actorId, rootName, highlightIds, focusNodeParam, isGreenMode, customColor, profileData?.imageUrl])
+
+  // Bağlantı etiketleri: kullanıcı seçmediyse düğüm sayısına göre açık/kapalı.
+  const effectiveHideLinkLabels =
+    hideLinkLabels ?? graphData.nodes.length > LINK_LABEL_AUTO_HIDE_NODE_COUNT
+
+  // Three.js inşa fonksiyonları bayrakları render sırasında okur.
+  mindViewFlags.hideLinkLabels = effectiveHideLinkLabels
+  mindViewFlags.hideNodeLabels = effectiveHideNodeLabels
+  mindViewFlags.lazyRender = effectiveLazyRender
+
+  // Görünüm anahtarlarını mevcut Three.js etiket nesnelerine anında uygula
+  useEffect(() => {
+    const fg = fgRef.current
+    if (!fg || typeof fg.scene !== 'function') return
+    const scene = fg.scene()
+    if (!scene || typeof scene.traverse !== 'function') return
+    scene.traverse((obj) => {
+      const ud = obj.userData
+      if (!ud) return
+      if (ud.isBadge) obj.visible = !effectiveHideNodeLabels
+      else if (ud.isLinkLabel) obj.visible = !effectiveHideLinkLabels
+    })
+  }, [effectiveHideLinkLabels, effectiveHideNodeLabels])
+
+  // Node aralığı (Space) modu: seçili ayarı (Otomatik dahil) somut ön ayara çöz,
+  // fizik kuvvetlerini uygula ve simülasyonu yeniden ısıt. Kilitliyken düğümler
+  // fx/fy/fz ile sabit olduğundan yeni aralık uygulanabilsin diye geçici olarak
+  // serbest bırakılır; onEngineStop kilit açıkken düğümleri yeniden sabitler.
+  const spacingRef = useRef(SPACING_PRESETS[1])
+  useEffect(() => {
+    const preset = resolveSpacingPreset(effectiveSpacingSetting, graphData.nodes.length)
+    spacingRef.current = preset
+    const fg = fgRef.current
+    if (!fg) return
+    applySpacingForces(fg, preset)
+    if (effectiveLockGraph && typeof fg.graphData === 'function') {
+      const nodes = fg.graphData()?.nodes
+      if (nodes) {
+        for (const n of nodes) {
+          n.fx = undefined
+          n.fy = undefined
+          n.fz = undefined
+        }
+      }
+      setCooldownOverride(100)
+      if (cooldownOverrideTimerRef.current) clearTimeout(cooldownOverrideTimerRef.current)
+      cooldownOverrideTimerRef.current = setTimeout(() => setCooldownOverride(null), 2600)
+    }
+    requestAnimationFrame(() => {
+      const g = fgRef.current
+      if (g && typeof g.d3ReheatSimulation === 'function') g.d3ReheatSimulation()
+    })
+  }, [effectiveSpacingSetting, graphData.nodes.length, effectiveLockGraph])
 
   // ForceGraph'a verilen referans; fgRefreshKey artınca yeni obje üretilir ki
   // kütüphane update döngüsünü çalıştırıp drag kontrollerini güncel
@@ -1930,11 +2421,66 @@ export default function MindPage() {
     [graphData, fgRefreshKey]
   )
 
+  // Seçili düğüme bağlı ilişkiler (modal ilişki listesi için):
+  // relType + A (affinity) + S (strength) + karşı düğüm adı ve yönü.
+  const nodesById = useMemo(() => {
+    const map = new Map()
+    graphData.nodes.forEach((n) => map.set(n.id, n))
+    return map
+  }, [graphData.nodes])
+
+  const selectedNodeRelationships = useMemo(() => {
+    if (!selectedNode) return []
+    const sid = selectedNode.id
+    const list = []
+    for (const link of graphData.links) {
+      const sId = typeof link.source === 'object' ? link.source?.id : link.source
+      const tId = typeof link.target === 'object' ? link.target?.id : link.target
+      if (sId !== sid && tId !== sid) continue
+      const otherId = sId === sid ? tId : sId
+      const other = nodesById.get(otherId)
+      list.push({
+        key: `${sId}-${link.relType}-${tId}`,
+        relType: link.relType,
+        affinity: typeof link.affinity === 'number' ? link.affinity : null,
+        strength: typeof link.strength === 'number' ? link.strength : null,
+        otherId,
+        otherName: other?.name || otherId,
+        otherLabel: other?.label,
+        otherIsRoot: Boolean(other?.isRoot),
+        direction: sId === sid ? 'out' : 'in',
+      })
+    }
+    list.sort(
+      (a, b) =>
+        (a.relType || '').localeCompare(b.relType || '') ||
+        (a.otherName || '').localeCompare(b.otherName || '')
+    )
+    return list
+  }, [selectedNode, graphData.links, nodesById])
+
+  // Legend tip filtresi aktifken yalnızca seçilen tipteki düğümler (ve iki ucu da
+  // görünür olan bağlantılar) grafiğe verilir; diğerleri görünmez olur.
+  const visibleGraphData = useMemo(() => {
+    const matcher = graphTypeFilter ? GRAPH_TYPE_MATCHERS[graphTypeFilter] : null
+    if (!matcher) return graphDataRender
+    const nodes = graphData.nodes.filter((n) => matcher(n) || n.isRoot || n.isCore)
+    const keep = new Set(nodes.map((n) => n.id))
+    const links = graphData.links.filter((l) => {
+      const sId = typeof l.source === 'object' ? l.source?.id : l.source
+      const tId = typeof l.target === 'object' ? l.target?.id : l.target
+      return keep.has(sId) && keep.has(tId)
+    })
+    return { nodes, links }
+  }, [graphData.nodes, graphData.links, graphDataRender, graphTypeFilter])
+
   // Yeni grafik verisi geldiğinde kademeli render sayaçlarını sıfırla.
   // (graphDataRender yerine graphData.nodes: lock/unlock re-init'lerinde sıfırlanmasın)
   useEffect(() => {
     _tickCount = 0
     _engineRunning = true
+    _initialSimDone = false
+    setInitialPhysicsDone(false)
   }, [graphData.nodes])
 
   const sortedNodes = useMemo(() => {
@@ -1969,6 +2515,7 @@ export default function MindPage() {
   useEffect(() => {
     isInitialZoomRef.current = true
     initialSimDoneRef.current = false
+    setGraphTypeFilter(null)
   }, [actorId, tribeId])
 
   // Active Synapse: highlightIds veya focusNode varsa yükleme sonrası toast + ilk aktif node'a zoom & detay paneli açma
@@ -2098,17 +2645,8 @@ export default function MindPage() {
       if (!fgRef.current) return
       const fg = fgRef.current
 
-      // Kuvvetleri buradan da güvenli şekilde ayarla
-      const lf = typeof fg.d3Force === 'function' ? fg.d3Force('link') : null
-      if (lf) {
-        lf.distance((link) => {
-          if (link.isCoreLink) return CORE_ORBIT_RADIUS // Torba içi kök ↔ Core bağı
-          if (link.isBagLink) return OUTER_ORBIT_MIN // Torba ↔ dış düğüm
-          return 40 // Kılcal bağlar aşırı kısaltıldı
-        }).strength(0.3)
-      }
-      const cf = typeof fg.d3Force === 'function' ? fg.d3Force('charge') : null
-      if (cf) cf.strength((n) => (n.isCore ? -140 : -900))
+      // Kuvvetleri seçili aralık moduna göre güvenli şekilde ayarla
+      applySpacingForces(fg, spacingRef.current)
 
       if (typeof fg.graphData !== 'function') return
       const internalNodes = fg.graphData()?.nodes
@@ -2118,6 +2656,9 @@ export default function MindPage() {
       const outerNodes = internalNodes.filter((n) => !n.isRoot && !n.isCore)
       const coreTotal = coreNodes.length || 1
       const outerTotal = outerNodes.length || 1
+      const rootNode = internalNodes.find((n) => n.isRoot)
+      const coreOrbitRadius = rootNode?.coreOrbitRadius ?? CORE_ORBIT_RADIUS
+      const outerOrbitMin = rootNode?.outerOrbitMin ?? OUTER_ORBIT_MIN
 
       // Root merkez
       internalNodes.forEach((n) => {
@@ -2135,9 +2676,9 @@ export default function MindPage() {
       coreNodes.forEach((n, i) => {
         const phi = Math.acos(1 - (2 * (i + 0.5)) / coreTotal)
         const theta = Math.PI * (1 + Math.sqrt(5)) * (i + 0.5)
-        n.x = CORE_ORBIT_RADIUS * Math.sin(phi) * Math.cos(theta)
-        n.y = CORE_ORBIT_RADIUS * Math.cos(phi)
-        n.z = CORE_ORBIT_RADIUS * Math.sin(phi) * Math.sin(theta)
+        n.x = coreOrbitRadius * Math.sin(phi) * Math.cos(theta)
+        n.y = coreOrbitRadius * Math.cos(phi)
+        n.z = coreOrbitRadius * Math.sin(phi) * Math.sin(theta)
         n.vx = 0
         n.vy = 0
         n.vz = 0
@@ -2147,7 +2688,7 @@ export default function MindPage() {
       outerNodes.forEach((n, i) => {
         const phi = Math.acos(-1 + (2 * i) / outerTotal)
         const theta = Math.sqrt(outerTotal * Math.PI) * phi
-        const r = OUTER_ORBIT_MIN + (i % 3) * OUTER_ORBIT_STEP
+        const r = outerOrbitMin + (i % 3) * OUTER_ORBIT_STEP
         n.x = r * Math.sin(phi) * Math.cos(theta)
         n.y = r * Math.sin(phi) * Math.sin(theta)
         n.z = r * Math.cos(phi)
@@ -2236,6 +2777,7 @@ export default function MindPage() {
   const handleResetView = () => {
     selectedNodeRef.current = null
     setSelectedNode(null)
+    setGraphTypeFilter(null)
     selectedLinkRef.current = null
     if (fgRef.current && typeof fgRef.current.cameraPosition === 'function') {
       const internalNodes = fgRef.current.graphData?.()?.nodes || graphData.nodes
@@ -2243,6 +2785,24 @@ export default function MindPage() {
       fgRef.current.cameraPosition({ x: 0, y: 0, z: optimalDist }, { x: 0, y: 0, z: 0 }, 1000)
     }
   }
+
+  const mindLoadingIndicator = (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 16,
+        zIndex: 5,
+      }}
+    >
+      <Brain size={40} style={{ color: 'var(--color-primary)', opacity: 0.7 }} />
+      <div className="spinner spinner-lg" />
+    </div>
+  )
 
   return (
     <>
@@ -2275,8 +2835,20 @@ export default function MindPage() {
             minHeight: 56,
           }}
         >
-          {/* Sol: Geri + Kimlik bloğu */}
+          {/* Sol: Geri + Kimlik bloğu; bağlam başlığı bunun altında bağımsız satır */}
           <div
+            className="mind-identity-stack"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              gap: 4,
+              minWidth: 0,
+              maxWidth: contextTitle ? '42%' : '55%',
+            }}
+          >
+          <div
+            className="mind-identity-pill"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -2287,7 +2859,7 @@ export default function MindPage() {
               borderRadius: 12,
               padding: '6px 14px',
               boxShadow: 'var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1))',
-              maxWidth: contextTitle ? '34%' : '55%',
+              maxWidth: '100%',
               minWidth: 0,
               flexShrink: 0,
             }}
@@ -2366,18 +2938,14 @@ export default function MindPage() {
             </div>
           </div>
 
-          {/* Orta: Tetiklenen Anıların Bağlantılı Olduğu Başlık (Sade, tırnak içinde, özel sarı bloksuz) */}
+          {/* Bağlam başlığı kimlik pilinin altında bağımsız satır */}
           {contextTitle && (
             <div
               className="mind-context-title"
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                maxWidth: '42%',
                 minWidth: 0,
-                padding: '0 12px',
-                textAlign: 'center',
                 overflow: 'hidden',
                 pointerEvents: 'auto',
               }}
@@ -2385,7 +2953,7 @@ export default function MindPage() {
             >
               <span
                 style={{
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: 600,
                   fontStyle: 'italic',
                   color: 'var(--color-text-primary)',
@@ -2394,12 +2962,14 @@ export default function MindPage() {
                   textOverflow: 'ellipsis',
                   letterSpacing: '0.01em',
                   textShadow: isDarkMode ? '0 1px 4px rgba(0, 0, 0, 0.4)' : 'none',
+                  minWidth: 0,
                 }}
               >
                 "{contextTitle}"
               </span>
             </div>
           )}
+          </div>
 
           {/* Mobil: Varsayılan görünüm butonu üst satırın sağında durur */}
           <button
@@ -2411,13 +2981,13 @@ export default function MindPage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 8,
-              padding: '0 16px',
-              height: 32,
+              gap: 6,
+              padding: '0 12px',
+              height: 26,
             }}
           >
-            <Focus size={13} />
-            <span>{t('hierarchy.default_view', 'Varsayılan')}</span>
+            <Focus size={12} />
+            <span className="mind-default-label">{t('hierarchy.default_view', 'Varsayılan')}</span>
           </button>
 
           {/* Sağ: Node tanımları + Varsayılan Görünüm (mobilde legend + Anılar satırı) */}
@@ -2440,79 +3010,66 @@ export default function MindPage() {
               }}
             >
               {/* Legend grubu: Recalled + düğüm tipleri (mobilde ayrı satırda kaydırılır) */}
-              <div
-                className="mind-legend-items"
-                style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}
-              >
+              <div className="mind-legend-items-wrap">
+                {legendScroll.scrollable && (
+                  <div className="mind-view-scrollbar" aria-hidden="true">
+                    <div
+                      className="mind-view-scrollbar-thumb"
+                      style={{ width: `${legendScroll.width}%`, left: `${legendScroll.left}%` }}
+                    />
+                  </div>
+                )}
+                <div
+                  className="mind-legend-items"
+                  ref={legendItemsRef}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}
+                >
               {/* 1. Recalled (Tetiklenen Anı) - Dolu parlayan neon küre (8px, yumuşak ışık aurası ile) */}
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button
+                type="button"
+                onClick={() => setGraphTypeFilter((f) => (f === 'recalled' ? null : 'recalled'))}
+                title={t('mind.filter_by_type', 'Filter by type')}
+                aria-pressed={graphTypeFilter === 'recalled'}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  background: 'transparent',
+                  border: 'none',
+                  padding: 0,
+                  margin: 0,
+                  opacity: graphTypeFilter && graphTypeFilter !== 'recalled' ? 0.45 : 1,
+                  transition: 'all 0.18s ease',
+                  font: 'inherit',
+                }}
+              >
+                {/* İç hap: vurgu halkası yalnızca nokta + yazıyı sarar (layout nötr) */}
                 <span
                   style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    background: accent.activeCore,
-                    boxShadow: `0 0 0 2.5px ${hexToRgba(accent.activeCore, 0.32)}, 0 0 8px ${accent.activeCore}`,
-                    flexShrink: 0,
-                  }}
-                />
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: 'var(--color-text-secondary)',
-                    letterSpacing: '0.04em',
-                    whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '0 6px',
+                    margin: '0 -6px',
+                    borderRadius: 999,
+                    background:
+                      graphTypeFilter === 'recalled'
+                        ? hexToRgba(accent.activeCore, isDarkMode ? 0.16 : 0.12)
+                        : 'transparent',
+                    boxShadow:
+                      graphTypeFilter === 'recalled'
+                        ? `inset 0 0 0 1px ${accent.activeCore}`
+                        : 'none',
+                    transition: 'all 0.18s ease',
                   }}
                 >
-                  {t('mind.labels.recalled', 'Recalled')}
-                </span>
-              </span>
-
-              {/* Durum ile Düğüm Tipleri arasındaki ince ayırıcı */}
-              <span
-                style={{ width: 1, height: 18, background: 'var(--color-border)', margin: '0 2px' }}
-              />
-
-              {/* 2. Düğüm Tipleri (Persona, Tribe, Person, Thought) */}
-              {[
-                {
-                  color: accent.activeGlow,
-                  label: tribeId
-                    ? t('mind.labels.tribe_root', 'Tribe (Root)')
-                    : t('mind.labels.persona', 'Persona'),
-                },
-                { color: accent.activeGlow, label: t('mind.labels.core', 'Core') },
-                {
-                  color: NEURON_COLORS.Tribe.core,
-                  label: tribeId
-                    ? t('mind.labels.other_tribes', 'Other Tribes')
-                    : t('mind.labels.tribe', 'Tribe'),
-                },
-                { color: NEURON_COLORS.Actor.core, label: t('mind.labels.actor', 'Person') },
-                {
-                  color: NEURON_COLORS.GeneralThought.core,
-                  label: t('mind.labels.general_thought', 'Thought'),
-                },
-              ].map(({ color, label }, idx) => (
-                <span key={label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  {idx > 0 && (
-                    <span
-                      style={{
-                        width: 1,
-                        height: 18,
-                        background: 'var(--color-border)',
-                        marginRight: 2,
-                      }}
-                    />
-                  )}
                   <span
                     style={{
                       width: 8,
                       height: 8,
                       borderRadius: '50%',
-                      background: color,
-                      boxShadow: `0 0 8px ${color}`,
+                      background: accent.activeCore,
+                      boxShadow: `0 0 0 2.5px ${hexToRgba(accent.activeCore, 0.32)}, 0 0 8px ${accent.activeCore}`,
                       flexShrink: 0,
                     }}
                   />
@@ -2525,10 +3082,118 @@ export default function MindPage() {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {label}
+                    {t('mind.labels.recalled', 'Recalled')}
                   </span>
                 </span>
-              ))}
+              </button>
+
+              {/* Durum ile Düğüm Tipleri arasındaki ince ayırıcı */}
+              <span
+                style={{ width: 1, height: 18, background: 'var(--color-border)', margin: '0 2px' }}
+              />
+
+              {/* 2. Düğüm Tipleri (Persona, Tribe, Person, Thought) — tıklayınca grafik filtrelenir */}
+              {[
+                {
+                  key: 'root',
+                  color: accent.activeGlow,
+                  label: tribeId
+                    ? t('mind.labels.tribe_root', 'Tribe (Root)')
+                    : t('mind.labels.persona', 'Persona'),
+                },
+                { key: 'core', color: accent.activeGlow, label: t('mind.labels.core', 'Core') },
+                {
+                  key: 'tribe',
+                  color: NEURON_COLORS.Tribe.core,
+                  label: tribeId
+                    ? t('mind.labels.other_tribes', 'Other Tribes')
+                    : t('mind.labels.tribe', 'Tribe'),
+                },
+                {
+                  key: 'person',
+                  color: NEURON_COLORS.Actor.core,
+                  label: t('mind.labels.actor', 'Person'),
+                },
+                {
+                  key: 'thought',
+                  color: NEURON_COLORS.GeneralThought.core,
+                  label: t('mind.labels.general_thought', 'Thought'),
+                },
+              ].map(({ key, color, label }, idx) => {
+                const isActive = graphTypeFilter === key
+                return (
+                  <button
+                    type="button"
+                    key={key}
+                    onClick={() => setGraphTypeFilter((f) => (f === key ? null : key))}
+                    title={t('mind.filter_by_type', 'Filter by type')}
+                    aria-pressed={isActive}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      cursor: 'pointer',
+                      background: 'transparent',
+                      border: 'none',
+                      padding: 0,
+                      margin: 0,
+                      opacity: graphTypeFilter && !isActive ? 0.45 : 1,
+                      transition: 'all 0.18s ease',
+                      font: 'inherit',
+                    }}
+                  >
+                    {idx > 0 && (
+                      <span
+                        style={{
+                          width: 1,
+                          height: 18,
+                          background: 'var(--color-border)',
+                          marginRight: 2,
+                        }}
+                      />
+                    )}
+                    {/* İç hap: vurgu halkası yalnızca nokta + yazıyı sarar (layout nötr) */}
+                    <span
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        padding: '0 6px',
+                        margin: '0 -6px',
+                        borderRadius: 999,
+                        background: isActive
+                          ? hexToRgba(color, isDarkMode ? 0.16 : 0.12)
+                          : 'transparent',
+                        boxShadow: isActive ? `inset 0 0 0 1px ${color}` : 'none',
+                        transition: 'all 0.18s ease',
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          background: color,
+                          boxShadow: `0 0 8px ${color}`,
+                          flexShrink: 0,
+                        }}
+                      />
+                      <span
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: 'var(--color-text-secondary)',
+                          letterSpacing: '0.04em',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {label}
+                      </span>
+                    </span>
+                  </button>
+                )
+              })}
+              </div>
               </div>
 
               <span style={{ width: 1, height: 20, background: 'var(--color-border)' }} />
@@ -2536,31 +3201,74 @@ export default function MindPage() {
               {/* Görünüm anahtarları + Varsayılan (mobilde tek satırda, gerekirse yatay kaydırılır) */}
               <div
                 className="mind-actions"
-                style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}
+                style={{ display: 'flex', gap: 8, flexShrink: 0 }}
               >
-              {/* PC: Görünüm anahtarları (bağlantı yazıları / düğüm yazıları / ağı kilitle) */}
-              <div
-                className="mind-view-toggles"
-                style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}
-              >
+              {/* PC: Görünüm anahtarları (bağlantı yazıları / düğüm yazıları / ağı kilitle / aralık) */}
+              <div className="mind-view-toggles-wrap">
+                {viewScroll.scrollable && (
+                  <div className="mind-view-scrollbar" aria-hidden="true">
+                    <div
+                      className="mind-view-scrollbar-thumb"
+                      style={{ width: `${viewScroll.width}%`, left: `${viewScroll.left}%` }}
+                    />
+                  </div>
+                )}
+                <div
+                  className="mind-view-toggles"
+                  ref={viewTogglesRef}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}
+                >
                 <MindToggle
-                  active={hideLinkLabels}
-                  onClick={() => setHideLinkLabels((v) => !v)}
+                  active={effectiveHideLinkLabels}
+                  onClick={() => setHideLinkLabels(!effectiveHideLinkLabels)}
                   label={t('mind.view.hide_link_labels', 'Bağlantı yazıları')}
-                  icon={<Tag size={13} />}
+                  icon={<Tag size={12} />}
                 />
                 <MindToggle
-                  active={hideNodeLabels}
-                  onClick={() => setHideNodeLabels((v) => !v)}
+                  active={effectiveHideNodeLabels}
+                  onClick={() => setHideNodeLabels(!effectiveHideNodeLabels)}
                   label={t('mind.view.hide_node_labels', 'Düğüm yazıları')}
-                  icon={<Tag size={13} />}
+                  icon={<Type size={12} />}
                 />
                 <MindToggle
-                  active={lockGraph}
-                  onClick={() => setLockGraph((v) => !v)}
-                  label={t('mind.view.lock_graph', 'Ağı kilitle')}
-                  icon={lockGraph ? <Lock size={13} /> : <Unlock size={13} />}
+                  active={effectiveLockGraph}
+                  onClick={() => setLockGraph(!effectiveLockGraph)}
+                  label={t('mind.view.lock_graph', 'Kilit')}
+                  icon={effectiveLockGraph ? <Lock size={12} /> : <Unlock size={12} />}
                 />
+                <MindToggle
+                  active={effectiveSpacingSetting !== 'auto'}
+                  onClick={() => {
+                    const i = SPACING_OPTIONS.indexOf(effectiveSpacingSetting)
+                    setSpacingSetting(SPACING_OPTIONS[(i + 1) % SPACING_OPTIONS.length])
+                  }}
+                  label={`${t('mind.view.spacing', 'Aralık')}: ${
+                    effectiveSpacingSetting === 'auto'
+                      ? t('mind.view.spacing_auto', 'Otomatik')
+                      : t(
+                          `mind.view.spacing_${effectiveSpacingSetting}`,
+                          resolveSpacingPreset(effectiveSpacingSetting, graphData.nodes.length)
+                            .label
+                        )
+                  }`}
+                  shortLabel={
+                    effectiveSpacingSetting === 'auto'
+                      ? t('mind.view.spacing_auto', 'Otomatik')
+                      : t(
+                          `mind.view.spacing_${effectiveSpacingSetting}`,
+                          resolveSpacingPreset(effectiveSpacingSetting, graphData.nodes.length)
+                            .label
+                        )
+                  }
+                  icon={<Move size={12} />}
+                />
+                <MindToggle
+                  active={effectiveLazyRender}
+                  onClick={() => setLazyRender(!effectiveLazyRender)}
+                  label={t('mind.view.lazy', 'Lazy')}
+                  icon={<Timer size={12} />}
+                />
+                </div>
               </div>
 
               <span style={{ width: 1, height: 20, background: 'var(--color-border)' }} />
@@ -2574,13 +3282,13 @@ export default function MindPage() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 8,
-                  padding: '0 16px',
-                  height: 32,
+                  gap: 6,
+                  padding: '0 12px',
+                  height: 26,
                 }}
               >
-                <Focus size={13} />
-                <span>{t('hierarchy.default_view', 'Varsayılan')}</span>
+                <Focus size={12} />
+                <span className="mind-default-label">{t('hierarchy.default_view', 'Varsayılan')}</span>
               </button>
               </div>
             </div>
@@ -2624,20 +3332,7 @@ export default function MindPage() {
           }}
         >
           {isLoading ? (
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 16,
-              }}
-            >
-              <Brain size={40} style={{ color: 'var(--color-primary)', opacity: 0.7 }} />
-              <div className="spinner spinner-lg" />
-            </div>
+            mindLoadingIndicator
           ) : graphData.nodes.length === 0 ? (
             <div
               style={{
@@ -2656,7 +3351,8 @@ export default function MindPage() {
               </p>
             </div>
           ) : (
-            dimensions.width > 0 &&
+            <>
+            {dimensions.width > 0 &&
             dimensions.height > 0 && (
               <ForceGraph3D
                 ref={(el) => {
@@ -2667,12 +3363,19 @@ export default function MindPage() {
                 }}
                 width={dimensions.width}
                 height={dimensions.height}
-                graphData={graphDataRender}
+                graphData={visibleGraphData}
                 backgroundColor={bgColor}
                 // Custom Three.js parlayan nöron objeleri
                 nodeThreeObject={buildNeuronObject}
                 nodeThreeObjectExtend={false}
                 nodePositionUpdate={(obj, pos, node) => {
+                  // Lazy mod: ilk oluşum simülasyonu bitene kadar düğümleri
+                  // tamamen gizle; motor durunca son pozisyonlarla göster.
+                  if (mindViewFlags.lazyRender && !_initialSimDone && !_dragging) {
+                    obj.visible = false
+                    return true
+                  }
+                  obj.visible = true
                   // Kademeli render: checkpoint değilse ve motor çalışıyorsa
                   // pozisyon güncellemesini bastır (düğüm yerinde kalsın).
                   // Drag sırasında ve motor durduğunda her zaman güncelle.
@@ -2692,9 +3395,9 @@ export default function MindPage() {
                 cooldownTicks={
                   cooldownOverride !== null
                     ? cooldownOverride
-                    : lockGraph && initialSimDoneRef.current
+                    : effectiveLockGraph && initialSimDoneRef.current
                       ? 0
-                      : 200
+                      : 100
                 }
                 onEngineTick={() => {
                   // Motor durmuşken tick geliyorsa yeniden ısıtılmıştır (drag vb.):
@@ -2709,15 +3412,24 @@ export default function MindPage() {
                   if (fg && typeof fg.graphData === 'function') {
                     const nodes = fg.graphData()?.nodes
                     if (nodes) {
-                      const maxD = BAG_RADIUS - 24
+                      // Core düğümlerini kök merkezli torbanın içinde tut.
+                      const rootNode = nodes.find((n) => n.isRoot)
+                      const maxD = (rootNode?.bagRadius ?? BAG_RADIUS) - CORE_NODE_MARGIN
                       for (const n of nodes) {
                         if (n.isCore && !n.isRoot) {
-                          const d = Math.hypot(n.x || 0, n.y || 0, n.z || 0)
+                          const dx = (n.x || 0) - (rootNode?.x || 0)
+                          const dy = (n.y || 0) - (rootNode?.y || 0)
+                          const dz = (n.z || 0) - (rootNode?.z || 0)
+                          const d = Math.hypot(dx, dy, dz)
                           if (d > maxD) {
                             const s = maxD / d
-                            n.x = (n.x || 0) * s
-                            n.y = (n.y || 0) * s
-                            n.z = (n.z || 0) * s
+                            n.x = (rootNode?.x || 0) + dx * s
+                            n.y = (rootNode?.y || 0) + dy * s
+                            n.z = (rootNode?.z || 0) + dz * s
+                            // Sınıra yapışıp dışa doğru itilmeyi engelle.
+                            n.vx = (n.vx || 0) * 0.2
+                            n.vy = (n.vy || 0) * 0.2
+                            n.vz = (n.vz || 0) * 0.2
                           }
                         }
                       }
@@ -2736,10 +3448,12 @@ export default function MindPage() {
                 onEngineStop={() => {
                   _engineRunning = false
                   _dragging = false
+                  _initialSimDone = true
+                  setInitialPhysicsDone(true)
                   isInitialZoomRef.current = false
                   initialSimDoneRef.current = true
                   // Sayfa kilitli yüklendiyse, ilk simülasyon tamamlanınca düğümleri sabitle
-                  if (lockGraph) {
+          if (effectiveLockGraph) {
                     const fg = fgRef.current
                     if (fg && typeof fg.graphData === 'function') {
                       const nodes = fg.graphData()?.nodes
@@ -2753,7 +3467,7 @@ export default function MindPage() {
                     }
                   }
                 }}
-                enableNodeDrag={!lockGraph}
+                enableNodeDrag={!effectiveLockGraph}
                 onNodeDrag={handleNodeDrag}
                 onNodeDragEnd={handleNodeDragEnd}
                 onNodeClick={handleNodeClick}
@@ -2765,13 +3479,24 @@ export default function MindPage() {
                   selectedLinkRef.current = selectedLinkRef.current === link ? null : link
                 }}
               />
-            )
+            )}
+            {effectiveLazyRender &&
+              !initialPhysicsDone &&
+              dimensions.width > 0 &&
+              dimensions.height > 0 &&
+              mindLoadingIndicator}
+            </>
           )}
 
           {selectedNode && (
             <NodeDetailPanel
               node={selectedNode}
               isTribeContext={Boolean(tribeId)}
+              relationships={selectedNodeRelationships}
+              onNavigate={(nodeId) => {
+                const target = nodesById.get(nodeId)
+                if (target) handleNodeClick(target)
+              }}
               onClose={() => {
                 selectedNodeRef.current = null
                 setSelectedNode(null)
@@ -2800,7 +3525,7 @@ export default function MindPage() {
               <div
                 style={{
                   pointerEvents: 'auto',
-                  width: isMobileScreen ? 280 : 324,
+                  width: isMobileScreen ? 264 : 324,
                   maxHeight: 'calc(100vh - 200px)',
                   display: 'flex',
                   flexDirection: 'column',

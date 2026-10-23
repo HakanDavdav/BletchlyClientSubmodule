@@ -29,6 +29,7 @@ export default function HierarchyPage() {
 
   const [treeData, setTreeData] = useState(null)
   const [isExpandingAll, setIsExpandingAll] = useState(false)
+  const [isAllExpanded, setIsAllExpanded] = useState(false)
   const [expandCounter, setExpandCounter] = useState(0)
   const [fetchDepth, setFetchDepth] = useState(1)
   const [actorName, setActorName] = useState('')
@@ -313,10 +314,12 @@ export default function HierarchyPage() {
     })
 
     setTreeData(rootNode)
+    setIsAllExpanded(false)
   }, [hierarchyData])
 
   const handleExpandAll = () => {
     setIsExpandingAll(true)
+    setIsAllExpanded(true)
     setExpandCounter((c) => c + 1)
     setIsExpandingAll(false)
   }
@@ -440,6 +443,7 @@ export default function HierarchyPage() {
               boxShadow: 'var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1))',
             }}
           >
+            <div className="hierarchy-toolbar-secondary">
             {/* Derinlik Kontrolü */}
             <div className="hierarchy-depth" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span
@@ -501,30 +505,32 @@ export default function HierarchyPage() {
               className="btn btn-ghost btn-sm hierarchy-zoom-btn"
               onClick={() => setZoomLevel((z) => Math.min(2.0, +(z + 0.05).toFixed(2)))}
               aria-label={t('hierarchy.zoom_in', 'Büyüt (+)')}
-              style={{ width: 28, height: 28, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ flexShrink: 0, width: 26, height: 26, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              <Plus size={14} />
+              <Plus size={12} />
             </button>
             <button
               type="button"
               className="btn btn-ghost btn-sm hierarchy-zoom-btn"
               onClick={() => setZoomLevel((z) => Math.max(0.05, +(z - 0.05).toFixed(2)))}
               aria-label={t('hierarchy.zoom_out', 'Küçült (-)')}
-              style={{ width: 28, height: 28, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ flexShrink: 0, width: 26, height: 26, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              <Minus size={14} />
+              <Minus size={12} />
             </button>
+            </div>
 
+            <div className="hierarchy-toolbar-main">
             <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
 
             {/* Tümünü Genişlet Butonu */}
             <button
               type="button"
-              className="btn btn-primary btn-sm"
+              className={`btn btn-sm hierarchy-toggle-btn ${isAllExpanded ? 'hierarchy-toggle-btn--active' : ''}`}
               onClick={handleExpandAll}
               disabled={isExpandingAll || !treeData}
               aria-label={t('hierarchy.expand_all', 'Tümünü Genişlet')}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '0 16px', height: 32 }}
+              style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '0 12px', height: 26 }}
             >
               {isExpandingAll ? (
                 <div
@@ -532,9 +538,30 @@ export default function HierarchyPage() {
                   style={{ width: 14, height: 14, borderWidth: 2 }}
                 />
               ) : (
-                <Maximize2 size={13} />
+                <Maximize2 size={12} />
               )}
               <span>{t('hierarchy.expand_all', 'Tümünü Genişlet')}</span>
+            </button>
+
+            {/* Fosil Düğümleri Göster / Gizle Toggle */}
+            <button
+              type="button"
+              className={`btn btn-sm hierarchy-toggle-btn ${showFossils ? 'hierarchy-toggle-btn--active' : ''}`}
+              onClick={() => setShowFossils((prev) => !prev)}
+              disabled={!treeData}
+              aria-label={t('hierarchy.toggle_fossils', 'Fosil düğümleri göster/gizle')}
+              style={{
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                padding: '0 12px',
+                height: 26,
+              }}
+            >
+              <TRexSkullIcon className="badge-fossil-icon" />
+              <span>{showFossils ? t('common.enabled', 'Enabled') : t('common.disabled', 'Disabled')}</span>
             </button>
 
             <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
@@ -546,34 +573,12 @@ export default function HierarchyPage() {
               onClick={handleDefaultView}
               disabled={!treeData}
               aria-label={t('hierarchy.default_view', 'Varsayılan')}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '0 16px', height: 32 }}
+              style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '0 12px', height: 26 }}
             >
-              <Focus size={13} />
+              <Focus size={12} />
               <span>{t('hierarchy.default_view', 'Varsayılan')}</span>
             </button>
-
-            <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
-
-            {/* Fosil Düğümleri Göster / Gizle Toggle */}
-            <button
-              type="button"
-              className={`btn btn-primary btn-sm btn-fossil-toggle ${showFossils ? 'btn-fossil-toggle--active' : ''}`}
-              onClick={() => setShowFossils((prev) => !prev)}
-              disabled={!treeData}
-              aria-label={t('hierarchy.toggle_fossils', 'Fosil düğümleri göster/gizle')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                padding: '0 16px',
-                height: 32,
-                opacity: showFossils ? 1 : 0.85,
-              }}
-            >
-              <TRexSkullIcon className="badge-fossil-icon" />
-              <span>{showFossils ? t('common.enabled', 'Enabled') : t('common.disabled', 'Disabled')}</span>
-            </button>
+            </div>
           </div>
 
           {/* Sağ Üst Bloğun Altında Ortalı Heartbeat (Büyük & Hızlı Nabız) */}
@@ -590,8 +595,8 @@ export default function HierarchyPage() {
             <div
               key={pulseCount}
               style={{
-                width: 56,
-                height: 56,
+                width: 68,
+                height: 68,
                 color: 'var(--color-primary)',
                 animation: 'heartBeat 0.38s ease',
                 display: 'flex',
@@ -601,7 +606,7 @@ export default function HierarchyPage() {
                 cursor: 'default',
               }}
             >
-              <HeartSvg width={52} height={52} style={{ display: 'block' }} />
+              <HeartSvg width={64} height={64} style={{ display: 'block' }} />
             </div>
           </div>
         </div>

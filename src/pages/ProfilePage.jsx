@@ -21,6 +21,7 @@ import {
   Users,
 } from 'lucide-react'
 import { MODEL_GLASS_ITEMS } from '../components/common/ModelGlassToggle'
+import { getMemoryEmblems } from '../components/common/MemoryEmblems'
 import KingIcon from '../components/common/icons/KingIcon'
 import FossilIcon from '../components/common/icons/FossilIcon'
 import AngryBotWithSwordsIcon from '../components/common/icons/AngryBotWithSwordsIcon'
@@ -35,7 +36,7 @@ import toast from 'react-hot-toast'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { actorApi } from '../api/actorApi'
 import { personalityCardApi } from '../api/personalityCardApi'
-import { BotCapabilities, UserCapabilities, Theme } from '../constants/enums'
+import { UserCapabilities, Theme } from '../constants/enums'
 import TriggerDebateModal from '../components/profile/TriggerDebateModal'
 import { trackDebate } from '../utils/analytics'
 import BackButton from '../components/common/BackButton'
@@ -173,6 +174,9 @@ export default function ProfilePage() {
   const [entriesPage, setEntriesPage] = useState(1)
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false)
   const inferredPerPage = 5
+  // Profil sekmeleri: mobilde yatay kaydırma göstergesi (kaydıraç) durumu
+  const profileTabGroupRef = useRef(null)
+  const [tabScroll, setTabScroll] = useState({ scrollable: false, left: 0, width: 100 })
   const { t } = useTranslation()
   // Limitler & Miras paneli açma/kapama durumu (TribePage ile ORTAK global state)
   const { isLimitsExpanded, toggleLimits } = useUIStore()
@@ -362,6 +366,37 @@ export default function ProfilePage() {
     () => (profile?.tribes || []).filter((t) => isDormantItem(t)).length,
     [profile]
   )
+
+  // Mobilde yatay kaydırılabilen sekme grubu için kaydıraç konumunu takip et
+  useEffect(() => {
+    const el = profileTabGroupRef.current
+    if (!el) return undefined
+    const update = () => {
+      const sw = el.scrollWidth
+      const cw = el.clientWidth
+      const scrollable = sw > cw + 1
+      const width = scrollable ? Math.max(14, (cw / sw) * 100 * 0.8) : 100
+      const maxScroll = sw - cw
+      const left = scrollable && maxScroll > 0 ? (el.scrollLeft / maxScroll) * (100 - width) : 0
+      setTabScroll({ scrollable, left, width })
+    }
+    update()
+    el.addEventListener('scroll', update, { passive: true })
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(update) : null
+    if (ro) ro.observe(el)
+    window.addEventListener('resize', update)
+    return () => {
+      el.removeEventListener('scroll', update)
+      if (ro) ro.disconnect()
+      window.removeEventListener('resize', update)
+    }
+  }, [
+    activeTab,
+    profile?.postCount,
+    profile?.entryCount,
+    visibleProfileBots.length,
+    visibleProfileTribes.length,
+  ])
 
   const isMyBot =
     profile?.discriminator === 'Bot' &&
@@ -730,10 +765,6 @@ export default function ProfilePage() {
   const isBot = profile.discriminator === 'Bot'
   const isDormant = Boolean(isBot && (profile.isDormant ?? profile.IsDormant ?? false))
 
-  const botCapabilities = profile.botSettings?.botCapabilities ?? BotCapabilities.Default
-  const hasBotMemory =
-    (botCapabilities & BotCapabilities.ProlongedBotMemory) === BotCapabilities.ProlongedBotMemory
-
   const preferredModel = profile.botSettings?.preferredModel ?? 0
   const activeModelItem = MODEL_GLASS_ITEMS.find((m) => m.value === preferredModel) || MODEL_GLASS_ITEMS[0]
   const modelEmblem = [
@@ -756,23 +787,7 @@ export default function ProfilePage() {
       tone: 'default',
       size: 25,
     },
-    hasBotMemory
-      ? {
-          key: 'extended_memory',
-          label: t('bot.capability_extended_memory', 'Genişletilmiş Hafıza'),
-          description: `${t('bot.capability_extended_memory', 'Genişletilmiş Hafıza')}: ${t('bot.capability_extended_memory_desc', '60 günlük genişletilmiş hafıza ve derin bağlam')}`,
-          Icon: Brain,
-          tone: 'extended-memory',
-          size: 25,
-        }
-      : {
-          key: 'memory',
-          label: t('bot.capability_memory', 'Hafıza'),
-          description: `${t('bot.capability_memory', 'Hafıza')}: ${t('bot.capability_memory_desc', '30 günlük standart bot hafızası')}`,
-          Icon: Brain,
-          tone: 'memory',
-          size: 25,
-        },
+    ...getMemoryEmblems(profile.botSettings, t),
     ...modelEmblem,
     ...(isDormant
       ? [
@@ -1706,19 +1721,29 @@ export default function ProfilePage() {
 
       {/* ─── Tabs & Pagination ─── */}
       <div className="profile-tabs-container">
-        <div className="profile-tab-group">
-          {['posts', 'entries', 'bots', 'tribes'].map((tab) => (
-            <button
-              key={tab}
-              className={`profile-tab-btn ${activeTab === tab ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab)}
-            >
-              {tab === 'posts' && `${t('profile.posts')} (${profile.postCount ?? 0})`}
-              {tab === 'entries' && `${t('profile.entries')} (${profile.entryCount ?? 0})`}
-              {tab === 'bots' && `${t('profile.bots')} (${visibleProfileBots.length})`}
-              {tab === 'tribes' && `${t('profile.tribes')} (${visibleProfileTribes.length})`}
-            </button>
-          ))}
+        <div className="profile-tab-group-wrap">
+          {tabScroll.scrollable && (
+            <div className="profile-tabs-scrollbar" aria-hidden="true">
+              <div
+                className="profile-tabs-scrollbar-thumb"
+                style={{ width: `${tabScroll.width}%`, left: `${tabScroll.left}%` }}
+              />
+            </div>
+          )}
+          <div className="profile-tab-group" ref={profileTabGroupRef}>
+            {['posts', 'entries', 'bots', 'tribes'].map((tab) => (
+              <button
+                key={tab}
+                className={`profile-tab-btn ${activeTab === tab ? 'active' : ''}`}
+                onClick={() => setActiveTab(tab)}
+              >
+                {tab === 'posts' && `${t('profile.posts')} (${profile.postCount ?? 0})`}
+                {tab === 'entries' && `${t('profile.entries')} (${profile.entryCount ?? 0})`}
+                {tab === 'bots' && `${t('profile.bots')} (${visibleProfileBots.length})`}
+                {tab === 'tribes' && `${t('profile.tribes')} (${visibleProfileTribes.length})`}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Paging Controls */}

@@ -720,6 +720,12 @@ export default function BasicConceptsPage() {
                 'Bir bota atadığınız Kişilik Kartını kilitleyebilirsiniz. Bota yeni bir kart ataması, botun Kart Atanma Limitini aştığında kilitlenmemiş en eski atama otomatik olarak kaldırılır. Kilitli kartlar bu işlemden korunur ve siz kilidi kaldırana veya kartı el ile çıkarana kadar botun kişilik setinde kalır.'
               )}
             </Description>
+            <Description style={{ marginTop: 8 }}>
+              {t(
+                'hierarchy_info.incubation_desc',
+                "Bota veya klana yeni bir Kişilik Kartı atandığında, eğer Kişilik Kuluçka Süresi devam ediyorsa kart hemen yuvalara yerleşir ve alt hiyerarşiye yayılmaya devam eder; ancak kuluçka tamamlanana kadar üzerinde 'Kuluçkada (Etki Etmedi)' işareti taşır ve aktif karakteri değiştirmez. Kuluçka süresi dolduğunda bekleyen kartlar aktif kişilikle birleşir; zihin haritasındaki (Mind) eski çekirdek değerler ise dış halkaya taşınarak geçmiş birer düşünce katmanına dönüşür ve yeni çekirdeğe bağlanır."
+              )}
+            </Description>
           </TextColumn>
         </Section>
 

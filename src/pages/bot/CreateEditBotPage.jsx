@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import BackButton from '../../components/common/BackButton'
 import ConfirmModal from '../../components/common/ConfirmModal'
 import { TopicTypes } from '../../constants/TopicTypes'
+import { UserCapabilities } from '../../constants/enums'
 import useAuthStore from '../../store/authStore'
 import useMyEntitiesStore from '../../store/myEntitiesStore'
 import useDevLog from '../../utils/useDevLog'
@@ -20,6 +21,10 @@ import HowItWorksHelp from '../../components/common/HowItWorksHelp'
 import BotFlashCardsIcon from '../../components/common/icons/BotFlashCardsIcon'
 import AvatarUpload from '../../components/common/AvatarUpload'
 import ModelGlassToggle from '../../components/common/ModelGlassToggle'
+import MemoryTuningSlider, {
+  formatMultiplier,
+} from '../../components/common/MemoryTuningSlider'
+import useIsMobile from '../../hooks/useIsMobile'
 import { buildOwnedCardIdSet, normalizeCardId } from '../../utils/cardOwnership'
 import { trackCreateBot } from '../../utils/analytics'
 
@@ -56,6 +61,12 @@ export default function CreateEditBotPage() {
     autoInterests: false,
     autoBio: false,
     preferredModel: 0,
+    affinityBiasMultiplier: 1,
+    forgetfulnessMultiplier: 1,
+    maxStrengthMultiplier: 1,
+    minStrengthThresholdMultiplier: 1,
+    recallPathLimitMultiplier: 1,
+    incubationPeriodMultiplier: 1,
     topicTypes: [],
     selectedCardIds: [],
     lockedCardIds: [],
@@ -100,6 +111,15 @@ export default function CreateEditBotPage() {
   const botCountLimit = userSettings?.botCountLimit ?? storeSettings?.botCountLimit ?? 5
   const isBotLimitReached = !isEditMode && activeBots.length >= botCountLimit
 
+  // Hafıza dayanıklılığı (Unutkanlık Hızı) ayarı Pro'ya özeldir
+  const isPremiumUser =
+    ((userSettings?.userCapabilities ?? UserCapabilities.Default) & UserCapabilities.Premium) ===
+    UserCapabilities.Premium
+  const isMobileScreen = useIsMobile()
+  const sliderRowStyle = isMobileScreen
+    ? undefined
+    : { flex: 1, minWidth: 0, maxWidth: 'none' }
+
   // Fetch existing data if in Edit Mode
   const { data: existingBot, isLoading: isLoadingExisting } = useQuery({
     queryKey: ['actorProfile', botId],
@@ -121,6 +141,12 @@ export default function CreateEditBotPage() {
     autoInterests: false,
     autoBio: false,
     preferredModel: 0,
+    affinityBiasMultiplier: 1,
+    forgetfulnessMultiplier: 1,
+    maxStrengthMultiplier: 1,
+    minStrengthThresholdMultiplier: 1,
+    recallPathLimitMultiplier: 1,
+    incubationPeriodMultiplier: 1,
     topicTypes: [],
     selectedCardIds: [],
     lockedCardIds: [],
@@ -189,6 +215,14 @@ export default function CreateEditBotPage() {
         autoInterests: existingBot.botSettings?.autoInterests || false,
         autoBio: existingBot.botSettings?.autoBio || false,
         preferredModel: existingBot.botSettings?.preferredModel ?? 0,
+        affinityBiasMultiplier: existingBot.botSettings?.affinityBiasMultiplier ?? 1,
+        forgetfulnessMultiplier: existingBot.botSettings?.forgetfulnessMultiplier ?? 1,
+        maxStrengthMultiplier: existingBot.botSettings?.maxStrengthMultiplier ?? 1,
+        minStrengthThresholdMultiplier: Number(
+          (2 - (existingBot.botSettings?.maxStrengthMultiplier ?? 1)).toFixed(2)
+        ),
+        recallPathLimitMultiplier: existingBot.botSettings?.recallPathLimitMultiplier ?? 1,
+        incubationPeriodMultiplier: existingBot.botSettings?.incubationPeriodMultiplier ?? 1,
         topicTypes: mappedTopicTypes,
         selectedCardIds: personalAssignedIds,
         lockedCardIds: existingLockedIds,
@@ -518,6 +552,7 @@ export default function CreateEditBotPage() {
             t('bot.how_it_works_2'),
             t('bot.how_it_works_3'),
             t('bot.how_it_works_4'),
+            t('bot.how_it_works_5'),
           ]}
           closeLabel={t('common.close', 'Kapat')}
           triggerStyle={{ marginLeft: 'auto', marginRight: 24, flexShrink: 0 }}
@@ -665,6 +700,152 @@ export default function CreateEditBotPage() {
             }}
             disabled={mutation.isPending || mutation.isSuccess}
           />
+          <div style={{ marginTop: 18 }}>
+            <label
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: 'var(--color-text-secondary)',
+                letterSpacing: '0.02em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {t('bot.memory_tuning', 'Memory Tuning')}
+            </label>
+            <div
+              style={{
+                marginTop: 12,
+                display: 'flex',
+                flexDirection: isMobileScreen ? 'column' : 'row',
+                gap: 12,
+                alignItems: 'stretch',
+              }}
+            >
+              <MemoryTuningSlider
+                title={t('bot.affinity_bias_title', 'Cognitive Balance')}
+                description={t(
+                  'bot.affinity_bias_desc',
+                  'How the bot travels to its core when recalling: shortcut logic vs. passionate, high-affinity pathways.'
+                )}
+                leftLabel={t('bot.affinity_bias_left', 'Logical')}
+                rightLabel={t('bot.affinity_bias_right', 'Emotional')}
+                value={formData.affinityBiasMultiplier}
+                min={0}
+                max={2}
+                onChange={(v) => {
+                  if (!mutation.isPending && !mutation.isSuccess) {
+                    setFormData((prev) => ({ ...prev, affinityBiasMultiplier: v }))
+                  }
+                }}
+                disabled={mutation.isPending || mutation.isSuccess}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+              <MemoryTuningSlider
+                title={t('bot.forgetfulness_title', 'Forgetting Speed')}
+                description={t(
+                  'bot.forgetfulness_desc',
+                  'How fast unused memory paths cool down and how aggressively they are pruned.'
+                )}
+                leftLabel={t('bot.forgetfulness_left', 'Elephant Memory')}
+                rightLabel={t('bot.forgetfulness_right', 'Alzheimer')}
+                value={formData.forgetfulnessMultiplier}
+                min={0}
+                max={2}
+                onChange={(v) => {
+                  if (!mutation.isPending && !mutation.isSuccess) {
+                    setFormData((prev) => ({ ...prev, forgetfulnessMultiplier: v }))
+                  }
+                }}
+                disabled={mutation.isPending || mutation.isSuccess}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+            </div>
+            <div
+              style={{
+                marginTop: 12,
+                display: 'flex',
+                flexDirection: isMobileScreen ? 'column' : 'row',
+                gap: 12,
+                alignItems: 'stretch',
+              }}
+            >
+              <MemoryTuningSlider
+                title={t('bot.associative_scope_title', 'Associative Scope')}
+                description={t(
+                  'bot.associative_scope_desc',
+                  'How many surrounding associations surface when a memory is recalled.'
+                )}
+                leftLabel={t('bot.associative_scope_left', 'Autism-like')}
+                rightLabel={t('bot.associative_scope_right', 'Big Picture')}
+                value={formData.recallPathLimitMultiplier}
+                min={0}
+                max={2}
+                onChange={(v) => {
+                  if (!mutation.isPending && !mutation.isSuccess) {
+                    setFormData((prev) => ({ ...prev, recallPathLimitMultiplier: v }))
+                  }
+                }}
+                disabled={mutation.isPending || mutation.isSuccess}
+                locked={!isPremiumUser}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+              <MemoryTuningSlider
+                title={t('bot.fixation_title', 'Memory Fixation')}
+                description={`${t('bot.fixation_desc', 'How deeply repeated ideas take root; high values resist change and fading.')} ${t('bot.retention_desc', 'How faint a memory may become before it is pruned; lower values cling to the faintest traces.')}`}
+                leftLabel={t('bot.fixation_left', 'Open-Minded')}
+                rightLabel={t('bot.fixation_right', 'Resilient')}
+                value={formData.maxStrengthMultiplier}
+                min={0.5}
+                max={2}
+                onChange={(v) => {
+                  if (!mutation.isPending && !mutation.isSuccess) {
+                    setFormData((prev) => ({
+                      ...prev,
+                      maxStrengthMultiplier: v,
+                      minStrengthThresholdMultiplier: Number((2 - v).toFixed(2)),
+                    }))
+                  }
+                }}
+                disabled={mutation.isPending || mutation.isSuccess}
+                locked={!isPremiumUser}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+            </div>
+            <div
+              style={{
+                marginTop: 12,
+                display: 'flex',
+                flexDirection: isMobileScreen ? 'column' : 'row',
+                gap: 12,
+                alignItems: 'stretch',
+              }}
+            >
+              <MemoryTuningSlider
+                title={t('bot.incubation_title', 'Kişilik Kuluçka Süresi')}
+                description={t(
+                  'bot.incubation_desc',
+                  "Botun kart yuvalarına yeni Kişilik Kartları eklense bile, bu süre dolana kadar yeni kartlar 'Kuluçkada' bekler ve aktif kişiliği değiştirmez. Süreyi kısa tutmak yeni kartların karakteri hızla değiştirmesini sağlar; ancak sık kişilik değişimi hafıza ağının (Mind) çekirdeğini sürekli sıfırlayarak olgunlaşmasını engeller ve çelişkili, dengesiz bir zihin yapısına yol açar."
+                )}
+                leftLabel={t('bot.incubation_left', 'Fast Personality Change')}
+                rightLabel={t('bot.incubation_right', 'Slow Personality Change')}
+                value={formData.incubationPeriodMultiplier}
+                min={0}
+                max={2}
+                onChange={(v) => {
+                  if (!mutation.isPending && !mutation.isSuccess) {
+                    setFormData((prev) => ({ ...prev, incubationPeriodMultiplier: v }))
+                  }
+                }}
+                disabled={mutation.isPending || mutation.isSuccess}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+            </div>
+          </div>
           {!isEditMode && (
             <div style={{ marginTop: 12 }}>
               <SelectionMarker

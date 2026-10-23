@@ -19,8 +19,13 @@ import BotFlashCardsIcon from '../../components/common/icons/BotFlashCardsIcon'
 import PersonalityCard from '../../components/card/PersonalityCard'
 import AvatarUpload from '../../components/common/AvatarUpload'
 import ModelGlassToggle from '../../components/common/ModelGlassToggle'
+import MemoryTuningSlider, {
+  formatMultiplier,
+} from '../../components/common/MemoryTuningSlider'
+import useIsMobile from '../../hooks/useIsMobile'
 import { normalizeCardId } from '../../utils/cardOwnership'
 import { TopicTypes } from '../../constants/TopicTypes'
+import { UserCapabilities } from '../../constants/enums'
 
 const RANDOM_TRIBE_NAMES = ['Comrades', 'Femboys', 'LGBT', 'Incels', 'Doomers']
 
@@ -72,11 +77,26 @@ export default function CreateTribePage() {
   const tribeCountLimit = userSettings?.tribeCountLimit ?? storeSettings?.tribeCountLimit ?? 3
   const isTribeLimitReached = activeTribes.length >= tribeCountLimit
 
+  // Hafıza dayanıklılığı (Unutkanlık Hızı) ayarı Pro'ya özeldir
+  const isPremiumUser =
+    ((userSettings?.userCapabilities ?? UserCapabilities.Default) & UserCapabilities.Premium) ===
+    UserCapabilities.Premium
+  const isMobileScreen = useIsMobile()
+  const sliderRowStyle = isMobileScreen
+    ? undefined
+    : { flex: 1, minWidth: 0, maxWidth: 'none' }
+
   const [formData, setFormData] = useState({
     tribeName: '',
     imageUrl: '',
     mission: '',
     preferredModel: 0,
+    affinityBiasMultiplier: 1,
+    forgetfulnessMultiplier: 1,
+    maxStrengthMultiplier: 1,
+    minStrengthThresholdMultiplier: 1,
+    recallPathLimitMultiplier: 1,
+    incubationPeriodMultiplier: 1,
     topicTypes: [],
     personalityCardName: '',
     personalityCardPrompt: '',
@@ -265,7 +285,12 @@ export default function CreateTribePage() {
         </div>
         <HowItWorksHelp
           title={t('tribe.how_it_works')}
-          items={[t('tribe.how_it_works_1'), t('tribe.how_it_works_2'), t('tribe.how_it_works_3')]}
+          items={[
+            t('tribe.how_it_works_1'),
+            t('tribe.how_it_works_2'),
+            t('tribe.how_it_works_3'),
+            t('tribe.how_it_works_4'),
+          ]}
           closeLabel={t('common.close', 'Kapat')}
           triggerStyle={{ marginLeft: 'auto', marginRight: 24, flexShrink: 0 }}
         />
@@ -435,6 +460,152 @@ export default function CreateTribePage() {
           <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
             {t('tribe_settings.model_selection_desc', 'Klan hafızası ve kişilik işlemlerinde kullanılır.')}
           </p>
+          <div style={{ marginTop: 18 }}>
+            <label
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: 'var(--color-text-secondary)',
+                letterSpacing: '0.02em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {t('tribe.memory_tuning', 'Memory Tuning')}
+            </label>
+            <div
+              style={{
+                marginTop: 12,
+                display: 'flex',
+                flexDirection: isMobileScreen ? 'column' : 'row',
+                gap: 12,
+                alignItems: 'stretch',
+              }}
+            >
+              <MemoryTuningSlider
+                title={t('tribe.affinity_bias_title', 'Cognitive Balance')}
+                description={t(
+                  'tribe.affinity_bias_desc',
+                  'How the tribe travels to its core when recalling: shortcut logic vs. passionate, high-affinity pathways.'
+                )}
+                leftLabel={t('tribe.affinity_bias_left', 'Logical')}
+                rightLabel={t('tribe.affinity_bias_right', 'Emotional')}
+                value={formData.affinityBiasMultiplier}
+                min={0}
+                max={2}
+                onChange={(v) => {
+                  if (!mutation.isPending && !mutation.isSuccess) {
+                    setFormData((current) => ({ ...current, affinityBiasMultiplier: v }))
+                  }
+                }}
+                disabled={mutation.isPending || mutation.isSuccess}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+              <MemoryTuningSlider
+                title={t('tribe.forgetfulness_title', 'Forgetting Speed')}
+                description={t(
+                  'tribe.forgetfulness_desc',
+                  'How fast unused memory paths cool down and how aggressively they are pruned.'
+                )}
+                leftLabel={t('tribe.forgetfulness_left', 'Elephant Memory')}
+                rightLabel={t('tribe.forgetfulness_right', 'Alzheimer')}
+                value={formData.forgetfulnessMultiplier}
+                min={0}
+                max={2}
+                onChange={(v) => {
+                  if (!mutation.isPending && !mutation.isSuccess) {
+                    setFormData((current) => ({ ...current, forgetfulnessMultiplier: v }))
+                  }
+                }}
+                disabled={mutation.isPending || mutation.isSuccess}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+            </div>
+            <div
+              style={{
+                marginTop: 12,
+                display: 'flex',
+                flexDirection: isMobileScreen ? 'column' : 'row',
+                gap: 12,
+                alignItems: 'stretch',
+              }}
+            >
+              <MemoryTuningSlider
+                title={t('tribe.associative_scope_title', 'Associative Scope')}
+                description={t(
+                  'tribe.associative_scope_desc',
+                  'How many surrounding associations surface when a memory is recalled.'
+                )}
+                leftLabel={t('tribe.associative_scope_left', 'Autism-like')}
+                rightLabel={t('tribe.associative_scope_right', 'Big Picture')}
+                value={formData.recallPathLimitMultiplier}
+                min={0}
+                max={2}
+                onChange={(v) => {
+                  if (!mutation.isPending && !mutation.isSuccess) {
+                    setFormData((current) => ({ ...current, recallPathLimitMultiplier: v }))
+                  }
+                }}
+                disabled={mutation.isPending || mutation.isSuccess}
+                locked={!isPremiumUser}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+              <MemoryTuningSlider
+                title={t('tribe.fixation_title', 'Memory Fixation')}
+                description={`${t('tribe.fixation_desc', 'How deeply repeated ideas take root; high values resist change and fading.')} ${t('tribe.retention_desc', 'How faint a memory may become before it is pruned; lower values cling to the faintest traces.')}`}
+                leftLabel={t('tribe.fixation_left', 'Open-Minded')}
+                rightLabel={t('tribe.fixation_right', 'Resilient')}
+                value={formData.maxStrengthMultiplier}
+                min={0.5}
+                max={2}
+                onChange={(v) => {
+                  if (!mutation.isPending && !mutation.isSuccess) {
+                    setFormData((current) => ({
+                      ...current,
+                      maxStrengthMultiplier: v,
+                      minStrengthThresholdMultiplier: Number((2 - v).toFixed(2)),
+                    }))
+                  }
+                }}
+                disabled={mutation.isPending || mutation.isSuccess}
+                locked={!isPremiumUser}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+            </div>
+            <div
+              style={{
+                marginTop: 12,
+                display: 'flex',
+                flexDirection: isMobileScreen ? 'column' : 'row',
+                gap: 12,
+                alignItems: 'stretch',
+              }}
+            >
+              <MemoryTuningSlider
+                title={t('tribe.incubation_title', 'Kişilik Kuluçka Süresi')}
+                description={t(
+                  'tribe.incubation_desc',
+                  "Klanın kart yuvalarına yeni Kişilik Kartları eklense bile, bu süre dolana kadar yeni kartlar 'Kuluçkada' bekler ve klanın kolektif kişiliğini değiştirmez. Süreyi kısa tutmak yeni kartların hızla benimsenmesini sağlar; ancak sık kişilik değişimi kolektif hafıza ağının (Mind) çekirdeğini sürekli sıfırlayarak olgunlaşmasını engeller ve çelişkili, dengesiz bir yapıya yol açar."
+                )}
+                leftLabel={t('tribe.incubation_left', 'Fast Personality Change')}
+                rightLabel={t('tribe.incubation_right', 'Slow Personality Change')}
+                value={formData.incubationPeriodMultiplier}
+                min={0}
+                max={2}
+                onChange={(v) => {
+                  if (!mutation.isPending && !mutation.isSuccess) {
+                    setFormData((current) => ({ ...current, incubationPeriodMultiplier: v }))
+                  }
+                }}
+                disabled={mutation.isPending || mutation.isSuccess}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+            </div>
+          </div>
         </div>
 
         <div>

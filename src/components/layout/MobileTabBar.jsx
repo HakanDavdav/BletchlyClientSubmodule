@@ -152,8 +152,8 @@ export default function MobileTabBar() {
           {/* Bütünleşik bot ikonu: yön ve renk layout.css ile yönetilir */}
           <span className="mobile-tab-bar__quick-bot" aria-hidden="true">
             <MobilBottomMiddleBotSvg
-              width={20}
-              height={26}
+              width={19}
+              height={25}
               style={{ display: 'block' }}
             />
           </span>

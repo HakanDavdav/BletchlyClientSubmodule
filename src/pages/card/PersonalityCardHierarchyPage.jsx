@@ -1054,6 +1054,7 @@ export default function PersonalityCardHierarchyPage() {
             <span className="hierarchy-count-badge__text" style={{ fontSize: 11, opacity: 0.7 }}>{t('card.assignees', 'Atama')}</span>
           </div>
 
+          <div className="hierarchy-toolbar-secondary">
           <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
 
           {/* Zoom Level Indicator */}
@@ -1076,33 +1077,56 @@ export default function PersonalityCardHierarchyPage() {
             className="btn btn-ghost btn-sm hierarchy-zoom-btn"
             onClick={() => setZoomLevel((z) => Math.min(2.0, +(z + 0.1).toFixed(2)))}
             aria-label={t('hierarchy.zoom_in', 'Büyüt (+)')}
-            style={{ width: 28, height: 28, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ flexShrink: 0, width: 26, height: 26, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <Plus size={14} />
+            <Plus size={12} />
           </button>
           <button
             type="button"
             className="btn btn-ghost btn-sm hierarchy-zoom-btn"
             onClick={() => setZoomLevel((z) => Math.max(0.05, +(z - 0.1).toFixed(2)))}
             aria-label={t('hierarchy.zoom_out', 'Küçült (-)')}
-            style={{ width: 28, height: 28, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ flexShrink: 0, width: 26, height: 26, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <Minus size={14} />
+            <Minus size={12} />
           </button>
+          </div>
 
+          <div className="hierarchy-toolbar-main">
           <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
 
           {/* Expand / Collapse All */}
           <button
             type="button"
-            className="btn btn-primary btn-sm"
+            className={`btn btn-sm hierarchy-toggle-btn ${!isAllCollapsed ? 'hierarchy-toggle-btn--active' : ''}`}
             onClick={handleToggleAll}
             disabled={!treeRoot}
             aria-label={isAllCollapsed ? t('hierarchy.expand_all', 'Tümünü Genişlet') : t('hierarchy.collapse_all', 'Tümünü Daralt')}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '0 16px', height: 32 }}
+            style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '0 12px', height: 26 }}
           >
-            {isAllCollapsed ? <Maximize2 size={13} /> : <Minimize2 size={13} />}
+            {isAllCollapsed ? <Maximize2 size={12} /> : <Minimize2 size={12} />}
             <span>{isAllCollapsed ? t('hierarchy.expand_all', 'Tümünü Genişlet') : t('hierarchy.collapse_all', 'Tümünü Daralt')}</span>
+          </button>
+
+          {/* Fosil Düğümleri Göster / Gizle Toggle */}
+          <button
+            type="button"
+            className={`btn btn-sm hierarchy-toggle-btn ${showFossils ? 'hierarchy-toggle-btn--active' : ''}`}
+            onClick={() => setShowFossils((prev) => !prev)}
+            disabled={!treeRoot}
+            aria-label={t('hierarchy.toggle_fossils', 'Fosil düğümleri göster/gizle')}
+            style={{
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              padding: '0 12px',
+              height: 26,
+            }}
+          >
+            <TRexSkullIcon className="badge-fossil-icon" />
+            <span>{showFossils ? t('common.enabled', 'Enabled') : t('common.disabled', 'Disabled')}</span>
           </button>
 
           <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
@@ -1114,34 +1138,12 @@ export default function PersonalityCardHierarchyPage() {
             onClick={handleDefaultView}
             disabled={!treeRoot}
             aria-label={t('hierarchy.default_view', 'Varsayılan')}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '0 16px', height: 32 }}
+            style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '0 12px', height: 26 }}
           >
-            <Focus size={13} />
+            <Focus size={12} />
             <span>{t('hierarchy.default_view', 'Varsayılan')}</span>
           </button>
-
-          <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
-
-          {/* Fosil Düğümleri Göster / Gizle Toggle */}
-          <button
-            type="button"
-            className={`btn btn-primary btn-sm btn-fossil-toggle ${showFossils ? 'btn-fossil-toggle--active' : ''}`}
-            onClick={() => setShowFossils((prev) => !prev)}
-            disabled={!treeRoot}
-            aria-label={t('hierarchy.toggle_fossils', 'Fosil düğümleri göster/gizle')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              padding: '0 16px',
-              height: 32,
-              opacity: showFossils ? 1 : 0.85,
-            }}
-          >
-            <TRexSkullIcon className="badge-fossil-icon" />
-            <span>{showFossils ? t('common.enabled', 'Enabled') : t('common.disabled', 'Disabled')}</span>
-          </button>
+          </div>
         </div>
         </div>
       </div>

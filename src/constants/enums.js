@@ -163,11 +163,6 @@ export const TribeGradeColors = {
   [TribeGrades.F]: '#EF4444',
 }
 
-export const BotCapabilities = {
-  Default: 0,
-  ProlongedBotMemory: 1,
-};
-
 export const UserCapabilities = {
   Default: 0,
   Premium: 1,

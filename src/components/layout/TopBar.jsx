@@ -2156,6 +2156,7 @@ function MobileTopbarControls() {
         onClick={toggleTheme}
         aria-label={themeLabel}
         title={themeLabel}
+        style={{ color: customColor || (isGreenMode ? '#10b981' : '#3b82f6') }}
       >
         {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
       </button>

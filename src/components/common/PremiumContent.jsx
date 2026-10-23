@@ -1755,10 +1755,10 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                   }}
                 >
                   <strong style={{ color: 'var(--color-text-primary)' }}>
-                    {t('premium.memory_highlight_title', 'Genişletilmiş Bot Hafızası')}
+                    {t('premium.memory_highlight_title', 'Bellek Dayanıklılığı')}
                   </strong>
                   <span style={{ marginLeft: 8 }}>
-                    — {t('premium.memory_highlight_desc', '+30 gün uzatılmış bot hafıza süresi.')}
+                    — {t('premium.memory_highlight_desc', 'Botlarınızın bellek dayanıklılığını ayarlayın; hafızaları daha güçlü ve kalıcı olur.')}
                   </span>
                 </div>
               </div>

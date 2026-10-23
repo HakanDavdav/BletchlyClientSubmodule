@@ -15,7 +15,7 @@ import BotFlashCardsIcon from '../common/icons/BotFlashCardsIcon'
 import CardContingencyIcon from '../common/icons/CardContingencyIcon'
 import CardContingencyModifierIcon from '../common/icons/CardContingencyModifierIcon'
 import ModalHeader from '../common/ModalHeader'
-import { BotCapabilities, UserCapabilities } from '../../constants/enums'
+import { UserCapabilities } from '../../constants/enums'
 import useDevLog from '../../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 
@@ -72,9 +72,15 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
   const contingencyModifierMap = { A: 20, B: 15, C: 10, D: 5, F: 0 }
   const gradeContingencyMod = contingencyModifierMap[gradeLabel] || 0
 
-  const botCapabilities = profile.botSettings?.botCapabilities ?? BotCapabilities.Default
-  const hasBotMemory =
-    (botCapabilities & BotCapabilities.ProlongedBotMemory) === BotCapabilities.ProlongedBotMemory
+  // Bellek Dayanıklılığı = Unutkanlık Hızı çarpanı (backend tek doğruluk kaynağı)
+  const memoryResilience = profile.botSettings?.memoryResilience
+  const botForgetfulnessMultiplier = Math.min(2, Math.max(0, profile.botSettings?.forgetfulnessMultiplier ?? 1))
+  const botAffinityBiasMultiplier = Math.min(2, Math.max(0, profile.botSettings?.affinityBiasMultiplier ?? 1))
+  const botIncubationMultiplier = Math.min(2, Math.max(0, profile.botSettings?.incubationPeriodMultiplier ?? 1))
+  const forgetfulnessMultiplier = memoryResilience ?? 2 - 1.75 * Math.min(1, 0.5 * botForgetfulnessMultiplier)
+  const totalResilience = forgetfulnessMultiplier
+
+  const formatMultiplier = (value) => `×${Math.round(value * 100) / 100}`
 
   const userCapabilities = profile.userSettings?.userCapabilities ?? UserCapabilities.Default
   const isPremiumUser = (userCapabilities & UserCapabilities.Premium) === UserCapabilities.Premium
@@ -183,7 +189,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
         marginTop: 6,
         padding: '12px 14px',
         borderRadius: 12,
-        background: 'color-mix(in srgb, var(--color-primary) 6%, var(--color-surface))',
+        background: 'color-mix(in srgb, var(--color-primary) 6%, transparent)',
         border: '1px solid color-mix(in srgb, var(--color-primary) 28%, transparent)',
         fontSize: 12,
         animation: 'fadeIn 0.2s ease',
@@ -260,7 +266,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 style={{
                   padding: '10px 14px',
                   borderRadius: 12,
-                  background: 'var(--color-surface)',
+                  background: 'transparent',
                   border: activeBubble === 'gradeCard' ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                   display: 'flex',
                   alignItems: 'center',
@@ -331,7 +337,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   style={{
                     padding: '10px 14px',
                     borderRadius: 12,
-                    background: 'var(--color-surface)',
+                    background: 'transparent',
                     border: activeBubble === 'premiumPerk' ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                     display: 'flex',
                     alignItems: 'center',
@@ -390,9 +396,9 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   style={{
                     padding: '10px 14px',
                     borderRadius: 12,
-                    background: 'var(--color-surface)',
+                    background: 'transparent',
                     border: activeBubble === 'botMemory'
-                      ? (hasBotMemory ? '1.5px solid var(--color-warning)' : '1.5px solid var(--color-primary)')
+                      ? '1.5px solid var(--color-primary)'
                       : '1px solid var(--color-border)',
                     display: 'flex',
                     alignItems: 'center',
@@ -408,32 +414,26 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                         width: 36,
                         height: 36,
                         borderRadius: 10,
-                        background: hasBotMemory
-                          ? 'color-mix(in srgb, var(--color-warning) 15%, transparent)'
-                          : 'color-mix(in srgb, var(--color-primary) 15%, transparent)',
-                        border: hasBotMemory
-                          ? '1px solid color-mix(in srgb, var(--color-warning) 30%, transparent)'
-                          : '1px solid color-mix(in srgb, var(--color-primary) 30%, transparent)',
-                        color: hasBotMemory ? 'var(--color-warning)' : 'var(--color-primary)',
+                        background: 'color-mix(in srgb, var(--color-primary) 15%, transparent)',
+                        border: '1px solid color-mix(in srgb, var(--color-primary) 30%, transparent)',
+                        color: 'var(--color-primary)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        boxShadow: hasBotMemory
-                          ? '0 2px 10px color-mix(in srgb, var(--color-warning) 25%, transparent)'
-                          : 'none',
+                        boxShadow: 'none',
                         flexShrink: 0,
                       }}
                     >
                       <Brain size={20} />
                     </div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                      {hasBotMemory ? t('bot.capability_extended_memory', 'Genişletilmiş Hafıza') : t('bot.capability_memory', 'Hafıza')}
+                      {t('bot.capability_memory', 'Hafıza')}
                     </div>
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: hasBotMemory ? 'var(--color-warning)' : 'var(--color-text-primary)' }}>
-                      {hasBotMemory ? '2x' : '1x'}
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                      {formatMultiplier(totalResilience)}
                     </div>
                     {renderCaret(activeBubble === 'botMemory')}
                   </div>
@@ -441,16 +441,36 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
 
                 {activeBubble === 'botMemory' &&
                   renderModifierBubble({
-                    title: t('profile.mod_memory_duration', 'Hafıza Süresi'),
-                    baseValue: t('profile.mod_60_days', '60 Gün'),
+                    topContent: (
+                      <div
+                        style={{
+                          fontWeight: 700,
+                          color: 'var(--color-text-primary)',
+                          marginBottom: 6,
+                        }}
+                      >
+                        {t('profile.mod_memory_resilience', 'Bellek Dayanıklılığı')}
+                      </div>
+                    ),
+                    baseValue: formatMultiplier(1),
                     modifiers: [
                       {
-                        label: hasBotMemory ? t('bot.capability_extended_memory', 'Genişletilmiş Hafıza') : t('bot.capability_memory', 'Hafıza'),
-                        value: hasBotMemory ? '2x' : `1x (${t('hierarchy.default_view', 'Varsayılan')})`,
-                        color: hasBotMemory ? 'var(--color-warning)' : 'var(--color-primary)',
+                        label: t('profile.mod_forgetfulness_speed', 'Unutkanlık Hızı'),
+                        value: formatMultiplier(forgetfulnessMultiplier),
+                        color: 'var(--color-primary)',
+                      },
+                      {
+                        label: t('bot.affinity_bias_title', 'Cognitive Balance'),
+                        value: formatMultiplier(botAffinityBiasMultiplier),
+                        color: 'var(--color-primary)',
+                      },
+                      {
+                        label: t('bot.incubation_title', 'Kişilik Kuluçkası'),
+                        value: formatMultiplier(botIncubationMultiplier),
+                        color: 'var(--color-primary)',
                       },
                     ],
-                    totalValue: hasBotMemory ? t('profile.mod_120_days', '120 Gün') : t('profile.mod_60_days', '60 Gün'),
+                    totalValue: formatMultiplier(totalResilience),
                   })}
               </div>
             )}
@@ -475,7 +495,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 style={{
                   padding: '12px 16px',
                   borderRadius: 12,
-                  background: 'var(--color-surface)',
+                  background: 'transparent',
                   border: activeBubble === 'actorBots' ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                   display: 'flex',
                   alignItems: 'center',
@@ -541,7 +561,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 style={{
                   padding: '12px 16px',
                   borderRadius: 12,
-                  background: 'var(--color-surface)',
+                  background: 'transparent',
                   border: activeBubble === 'actorTribes' ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                   display: 'flex',
                   alignItems: 'center',
@@ -605,7 +625,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 style={{
                   padding: '12px 16px',
                   borderRadius: 12,
-                  background: 'var(--color-surface)',
+                  background: 'transparent',
                   border: activeBubble === 'userCards' ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                   display: 'flex',
                   alignItems: 'center',
@@ -669,7 +689,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 style={{
                   padding: '12px 16px',
                   borderRadius: 12,
-                  background: 'var(--color-surface)',
+                  background: 'transparent',
                   border: activeBubble === 'botAssignment' ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                   display: 'flex',
                   alignItems: 'center',
@@ -721,7 +741,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 style={{
                   padding: '12px 16px',
                   borderRadius: 12,
-                  background: 'var(--color-surface)',
+                  background: 'transparent',
                   border: activeBubble === 'assignmentLock' ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                   display: 'flex',
                   alignItems: 'center',
@@ -785,7 +805,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 style={{
                   padding: '12px 16px',
                   borderRadius: 12,
-                  background: 'var(--color-surface)',
+                  background: 'transparent',
                   border: activeBubble === 'debateLimit' ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                   display: 'flex',
                   alignItems: 'center',
@@ -841,7 +861,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
               style={{
                 padding: '12px 16px',
                 borderRadius: 12,
-                background: 'var(--color-surface)',
+                background: 'transparent',
                 border: activeBubble === 'cardInheritance' ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                 display: 'flex',
                 alignItems: 'center',
@@ -896,7 +916,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 style={{
                   padding: '12px 16px',
                   borderRadius: 12,
-                  background: 'var(--color-surface)',
+                  background: 'transparent',
                   border: activeBubble === 'cardModifier' ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                   display: 'flex',
                   alignItems: 'center',
@@ -943,7 +963,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 order: 6,
                 padding: '12px 16px',
                 borderRadius: 12,
-                background: 'var(--color-surface)',
+                background: 'transparent',
                 border: '1px solid var(--color-border)',
                 display: 'flex',
                 alignItems: 'center',
@@ -975,7 +995,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 style={{
                   padding: '12px 16px',
                   borderRadius: 12,
-                  background: 'var(--color-surface)',
+                  background: 'transparent',
                   border: activeBubble === 'tribeMembers' ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                   display: 'flex',
                   alignItems: 'center',
