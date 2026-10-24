@@ -3,7 +3,9 @@ import {
   Feather,
   Fish,
   Flame,
+  Rabbit,
   Scale,
+  Snail,
   Waypoints,
   Zap,
 } from 'lucide-react'
@@ -37,7 +39,11 @@ const EMBLEM_DEFS = [
     lowBelow: 0.75,
     highAbove: 1.35,
     titleKey: 'bot.affinity_bias_title',
-    titleDefault: 'Cognitive Balance',
+    titleDefault: 'Emotionality',
+    leftKey: 'bot.affinity_bias_left',
+    leftDefault: 'Logical',
+    rightKey: 'bot.affinity_bias_right',
+    rightDefault: 'Emotional',
     variants: {
       low: {
         Icon: Zap,
@@ -50,7 +56,7 @@ const EMBLEM_DEFS = [
       mid: {
         Icon: Scale,
         labelKey: 'bot.memory_emblem.cognitive_mid_label',
-        labelDefault: 'Balanced Cognition',
+        labelDefault: 'Balanced Emotionality',
         descKey: 'bot.memory_emblem.cognitive_mid_desc',
         descDefault:
           'A healthy mix of shortcut logic and passionate, high-affinity pathways.',
@@ -74,6 +80,10 @@ const EMBLEM_DEFS = [
     highAbove: 1.35,
     titleKey: 'bot.forgetfulness_title',
     titleDefault: 'Forgetting Speed',
+    leftKey: 'bot.forgetfulness_left',
+    leftDefault: 'Elephant Memory',
+    rightKey: 'bot.forgetfulness_right',
+    rightDefault: 'Alzheimer',
     variants: {
       low: {
         Icon: ElephantIcon,
@@ -109,7 +119,11 @@ const EMBLEM_DEFS = [
     lowBelow: 0.75,
     highAbove: 1.35,
     titleKey: 'bot.associative_scope_title',
-    titleDefault: 'Associative Scope',
+    titleDefault: 'Recall Scope',
+    leftKey: 'bot.associative_scope_left',
+    leftDefault: 'Autism-like',
+    rightKey: 'bot.associative_scope_right',
+    rightDefault: 'Big Picture',
     variants: {
       low: {
         Icon: Binoculars,
@@ -122,7 +136,7 @@ const EMBLEM_DEFS = [
       mid: {
         Icon: Scale,
         labelKey: 'bot.memory_emblem.scope_mid_label',
-        labelDefault: 'Balanced Scope',
+        labelDefault: 'Balanced Recall',
         descKey: 'bot.memory_emblem.scope_mid_desc',
         descDefault:
           'A moderate halo of associations surfaces with each recalled memory.',
@@ -145,7 +159,11 @@ const EMBLEM_DEFS = [
     lowBelow: 0.8,
     highAbove: 1.4,
     titleKey: 'bot.fixation_title',
-    titleDefault: 'Memory Fixation',
+    titleDefault: 'Idea Fixation',
+    leftKey: 'bot.fixation_left',
+    leftDefault: 'Open-Minded',
+    rightKey: 'bot.fixation_right',
+    rightDefault: 'Resilient',
     variants: {
       low: {
         Icon: Feather,
@@ -158,7 +176,7 @@ const EMBLEM_DEFS = [
       mid: {
         Icon: Scale,
         labelKey: 'bot.memory_emblem.fixation_mid_label',
-        labelDefault: 'Balanced Fixation',
+        labelDefault: 'Balanced Idea Fixation',
         descKey: 'bot.memory_emblem.fixation_mid_desc',
         descDefault:
           'Repeated ideas take root without becoming rigid.',
@@ -173,7 +191,49 @@ const EMBLEM_DEFS = [
       },
     },
   },
+  {
+    key: 'incubation-period',
+    field: 'incubationPeriodMultiplier',
+    min: 0,
+    max: 2,
+    lowBelow: 0.75,
+    highAbove: 1.35,
+    titleKey: 'bot.incubation_title',
+    titleDefault: 'Personality Change Period',
+    leftKey: 'bot.incubation_left',
+    leftDefault: 'Fast Personality Change',
+    rightKey: 'bot.incubation_right',
+    rightDefault: 'Slow Personality Change',
+    variants: {
+      low: {
+        Icon: Rabbit,
+        labelKey: 'bot.memory_emblem.incubation_low_label',
+        labelDefault: 'Fast Personality Change',
+      },
+      mid: {
+        Icon: Scale,
+        labelKey: 'bot.memory_emblem.incubation_mid_label',
+        labelDefault: 'Balanced Personality Change',
+      },
+      high: {
+        Icon: Snail,
+        labelKey: 'bot.memory_emblem.incubation_high_label',
+        labelDefault: 'Slow Personality Change',
+      },
+    },
+  },
 ]
+
+export function getMemoryEmblemVisual(field, value) {
+  const def = EMBLEM_DEFS.find((item) => item.field === field)
+  if (!def) return null
+  const safeValue = toValue(value, 1, def.min, def.max)
+  const state = stateOf(safeValue, def.lowBelow, def.highAbove)
+  return {
+    Icon: def.variants[state].Icon,
+    tone: TONE_BY_STATE[state],
+  }
+}
 
 export function getMemoryEmblems(settings, t) {
   if (!settings) return []
@@ -188,9 +248,15 @@ export function getMemoryEmblems(settings, t) {
       key: def.key,
       label,
       description: label,
+      title: t(def.titleKey, def.titleDefault),
+      value,
+      min: def.min,
+      max: def.max,
+      leftLabel: t(def.leftKey, def.leftDefault),
+      rightLabel: t(def.rightKey, def.rightDefault),
       Icon: variant.Icon,
       tone: TONE_BY_STATE[state],
-      size: 25,
+      size: 14,
     }
   })
 }

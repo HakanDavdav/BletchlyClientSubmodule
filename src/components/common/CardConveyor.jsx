@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { ClockAlert, ClockCheck } from 'lucide-react'
 import CardSvg from '../../assets/FigmaNew/Card.svg?react'
 
 const DEFAULT_SLOT_XS = [8, 19, 30, 41, 52]
@@ -13,9 +14,10 @@ export default function CardConveyor({
   rowY = 50,
   entryX = -9,
   exitX = 60,
-  stepInterval = 4000,
-  moveFraction = 0.25,
+  stepInterval = 2000,
+  moveFraction = 0.28,
   staticCards = [],
+  showIncubationBadges = false,
   style = {},
 }) {
   const containerRef = useRef(null)
@@ -32,10 +34,12 @@ export default function CardConveyor({
     const t0 = performance.now()
     let nextId = 0
     let nextBirth = step
+    let nextActivation = step * 1.6
 
-    const initial = Array.from({ length: maxIdx + 1 }, (_, i) => i - maxIdx).map(n => ({
+    const initial = Array.from({ length: maxIdx + 1 }, (_, i) => i - maxIdx).map((n, idx) => ({
       id: nextId++,
       born: n * step,
+      isActive: idx <= 2,
     }))
     cardsRef.current = initial
     setCards(initial)
@@ -49,7 +53,11 @@ export default function CardConveyor({
 
       const newBorns = []
       while (now >= nextBirth) {
-        newBorns.push({ id: nextId++, born: nextBirth })
+        newBorns.push({
+          id: nextId++,
+          born: nextBirth,
+          isActive: false,
+        })
         nextBirth += step
       }
 
@@ -58,6 +66,18 @@ export default function CardConveyor({
       if (newBorns.length) {
         list = [...list, ...newBorns]
         changed = true
+      }
+
+      if (showIncubationBadges && now >= nextActivation) {
+        while (now >= nextActivation) {
+          nextActivation += step * 3
+        }
+        list.forEach(c => {
+          const phase = (now - c.born) / step
+          if (phase >= moveFraction && phase < maxIdx) {
+            c.isActive = true
+          }
+        })
       }
       const filtered = list.filter(c => (now - c.born) / step < maxIdx + 1)
       if (filtered.length !== list.length) changed = true
@@ -81,6 +101,27 @@ export default function CardConveyor({
         else if (stepIdx === maxIdx) opacity = 1 - e
         el.style.left = `${x}%`
         el.style.opacity = String(opacity)
+        if (showIncubationBadges) {
+          const isActive = Boolean(c.isActive)
+          const nextState = isActive ? '1' : '0'
+          if (el.dataset.active !== nextState) {
+            el.dataset.active = nextState
+            const pendingEl = el.querySelector('[data-badge="pending"]')
+            const activeEl = el.querySelector('[data-badge="active"]')
+            if (pendingEl) {
+              pendingEl.style.opacity = isActive ? '0' : '1'
+              pendingEl.style.transform = isActive
+                ? 'rotate(-20deg) scale(0.7)'
+                : 'rotate(-20deg) scale(1)'
+            }
+            if (activeEl) {
+              activeEl.style.opacity = isActive ? '1' : '0'
+              activeEl.style.transform = isActive
+                ? 'rotate(-20deg) scale(1)'
+                : 'rotate(-20deg) scale(0.7)'
+            }
+          }
+        }
       })
 
       rafId = requestAnimationFrame(tick)
@@ -88,7 +129,7 @@ export default function CardConveyor({
     rafId = requestAnimationFrame(tick)
 
     return () => cancelAnimationFrame(rafId)
-  }, [Svg, cardWidthPct, slotXs, rowY, entryX, exitX, stepInterval, moveFraction])
+  }, [Svg, cardWidthPct, slotXs, rowY, entryX, exitX, stepInterval, moveFraction, showIncubationBadges])
 
   return (
     <div ref={containerRef} style={{ position: 'relative', width: `${widthPct}%`, flexShrink: 0, ...style }}>
@@ -129,6 +170,42 @@ export default function CardConveyor({
           }}
         >
           <CardSvg style={{ width: '100%', height: 'auto', display: 'block' }} />
+          {showIncubationBadges && (
+            <>
+              <ClockAlert
+                data-badge="pending"
+                style={{
+                  position: 'absolute',
+                  top: '-10%',
+                  left: '-12%',
+                  width: '38%',
+                  height: 'auto',
+                  color: '#ffffff',
+                  filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.8))',
+                  transform: 'rotate(-20deg) scale(1)',
+                  opacity: 1,
+                  transition: 'opacity 0.4s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1)',
+                  strokeWidth: 2.8,
+                }}
+              />
+              <ClockCheck
+                data-badge="active"
+                style={{
+                  position: 'absolute',
+                  top: '-10%',
+                  left: '-12%',
+                  width: '38%',
+                  height: 'auto',
+                  color: 'var(--color-warning)',
+                  filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.8))',
+                  transform: 'rotate(-20deg) scale(0.7)',
+                  opacity: 0,
+                  transition: 'opacity 0.4s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1)',
+                  strokeWidth: 2.8,
+                }}
+              />
+            </>
+          )}
         </div>
       ))}
     </div>

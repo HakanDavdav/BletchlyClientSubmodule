@@ -1,4 +1,5 @@
 import LockedSlash from './LockedSlash'
+import { getMemoryEmblemVisual } from './MemoryEmblems'
 import './MemoryTuningSlider.css'
 
 // Genel çarpan biçimi (×0 .. ×2) — mind tuning sliderları için
@@ -21,12 +22,15 @@ export default function MemoryTuningSlider({
   disabled = false,
   locked = false,
   formatValue,
+  emblemField,
   style = {},
 }) {
   const safeValue = Math.min(max, Math.max(min, Number.isFinite(value) ? value : min))
   const percent = max === min ? 0 : Math.round(((safeValue - min) / (max - min)) * 100)
   const isDisabled = disabled || locked
   const valueLabel = formatValue ? formatValue(safeValue) : `${percent}%`
+  const emblem = emblemField ? getMemoryEmblemVisual(emblemField, safeValue) : null
+  const EmblemIcon = emblem?.Icon
 
   return (
     <div
@@ -34,6 +38,14 @@ export default function MemoryTuningSlider({
       style={{ opacity: isDisabled ? 0.6 : 1, ...style }}
     >
       <div className="memory-slider__header">
+        {EmblemIcon && (
+          <span
+            className={`memory-slider__emblem bot-capability-emblem bot-capability-emblem--${emblem.tone}`}
+            aria-hidden="true"
+          >
+            <EmblemIcon size={13} strokeWidth={2.2} />
+          </span>
+        )}
         <span className="memory-slider__title">{title}</span>
         <span className="memory-slider__value">{valueLabel}</span>
       </div>

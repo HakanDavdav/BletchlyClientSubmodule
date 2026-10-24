@@ -12,6 +12,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
+import { getMemoryEmblems } from '../components/common/MemoryEmblems'
+import { formatMultiplier } from '../components/common/MemoryTuningSlider'
 
 export function getNodeLabelText(label, isRoot = false, isTribeContext = false) {
   if (isRoot) {
@@ -1804,6 +1806,14 @@ export default function MindPage() {
   const rootName =
     profileData?.profileName || profileData?.tribeName || profileData?.name || queryName || ''
 
+  const isTribeMind = Boolean(tribeId)
+  const isBotMind = !isTribeMind && profileData?.discriminator === 'Bot'
+
+  const mindMemoryEmblems = useMemo(() => {
+    if (!profileData || (!isTribeMind && !isBotMind)) return []
+    return getMemoryEmblems(isTribeMind ? profileData : profileData.botSettings, t)
+  }, [profileData, isTribeMind, isBotMind, t])
+
   const {
     data: rawData = [],
     isLoading,
@@ -1913,6 +1923,8 @@ export default function MindPage() {
   const [memNodeTypes, setMemNodeTypes] = useState(() => new Set())
   const [memSortBy, setMemSortBy] = useState('')
   const memFilterRef = useRef(null)
+  const [memStatsOpen, setMemStatsOpen] = useState(false)
+  const memStatsRef = useRef(null)
   const [isNodeListCollapsed, setIsNodeListCollapsed] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches
   )
@@ -2059,6 +2071,25 @@ export default function MindPage() {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
+
+  // Hafıza ayarları dropdown'ı: dış tıklama ve Escape ile kapat
+  useEffect(() => {
+    if (!memStatsOpen) return
+    const handlePointerDown = (e) => {
+      if (memStatsRef.current && !memStatsRef.current.contains(e.target)) {
+        setMemStatsOpen(false)
+      }
+    }
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setMemStatsOpen(false)
+    }
+    document.addEventListener('mousedown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [memStatsOpen])
 
   // Mobilde "Anılar" paneli butonun hemen altında açılsın (container'a göre üst offset)
   const [memPanelTop, setMemPanelTop] = useState(null)
@@ -2861,7 +2892,7 @@ export default function MindPage() {
               boxShadow: 'var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1))',
               maxWidth: '100%',
               minWidth: 0,
-              flexShrink: 0,
+              flexShrink: 1,
             }}
           >
             <button
@@ -2889,7 +2920,16 @@ export default function MindPage() {
               style={{ width: 1, height: 24, background: 'var(--color-border)', flexShrink: 0 }}
             />
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                minWidth: 0,
+                flex: '1 1 auto',
+                overflow: 'hidden',
+              }}
+            >
               <Brain
                 size={18}
                 color="var(--color-primary)"
@@ -2906,7 +2946,12 @@ export default function MindPage() {
                   whiteSpace: 'nowrap',
                 }}
               >
-                {t('mind.graph_title', 'MIND GRAPH')}
+                <span className="mind-header-label-full">
+                  {t('mind.graph_title', 'MIND GRAPH')}
+                </span>
+                <span className="mind-header-label-short">
+                  {t('mind.graph_title_short', 'MIND')}
+                </span>
               </span>
               <span
                 className="mind-header-bullet"
@@ -2936,6 +2981,191 @@ export default function MindPage() {
                 </span>
               )}
             </div>
+
+            {profileData && mindMemoryEmblems.length > 0 && (
+              <div
+                ref={memStatsRef}
+                style={{
+                  position: 'relative',
+                  flexShrink: 0,
+                  marginLeft: 'auto',
+                  zIndex: memStatsOpen ? 120 : 'auto',
+                }}
+              >
+                <button
+                  type="button"
+                  className="mind-memory-stats-trigger"
+                  onClick={() => setMemStatsOpen((v) => !v)}
+                  aria-haspopup="dialog"
+                  aria-expanded={memStatsOpen}
+                  aria-label={t('bot.memory_tuning', 'Hafıza Ayarı')}
+                >
+                  <span className="mind-identity-emblems bot-capability-emblems bot-capability-emblems--memory-grid">
+                    {mindMemoryEmblems.map(
+                      ({ key, label, description, Icon, tone, size = 14 }) => (
+                        <span
+                          key={key}
+                          className={`bot-capability-emblem bot-capability-emblem--${tone}`}
+                          aria-label={label}
+                          title={description || label}
+                          role="img"
+                        >
+                          <Icon size={Math.min(size, 11)} strokeWidth={2.2} aria-hidden="true" />
+                        </span>
+                      )
+                    )}
+                  </span>
+                  <span
+                    className="mind-memory-stats-caret"
+                    aria-hidden="true"
+                    style={{
+                      transform: memStatsOpen ? 'rotate(180deg)' : 'none',
+                    }}
+                  >
+                    ▼
+                  </span>
+                </button>
+
+                <AnimatePresence>
+                  {memStatsOpen && (
+                    <motion.div
+                      role="dialog"
+                      aria-label={t('bot.memory_tuning', 'Hafıza Ayarı')}
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.16 }}
+                      style={{
+                        position: 'absolute',
+                        top: 'calc(100% + 10px)',
+                        right: 0,
+                        zIndex: 130,
+                        width: 300,
+                        maxWidth: 'calc(100vw - 32px)',
+                        background: headerBg,
+                        border: `1px solid ${borderColor}`,
+                        borderRadius: 14,
+                        backdropFilter: 'blur(16px)',
+                        WebkitBackdropFilter: 'blur(16px)',
+                        boxShadow: isDarkMode
+                          ? '0 12px 36px rgba(0,0,0,0.5)'
+                          : '0 12px 32px -4px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04)',
+                        padding: '10px 12px',
+                        fontFamily: 'Inter, sans-serif',
+                      }}
+                    >
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        {mindMemoryEmblems.map(
+                          ({ key, title, value, min, max, leftLabel, rightLabel, Icon, tone }) => {
+                            const range = max - min
+                            const percent =
+                              range > 0 ? Math.round(((value - min) / range) * 100) : 0
+                            return (
+                              <div
+                                key={key}
+                                className="mind-memory-stats-row"
+                                style={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: 5,
+                                  padding: '8px 0',
+                                  borderBottom: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  <span
+                                    className={`bot-capability-emblem bot-capability-emblem--${tone}`}
+                                    style={{ width: 24, height: 24, flexShrink: 0 }}
+                                  >
+                                    <Icon size={13} strokeWidth={2.2} aria-hidden="true" />
+                                  </span>
+                                  <span
+                                    style={{
+                                      flex: 1,
+                                      minWidth: 0,
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap',
+                                      fontSize: 12,
+                                      fontWeight: 700,
+                                      color: isDarkMode ? '#f0e6ff' : '#111827',
+                                    }}
+                                  >
+                                    {title}
+                                  </span>
+                                  <span
+                                    style={{
+                                      fontSize: 11,
+                                      fontWeight: 800,
+                                      color: 'var(--color-primary)',
+                                      fontVariantNumeric: 'tabular-nums',
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    {formatMultiplier(value)}
+                                  </span>
+                                </div>
+                                <div
+                                  style={{
+                                    height: 4,
+                                    marginLeft: 32,
+                                    borderRadius: 999,
+                                    background: isDarkMode
+                                      ? 'rgba(255,255,255,0.1)'
+                                      : 'rgba(0,0,0,0.08)',
+                                    overflow: 'hidden',
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      width: `${percent}%`,
+                                      height: '100%',
+                                      borderRadius: 999,
+                                      background: 'var(--color-primary)',
+                                    }}
+                                  />
+                                </div>
+                                <div
+                                  style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    gap: 8,
+                                    marginLeft: 32,
+                                    fontSize: 9.5,
+                                    lineHeight: 1.2,
+                                    color: 'var(--color-text-muted)',
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap',
+                                    }}
+                                  >
+                                    {leftLabel}
+                                  </span>
+                                  <span
+                                    style={{
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap',
+                                      textAlign: 'right',
+                                    }}
+                                  >
+                                    {rightLabel}
+                                  </span>
+                                </div>
+                              </div>
+                            )
+                          }
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
           </div>
 
           {/* Bağlam başlığı kimlik pilinin altında bağımsız satır */}

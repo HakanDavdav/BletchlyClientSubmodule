@@ -438,6 +438,42 @@ export default function CreateTribePage() {
           </p>
         </div>
 
+
+        <div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+              marginBottom: 8,
+            }}
+          >
+            <label
+              style={{
+                display: 'block',
+                fontSize: 13,
+                fontWeight: 600,
+                color: 'var(--color-text-secondary)',
+                letterSpacing: '0.02em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {t('card.select_existing_cards', 'Mevcut kartlardan seçip ekle (Opsiyonel)')}
+            </label>
+          </div>
+          <CardSelectionSlots
+            cards={myCards}
+            selectedCardIds={selectedCardIds}
+            onToggle={toggleCard}
+            disabled={mutation.isPending || mutation.isSuccess}
+            showHeader={false}
+            slotCount={10}
+          />
+          <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
+            {t('tribe_settings.additional_personality_cards_desc')}
+          </p>
+        </div>
         <div>
           <label
             style={{
@@ -482,13 +518,45 @@ export default function CreateTribePage() {
               }}
             >
               <MemoryTuningSlider
-                title={t('tribe.affinity_bias_title', 'Cognitive Balance')}
+                title={t('tribe.incubation_title', 'Kişilik Değişim Süresi')}
+                description={t(
+                  'tribe.incubation_desc',
+                  'Yeni eklenen Kişilik Kartlarının klanın ortak karakterini değiştirmeden önce ne kadar süre bekleyeceğini belirler. Süre dolduğunda bekleyen kartlar etkinleşerek mevcut kart setinden doğrudan yeni bir ortak kişilik oluşturulur ve Hafıza Ağı bu yeni karaktere uyum sağlayacak şekilde güncellenir. Süreyi kısa tutmak yeni kartları hızla devreye sokar; ancak sık değişim anıların daha dengesiz ve çelişkili bir yapıya bürünmesine neden olarak ortak karakterin oturmasını zorlaştırır.'
+                )}
+                leftLabel={t('tribe.incubation_left', 'Fast Personality Change')}
+                rightLabel={t('tribe.incubation_right', 'Slow Personality Change')}
+                emblemField="incubationPeriodMultiplier"
+                value={formData.incubationPeriodMultiplier}
+                min={0}
+                max={2}
+                onChange={(v) => {
+                  if (!mutation.isPending && !mutation.isSuccess) {
+                    setFormData((current) => ({ ...current, incubationPeriodMultiplier: v }))
+                  }
+                }}
+                disabled={mutation.isPending || mutation.isSuccess}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+            </div>
+            <div
+              style={{
+                marginTop: 12,
+                display: 'flex',
+                flexDirection: isMobileScreen ? 'column' : 'row',
+                gap: 12,
+                alignItems: 'stretch',
+              }}
+            >
+              <MemoryTuningSlider
+                title={t('tribe.affinity_bias_title', 'Emotionality')}
                 description={t(
                   'tribe.affinity_bias_desc',
-                  'How the tribe travels to its core when recalling: shortcut logic vs. passionate, high-affinity pathways.'
+                  'Determines how the tribe links its past Memories to its Core character. Closer to Logical, it follows the shortest and most direct connections between memories. Closer to Emotional, even if the path is longer, it travels through the memories that left the strongest impression and reinforces them further.'
                 )}
                 leftLabel={t('tribe.affinity_bias_left', 'Logical')}
                 rightLabel={t('tribe.affinity_bias_right', 'Emotional')}
+                emblemField="affinityBiasMultiplier"
                 value={formData.affinityBiasMultiplier}
                 min={0}
                 max={2}
@@ -505,10 +573,11 @@ export default function CreateTribePage() {
                 title={t('tribe.forgetfulness_title', 'Forgetting Speed')}
                 description={t(
                   'tribe.forgetfulness_desc',
-                  'How fast unused memory paths cool down and how aggressively they are pruned.'
+                  'Determines how quickly unvisited Memories fade over time and how frequently they are cleared from the Memory Network. Towards Elephant Memory, the tribe retains even its oldest experiences for a long time; towards Alzheimer, it quickly forgets unused old memories and focuses only on recent events.'
                 )}
                 leftLabel={t('tribe.forgetfulness_left', 'Elephant Memory')}
                 rightLabel={t('tribe.forgetfulness_right', 'Alzheimer')}
+                emblemField="forgetfulnessMultiplier"
                 value={formData.forgetfulnessMultiplier}
                 min={0}
                 max={2}
@@ -532,13 +601,14 @@ export default function CreateTribePage() {
               }}
             >
               <MemoryTuningSlider
-                title={t('tribe.associative_scope_title', 'Associative Scope')}
+                title={t('tribe.associative_scope_title', 'Recall Scope')}
                 description={t(
                   'tribe.associative_scope_desc',
-                  'How many surrounding associations surface when a memory is recalled.'
+                  'Determines how many related side memories and relationships are recalled together when a Memory is triggered. At the Autism-like end, the tribe focuses solely on the immediate topic and leaves out side details. At the Big Picture end, it brings many surrounding connections into focus at once, forming broad links across different topics.'
                 )}
                 leftLabel={t('tribe.associative_scope_left', 'Autism-like')}
                 rightLabel={t('tribe.associative_scope_right', 'Big Picture')}
+                emblemField="recallPathLimitMultiplier"
                 value={formData.recallPathLimitMultiplier}
                 min={0}
                 max={2}
@@ -553,10 +623,14 @@ export default function CreateTribePage() {
                 style={sliderRowStyle}
               />
               <MemoryTuningSlider
-                title={t('tribe.fixation_title', 'Memory Fixation')}
-                description={`${t('tribe.fixation_desc', 'How deeply repeated ideas take root; high values resist change and fading.')} ${t('tribe.retention_desc', 'How faint a memory may become before it is pruned; lower values cling to the faintest traces.')}`}
+                title={t('tribe.fixation_title', 'Idea Fixation')}
+                description={t(
+                  'tribe.fixation_desc',
+                  'Determines how strongly repeated ideas can solidify in the Memory Network and how easily fading memories are cleared. At the Open-Minded end, no idea becomes overly rigid and fading memories are easily cleared, allowing the tribe to adapt quickly to new ideas. At the Resilient end, repeated thoughts take deep root and even the faintest memories resist being forgotten.'
+                )}
                 leftLabel={t('tribe.fixation_left', 'Open-Minded')}
                 rightLabel={t('tribe.fixation_right', 'Resilient')}
+                emblemField="maxStrengthMultiplier"
                 value={formData.maxStrengthMultiplier}
                 min={0.5}
                 max={2}
@@ -575,73 +649,7 @@ export default function CreateTribePage() {
                 style={sliderRowStyle}
               />
             </div>
-            <div
-              style={{
-                marginTop: 12,
-                display: 'flex',
-                flexDirection: isMobileScreen ? 'column' : 'row',
-                gap: 12,
-                alignItems: 'stretch',
-              }}
-            >
-              <MemoryTuningSlider
-                title={t('tribe.incubation_title', 'Kişilik Kuluçka Süresi')}
-                description={t(
-                  'tribe.incubation_desc',
-                  "Klanın kart yuvalarına yeni Kişilik Kartları eklense bile, bu süre dolana kadar yeni kartlar 'Kuluçkada' bekler ve klanın kolektif kişiliğini değiştirmez. Süreyi kısa tutmak yeni kartların hızla benimsenmesini sağlar; ancak sık kişilik değişimi kolektif hafıza ağının (Mind) çekirdeğini sürekli sıfırlayarak olgunlaşmasını engeller ve çelişkili, dengesiz bir yapıya yol açar."
-                )}
-                leftLabel={t('tribe.incubation_left', 'Fast Personality Change')}
-                rightLabel={t('tribe.incubation_right', 'Slow Personality Change')}
-                value={formData.incubationPeriodMultiplier}
-                min={0}
-                max={2}
-                onChange={(v) => {
-                  if (!mutation.isPending && !mutation.isSuccess) {
-                    setFormData((current) => ({ ...current, incubationPeriodMultiplier: v }))
-                  }
-                }}
-                disabled={mutation.isPending || mutation.isSuccess}
-                formatValue={formatMultiplier}
-                style={sliderRowStyle}
-              />
-            </div>
           </div>
-        </div>
-
-        <div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 12,
-              marginBottom: 8,
-            }}
-          >
-            <label
-              style={{
-                display: 'block',
-                fontSize: 13,
-                fontWeight: 600,
-                color: 'var(--color-text-secondary)',
-                letterSpacing: '0.02em',
-                textTransform: 'uppercase',
-              }}
-            >
-              {t('card.select_existing_cards', 'Mevcut kartlardan seçip ekle (Opsiyonel)')}
-            </label>
-          </div>
-          <CardSelectionSlots
-            cards={myCards}
-            selectedCardIds={selectedCardIds}
-            onToggle={toggleCard}
-            disabled={mutation.isPending || mutation.isSuccess}
-            showHeader={false}
-            slotCount={10}
-          />
-          <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
-            {t('tribe_settings.additional_personality_cards_desc')}
-          </p>
         </div>
 
         <div>

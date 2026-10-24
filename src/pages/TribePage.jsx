@@ -38,6 +38,7 @@ import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
 import { buildOwnedCardIdSet, sortCardsOwnedFirst } from '../utils/cardOwnership'
+import { getMemoryEmblems } from '../components/common/MemoryEmblems'
 
 export default function TribePage() {
   const [searchParams] = useSearchParams()
@@ -232,6 +233,7 @@ export default function TribePage() {
         ]
       : []),
   ]
+  const memoryEmblems = getMemoryEmblems(tribe, t)
 
   return (
     <div className="flex-col gap-4">
@@ -368,6 +370,21 @@ export default function TribePage() {
                     <Icon size={size} strokeWidth={2.2} aria-hidden="true" />
                   </span>
                 ))}
+                {memoryEmblems.length > 0 && (
+                  <div className="bot-capability-emblems bot-capability-emblems--memory-grid">
+                    {memoryEmblems.map(({ key, label, description, Icon, tone, size = 12 }) => (
+                      <span
+                        key={key}
+                        className={`bot-capability-emblem bot-capability-emblem--${tone}`}
+                        aria-label={label}
+                        title={description || label}
+                        role="img"
+                      >
+                        <Icon size={size} strokeWidth={2.2} aria-hidden="true" />
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

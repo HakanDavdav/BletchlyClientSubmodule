@@ -267,7 +267,7 @@
     "fixation_right": "Résistant",
     "retention_title": "Rétention mémorielle",
     "retention_desc": "Jusqu'où un souvenir peut s'affaiblir avant d'être élagué ; des valeurs basses s'accrochent aux traces les plus ténues.",
-    "incubation_title": "Période d'incubation de la personnalité",
+    "incubation_title": "Période de changement de personnalité",
     "incubation_desc": "Même lorsque de nouvelles cartes de personnalité entrent dans les emplacements du bot, elles restent en état « Incubation » et ne modifient pas sa personnalité active avant la fin de cette période. Une durée courte permet aux nouvelles cartes de remodeler rapidement le personnage ; cependant, des changements fréquents de personnalité réinitialisent à plusieurs reprises le cœur du graphe de mémoire (Mind), l'empêchant de mûrir et créant un esprit contradictoire et instable.",
     "incubation_left": "Changement rapide de personnalité",
     "incubation_right": "Changement lent de personnalité",
@@ -561,6 +561,7 @@
     "recalled_badge": "Rappelé",
     "unknown_memory": "Souvenir",
     "graph_title": "GRAPHIQUE D'ESPRIT",
+    "graph_title_short": "ESPRIT",
     "labels": {
       "actor": "Personne",
       "core": "Noyau",
@@ -855,7 +856,7 @@
     "fixation_right": "Résistant",
     "retention_title": "Rétention mémorielle",
     "retention_desc": "Jusqu'où un souvenir peut s'affaiblir avant d'être élagué ; des valeurs basses s'accrochent aux traces les plus ténues.",
-    "incubation_title": "Période d'incubation de la personnalité",
+    "incubation_title": "Période de changement de personnalité",
     "incubation_desc": "Même lorsque de nouvelles cartes de personnalité entrent dans les emplacements de la tribu, elles restent en état « Incubation » et ne modifient pas sa personnalité collective avant la fin de cette période. Une durée courte permet aux nouvelles cartes de prendre effet rapidement ; cependant, des changements fréquents de personnalité réinitialisent à plusieurs reprises le cœur du graphe de mémoire collective (Mind), l'empêchant de mûrir et créant une structure contradictoire et instable.",
     "incubation_left": "Changement rapide de personnalité",
     "incubation_right": "Changement lent de personnalité"

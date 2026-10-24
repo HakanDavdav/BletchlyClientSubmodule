@@ -13,7 +13,8 @@ import {
   Lock,
   LockOpen,
   Network,
-  AlertTriangle,
+  ClockAlert,
+  ClockCheck,
 } from 'lucide-react'
 import CardActorListModal from './CardActorListModal'
 import CardDetailModal from './CardDetailModal'
@@ -501,8 +502,17 @@ export default function PersonalityCard({
   const isAssignedCard = Boolean(
     card?.assignmentId || card?.botId || card?.tribeId || card?.assignedTribeId || tribeAssigned
   )
+  const hasAssignmentRecord = Boolean(
+    filled &&
+      (card?.assignmentId ||
+        card?.botId ||
+        card?.tribeId ||
+        card?.assignedTribeId ||
+        typeof card?.isEffective === 'boolean' ||
+        typeof card?.assignment?.isEffective === 'boolean')
+  )
   const isIneffectiveAssignment =
-    isAssignedCard &&
+    hasAssignmentRecord &&
     (card?.isEffective === false || card?.assignment?.isEffective === false)
   const ownerActor = card?.ownership?.actor ?? card?.actor ?? null
   const ownershipId =
@@ -788,7 +798,10 @@ export default function PersonalityCard({
         <BotIcon size={120} />
       </div>
 
-      {(currentAcqType === 0 || currentAcqType === 1 || isAssignmentLocked) && (
+      {(currentAcqType === 0 ||
+        currentAcqType === 1 ||
+        isAssignmentLocked ||
+        hasAssignmentRecord) && (
         <span
           className="personality-card__corner-badges"
           style={{
@@ -798,53 +811,67 @@ export default function PersonalityCard({
             zIndex: 3,
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 2,
+            gap: 4,
             pointerEvents: 'none',
           }}
         >
           {currentAcqType === 0 && (
             <span
-              style={{
-                color: 'var(--color-warning)',
-                filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.5))',
-                transform: 'rotate(-25deg)',
-                pointerEvents: 'auto',
-              }}
+              className="personality-card__corner-badge"
+              title={t('card.tooltip_creator', 'Yaratıcı')}
+              aria-label={t('card.tooltip_creator', 'Yaratıcı')}
             >
-              <Crown size={28} strokeWidth={2.5} />
+              <span
+                style={{
+                  color: 'var(--color-warning)',
+                  filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.5))',
+                  transform: 'rotate(-25deg)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                }}
+              >
+                <Crown size={28} strokeWidth={2.5} />
+              </span>
             </span>
           )}
           {currentAcqType === 1 && (
             <span
-              style={{
-                color: '#b87333',
-                filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.5))',
-                transform: 'rotate(-18deg)',
-                pointerEvents: 'auto',
-                display: 'inline-flex',
-                alignItems: 'center',
-              }}
+              className="personality-card__corner-badge"
+              title={t('card.tooltip_purchased', 'Satın Alındı')}
+              aria-label={t('card.tooltip_purchased', 'Satın Alındı')}
             >
-              <Crown size={24} strokeWidth={2.5} />
               <span
                 style={{
-                  marginLeft: '-4px',
-                  marginTop: '4px',
-                  fontSize: '25px',
-                  fontWeight: '900',
-                  fontFamily: '"Arial Black", Impact, system-ui, sans-serif',
-                  lineHeight: 1,
-                  color: '#22c55e',
-                  textShadow: '0 0 3px rgba(34, 197, 94, 0.35), 0 1px 2px rgba(0,0,0,0.8)',
-                  WebkitTextStroke: '0.6px #052e16',
+                  color: '#b87333',
+                  filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.5))',
+                  transform: 'rotate(-18deg)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
                 }}
               >
-                $
+                <Crown size={24} strokeWidth={2.5} />
+                <span
+                  style={{
+                    marginLeft: '-4px',
+                    marginTop: '4px',
+                    fontSize: '25px',
+                    fontWeight: '900',
+                    fontFamily: '"Arial Black", Impact, system-ui, sans-serif',
+                    lineHeight: 1,
+                    color: '#22c55e',
+                    textShadow: '0 0 3px rgba(34, 197, 94, 0.35), 0 1px 2px rgba(0,0,0,0.8)',
+                    WebkitTextStroke: '0.6px #052e16',
+                  }}
+                >
+                  $
+                </span>
               </span>
             </span>
           )}
           {isAssignmentLocked && (
             <span
+              className="personality-card__corner-badge"
+              title={t('card.tooltip_locked', 'Kilitli')}
               aria-label={t('card.locked_assignment', 'Bu atama kilitli')}
               onClick={
                 showLockToggle
@@ -855,17 +882,53 @@ export default function PersonalityCard({
                   : undefined
               }
               style={{
-                color: '#ffffff',
-                filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.8))',
-                pointerEvents: 'auto',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transform: 'rotate(-22deg)',
                 cursor: showLockToggle ? 'pointer' : 'default',
               }}
             >
-              <Lock size={26} strokeWidth={3} />
+              <span
+                style={{
+                  color: '#ffffff',
+                  filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.8))',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transform: 'rotate(-22deg)',
+                }}
+              >
+                <Lock size={26} strokeWidth={3} />
+              </span>
+            </span>
+          )}
+          {hasAssignmentRecord && (
+            <span
+              className="personality-card__corner-badge"
+              title={
+                isIneffectiveAssignment
+                  ? t('card.tooltip_incubating', 'Beklemede')
+                  : t('card.tooltip_effective', 'Etkin')
+              }
+              aria-label={
+                isIneffectiveAssignment
+                  ? t('card.incubating_not_effective', 'Beklemede (Etkin Değil)')
+                  : t('card.tooltip_effective', 'Etkin')
+              }
+            >
+              <span
+                style={{
+                  color: isIneffectiveAssignment ? '#ffffff' : 'var(--color-warning)',
+                  filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.8))',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transform: 'rotate(-20deg)',
+                }}
+              >
+                {isIneffectiveAssignment ? (
+                  <ClockAlert size={26} strokeWidth={2.8} />
+                ) : (
+                  <ClockCheck size={26} strokeWidth={2.8} />
+                )}
+              </span>
             </span>
           )}
         </span>
@@ -963,33 +1026,6 @@ export default function PersonalityCard({
       </div>
 
       {hint && <p className="personality-card__hint">{hint}</p>}
-
-      {isIneffectiveAssignment && (
-        <div
-          title={t(
-            'card.incubating_not_effective_desc',
-            'Bu kart kuluçka süresinde atandığı için henüz aktif kişiliğe etki etmemiştir.'
-          )}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 5,
-            marginTop: 6,
-            padding: '3px 8px',
-            borderRadius: 999,
-            fontSize: 11,
-            fontWeight: 600,
-            color: '#f59e0b',
-            background: 'rgba(245, 158, 11, 0.14)',
-            border: '1px solid rgba(245, 158, 11, 0.35)',
-            width: 'fit-content',
-            zIndex: 2,
-          }}
-        >
-          <AlertTriangle size={12} strokeWidth={2.2} />
-          <span>{t('card.incubating_not_effective', 'Kuluçkada (Etki Etmedi)')}</span>
-        </div>
-      )}
 
       {tags.length > 0 && (
         <div className="personality-card__tags">

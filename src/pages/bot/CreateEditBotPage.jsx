@@ -677,215 +677,6 @@ export default function CreateEditBotPage() {
           />
         </div>
 
-        <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              marginBottom: 8,
-              letterSpacing: '0.02em',
-              textTransform: 'uppercase',
-            }}
-          >
-            {t('bot.model_selection', 'Model')}
-          </label>
-          <ModelGlassToggle
-            value={formData.preferredModel}
-            onChange={(nextModel) => {
-              if (!mutation.isPending && !mutation.isSuccess) {
-                setFormData({ ...formData, preferredModel: nextModel })
-              }
-            }}
-            disabled={mutation.isPending || mutation.isSuccess}
-          />
-          <div style={{ marginTop: 18 }}>
-            <label
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: 'var(--color-text-secondary)',
-                letterSpacing: '0.02em',
-                textTransform: 'uppercase',
-              }}
-            >
-              {t('bot.memory_tuning', 'Memory Tuning')}
-            </label>
-            <div
-              style={{
-                marginTop: 12,
-                display: 'flex',
-                flexDirection: isMobileScreen ? 'column' : 'row',
-                gap: 12,
-                alignItems: 'stretch',
-              }}
-            >
-              <MemoryTuningSlider
-                title={t('bot.affinity_bias_title', 'Cognitive Balance')}
-                description={t(
-                  'bot.affinity_bias_desc',
-                  'How the bot travels to its core when recalling: shortcut logic vs. passionate, high-affinity pathways.'
-                )}
-                leftLabel={t('bot.affinity_bias_left', 'Logical')}
-                rightLabel={t('bot.affinity_bias_right', 'Emotional')}
-                value={formData.affinityBiasMultiplier}
-                min={0}
-                max={2}
-                onChange={(v) => {
-                  if (!mutation.isPending && !mutation.isSuccess) {
-                    setFormData((prev) => ({ ...prev, affinityBiasMultiplier: v }))
-                  }
-                }}
-                disabled={mutation.isPending || mutation.isSuccess}
-                formatValue={formatMultiplier}
-                style={sliderRowStyle}
-              />
-              <MemoryTuningSlider
-                title={t('bot.forgetfulness_title', 'Forgetting Speed')}
-                description={t(
-                  'bot.forgetfulness_desc',
-                  'How fast unused memory paths cool down and how aggressively they are pruned.'
-                )}
-                leftLabel={t('bot.forgetfulness_left', 'Elephant Memory')}
-                rightLabel={t('bot.forgetfulness_right', 'Alzheimer')}
-                value={formData.forgetfulnessMultiplier}
-                min={0}
-                max={2}
-                onChange={(v) => {
-                  if (!mutation.isPending && !mutation.isSuccess) {
-                    setFormData((prev) => ({ ...prev, forgetfulnessMultiplier: v }))
-                  }
-                }}
-                disabled={mutation.isPending || mutation.isSuccess}
-                formatValue={formatMultiplier}
-                style={sliderRowStyle}
-              />
-            </div>
-            <div
-              style={{
-                marginTop: 12,
-                display: 'flex',
-                flexDirection: isMobileScreen ? 'column' : 'row',
-                gap: 12,
-                alignItems: 'stretch',
-              }}
-            >
-              <MemoryTuningSlider
-                title={t('bot.associative_scope_title', 'Associative Scope')}
-                description={t(
-                  'bot.associative_scope_desc',
-                  'How many surrounding associations surface when a memory is recalled.'
-                )}
-                leftLabel={t('bot.associative_scope_left', 'Autism-like')}
-                rightLabel={t('bot.associative_scope_right', 'Big Picture')}
-                value={formData.recallPathLimitMultiplier}
-                min={0}
-                max={2}
-                onChange={(v) => {
-                  if (!mutation.isPending && !mutation.isSuccess) {
-                    setFormData((prev) => ({ ...prev, recallPathLimitMultiplier: v }))
-                  }
-                }}
-                disabled={mutation.isPending || mutation.isSuccess}
-                locked={!isPremiumUser}
-                formatValue={formatMultiplier}
-                style={sliderRowStyle}
-              />
-              <MemoryTuningSlider
-                title={t('bot.fixation_title', 'Memory Fixation')}
-                description={`${t('bot.fixation_desc', 'How deeply repeated ideas take root; high values resist change and fading.')} ${t('bot.retention_desc', 'How faint a memory may become before it is pruned; lower values cling to the faintest traces.')}`}
-                leftLabel={t('bot.fixation_left', 'Open-Minded')}
-                rightLabel={t('bot.fixation_right', 'Resilient')}
-                value={formData.maxStrengthMultiplier}
-                min={0.5}
-                max={2}
-                onChange={(v) => {
-                  if (!mutation.isPending && !mutation.isSuccess) {
-                    setFormData((prev) => ({
-                      ...prev,
-                      maxStrengthMultiplier: v,
-                      minStrengthThresholdMultiplier: Number((2 - v).toFixed(2)),
-                    }))
-                  }
-                }}
-                disabled={mutation.isPending || mutation.isSuccess}
-                locked={!isPremiumUser}
-                formatValue={formatMultiplier}
-                style={sliderRowStyle}
-              />
-            </div>
-            <div
-              style={{
-                marginTop: 12,
-                display: 'flex',
-                flexDirection: isMobileScreen ? 'column' : 'row',
-                gap: 12,
-                alignItems: 'stretch',
-              }}
-            >
-              <MemoryTuningSlider
-                title={t('bot.incubation_title', 'Kişilik Kuluçka Süresi')}
-                description={t(
-                  'bot.incubation_desc',
-                  "Botun kart yuvalarına yeni Kişilik Kartları eklense bile, bu süre dolana kadar yeni kartlar 'Kuluçkada' bekler ve aktif kişiliği değiştirmez. Süreyi kısa tutmak yeni kartların karakteri hızla değiştirmesini sağlar; ancak sık kişilik değişimi hafıza ağının (Mind) çekirdeğini sürekli sıfırlayarak olgunlaşmasını engeller ve çelişkili, dengesiz bir zihin yapısına yol açar."
-                )}
-                leftLabel={t('bot.incubation_left', 'Fast Personality Change')}
-                rightLabel={t('bot.incubation_right', 'Slow Personality Change')}
-                value={formData.incubationPeriodMultiplier}
-                min={0}
-                max={2}
-                onChange={(v) => {
-                  if (!mutation.isPending && !mutation.isSuccess) {
-                    setFormData((prev) => ({ ...prev, incubationPeriodMultiplier: v }))
-                  }
-                }}
-                disabled={mutation.isPending || mutation.isSuccess}
-                formatValue={formatMultiplier}
-                style={sliderRowStyle}
-              />
-            </div>
-          </div>
-          {!isEditMode && (
-            <div style={{ marginTop: 12 }}>
-              <SelectionMarker
-                checked={false}
-                onChange={() => {}}
-                disabled
-                label={t('bot.fediverse_support', 'Fediverse Support')}
-              >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                    <Globe size={16} strokeWidth={2} />
-                    {t('bot.fediverse_support', 'Fediverse Support')}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: 'var(--color-text-faint)',
-                    }}
-                  >
-                    {t('bot.too_soon', 'Too soon!')}
-                  </span>
-                </span>
-              </SelectionMarker>
-              <p
-                style={{
-                  margin: '2px 0 0 26px',
-                  fontSize: 12,
-                  color: 'var(--color-text-faint)',
-                  lineHeight: 1.5,
-                }}
-              >
-                {t(
-                  'bot.fediverse_support_desc',
-                  'Open your bot to the internet. The Fediverse is the open network that connects Bletchly to the outside world.'
-                )}
-              </p>
-            </div>
-          )}
-        </div>
 
         <div>
           <label
@@ -1020,6 +811,223 @@ export default function CreateEditBotPage() {
           <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
             {t('bot.additional_personality_cards_desc')}
           </p>
+        </div>
+        <div>
+          <label
+            style={{
+              display: 'block',
+              fontSize: 13,
+              fontWeight: 600,
+              color: 'var(--color-text-secondary)',
+              marginBottom: 8,
+              letterSpacing: '0.02em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {t('bot.model_selection', 'Model')}
+          </label>
+          <ModelGlassToggle
+            value={formData.preferredModel}
+            onChange={(nextModel) => {
+              if (!mutation.isPending && !mutation.isSuccess) {
+                setFormData({ ...formData, preferredModel: nextModel })
+              }
+            }}
+            disabled={mutation.isPending || mutation.isSuccess}
+          />
+          <div style={{ marginTop: 18 }}>
+            <label
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: 'var(--color-text-secondary)',
+                letterSpacing: '0.02em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {t('bot.memory_tuning', 'Memory Tuning')}
+            </label>
+            <div
+              style={{
+                marginTop: 12,
+                display: 'flex',
+                flexDirection: isMobileScreen ? 'column' : 'row',
+                gap: 12,
+                alignItems: 'stretch',
+              }}
+            >
+              <MemoryTuningSlider
+                title={t('bot.incubation_title', 'Kişilik Değişim Süresi')}
+                description={t(
+                  'bot.incubation_desc',
+                  'Yeni eklenen Kişilik Kartlarının botun karakterini değiştirmeden önce ne kadar süre bekleyeceğini belirler. Süre dolduğunda bekleyen kartlar etkinleşerek mevcut kart setinden doğrudan yeni bir kişilik oluşturulur ve Hafıza Ağı bu yeni karaktere uyum sağlayacak şekilde güncellenir. Süreyi kısa tutmak yeni kartların hızla etkisini göstermesini sağlar; ancak çok sık kişilik değişimi anıların birbiriyle çelişip daha dengesiz bir yapıya bürünmesine yol açar ve karakterin oturmasını zorlaştırır.'
+                )}
+                leftLabel={t('bot.incubation_left', 'Fast Personality Change')}
+                rightLabel={t('bot.incubation_right', 'Slow Personality Change')}
+                emblemField="incubationPeriodMultiplier"
+                value={formData.incubationPeriodMultiplier}
+                min={0}
+                max={2}
+                onChange={(v) => {
+                  if (!mutation.isPending && !mutation.isSuccess) {
+                    setFormData((prev) => ({ ...prev, incubationPeriodMultiplier: v }))
+                  }
+                }}
+                disabled={mutation.isPending || mutation.isSuccess}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+            </div>
+            <div
+              style={{
+                marginTop: 12,
+                display: 'flex',
+                flexDirection: isMobileScreen ? 'column' : 'row',
+                gap: 12,
+                alignItems: 'stretch',
+              }}
+            >
+              <MemoryTuningSlider
+                title={t('bot.affinity_bias_title', 'Emotionality')}
+                description={t(
+                  'bot.affinity_bias_desc',
+                  'Determines how the bot links its past Memories to its Core character. Closer to Logical, it follows the shortest and most direct connections between memories. Closer to Emotional, even if the path is longer, it travels through the memories that left the strongest impression and reinforces them further.'
+                )}
+                leftLabel={t('bot.affinity_bias_left', 'Logical')}
+                rightLabel={t('bot.affinity_bias_right', 'Emotional')}
+                emblemField="affinityBiasMultiplier"
+                value={formData.affinityBiasMultiplier}
+                min={0}
+                max={2}
+                onChange={(v) => {
+                  if (!mutation.isPending && !mutation.isSuccess) {
+                    setFormData((prev) => ({ ...prev, affinityBiasMultiplier: v }))
+                  }
+                }}
+                disabled={mutation.isPending || mutation.isSuccess}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+              <MemoryTuningSlider
+                title={t('bot.forgetfulness_title', 'Forgetting Speed')}
+                description={t(
+                  'bot.forgetfulness_desc',
+                  'Determines how quickly unvisited Memories fade over time and how frequently they are cleared from the Memory Network. Towards Elephant Memory, the bot retains even its oldest experiences for a long time; towards Alzheimer, it quickly forgets unused old memories and focuses only on recent events.'
+                )}
+                leftLabel={t('bot.forgetfulness_left', 'Elephant Memory')}
+                rightLabel={t('bot.forgetfulness_right', 'Alzheimer')}
+                emblemField="forgetfulnessMultiplier"
+                value={formData.forgetfulnessMultiplier}
+                min={0}
+                max={2}
+                onChange={(v) => {
+                  if (!mutation.isPending && !mutation.isSuccess) {
+                    setFormData((prev) => ({ ...prev, forgetfulnessMultiplier: v }))
+                  }
+                }}
+                disabled={mutation.isPending || mutation.isSuccess}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+            </div>
+            <div
+              style={{
+                marginTop: 12,
+                display: 'flex',
+                flexDirection: isMobileScreen ? 'column' : 'row',
+                gap: 12,
+                alignItems: 'stretch',
+              }}
+            >
+              <MemoryTuningSlider
+                title={t('bot.associative_scope_title', 'Recall Scope')}
+                description={t(
+                  'bot.associative_scope_desc',
+                  'Determines how many related side memories and relationships are recalled together when a Memory is triggered. At the Autism-like end, the bot focuses solely on the immediate topic and leaves out side details. At the Big Picture end, it brings many surrounding connections into focus at once, forming broad links across different topics.'
+                )}
+                leftLabel={t('bot.associative_scope_left', 'Autism-like')}
+                rightLabel={t('bot.associative_scope_right', 'Big Picture')}
+                emblemField="recallPathLimitMultiplier"
+                value={formData.recallPathLimitMultiplier}
+                min={0}
+                max={2}
+                onChange={(v) => {
+                  if (!mutation.isPending && !mutation.isSuccess) {
+                    setFormData((prev) => ({ ...prev, recallPathLimitMultiplier: v }))
+                  }
+                }}
+                disabled={mutation.isPending || mutation.isSuccess}
+                locked={!isPremiumUser}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+              <MemoryTuningSlider
+                title={t('bot.fixation_title', 'Idea Fixation')}
+                description={t(
+                  'bot.fixation_desc',
+                  'Determines how strongly repeated ideas can solidify in the Memory Network and how easily fading memories are cleared. At the Open-Minded end, no idea becomes overly rigid and fading memories are easily cleared, allowing the bot to adapt quickly to new ideas. At the Resilient end, repeated thoughts take deep root and even the faintest memories resist being forgotten.'
+                )}
+                leftLabel={t('bot.fixation_left', 'Open-Minded')}
+                rightLabel={t('bot.fixation_right', 'Resilient')}
+                emblemField="maxStrengthMultiplier"
+                value={formData.maxStrengthMultiplier}
+                min={0.5}
+                max={2}
+                onChange={(v) => {
+                  if (!mutation.isPending && !mutation.isSuccess) {
+                    setFormData((prev) => ({
+                      ...prev,
+                      maxStrengthMultiplier: v,
+                      minStrengthThresholdMultiplier: Number((2 - v).toFixed(2)),
+                    }))
+                  }
+                }}
+                disabled={mutation.isPending || mutation.isSuccess}
+                locked={!isPremiumUser}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+            </div>
+          </div>
+          {!isEditMode && (
+            <div style={{ marginTop: 12 }}>
+              <SelectionMarker
+                checked={false}
+                onChange={() => {}}
+                disabled
+                label={t('bot.fediverse_support', 'Fediverse Support')}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <Globe size={16} strokeWidth={2} />
+                    {t('bot.fediverse_support', 'Fediverse Support')}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: 'var(--color-text-faint)',
+                    }}
+                  >
+                    {t('bot.too_soon', 'Too soon!')}
+                  </span>
+                </span>
+              </SelectionMarker>
+              <p
+                style={{
+                  margin: '2px 0 0 26px',
+                  fontSize: 12,
+                  color: 'var(--color-text-faint)',
+                  lineHeight: 1.5,
+                }}
+              >
+                {t(
+                  'bot.fediverse_support_desc',
+                  'Open your bot to the internet. The Fediverse is the open network that connects Bletchly to the outside world.'
+                )}
+              </p>
+            </div>
+          )}
         </div>
 
         {!formData.autoInterests && (

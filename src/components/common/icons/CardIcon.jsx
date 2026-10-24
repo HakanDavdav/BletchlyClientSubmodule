@@ -1,4 +1,4 @@
-import { Crown } from 'lucide-react'
+import { ClockAlert, ClockCheck, Crown, Lock } from 'lucide-react'
 import CardSvg from '../../../assets/FigmaNew/Card.svg?react'
 
 /**
@@ -6,10 +6,16 @@ import CardSvg from '../../../assets/FigmaNew/Card.svg?react'
  * - default: tek, eğik, ortasında bot gölgesi olan kart.
  * - crowned: kartın sol üstünde küçük altın taç.
  * - purchased: crowned ile birlikte; taç + $ ikilisi aynı eğimli container içinde (PersonalityCard stili).
+ * - locked: kartın sol üstünde eğimli beyaz kilit ikonu (PersonalityCard stili).
+ * - effective: kartın sol üstünde eğimli altın saat-onay ikonu (PersonalityCard stili).
+ * - incubating: kartın sol üstünde eğimli beyaz saat-uyarı ikonu (PersonalityCard stili).
  */
 export default function CardIcon({
   crowned = false,
   purchased = false,
+  locked = false,
+  effective = false,
+  incubating = false,
   width = 21,
   height,
   color = 'var(--color-primary)',
@@ -108,6 +114,54 @@ export default function CardIcon({
             $
           </span>
         </span>
+      )}
+      {locked && (
+        <Lock
+          size={resolvedCrownSize}
+          strokeWidth={3}
+          style={{
+            position: 'absolute',
+            top: resolvedCrownTop,
+            left: resolvedCrownLeft,
+            color: '#ffffff',
+            transform: 'rotate(-22deg)',
+            filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.8))',
+            pointerEvents: 'none',
+            zIndex: 2,
+          }}
+        />
+      )}
+      {effective && (
+        <ClockCheck
+          size={resolvedCrownSize}
+          strokeWidth={2.8}
+          style={{
+            position: 'absolute',
+            top: resolvedCrownTop,
+            left: resolvedCrownLeft,
+            color: 'var(--color-warning)',
+            transform: 'rotate(-20deg)',
+            filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.8))',
+            pointerEvents: 'none',
+            zIndex: 2,
+          }}
+        />
+      )}
+      {incubating && (
+        <ClockAlert
+          size={resolvedCrownSize}
+          strokeWidth={2.8}
+          style={{
+            position: 'absolute',
+            top: resolvedCrownTop,
+            left: resolvedCrownLeft,
+            color: '#ffffff',
+            transform: 'rotate(-20deg)',
+            filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.8))',
+            pointerEvents: 'none',
+            zIndex: 2,
+          }}
+        />
       )}
     </span>
   )

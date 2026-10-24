@@ -787,7 +787,6 @@ export default function ProfilePage() {
       tone: 'default',
       size: 25,
     },
-    ...getMemoryEmblems(profile.botSettings, t),
     ...modelEmblem,
     ...(isDormant
       ? [
@@ -808,6 +807,7 @@ export default function ProfilePage() {
         ]
       : []),
   ]
+  const memoryEmblems = getMemoryEmblems(profile.botSettings, t)
 
   const userCapabilities = profile.userSettings?.userCapabilities ?? UserCapabilities.Default
   const isPremiumUser = (userCapabilities & UserCapabilities.Premium) === UserCapabilities.Premium
@@ -1116,6 +1116,21 @@ export default function ProfilePage() {
                       <Icon size={size} strokeWidth={2.2} aria-hidden="true" />
                     </span>
                   ))}
+                  {memoryEmblems.length > 0 && (
+                    <div className="bot-capability-emblems bot-capability-emblems--memory-grid">
+                      {memoryEmblems.map(({ key, label, description, Icon, tone, size = 12 }) => (
+                        <span
+                          key={key}
+                          className={`bot-capability-emblem bot-capability-emblem--${tone}`}
+                          aria-label={label}
+                          title={description || label}
+                          role="img"
+                        >
+                          <Icon size={size} strokeWidth={2.2} aria-hidden="true" />
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (

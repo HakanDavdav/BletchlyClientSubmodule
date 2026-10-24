@@ -72,13 +72,13 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
   const contingencyModifierMap = { A: 20, B: 15, C: 10, D: 5, F: 0 }
   const gradeContingencyMod = contingencyModifierMap[gradeLabel] || 0
 
-  // Bellek Dayanıklılığı = Unutkanlık Hızı çarpanı (backend tek doğruluk kaynağı)
-  const memoryResilience = profile.botSettings?.memoryResilience
-  const botForgetfulnessMultiplier = Math.min(2, Math.max(0, profile.botSettings?.forgetfulnessMultiplier ?? 1))
-  const botAffinityBiasMultiplier = Math.min(2, Math.max(0, profile.botSettings?.affinityBiasMultiplier ?? 1))
-  const botIncubationMultiplier = Math.min(2, Math.max(0, profile.botSettings?.incubationPeriodMultiplier ?? 1))
-  const forgetfulnessMultiplier = memoryResilience ?? 2 - 1.75 * Math.min(1, 0.5 * botForgetfulnessMultiplier)
-  const totalResilience = forgetfulnessMultiplier
+  // Hafıza Ayarı çarpanları (Bot & Tribe)
+  const memorySource = isBot ? profile.botSettings : isTribe ? profile : null
+  const activeIncubationMultiplier = Math.min(2, Math.max(0, memorySource?.incubationPeriodMultiplier ?? 1))
+  const activeAffinityBiasMultiplier = Math.min(2, Math.max(0, memorySource?.affinityBiasMultiplier ?? 1))
+  const activeForgetfulnessMultiplier = Math.min(2, Math.max(0, memorySource?.forgetfulnessMultiplier ?? 1))
+  const activeRecallScopeMultiplier = Math.min(2, Math.max(0, memorySource?.recallPathLimitMultiplier ?? 1))
+  const activeFixationMultiplier = Math.min(2, Math.max(0.5, memorySource?.maxStrengthMultiplier ?? 1))
 
   const formatMultiplier = (value) => `×${Math.round(value * 100) / 100}`
 
@@ -220,12 +220,16 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
           )
         })}
 
-        <div style={{ height: 1, background: 'var(--color-border)', margin: '3px 0' }} />
+        {totalValue !== undefined && (
+          <>
+            <div style={{ height: 1, background: 'var(--color-border)', margin: '3px 0' }} />
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-          <span style={{ fontWeight: 700 }}>{t('profile.mod_total', 'Total')}:</span>
-          <span style={{ color: 'var(--color-primary)', fontSize: 13, fontWeight: 800 }}>{totalValue}</span>
-        </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--color-text-primary)' }}>
+              <span style={{ fontWeight: 700 }}>{t('profile.mod_total', 'Total')}:</span>
+              <span style={{ color: 'var(--color-primary)', fontSize: 13, fontWeight: 800 }}>{totalValue}</span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
@@ -388,8 +392,8 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
               </div>
             )}
 
-            {/* Gelişmiş Hafıza Section (for Bot) */}
-            {isBot && (
+            {/* Gelişmiş Hafıza Section (for Bot & Tribe) */}
+            {(isBot || isTribe) && (
               <div>
                 <div
                   onClick={() => toggleBubble('botMemory')}
@@ -431,46 +435,40 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                      {formatMultiplier(totalResilience)}
-                    </div>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
                     {renderCaret(activeBubble === 'botMemory')}
                   </div>
                 </div>
 
                 {activeBubble === 'botMemory' &&
                   renderModifierBubble({
-                    topContent: (
-                      <div
-                        style={{
-                          fontWeight: 700,
-                          color: 'var(--color-text-primary)',
-                          marginBottom: 6,
-                        }}
-                      >
-                        {t('profile.mod_memory_resilience', 'Bellek Dayanıklılığı')}
-                      </div>
-                    ),
-                    baseValue: formatMultiplier(1),
                     modifiers: [
                       {
-                        label: t('profile.mod_forgetfulness_speed', 'Unutkanlık Hızı'),
-                        value: formatMultiplier(forgetfulnessMultiplier),
+                        label: t(isTribe ? 'tribe.incubation_title' : 'bot.incubation_title', 'Kişilik Değişim Süresi'),
+                        value: formatMultiplier(activeIncubationMultiplier),
                         color: 'var(--color-primary)',
                       },
                       {
-                        label: t('bot.affinity_bias_title', 'Cognitive Balance'),
-                        value: formatMultiplier(botAffinityBiasMultiplier),
+                        label: t(isTribe ? 'tribe.affinity_bias_title' : 'bot.affinity_bias_title', 'Duygusallık'),
+                        value: formatMultiplier(activeAffinityBiasMultiplier),
                         color: 'var(--color-primary)',
                       },
                       {
-                        label: t('bot.incubation_title', 'Kişilik Kuluçkası'),
-                        value: formatMultiplier(botIncubationMultiplier),
+                        label: t(isTribe ? 'tribe.forgetfulness_title' : 'bot.forgetfulness_title', 'Unutkanlık Hızı'),
+                        value: formatMultiplier(activeForgetfulnessMultiplier),
+                        color: 'var(--color-primary)',
+                      },
+                      {
+                        label: t(isTribe ? 'tribe.associative_scope_title' : 'bot.associative_scope_title', 'Hatırlama Kapsamı'),
+                        value: formatMultiplier(activeRecallScopeMultiplier),
+                        color: 'var(--color-primary)',
+                      },
+                      {
+                        label: t(isTribe ? 'tribe.fixation_title' : 'bot.fixation_title', 'Sabit Fikirlilik'),
+                        value: formatMultiplier(activeFixationMultiplier),
                         color: 'var(--color-primary)',
                       },
                     ],
-                    totalValue: formatMultiplier(totalResilience),
                   })}
               </div>
             )}

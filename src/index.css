@@ -204,6 +204,13 @@
     transform var(--transition-fast);
 }
 
+.personality-card__corner-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
 .personality-card::before {
   position: absolute;
   inset: 8px;
@@ -1827,6 +1834,28 @@ select {
   border-radius: var(--radius-full);
   box-shadow: var(--shadow-xs);
   cursor: default;
+}
+
+.bot-capability-emblems--memory-grid {
+  width: 68px;
+  height: 44px;
+  flex: 0 0 auto;
+  gap: 0 1px;
+  align-content: center;
+  justify-content: center;
+}
+
+.bot-capability-emblems--memory-grid .bot-capability-emblem {
+  width: 22px;
+  height: 22px;
+}
+
+.bot-capability-emblems--memory-grid .bot-capability-emblem:nth-child(-n + 3) {
+  transform: translateY(1px);
+}
+
+.bot-capability-emblems--memory-grid .bot-capability-emblem:nth-child(n + 4) {
+  transform: translateY(-1px);
 }
 
 .bot-capability-emblem--memory {
@@ -5432,6 +5461,68 @@ textarea {
   min-width: 0;
 }
 
+.mind-identity-emblems {
+  flex: 0 0 auto;
+}
+
+.mind-identity-emblems.bot-capability-emblems--memory-grid {
+  width: 48px;
+  height: 30px;
+}
+
+.mind-identity-emblems.bot-capability-emblems--memory-grid .bot-capability-emblem {
+  width: 15px;
+  height: 15px;
+}
+
+.mind-memory-stats-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 8px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.mind-memory-stats-caret {
+  font-size: 9px;
+  line-height: 1;
+  display: inline-block;
+  color: var(--color-text-muted);
+  transition: transform 0.2s ease;
+}
+
+.mind-memory-stats-trigger:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.mind-memory-stats-row:last-child {
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+}
+
+.mind-header-label-short {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .mind-header-label-full {
+    display: none;
+  }
+
+  .mind-header-label-short {
+    display: inline;
+  }
+}
+
 /* Bağlam başlığı pilin altında akışta durur; pil birkaç px yukarı kayabilir. */
 .mind-identity-stack .mind-context-title {
   max-width: 100%;
@@ -5494,11 +5585,16 @@ textarea {
   .mind-header .mind-identity-pill {
     gap: 8px !important;
     max-width: 100% !important;
+    width: 100% !important;
     min-height: 0 !important;
     padding: 0 !important;
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
+  }
+
+  .mind-identity-emblems {
+    display: flex !important;
   }
 
   /* Bağlantılı anı başlığı her zaman 2. satırda, tam genişlikte */

@@ -205,49 +205,65 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
         {/* Creator / Purchaser Crown Badge on Top-Left */}
         {isCreator ? (
           <span
+            className="personality-card__corner-badge"
+            title={t('card.tooltip_creator', 'Yaratıcı')}
+            aria-label={t('card.tooltip_creator', 'Yaratıcı')}
             style={{
               position: 'absolute',
               top: -14,
               left: -8,
-              color: 'var(--color-warning)',
               zIndex: 3,
-              filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.5))',
-              transform: 'rotate(-25deg)',
-              pointerEvents: 'auto',
             }}
           >
-            <Crown size={28} strokeWidth={2.5} />
+            <span
+              style={{
+                color: 'var(--color-warning)',
+                filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.5))',
+                transform: 'rotate(-25deg)',
+                display: 'inline-flex',
+                alignItems: 'center',
+              }}
+            >
+              <Crown size={28} strokeWidth={2.5} />
+            </span>
           </span>
         ) : (
           <span
+            className="personality-card__corner-badge"
+            title={t('card.tooltip_purchased', 'Satın Alındı')}
+            aria-label={t('card.tooltip_purchased', 'Satın Alındı')}
             style={{
               position: 'absolute',
               top: -14,
               left: -8,
-              color: '#b87333',
               zIndex: 3,
-              filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.5))',
-              transform: 'rotate(-18deg)',
-              pointerEvents: 'auto',
-              display: 'inline-flex',
-              alignItems: 'center',
             }}
           >
-            <Crown size={24} strokeWidth={2.5} />
             <span
               style={{
-                marginLeft: '-4px',
-                marginTop: '4px',
-                fontSize: '25px',
-                fontWeight: '900',
-                fontFamily: '"Arial Black", Impact, system-ui, sans-serif',
-                lineHeight: 1,
-                color: '#22c55e',
-                textShadow: '0 0 3px rgba(34, 197, 94, 0.35), 0 1px 2px rgba(0,0,0,0.8)',
-                WebkitTextStroke: '0.6px #052e16',
+                color: '#b87333',
+                filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.5))',
+                transform: 'rotate(-18deg)',
+                display: 'inline-flex',
+                alignItems: 'center',
               }}
             >
-              $
+              <Crown size={24} strokeWidth={2.5} />
+              <span
+                style={{
+                  marginLeft: '-4px',
+                  marginTop: '4px',
+                  fontSize: '25px',
+                  fontWeight: '900',
+                  fontFamily: '"Arial Black", Impact, system-ui, sans-serif',
+                  lineHeight: 1,
+                  color: '#22c55e',
+                  textShadow: '0 0 3px rgba(34, 197, 94, 0.35), 0 1px 2px rgba(0,0,0,0.8)',
+                  WebkitTextStroke: '0.6px #052e16',
+                }}
+              >
+                $
+              </span>
             </span>
           </span>
         )}

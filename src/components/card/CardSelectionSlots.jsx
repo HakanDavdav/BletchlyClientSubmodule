@@ -8,6 +8,15 @@ function getCardId(item) {
 
 function getCard(item) {
   if (!item?.card) return item
+  if (
+    item.assignmentId ||
+    item.botId ||
+    item.tribeId ||
+    item.assignedTribeId ||
+    typeof item.isEffective === 'boolean'
+  ) {
+    return item
+  }
   return {
     ...item.card,
     assignedBots: item.assignedBots || [],

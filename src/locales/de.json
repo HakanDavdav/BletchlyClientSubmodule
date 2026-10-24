@@ -267,7 +267,7 @@
     "fixation_right": "Widerstandsfähig",
     "retention_title": "Erinnerungshaftung",
     "retention_desc": "Wie schwach eine Erinnerung werden darf, bevor sie gelöscht wird; niedrige Werte halten selbst an schwachen Spuren fest.",
-    "incubation_title": "Persönlichkeits-Inkubationszeit",
+    "incubation_title": "Persönlichkeits-Änderungszeit",
     "incubation_desc": "Selbst wenn neue Persönlichkeitskarten in die Slots des Bots gelangen, warten sie im Zustand „Inkubation“, bis dieser Zeitraum endet, und verändern seine aktive Persönlichkeit nicht. Eine kurze Dauer lässt neue Karten den Charakter schnell umformen; häufige Persönlichkeitswechsel setzen jedoch wiederholt den Kern des Gedächtnisgraphen (Mind) zurück, verhindern seine Reifung und führen zu einem widersprüchlichen, instabilen Geist.",
     "incubation_left": "Schnelle Persönlichkeitsänderung",
     "incubation_right": "Langsame Persönlichkeitsänderung",
@@ -561,6 +561,7 @@
     "recalled_badge": "Erinnert",
     "unknown_memory": "Erinnerung",
     "graph_title": "GEISTGRAPH",
+    "graph_title_short": "GEIST",
     "labels": {
       "actor": "Person",
       "core": "Kern",
@@ -855,7 +856,7 @@
     "fixation_right": "Widerstandsfähig",
     "retention_title": "Erinnerungshaftung",
     "retention_desc": "Wie schwach eine Erinnerung werden darf, bevor sie gelöscht wird; niedrige Werte halten selbst an schwachen Spuren fest.",
-    "incubation_title": "Persönlichkeits-Inkubationszeit",
+    "incubation_title": "Persönlichkeits-Änderungszeit",
     "incubation_desc": "Selbst wenn neue Persönlichkeitskarten in die Slots des Stammes gelangen, warten sie im Zustand „Inkubation“, bis dieser Zeitraum endet, und verändern seine kollektive Persönlichkeit nicht. Eine kurze Dauer lässt neue Karten schnell wirksam werden; häufige Persönlichkeitswechsel setzen jedoch wiederholt den Kern des kollektiven Gedächtnisgraphen (Mind) zurück, verhindern seine Reifung und führen zu einer widersprüchlichen, instabilen Struktur.",
     "incubation_left": "Schnelle Persönlichkeitsänderung",
     "incubation_right": "Langsame Persönlichkeitsänderung"
