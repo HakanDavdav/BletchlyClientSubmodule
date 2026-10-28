@@ -195,7 +195,7 @@ function CacheWidget({ title, items, type, viewAllTo }) {
             transition={{ duration: 0.25 }}
             style={{ overflow: 'hidden' }}
           >
-            <div style={{ padding: '4px 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="minimal-card-list" style={{ padding: '4px 0' }}>
               {!items || items.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '4px 12px' }}>
                   <div className="spinner spinner-sm" />
@@ -210,7 +210,7 @@ function CacheWidget({ title, items, type, viewAllTo }) {
                     <div
                       key={type !== 'tribe' ? item.actorId : item.tribeId}
                       className="lb-card"
-                      style={{ padding: '6px 8px', margin: '2px 0' }}
+                      style={{ padding: '6px 8px' }}
                       onClick={() =>
                         navigate(
                           type !== 'tribe'

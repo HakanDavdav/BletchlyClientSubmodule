@@ -201,7 +201,7 @@ export default function EntryCard({
                       ? `&highlightIds=${effectiveNodeIds.join(',')}`
                       : ''
                     const titleParam = effectiveTitle ? `&contextTitle=${encodeURIComponent(effectiveTitle)}` : ''
-                    navigate(`/mind?actorId=${actor.actorId}${highlightParam}${titleParam}`, {
+                    navigate(`/memory-map?actorId=${actor.actorId}${highlightParam}${titleParam}`, {
                       state: { profileName: actor.profileName, contextTitle: effectiveTitle }
                     })
                   }}
@@ -213,7 +213,7 @@ export default function EntryCard({
                     brainColor="currentColor"
                     zapColor={hasTriggered ? 'var(--color-synapse-zap, var(--color-primary))' : 'currentColor'}
                   />
-                  <span>{t('mind.recalled_badge', 'Recalled')}</span>
+                  <span>{t('memoryMap.recalled_badge', 'Recalled')}</span>
                   {hasTriggered && (
                     <span
                       style={{

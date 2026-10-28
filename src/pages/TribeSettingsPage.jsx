@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Trash2, Shield, UserMinus, Users, Loader2 } from 'lucide-react'
+import { Trash2, Shield, UserMinus, Users, Loader2, Lock } from 'lucide-react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { tribeApi } from '../api/tribeApi'
 import { actorApi } from '../api/actorApi'
@@ -21,6 +21,8 @@ import useAuthStore from '../store/authStore'
 import useMyEntitiesStore from '../store/myEntitiesStore'
 import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
+import { getQueryErrorMessage } from '../utils/errorHelper'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 import toast from 'react-hot-toast'
 import { buildOwnedCardIdSet, normalizeCardId, sortCardsOwnedFirst } from '../utils/cardOwnership'
 import { TopicTypes } from '../constants/TopicTypes'
@@ -42,7 +44,7 @@ export default function TribeSettingsPage() {
     mission: '',
     preferredModel: 0,
     affinityBiasMultiplier: 1,
-    forgetfulnessMultiplier: 1,
+    ebbinghausHalfLifePeriodMultiplier: 1,
     maxStrengthMultiplier: 1,
     minStrengthThresholdMultiplier: 1,
     recallPathLimitMultiplier: 1,
@@ -61,13 +63,16 @@ export default function TribeSettingsPage() {
   const [expelTargetMember, setExpelTargetMember] = useState(null)
 
   // Fetch Tribe
-  const { data: tribe, isLoading } = useQuery({
+  const { data: tribe, isLoading, isError: isTribeError, error: tribeError } = useQuery({
     queryKey: ['tribe', tribeId],
     queryFn: () => tribeApi.getTribe(tribeId).then((r) => r.data?.data ?? null),
     enabled: !!tribeId,
   })
 
-  const storeSettings = useMyEntitiesStore((state) => state.mySettings)
+  useDocumentTitle(
+    tribe ? `${tribe.tribeName} - ${t('tribe_settings.title', 'Klan Yönetimi')}` : null
+  )
+
   const { data: userSettings } = useQuery({
     queryKey: ['userSettings', currentUserId],
     queryFn: async () => {
@@ -78,6 +83,8 @@ export default function TribeSettingsPage() {
     initialData: storeSettings || undefined,
     enabled: Boolean(currentUserId),
   })
+
+  const cardLockLimit = userSettings?.cardAssignmentLockLimit ?? storeSettings?.cardAssignmentLockLimit ?? 4
 
   // Hafıza dayanıklılığı (Unutkanlık Hızı) ayarı Pro'ya özeldir
   const isPremiumUser =
@@ -124,7 +131,7 @@ export default function TribeSettingsPage() {
         mission: tribe.mission || '',
         preferredModel: tribe.preferredModel ?? 0,
         affinityBiasMultiplier: tribe.affinityBiasMultiplier ?? 1,
-        forgetfulnessMultiplier: tribe.forgetfulnessMultiplier ?? 1,
+        ebbinghausHalfLifePeriodMultiplier: tribe.ebbinghausHalfLifePeriodMultiplier ?? 1,
         maxStrengthMultiplier: tribe.maxStrengthMultiplier ?? 1,
         minStrengthThresholdMultiplier: Number((2 - (tribe.maxStrengthMultiplier ?? 1)).toFixed(2)),
         recallPathLimitMultiplier: tribe.recallPathLimitMultiplier ?? 1,
@@ -189,7 +196,7 @@ export default function TribeSettingsPage() {
         <div className="spinner spinner-lg" />
       </div>
     )
-  if (!tribe) return <div className="empty-state">{t('tribe_settings.not_found')}</div>
+  if (isTribeError || !tribe) return <div className="empty-state">{getQueryErrorMessage(tribeError, t, true)}</div>
 
   const isDormantTribe = Boolean(tribe.isDormant ?? tribe.IsDormant ?? false)
   if (isDormantTribe) {
@@ -268,16 +275,21 @@ export default function TribeSettingsPage() {
         ? current.filter((selectedId) => selectedId !== lowerId)
         : [...current, lowerId]
     )
+    setLockedCardIds((current) => current.filter((lockedId) => lockedId !== lowerId))
   }
 
   const toggleLockCard = (cardId) => {
     const lowerId = normalizeCardId(cardId)
     if (!lowerId) return
-    setLockedCardIds((current) =>
-      current.includes(lowerId)
-        ? current.filter((lockedId) => lockedId !== lowerId)
-        : [...current, lowerId]
-    )
+    setLockedCardIds((current) => {
+      const isLocked = current.includes(lowerId)
+      if (isLocked) {
+        return current.filter((lockedId) => lockedId !== lowerId)
+      } else {
+        setSelectedCardIds((prev) => (prev.includes(lowerId) ? prev : [...prev, lowerId]))
+        return [...current, lowerId]
+      }
+    })
   }
 
   const handleTopicToggle = (value) => {
@@ -520,12 +532,42 @@ export default function TribeSettingsPage() {
         </div>
 
         <div>
-          <label style={labelStyle}>
-            {t(
-              'bot.select_unassigned_cards',
-              'Sahip olduğun kartlarından ekle (Opsiyonel)'
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+              marginBottom: 8,
+            }}
+          >
+            <label style={{ ...labelStyle, marginBottom: 0 }}>
+              {t(
+                'bot.select_unassigned_cards',
+                'Sahip olduğun kartlarından ekle (Opsiyonel)'
+              )}
+            </label>
+            {cardLockLimit != null && (
+              <span
+                title={t('profile.card_assignment_lock_limit', 'Kart Kilit Limiti')}
+                style={{
+                  fontSize: 12,
+                  padding: '2px 8px',
+                  borderRadius: 12,
+                  background: 'var(--color-surface-raised)',
+                  color: 'var(--color-text-secondary)',
+                  border: '1px solid var(--color-border)',
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                <Lock size={12} style={{ opacity: 0.8 }} />
+                {t('card.total_lock_allowance', 'Toplam Kilit Hakkı')}: {cardLockLimit}
+              </span>
             )}
-          </label>
+          </div>
           <CardSelectionSlots
             cards={myCards}
             selectedCardIds={selectedCardIds}
@@ -533,6 +575,9 @@ export default function TribeSettingsPage() {
             disabled={editMutation.isPending}
             showHeader={false}
             slotCount={10}
+            assignLockedCardIds={lockedCardIds}
+            onToggleAssignLock={toggleLockCard}
+            ownedCardIds={myCards}
           />
           <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
             {t('tribe_settings.additional_personality_cards_desc')}
@@ -543,6 +588,7 @@ export default function TribeSettingsPage() {
           <ModelGlassToggle
             value={formData.preferredModel}
             disabled={editMutation.isPending}
+            isPremium={isPremiumUser}
             onChange={(nextModel) => setFormData((current) => ({ ...current, preferredModel: nextModel }))}
           />
           <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
@@ -563,7 +609,7 @@ export default function TribeSettingsPage() {
                 title={t('tribe.incubation_title', 'Kişilik Değişim Süresi')}
                 description={t(
                   'tribe.incubation_desc',
-                  'Yeni eklenen Kişilik Kartlarının klanın ortak karakterini değiştirmeden önce ne kadar süre bekleyeceğini belirler. Süre dolduğunda bekleyen kartlar etkinleşerek mevcut kart setinden doğrudan yeni bir ortak kişilik oluşturulur ve Hafıza Ağı bu yeni karaktere uyum sağlayacak şekilde güncellenir. Süreyi kısa tutmak yeni kartları hızla devreye sokar; ancak sık değişim anıların daha dengesiz ve çelişkili bir yapıya bürünmesine neden olarak ortak karakterin oturmasını zorlaştırır.'
+                  'Yeni eklenen Kişilik Kartlarının klanın ortak karakterini değiştirmeden önce ne kadar süre bekleyeceğini belirler. Süre dolduğunda bekleyen kartlar etkinleşerek mevcut kart setinden doğrudan yeni bir ortak kişilik oluşturulur ve Hafıza Haritası bu yeni karaktere uyum sağlayacak şekilde güncellenir. Süreyi kısa tutmak yeni kartları hızla devreye sokar; ancak sık değişim anıların daha dengesiz ve çelişkili bir yapıya bürünmesine neden olarak ortak karakterin oturmasını zorlaştırır.'
                 )}
                 leftLabel={t('tribe.incubation_left', 'Fast Personality Change')}
                 rightLabel={t('tribe.incubation_right', 'Slow Personality Change')}
@@ -607,15 +653,15 @@ export default function TribeSettingsPage() {
                 title={t('tribe.forgetfulness_title', 'Forgetting Speed')}
                 description={t(
                   'tribe.forgetfulness_desc',
-                  'Determines how quickly unvisited Memories fade over time and how frequently they are cleared from the Memory Network. Towards Elephant Memory, the tribe retains even its oldest experiences for a long time; towards Alzheimer, it quickly forgets unused old memories and focuses only on recent events.'
+                  'Determines how quickly unvisited Memories fade over time and how frequently they are cleared from the Memory Map. Towards Elephant Memory, the tribe retains even its oldest experiences for a long time; towards Alzheimer, it quickly forgets unused old memories and focuses only on recent events.'
                 )}
                 leftLabel={t('tribe.forgetfulness_left', 'Elephant Memory')}
                 rightLabel={t('tribe.forgetfulness_right', 'Alzheimer')}
-                emblemField="forgetfulnessMultiplier"
-                value={formData.forgetfulnessMultiplier}
+                emblemField="ebbinghausHalfLifePeriodMultiplier"
+                value={formData.ebbinghausHalfLifePeriodMultiplier}
                 min={0}
                 max={2}
-                onChange={(v) => setFormData((current) => ({ ...current, forgetfulnessMultiplier: v }))}
+                onChange={(v) => setFormData((current) => ({ ...current, ebbinghausHalfLifePeriodMultiplier: v }))}
                 disabled={editMutation.isPending}
                 formatValue={formatMultiplier}
                 style={sliderRowStyle}
@@ -652,7 +698,7 @@ export default function TribeSettingsPage() {
                 title={t('tribe.fixation_title', 'Idea Fixation')}
                 description={t(
                   'tribe.fixation_desc',
-                  'Determines how strongly repeated ideas can solidify in the Memory Network and how easily fading memories are cleared. At the Open-Minded end, no idea becomes overly rigid and fading memories are easily cleared, allowing the tribe to adapt quickly to new ideas. At the Resilient end, repeated thoughts take deep root and even the faintest memories resist being forgotten.'
+                  'Determines how strongly repeated ideas can solidify in the Memory Map and how easily fading memories are cleared. At the Open-Minded end, no idea becomes overly rigid and fading memories are easily cleared, allowing the tribe to adapt quickly to new ideas. At the Resilient end, repeated thoughts take deep root and even the faintest memories resist being forgotten.'
                 )}
                 leftLabel={t('tribe.fixation_left', 'Open-Minded')}
                 rightLabel={t('tribe.fixation_right', 'Resilient')}

@@ -1,5 +1,6 @@
 import { useState, useEffect, forwardRef } from 'react'
 import { Eye, EyeOff, ArrowBigUp } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 /**
  * Reusable PasswordInput Component
@@ -20,6 +21,7 @@ const PasswordInput = forwardRef(function PasswordInput(
   },
   ref
 ) {
+  const { t } = useTranslation()
   const [showPassword, setShowPassword] = useState(false)
   const [capsLock, setCapsLock] = useState(false)
   const [isEyeHovered, setIsEyeHovered] = useState(false)
@@ -93,7 +95,8 @@ const PasswordInput = forwardRef(function PasswordInput(
 
       {capsLock && (
         <span
-          title="Caps Lock"
+          title={t('auth.caps_lock', 'Caps Lock')}
+          aria-label={t('auth.caps_lock', 'Caps Lock')}
           style={{
             position: 'absolute',
             right: 36,

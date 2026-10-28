@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { Search } from 'lucide-react'
+import { Search, Clock, X } from 'lucide-react'
+import { getRecentSearches, saveRecentSearch, removeRecentSearch } from '../utils/recentSearches'
 import { motion, AnimatePresence } from 'framer-motion'
 import { searchApi } from '../api/searchApi'
 import PostCard from '../components/content/PostCard'
@@ -11,6 +12,7 @@ import PostMinimalCard from '../components/content/PostMinimalCard'
 import BackButton from '../components/common/BackButton'
 import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
+import { getQueryErrorMessage } from '../utils/errorHelper'
 
 export default function SearchPage() {
   const navigate = useNavigate()
@@ -42,7 +44,7 @@ export default function SearchPage() {
 
   console.log('SearchPage params:', { query, mode, orderType: finalOrderType, startDate, endDate })
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ['search', mode, query, finalOrderType, startDate, endDate],
     queryFn: () => {
       if (!query && mode === 'general') return []
@@ -112,7 +114,7 @@ export default function SearchPage() {
   }
 
   if (isError) {
-    return <div className="empty-state form-error">{t('search.error')}</div>
+    return <div className="empty-state form-error">{getQueryErrorMessage(error, t)}</div>
   }
 
   const renderResults = () => {
@@ -313,7 +315,14 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
   const [suggestions, setSuggestions] = useState(null)
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
+  const [recentSearches, setRecentSearches] = useState(() => getRecentSearches())
   const searchWrapRef = useRef(null)
+
+  useEffect(() => {
+    const handleUpdate = () => setRecentSearches(getRecentSearches())
+    window.addEventListener('recent-searches-updated', handleUpdate)
+    return () => window.removeEventListener('recent-searches-updated', handleUpdate)
+  }, [])
 
   const modes = [
     { key: 'general', label: t('search.mode.general', 'Genel') },
@@ -326,7 +335,6 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
   useEffect(() => {
     if (!query || query.trim().length === 0) {
       setSuggestions(null)
-      setShowSuggestions(false)
       return
     }
 
@@ -421,7 +429,12 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
       className="mobile-search-form"
       ref={searchWrapRef}
       onSubmit={(e) => {
-        e.preventDefault()
+        if (e && e.preventDefault) e.preventDefault()
+        const trimmed = (query || '').trim()
+        if (trimmed) {
+          saveRecentSearch(trimmed)
+          setRecentSearches(getRecentSearches())
+        }
         setShowSuggestions(false)
         onSubmit()
       }}
@@ -435,14 +448,13 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
             value={query}
             onChange={(e) => {
               onQueryChange(e.target.value)
-              if (!showSuggestions && e.target.value.trim().length > 0) {
-                setShowSuggestions(true)
-              }
+              setShowSuggestions(true)
             }}
             onFocus={() => {
-              if (suggestions && query.trim().length > 0) {
-                setShowSuggestions(true)
-              }
+              setShowSuggestions(true)
+            }}
+            onClick={() => {
+              setShowSuggestions(true)
             }}
           />
         </div>
@@ -450,9 +462,13 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
           {t('topbar.search_button', 'Ara')}
         </button>
 
-        {/* Search Suggestions Dropdown */}
+        {/* Search Suggestions & Recent Searches Dropdown */}
         <AnimatePresence>
-          {showSuggestions && (suggestions || isLoadingSuggestions) && (
+          {showSuggestions && (
+            query?.trim()?.length > 0
+              ? (suggestions || isLoadingSuggestions)
+              : (recentSearches && recentSearches.length > 0)
+          ) && (
             <motion.div
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -475,6 +491,98 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
               {isLoadingSuggestions ? (
                 <div style={{ padding: 16, textAlign: 'center' }}>
                   <div className="spinner spinner-sm" />
+                </div>
+              ) : (!query || query.trim().length === 0) ? (
+                <div style={{ padding: '6px 8px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '6px 8px',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: 'var(--color-text-faint)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      {t('search.recent', 'RECENT')}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {recentSearches.slice(0, 5).map((item) => (
+                      <div
+                        key={item}
+                        onClick={() => {
+                          onQueryChange(item)
+                          setShowSuggestions(false)
+                          saveRecentSearch(item)
+                          setRecentSearches(getRecentSearches())
+                          onSubmit()
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '8px 10px',
+                          borderRadius: 6,
+                          cursor: 'pointer',
+                          transition: 'background 0.15s ease',
+                          fontSize: 13,
+                          color: 'var(--color-text)',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'var(--color-surface-2)'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
+                          <Clock size={14} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {item}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          aria-label={t('common.delete', 'Sil')}
+                          title={t('common.delete', 'Sil')}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            removeRecentSearch(item)
+                            setRecentSearches(getRecentSearches())
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: 20,
+                            height: 20,
+                            border: 'none',
+                            background: 'transparent',
+                            color: 'var(--color-text-faint)',
+                            cursor: 'pointer',
+                            padding: 0,
+                            marginLeft: 8,
+                            flexShrink: 0,
+                            opacity: 0.6,
+                            transition: 'opacity 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.opacity = '1'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.opacity = '0.6'
+                          }}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : suggestions ? (
                 <div style={{ padding: 8 }}>

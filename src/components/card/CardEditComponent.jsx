@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { personalityCardApi } from '../../api/personalityCardApi'
 import useMyEntitiesStore from '../../store/myEntitiesStore'
@@ -11,9 +12,13 @@ import BotIcon from '../common/icons/BotIcon'
 import AvatarUpload from '../common/AvatarUpload'
 import ImageWithLoader from '../common/ImageWithLoader'
 import ConfirmModal from '../common/ConfirmModal'
+import PremiumModal from '../common/PremiumModal'
+import useAuthStore from '../../store/authStore'
+import { UserCapabilities } from '../../constants/enums'
 
 export default function CardEditComponent({ card, myBots = [], onClose, onSaved }) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
 
   const cardData = card?.card || card?.originalCard || card
@@ -32,6 +37,14 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
     assignedBotIds: [],
   })
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false)
+
+  const storeSettings = useMyEntitiesStore((s) => s.mySettings)
+  const isAdmin = useAuthStore((s) => s.isAdmin)
+  const isPremiumUser =
+    Boolean(isAdmin) ||
+    ((storeSettings?.userCapabilities ?? UserCapabilities.Default) & UserCapabilities.Premium) ===
+      UserCapabilities.Premium
 
   const [isConfirmed, setIsConfirmed] = useState(false)
   const canConfirm = !isCreator || (Boolean(editFormData.cardName.trim()) && Boolean(editFormData.personalityPrompt.trim()))
@@ -283,6 +296,8 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
                   shape="rect"
                   compact={true}
                   aspectRatio={3 / 4}
+                  isLocked={!isPremiumUser}
+                  onLockedClick={() => navigate('/premium')}
                 />
               </div>
             )}
@@ -714,6 +729,10 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
         confirmText={t('action.delete', 'Sil')}
         confirmVariant="danger"
         isLoading={deleteMutation.isPending}
+      />
+      <PremiumModal
+        isOpen={isPremiumModalOpen}
+        onClose={() => setIsPremiumModalOpen(false)}
       />
     </div>
   )

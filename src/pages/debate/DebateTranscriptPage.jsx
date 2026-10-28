@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { getQueryErrorMessage } from '../../utils/errorHelper'
 import {
   ArrowLeft,
   Calendar,
@@ -11,6 +12,8 @@ import {
   Bot as BotIcon,
 } from 'lucide-react'
 import { actorApi } from '../../api/actorApi'
+import useIsMobile from '../../hooks/useIsMobile'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 import BackButton from '../../components/common/BackButton'
 import ActorAvatar from '../../components/actor/ActorAvatar'
 import ActorMinimalCard from '../../components/actor/ActorMinimalCard'
@@ -26,11 +29,12 @@ export default function DebateTranscriptPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
   const debateId = searchParams.get('id')
 
   const initialDebate = location.state?.debate || null
 
-  const { data: fetchedDebate, isLoading, isError } = useQuery({
+  const { data: fetchedDebate, isLoading, isError, error } = useQuery({
     queryKey: ['debate-detail', debateId],
     queryFn: () => actorApi.getDebateById(debateId).then((r) => r.data?.data || r.data),
     enabled: Boolean(debateId) && !initialDebate?.debateTranscript,
@@ -38,6 +42,10 @@ export default function DebateTranscriptPage() {
   })
 
   const debate = fetchedDebate || initialDebate
+
+  useDocumentTitle(
+    debate?.proposition || t('debate.transcript_title', 'Meydan Okuma Transkripti')
+  )
 
   const proponent = debate?.proponent || {}
   const opponent = debate?.opponent || {}
@@ -75,7 +83,8 @@ export default function DebateTranscriptPage() {
 
       const icons = []
       const totalPoints = pPoints + oPoints
-      const numIcons = Math.min(300, 72 + Math.floor(totalPoints / 20))
+      const baseIcons = Math.min(300, 72 + Math.floor(totalPoints / 20))
+      const numIcons = isMobile ? Math.round(baseIcons * 0.4) : baseIcons
       for (let i = 0; i < numIcons; i++) {
         const rx = Rx * (1.02 + Math.random() * 0.2)
         const ry = Ry * (1.02 + Math.random() * 0.2)
@@ -115,7 +124,7 @@ export default function DebateTranscriptPage() {
     const ro = new ResizeObserver(update)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [pPoints, oPoints])
+  }, [pPoints, oPoints, isMobile])
 
   const parsedTurns = useMemo(() => {
     if (!debate?.debateTranscript) return []
@@ -179,7 +188,7 @@ export default function DebateTranscriptPage() {
   if (isError && !debate) {
     return (
       <div style={{ padding: '32px', textAlign: 'center' }}>
-        <p style={{ color: '#ef4444', fontWeight: '600' }}>{t('debate.not_found', 'Meydan okuma bulunamadı.')}</p>
+        <p style={{ color: '#ef4444', fontWeight: '600' }}>{getQueryErrorMessage(error, t, true)}</p>
         <button className="btn btn-outline btn-sm" onClick={() => navigate(-1)} style={{ marginTop: '12px' }}>
           <ArrowLeft size={14} /> {t('common.back', 'Geri')}
         </button>
@@ -341,7 +350,7 @@ export default function DebateTranscriptPage() {
                           actor={currentActor}
                           variant="ultra-compact"
                           showHierarchyBtn={false}
-                          showMindBtn={true}
+                          showMemoryMapBtn={true}
                           contextTitle={debate.proposition}
                         />
                         <div className="chat-message-info">

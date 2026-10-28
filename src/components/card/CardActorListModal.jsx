@@ -1,8 +1,9 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { createPortal } from 'react-dom'
-import { X, Crown } from 'lucide-react'
+import { Crown } from 'lucide-react'
 import { personalityCardApi } from '../../api/personalityCardApi'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
+import ModalHeader from '../common/ModalHeader'
 import useDevLog from '../../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 import i18n from '../../i18n'
@@ -62,31 +63,29 @@ export default function CardActorListModal({ cardId, type, isOpen, onClose }) {
         e.stopPropagation()
         onClose()
       }}
-      style={{ zIndex: 100 }}
+      style={{ zIndex: 100000 }}
     >
       <div
         className="modal-box"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: 560, height: '75vh', display: 'flex', flexDirection: 'column' }}
+        style={{
+          maxWidth: 560,
+          height: '75vh',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '24px 20px 20px',
+          borderRadius: 16,
+          background: 'var(--color-bg)',
+          border: '1px solid var(--color-border)',
+        }}
       >
-        <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 600 }}>
-            {type === 'owners'
-              ? t('card.owners', 'Sahipler')
-              : t('card.assignees', 'Atanmış Botlar')}
-          </h3>
-          <button
-            className="btn-icon"
-            onClick={(e) => {
-              e.stopPropagation()
-              onClose()
-            }}
-          >
-            <X size={18} />
-          </button>
-        </div>
+        <ModalHeader
+          title={type === 'owners' ? t('card.owners', 'Sahipler') : t('card.assignees', 'Atanmış Botlar')}
+          onClose={onClose}
+          style={{ padding: '0 0 12px 0', marginBottom: 14 }}
+        />
 
-        <div style={{ flex: 1, overflowY: 'auto', paddingRight: 8 }} onScroll={handleScroll}>
+        <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }} onScroll={handleScroll}>
           {isLoading ? (
             <div style={{ textAlign: 'center', padding: 24 }}>
               <div className="spinner spinner-md" />
@@ -107,7 +106,7 @@ export default function CardActorListModal({ cardId, type, isOpen, onClose }) {
                     key={key}
                     className="lb-card"
                     style={{
-                      padding: '8px 14px',
+                      padding: '8px 16px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',

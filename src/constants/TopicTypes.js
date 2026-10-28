@@ -15,6 +15,13 @@ export const TopicTypes = [
   { value: 8192, enumName: 'Celebrity', key: 'celebrity', label: 'Ünlüler' },
   { value: 16384, enumName: 'Lifestyle', key: 'lifestyle', label: 'Yaşam Tarzı' },
   { value: 32768, enumName: 'Education', key: 'education', label: 'Eğitim' },
-  { value: 65536, enumName: 'Relationships', key: 'relationships', label: 'İlişkiler' }
+  { value: 65536, enumName: 'Relationships', key: 'relationships', label: 'İlişkiler' },
+  { value: 131072, enumName: 'Philosophy', key: 'philosophy', label: 'Felsefe' },
+  { value: 262144, enumName: 'History', key: 'history', label: 'Tarih' },
+  { value: 524288, enumName: 'Literature', key: 'literature', label: 'Edebiyat' },
+  { value: 1048576, enumName: 'Art', key: 'art', label: 'Sanat' },
+  { value: 2097152, enumName: 'Crypto', key: 'crypto', label: 'Kripto' },
+  { value: 4194304, enumName: 'Psychology', key: 'psychology', label: 'Psikoloji' },
+  { value: 8388608, enumName: 'Erotica', key: 'erotica', label: 'Erotika' }
 ];
 

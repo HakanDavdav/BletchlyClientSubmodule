@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import AvatarCropModal from './AvatarCropModal'
 import ImageWithLoader from './ImageWithLoader'
+import LockedSlash from './LockedSlash'
 
 export default function AvatarUpload({
   imageUrl,
@@ -15,6 +16,8 @@ export default function AvatarUpload({
   shape = 'circle',
   compact = false,
   aspectRatio,
+  isLocked = false,
+  onLockedClick,
 }) {
   const { t } = useTranslation()
   const fileInputRef = useRef(null)
@@ -106,7 +109,7 @@ export default function AvatarUpload({
   const handleDragOver = (e) => {
     e.preventDefault()
     e.stopPropagation()
-    if (!disabled && !isUploading) {
+    if (!disabled && !isUploading && !isLocked) {
       setIsDragging(true)
     }
   }
@@ -121,7 +124,10 @@ export default function AvatarUpload({
     e.preventDefault()
     e.stopPropagation()
     setIsDragging(false)
-    if (disabled || isUploading) return
+    if (disabled || isUploading || isLocked) {
+      if (isLocked) onLockedClick?.()
+      return
+    }
     const file = e.dataTransfer.files?.[0]
     if (file) processFile(file)
   }
@@ -163,7 +169,15 @@ export default function AvatarUpload({
             ? '0 6px 20px rgba(0, 0, 0, 0.18)'
             : '0 2px 8px rgba(0, 0, 0, 0.06)',
       }}
-      onClick={() => !disabled && !isUploading && fileInputRef.current?.click()}
+      title={isLocked ? t('premium.required', 'Pro özellik') : undefined}
+      onClick={() => {
+        if (disabled || isUploading) return
+        if (isLocked) {
+          onLockedClick?.()
+          return
+        }
+        fileInputRef.current?.click()
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onDragOver={handleDragOver}
@@ -259,6 +273,7 @@ export default function AvatarUpload({
           )}
         </div>
       )}
+      {isLocked && <LockedSlash stretch strokeWidth={2.4} style={{ zIndex: 10 }} />}
     </div>
   )
 
@@ -341,7 +356,13 @@ export default function AvatarUpload({
             type="button"
             className="btn"
             disabled={disabled || isUploading}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => {
+              if (isLocked) {
+                onLockedClick?.()
+                return
+              }
+              fileInputRef.current?.click()
+            }}
             style={{
               display: 'inline-flex',
               alignItems: 'center',

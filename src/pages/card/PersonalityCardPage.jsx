@@ -217,13 +217,13 @@ export default function PersonalityCardPage() {
                 fontSize: 12,
                 padding: '2px 8px',
                 borderRadius: 12,
-                background: isCardLimitReached ? 'rgba(239,68,68,0.15)' : 'var(--color-surface-raised)',
-                color: isCardLimitReached ? '#ef4444' : 'var(--color-text-secondary)',
-                border: `1px solid ${isCardLimitReached ? '#ef4444' : 'var(--color-border)'}`,
+                background: 'var(--color-surface-raised)',
+                color: 'var(--color-text-secondary)',
+                border: '1px solid var(--color-border)',
                 fontWeight: 600,
               }}
             >
-              {myCards.length} / {cardOwnershipLimit} {t('common.card', 'Kart')}
+              {myCards.length} / {cardOwnershipLimit}
             </span>
           </div>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>

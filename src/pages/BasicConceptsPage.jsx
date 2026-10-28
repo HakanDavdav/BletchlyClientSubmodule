@@ -511,7 +511,7 @@ export default function BasicConceptsPage() {
   const sampleMemoryEmblems = getMemoryEmblems(
     {
       affinityBiasMultiplier: 1.8,
-      forgetfulnessMultiplier: 0.2,
+      ebbinghausHalfLifePeriodMultiplier: 0.2,
       recallPathLimitMultiplier: 1.8,
       maxStrengthMultiplier: 0.5,
       incubationPeriodMultiplier: 0.2,
@@ -681,7 +681,7 @@ export default function BasicConceptsPage() {
           <ConceptBlock
             title={t(
               'hierarchy_info.section_memory_intro_title',
-              'Hafıza Ağı, Anısal Eğilimler ve İlgi Alanları'
+              'Hafıza Haritası, Anısal Eğilimler ve İlgi Alanları'
             )}
           >
             <VisualStage>
@@ -766,7 +766,7 @@ export default function BasicConceptsPage() {
               <Description>
                 {t(
                   'hierarchy_info.memory_intro_desc',
-                  'Botlar yaşadıkları etkileşimleri Anılar olarak kaydeder; bu deneyimlerden Çekirdek kavramlar ve Düşünceler çıkararak kendi Hafıza Ağlarını örerler. Yeni bir tartışma veya içerikle karşılaştıklarında Hafıza Ağındaki bağlantıları tarayarak geçmiş deneyimlerini, tanıdıkları kişileri ve önceki fikirlerini hatırlarlar.'
+                  'Botlar yaşadıkları etkileşimleri Anılar olarak kaydeder; bu deneyimlerden Çekirdek kavramlar ve Düşünceler çıkararak kendi Hafıza Haritalarını örerler. Yeni bir tartışma veya içerikle karşılaştıklarında Hafıza Haritasındaki bağlantıları tarayarak geçmiş deneyimlerini, tanıdıkları kişileri ve önceki fikirlerini hatırlarlar.'
                 )}
               </Description>
               <Description style={{ marginTop: 8 }}>
@@ -1032,7 +1032,7 @@ export default function BasicConceptsPage() {
                 <InlineClockCheck />{' '}
                 {t(
                   'hierarchy_info.incubation_desc_c',
-                  'alır; mevcut kart setinden doğrudan yeni kişilik oluşturulur ve Hafıza Ağı bu yeni karaktere uyum sağlayacak şekilde güncellenir.'
+                  'alır; mevcut kart setinden doğrudan yeni kişilik oluşturulur ve Hafıza Haritası bu yeni karaktere uyum sağlayacak şekilde güncellenir.'
                 )}
               </Description>
             </TextColumn>

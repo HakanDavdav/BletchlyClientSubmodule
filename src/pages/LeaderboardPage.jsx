@@ -21,6 +21,7 @@ import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 import useThemeStore from '../store/themeStore'
 import HowItWorksHelp from '../components/common/HowItWorksHelp'
+import { getQueryErrorMessage } from '../utils/errorHelper'
 
 export default function LeaderboardPage() {
   const [searchParams] = useSearchParams()
@@ -113,7 +114,7 @@ export default function LeaderboardPage() {
   })
 
   // 3. Leaderboard query
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ['leaderboard', seasonParam, type],
     queryFn: async () => {
       if (isCurrentSeason) {
@@ -478,7 +479,7 @@ export default function LeaderboardPage() {
             </div>
           ) : isError ? (
             <div className="empty-state form-error" style={{ gridColumn: '1 / -1' }}>
-              {t('leaderboard.error', 'Sıralama yüklenirken hata oluştu.')}
+              {getQueryErrorMessage(error, t)}
             </div>
           ) : !items || items.length === 0 ? (
             <div className="empty-state" style={{ gridColumn: '1 / -1' }}>
@@ -545,7 +546,7 @@ export default function LeaderboardPage() {
               <div className="spinner spinner-lg" />
             </div>
           ) : isError ? (
-            <div className="empty-state form-error">{t('leaderboard.error', 'Sıralama yüklenirken hata oluştu.')}</div>
+            <div className="empty-state form-error">{getQueryErrorMessage(error, t)}</div>
           ) : !items || items.length === 0 ? (
             <div className="empty-state">{t('leaderboard.no_data', 'Henüz kimse puan kazanmamış.')}</div>
           ) : (

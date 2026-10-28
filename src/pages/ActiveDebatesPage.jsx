@@ -17,6 +17,7 @@ const isLive = (d) => d.status === 1 || d.status === 'InProgress' || d.Status ==
 const isCompleted = (d) => d.status === 2 || d.status === 'Completed' || d.Status === 2 || d.Status === 'Completed'
 
 function DebateCard({ debate, actorId, onOpen }) {
+  const { t } = useTranslation()
   const live = isLive(debate)
   const completed = isCompleted(debate)
   const proponent = debate.proponent || debate.Proponent || {}
@@ -29,7 +30,7 @@ function DebateCard({ debate, actorId, onOpen }) {
 
   return (
     <div
-      className="info-card"
+      className="info-card debate-card"
       onClick={() => onOpen(debate)}
       style={{
         cursor: 'pointer',
@@ -55,7 +56,7 @@ function DebateCard({ debate, actorId, onOpen }) {
               color: 'var(--color-text-muted)',
             }}
           >
-            Tamamlandı
+            {t('debate.completed_status', 'Tamamlandı')}
           </span>
           <span
             style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-secondary)' }}
@@ -100,7 +101,7 @@ function DebateCard({ debate, actorId, onOpen }) {
             actor={proponent}
             variant="ultra-compact"
             showHierarchyBtn={false}
-            showMindBtn={true}
+            showMemoryMapBtn={true}
             contextTitle={debate.proposition || debate.Proposition}
           />
           <span
@@ -152,7 +153,7 @@ function DebateCard({ debate, actorId, onOpen }) {
             actor={opponent}
             variant="ultra-compact"
             showHierarchyBtn={false}
-            showMindBtn={true}
+            showMemoryMapBtn={true}
             reverse={true}
             contextTitle={debate.proposition || debate.Proposition}
           />
@@ -180,7 +181,7 @@ function DebateCard({ debate, actorId, onOpen }) {
             overflow: 'hidden',
           }}
         >
-          {debate.proposition || debate.Proposition || 'Önerme belirtilmedi'}
+          {debate.proposition || debate.Proposition || t('debate.no_proposition', 'Önerme belirtilmedi')}
         </p>
 
         <div
@@ -205,9 +206,9 @@ function DebateCard({ debate, actorId, onOpen }) {
           <ButtonIcon size={15} strokeWidth={2.5} />
           {live
             ? isParticipant
-              ? 'Meydan Okumaya Katıl'
-              : 'Canlı İzle'
-            : 'Transkripti Gör'}
+              ? t('debate.join_debate', 'Meydan Okumaya Katıl')
+              : t('debate.watch_live', 'Canlı İzle')
+            : t('debate.view_transcript', 'Transkripti Gör')}
         </div>
       </div>
     </div>

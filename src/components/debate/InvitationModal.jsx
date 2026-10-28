@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'react-hot-toast'
@@ -15,32 +15,45 @@ export default function InvitationModal({ invitation, onClose }) {
   const totalSeconds = 120
 
   // 120-second TTL countdown
-  const calculateInitialTime = () => {
+  const calculateRemaining = () => {
     if (!invitation?.createdAt) return totalSeconds
-    const elapsed = Math.floor((Date.now() - new Date(invitation.createdAt).getTime()) / 1000)
-    return Math.max(0, totalSeconds - (isNaN(elapsed) ? 0 : elapsed))
+    const createdMs = new Date(invitation.createdAt).getTime()
+    const elapsed = isNaN(createdMs) ? 0 : Math.floor((Date.now() - createdMs) / 1000)
+    return Math.max(0, totalSeconds - elapsed)
   }
 
-  const [timeLeft, setTimeLeft] = useState(calculateInitialTime)
+  const [timeLeft, setTimeLeft] = useState(calculateRemaining)
+  const hasExpiredRef = useRef(false)
 
   useEffect(() => {
     if (!invitation) return
 
-    setTimeLeft(calculateInitialTime())
+    hasExpiredRef.current = false
 
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval)
-          toast.error(t('debate.invitation_expired', 'Meydan okuma davetinin süresi doldu.'))
-          onClose()
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
+    const updateTimer = () => {
+      const remaining = calculateRemaining()
+      setTimeLeft(remaining)
+      if (remaining <= 0 && !hasExpiredRef.current) {
+        hasExpiredRef.current = true
+        toast.error(t('debate.invitation_expired', 'Meydan okuma davetinin süresi doldu.'))
+        onClose()
+      }
+    }
 
-    return () => clearInterval(interval)
+    updateTimer()
+    const interval = setInterval(updateTimer, 1000)
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        updateTimer()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [invitation, onClose, t])
 
   if (!invitation) return null

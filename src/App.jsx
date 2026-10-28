@@ -2,6 +2,8 @@ import MainLayout from './components/layout/MainLayout'
 import useUIStore from './store/uiStore'
 import useThemeStore from './store/themeStore'
 import useAuthStore from './store/authStore'
+import useMyEntitiesStore from './store/myEntitiesStore'
+import { UserCapabilities } from './constants/enums'
 import {
   applyCustomColorVars,
   clearCustomColorVars,
@@ -48,16 +50,24 @@ import TermsOfServicePage from './pages/legal/TermsOfServicePage'
 import DebatePage from './pages/debate/DebatePage'
 import DebateTranscriptPage from './pages/debate/DebateTranscriptPage'
 import InvitationModal from './components/debate/InvitationModal'
+import CookieConsentBanner from './components/common/CookieConsentBanner'
 import { useInvitationHub } from './hooks/useInvitationHub'
 
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { initGA, trackPageView } from './utils/analytics'
+import { formatPageTitle } from './config/site'
+import { isDynamicTitleRoute, resolveStaticPageTitle } from './config/pageTitles'
 
 const AdminApp = import.meta.env.VITE_IS_ADMIN_BUILD === 'true'
   ? lazy(() => import('./AdminApp'))
   : () => null
 
-const MindPage = lazy(() => import('./pages/MindPage'))
+const MemoryMapPage = lazy(() => import('./pages/MemoryMapPage'))
+
+function LegacyPathRedirect() {
+  const location = useLocation()
+  return <Navigate to={`/memory-map${location.search}`} replace />
+}
 
 // Mobilde toast'ı sağa/sola sürükleyip bırakınca kapatmayı sağlar.
 function SwipeableToast({ toast: t, enabled, children }) {
@@ -114,40 +124,46 @@ function SwipeableToast({ toast: t, enabled, children }) {
 }
 
 export default function App() {
-  const { t: translate } = useTranslation()
+  const { t: translate, i18n } = useTranslation()
   const isMobile = useIsMobile()
   const { isDarkMode, isGreenMode, customColor } = useThemeStore()
   const { incomingInvitation, isInvitationModalOpen, openInvitationModal, closeInvitation } =
     useInvitationHub()
   const location = useLocation()
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
-  const prevLoggedInRef = useRef(isLoggedIn)
+  const hasFetchedOnce = useMyEntitiesStore((s) => s.hasFetchedOnce)
+  const mySettings = useMyEntitiesStore((s) => s.mySettings)
 
   useEffect(() => {
     initGA()
   }, [])
 
-  // Logout → varsayılan mavi; login → tarayıcıdaki tercih edilen renk.
+  // Yetki doğrulama: kullanıcı premium değilse (veya oturum kapalıysa) ve aktif tema rengi
+  // bir premium renkse güvenli varsayılan olan yeşile çeker.
+  // Ücretsiz renkler (Yeşil, Mavi, Pembe) Dark Mode gibi login/logout'tan bağımsız tarayıcıda kalır.
   useEffect(() => {
-    if (prevLoggedInRef.current === isLoggedIn) return
-    prevLoggedInRef.current = isLoggedIn
-    if (isLoggedIn) {
-      useThemeStore.getState().restorePreferredColor()
-    } else {
-      useThemeStore.getState().resetToDefaultBlue()
+    if (!isLoggedIn) {
+      useThemeStore.getState().validateThemePermission(false)
+      return
     }
-  }, [isLoggedIn])
-
-  // Sayfa açılışında oturum varsa tercih edilen renk uygulanır (güvenlik).
-  useEffect(() => {
-    if (useAuthStore.getState().isLoggedIn) {
-      useThemeStore.getState().restorePreferredColor()
+    if (hasFetchedOnce) {
+      const userCapabilities = Number(mySettings?.userCapabilities ?? UserCapabilities.Default)
+      const isPremium = (userCapabilities & UserCapabilities.Premium) === UserCapabilities.Premium
+      useThemeStore.getState().validateThemePermission(isPremium)
     }
-  }, [])
+  }, [isLoggedIn, hasFetchedOnce, mySettings])
 
   useEffect(() => {
     trackPageView(location.pathname + location.search)
   }, [location.pathname, location.search])
+
+  // Statik sayfaların sekme başlığını yönetir. Detay sayfaları (post, profil, klan,
+  // meydan okuma vb.) kendi verileriyle useDocumentTitle üzerinden başlığı belirler.
+  useEffect(() => {
+    if (isDynamicTitleRoute(location.pathname)) return
+
+    document.title = formatPageTitle(resolveStaticPageTitle(location.pathname, translate))
+  }, [location.pathname, translate, i18n.language])
 
   useEffect(() => {
     if (isDarkMode) {
@@ -316,13 +332,14 @@ export default function App() {
             <Route path="/card-hierarchy" element={<PersonalityCardHierarchyPage />} />
             <Route path="/basic-concepts" element={<BasicConceptsPage />} />
             <Route
-              path="/mind"
+              path="/memory-map"
               element={
                 <Suspense fallback={null}>
-                  <MindPage />
+                  <MemoryMapPage />
                 </Suspense>
               }
             />
+            <Route path="/mind" element={<LegacyPathRedirect />} />
             <Route path="/cards" element={<PersonalityCardPage />} />
             <Route path="/marketplace" element={<MarketplacePage />} />
             <Route path="/enrich-news" element={<EnrichNewsPoolPage />} />
@@ -344,6 +361,7 @@ export default function App() {
         invitation={isInvitationModalOpen ? incomingInvitation : null}
         onClose={closeInvitation}
       />
+      <CookieConsentBanner />
     </>
   )
 }

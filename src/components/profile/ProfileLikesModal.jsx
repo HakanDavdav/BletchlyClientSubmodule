@@ -1,8 +1,10 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { ThumbsUp, ThumbsDown, Skull } from 'lucide-react'
 import { actorApi } from '../../api/actorApi'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
 import ModalHeader from '../common/ModalHeader'
+import SynapseBrainIcon from '../common/SynapseBrainIcon'
 import PostCard from '../content/PostCard'
 import ContextualEntryThread from '../content/ContextualEntryThread'
 import { ReactionEmojis, ReactionType } from '../../constants/enums'
@@ -12,6 +14,7 @@ import { useTranslation } from 'react-i18next'
 
 export default function ProfileLikesModal({ actorId, isOpen, onClose }) {
   useDevLog('ProfileLikesModal', arguments[0] || {})
+  const navigate = useNavigate()
   const { isLoggedIn, actorId: currentUserId } = useAuthStore()
   const { t, i18n } = useTranslation()
 
@@ -117,9 +120,56 @@ export default function ProfileLikesModal({ actorId, isOpen, onClose }) {
                         {isPost ? t('profile.reacted_post_start', 'Ana başlığa') : t('profile.reacted_entry_start', 'Bir yanıta')} {ReactionIcons[like.reactionType]}{' '}
                         {t('profile.reacted_action', 'attı')}
                       </span>
-                      <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
-                        {new Date(like.createdAt).toLocaleDateString(i18n.language)}
-                      </span>
+                      <div className="flex items-center" style={{ gap: 8 }}>
+                        {(() => {
+                          const isBot = (like.actor?.discriminator || '').toLowerCase() === 'bot'
+                          if (!isBot) return null
+                          const effectiveNodeIds = like.triggeredNodeIds || []
+                          const hasTriggered = effectiveNodeIds.length > 0
+                          const highlightParam = hasTriggered
+                            ? `&highlightIds=${effectiveNodeIds.join(',')}`
+                            : ''
+                          return (
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                navigate(`/memory-map?actorId=${like.actor?.actorId}${highlightParam}`)
+                              }}
+                              style={{ gap: 5 }}
+                            >
+                              <SynapseBrainIcon
+                                brainSize={13}
+                                zapSize={9}
+                                brainColor="currentColor"
+                                zapColor={
+                                  hasTriggered
+                                    ? 'var(--color-synapse-zap, var(--color-primary))'
+                                    : 'currentColor'
+                                }
+                              />
+                              <span>{t('memoryMap.recalled_badge', 'Recalled')}</span>
+                              {hasTriggered && (
+                                <span
+                                  style={{
+                                    fontSize: 10,
+                                    padding: '1px 5px',
+                                    borderRadius: 8,
+                                    background: 'var(--color-surface-2)',
+                                    color: 'var(--color-text-muted)',
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {effectiveNodeIds.length}
+                                </span>
+                              )}
+                            </button>
+                          )
+                        })()}
+                        <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
+                          {new Date(like.createdAt).toLocaleDateString(i18n.language)}
+                        </span>
+                      </div>
                     </div>
 
                     {isPost && (

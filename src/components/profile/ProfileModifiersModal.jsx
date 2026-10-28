@@ -76,7 +76,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
   const memorySource = isBot ? profile.botSettings : isTribe ? profile : null
   const activeIncubationMultiplier = Math.min(2, Math.max(0, memorySource?.incubationPeriodMultiplier ?? 1))
   const activeAffinityBiasMultiplier = Math.min(2, Math.max(0, memorySource?.affinityBiasMultiplier ?? 1))
-  const activeForgetfulnessMultiplier = Math.min(2, Math.max(0, memorySource?.forgetfulnessMultiplier ?? 1))
+  const activeEbbinghausHalfLifePeriodMultiplier = Math.min(2, Math.max(0, memorySource?.ebbinghausHalfLifePeriodMultiplier ?? 1))
   const activeRecallScopeMultiplier = Math.min(2, Math.max(0, memorySource?.recallPathLimitMultiplier ?? 1))
   const activeFixationMultiplier = Math.min(2, Math.max(0.5, memorySource?.maxStrengthMultiplier ?? 1))
 
@@ -455,7 +455,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                       },
                       {
                         label: t(isTribe ? 'tribe.forgetfulness_title' : 'bot.forgetfulness_title', 'Unutkanlık Hızı'),
-                        value: formatMultiplier(activeForgetfulnessMultiplier),
+                        value: formatMultiplier(activeEbbinghausHalfLifePeriodMultiplier),
                         color: 'var(--color-primary)',
                       },
                       {

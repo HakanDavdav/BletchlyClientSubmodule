@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { identityApi } from '../../api/identityApi'
 import useDevLog from '../../utils/useDevLog'
@@ -57,27 +57,55 @@ export default function ForgotPasswordModal({ isOpen, onClose }) {
     }
   })
 
+  const passwordEndTimeRef = useRef(null)
+  const hasPasswordTimedOutRef = useRef(false)
+
   // Countdown Logic for set_password step
   useEffect(() => {
-    let timer = null
-    if (isOpen && step === 'set_password') {
-      if (countdown > 0) {
-        timer = setInterval(() => {
-          setCountdown((prev) => prev - 1)
-        }, 1000)
-      } else if (countdown === 0) {
+    if (!isOpen || step !== 'set_password') {
+      passwordEndTimeRef.current = null
+      hasPasswordTimedOutRef.current = false
+      setCountdown(PASSWORD_SECONDS)
+      return
+    }
+
+    if (!passwordEndTimeRef.current) {
+      passwordEndTimeRef.current = Date.now() + PASSWORD_SECONDS * 1000
+      hasPasswordTimedOutRef.current = false
+    }
+
+    const updateTimer = () => {
+      if (!passwordEndTimeRef.current) return
+      const remaining = Math.max(0, Math.ceil((passwordEndTimeRef.current - Date.now()) / 1000))
+      setCountdown(remaining)
+      if (remaining === 0 && !hasPasswordTimedOutRef.current) {
+        hasPasswordTimedOutRef.current = true
         toast.error(t('common.session_timeout', 'Oturum zaman aşımına uğradı.'))
         handleClose()
         navigate('/register')
       }
     }
-    return () => {
-      if (timer) clearInterval(timer)
+
+    updateTimer()
+    const timer = setInterval(updateTimer, 1000)
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        updateTimer()
+      }
     }
-  }, [isOpen, step, countdown])
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [isOpen, step, t, navigate])
 
   const handleClose = () => {
     onClose()
+    passwordEndTimeRef.current = null
+    hasPasswordTimedOutRef.current = false
     setTimeout(() => {
       setStep('request')
       setEmailOrUsername('')

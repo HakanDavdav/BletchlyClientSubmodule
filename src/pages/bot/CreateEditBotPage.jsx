@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { actorApi } from '../../api/actorApi'
 import { personalityCardApi } from '../../api/personalityCardApi'
-import { Trash2, Loader2, Bot, Globe, AlertTriangle } from 'lucide-react'
+import { Trash2, Loader2, Bot, Globe, AlertTriangle, Lock } from 'lucide-react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import BackButton from '../../components/common/BackButton'
@@ -62,7 +62,7 @@ export default function CreateEditBotPage() {
     autoBio: false,
     preferredModel: 0,
     affinityBiasMultiplier: 1,
-    forgetfulnessMultiplier: 1,
+    ebbinghausHalfLifePeriodMultiplier: 1,
     maxStrengthMultiplier: 1,
     minStrengthThresholdMultiplier: 1,
     recallPathLimitMultiplier: 1,
@@ -109,6 +109,7 @@ export default function CreateEditBotPage() {
     [myBots]
   )
   const botCountLimit = userSettings?.botCountLimit ?? storeSettings?.botCountLimit ?? 5
+  const cardLockLimit = userSettings?.cardAssignmentLockLimit ?? storeSettings?.cardAssignmentLockLimit ?? 4
   const isBotLimitReached = !isEditMode && activeBots.length >= botCountLimit
 
   // Hafıza dayanıklılığı (Unutkanlık Hızı) ayarı Pro'ya özeldir
@@ -142,7 +143,7 @@ export default function CreateEditBotPage() {
     autoBio: false,
     preferredModel: 0,
     affinityBiasMultiplier: 1,
-    forgetfulnessMultiplier: 1,
+    ebbinghausHalfLifePeriodMultiplier: 1,
     maxStrengthMultiplier: 1,
     minStrengthThresholdMultiplier: 1,
     recallPathLimitMultiplier: 1,
@@ -168,31 +169,17 @@ export default function CreateEditBotPage() {
       const existingPersonalityCard = personalAssignedCards[0]
       setExistingCard(existingPersonalityCard || null)
 
-      const enums = {
-        Politics: 1,
-        Economy: 2,
-        WorldNews: 4,
-        LocalNews: 8,
-        Trending: 16,
-        Technology: 32,
-        Science: 64,
-        AI: 128,
-        Space: 256,
-        Health: 512,
-        Sports: 1024,
-        Entertainment: 2048,
-        Gaming: 4096,
-        Celebrity: 8192,
-        Lifestyle: 16384,
-        Education: 32768,
-        Relationships: 65536,
-      }
-
       const mappedTopicTypes = (existingBot.topicTypes || [])
         .map((t) => {
           const typeNameOrVal = t.topicTypeName
           if (typeof typeNameOrVal === 'number') return typeNameOrVal
-          return enums[typeNameOrVal] || null
+          const match = TopicTypes.find(
+            (opt) =>
+              opt.enumName === typeNameOrVal ||
+              opt.label === typeNameOrVal ||
+              opt.key === typeNameOrVal?.toLowerCase()
+          )
+          return match ? match.value : null
         })
         .filter((v) => v != null)
 
@@ -216,7 +203,7 @@ export default function CreateEditBotPage() {
         autoBio: existingBot.botSettings?.autoBio || false,
         preferredModel: existingBot.botSettings?.preferredModel ?? 0,
         affinityBiasMultiplier: existingBot.botSettings?.affinityBiasMultiplier ?? 1,
-        forgetfulnessMultiplier: existingBot.botSettings?.forgetfulnessMultiplier ?? 1,
+        ebbinghausHalfLifePeriodMultiplier: existingBot.botSettings?.ebbinghausHalfLifePeriodMultiplier ?? 1,
         maxStrengthMultiplier: existingBot.botSettings?.maxStrengthMultiplier ?? 1,
         minStrengthThresholdMultiplier: Number(
           (2 - (existingBot.botSettings?.maxStrengthMultiplier ?? 1)).toFixed(2)
@@ -370,6 +357,9 @@ export default function CreateEditBotPage() {
         selectedCardIds: exists
           ? current.selectedCardIds.filter((selectedId) => selectedId !== lowerId)
           : [...current.selectedCardIds, lowerId],
+        lockedCardIds: exists
+          ? current.lockedCardIds.filter((lockedId) => lockedId !== lowerId)
+          : current.lockedCardIds,
       }
     })
   }
@@ -378,12 +368,19 @@ export default function CreateEditBotPage() {
     const lowerId = normalizeCardId(cardId)
     if (!lowerId) return
     setFormData((current) => {
-      const exists = current.lockedCardIds.includes(lowerId)
-      return {
-        ...current,
-        lockedCardIds: exists
-          ? current.lockedCardIds.filter((lockedId) => lockedId !== lowerId)
-          : [...current.lockedCardIds, lowerId],
+      const isLocked = current.lockedCardIds.includes(lowerId)
+      if (isLocked) {
+        return {
+          ...current,
+          lockedCardIds: current.lockedCardIds.filter((lockedId) => lockedId !== lowerId),
+        }
+      } else {
+        const isSelected = current.selectedCardIds.includes(lowerId)
+        return {
+          ...current,
+          selectedCardIds: isSelected ? current.selectedCardIds : [...current.selectedCardIds, lowerId],
+          lockedCardIds: [...current.lockedCardIds, lowerId],
+        }
       }
     })
   }
@@ -531,13 +528,13 @@ export default function CreateEditBotPage() {
                   fontSize: 12,
                   padding: '2px 8px',
                   borderRadius: 12,
-                  background: isBotLimitReached ? 'rgba(239,68,68,0.15)' : 'var(--color-surface-raised)',
-                  color: isBotLimitReached ? '#ef4444' : 'var(--color-text-secondary)',
-                  border: `1px solid ${isBotLimitReached ? '#ef4444' : 'var(--color-border)'}`,
+                  background: 'var(--color-surface-raised)',
+                  color: 'var(--color-text-secondary)',
+                  border: '1px solid var(--color-border)',
                   fontWeight: 600,
                 }}
               >
-                {activeBots.length} / {botCountLimit} {t('common.bot', 'Bot')}
+                {activeBots.length} / {botCountLimit}
               </span>
             )}
           </div>
@@ -799,6 +796,26 @@ export default function CreateEditBotPage() {
             >
               {t('bot.select_unassigned_cards', 'Sahip olduğun kartlarından ekle (Opsiyonel)')}
             </label>
+            {cardLockLimit != null && (
+              <span
+                title={t('profile.card_assignment_lock_limit', 'Kart Kilit Limiti')}
+                style={{
+                  fontSize: 12,
+                  padding: '2px 8px',
+                  borderRadius: 12,
+                  background: 'var(--color-surface-raised)',
+                  color: 'var(--color-text-secondary)',
+                  border: '1px solid var(--color-border)',
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                <Lock size={12} style={{ opacity: 0.8 }} />
+                {t('card.total_lock_allowance', 'Toplam Kilit Hakkı')}: {cardLockLimit}
+              </span>
+            )}
           </div>
           <CardSelectionSlots
             cards={myCards}
@@ -807,6 +824,8 @@ export default function CreateEditBotPage() {
             disabled={mutation.isPending || mutation.isSuccess}
             showHeader={false}
             slotCount={10}
+            assignLockedCardIds={formData.lockedCardIds}
+            onToggleAssignLock={toggleLockCardId}
           />
           <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
             {t('bot.additional_personality_cards_desc')}
@@ -834,6 +853,7 @@ export default function CreateEditBotPage() {
               }
             }}
             disabled={mutation.isPending || mutation.isSuccess}
+            isPremium={isPremiumUser}
           />
           <div style={{ marginTop: 18 }}>
             <label
@@ -860,7 +880,7 @@ export default function CreateEditBotPage() {
                 title={t('bot.incubation_title', 'Kişilik Değişim Süresi')}
                 description={t(
                   'bot.incubation_desc',
-                  'Yeni eklenen Kişilik Kartlarının botun karakterini değiştirmeden önce ne kadar süre bekleyeceğini belirler. Süre dolduğunda bekleyen kartlar etkinleşerek mevcut kart setinden doğrudan yeni bir kişilik oluşturulur ve Hafıza Ağı bu yeni karaktere uyum sağlayacak şekilde güncellenir. Süreyi kısa tutmak yeni kartların hızla etkisini göstermesini sağlar; ancak çok sık kişilik değişimi anıların birbiriyle çelişip daha dengesiz bir yapıya bürünmesine yol açar ve karakterin oturmasını zorlaştırır.'
+                  'Yeni eklenen Kişilik Kartlarının botun karakterini değiştirmeden önce ne kadar süre bekleyeceğini belirler. Süre dolduğunda bekleyen kartlar etkinleşerek mevcut kart setinden doğrudan yeni bir kişilik oluşturulur ve Hafıza Haritası bu yeni karaktere uyum sağlayacak şekilde güncellenir. Süreyi kısa tutmak yeni kartların hızla etkisini göstermesini sağlar; ancak çok sık kişilik değişimi anıların birbiriyle çelişip daha dengesiz bir yapıya bürünmesine yol açar ve karakterin oturmasını zorlaştırır.'
                 )}
                 leftLabel={t('bot.incubation_left', 'Fast Personality Change')}
                 rightLabel={t('bot.incubation_right', 'Slow Personality Change')}
@@ -912,17 +932,17 @@ export default function CreateEditBotPage() {
                 title={t('bot.forgetfulness_title', 'Forgetting Speed')}
                 description={t(
                   'bot.forgetfulness_desc',
-                  'Determines how quickly unvisited Memories fade over time and how frequently they are cleared from the Memory Network. Towards Elephant Memory, the bot retains even its oldest experiences for a long time; towards Alzheimer, it quickly forgets unused old memories and focuses only on recent events.'
+                  'Determines how quickly unvisited Memories fade over time and how frequently they are cleared from the Memory Map. Towards Elephant Memory, the bot retains even its oldest experiences for a long time; towards Alzheimer, it quickly forgets unused old memories and focuses only on recent events.'
                 )}
                 leftLabel={t('bot.forgetfulness_left', 'Elephant Memory')}
                 rightLabel={t('bot.forgetfulness_right', 'Alzheimer')}
-                emblemField="forgetfulnessMultiplier"
-                value={formData.forgetfulnessMultiplier}
+                emblemField="ebbinghausHalfLifePeriodMultiplier"
+                value={formData.ebbinghausHalfLifePeriodMultiplier}
                 min={0}
                 max={2}
                 onChange={(v) => {
                   if (!mutation.isPending && !mutation.isSuccess) {
-                    setFormData((prev) => ({ ...prev, forgetfulnessMultiplier: v }))
+                    setFormData((prev) => ({ ...prev, ebbinghausHalfLifePeriodMultiplier: v }))
                   }
                 }}
                 disabled={mutation.isPending || mutation.isSuccess}
@@ -965,7 +985,7 @@ export default function CreateEditBotPage() {
                 title={t('bot.fixation_title', 'Idea Fixation')}
                 description={t(
                   'bot.fixation_desc',
-                  'Determines how strongly repeated ideas can solidify in the Memory Network and how easily fading memories are cleared. At the Open-Minded end, no idea becomes overly rigid and fading memories are easily cleared, allowing the bot to adapt quickly to new ideas. At the Resilient end, repeated thoughts take deep root and even the faintest memories resist being forgotten.'
+                  'Determines how strongly repeated ideas can solidify in the Memory Map and how easily fading memories are cleared. At the Open-Minded end, no idea becomes overly rigid and fading memories are easily cleared, allowing the bot to adapt quickly to new ideas. At the Resilient end, repeated thoughts take deep root and even the faintest memories resist being forgotten.'
                 )}
                 leftLabel={t('bot.fixation_left', 'Open-Minded')}
                 rightLabel={t('bot.fixation_right', 'Resilient')}

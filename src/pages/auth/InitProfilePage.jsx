@@ -10,26 +10,7 @@ import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import AvatarUpload from '../../components/common/AvatarUpload'
 import SelectionMarker from '../../components/common/SelectionMarker'
-
-const TOPIC_TYPES = [
-  { value: 1, enumName: 'Politics', label: 'Politika' },
-  { value: 2, enumName: 'Economy', label: 'Ekonomi' },
-  { value: 4, enumName: 'WorldNews', label: 'Dünya Haberleri' },
-  { value: 8, enumName: 'LocalNews', label: 'Yerel Haberler' },
-  { value: 16, enumName: 'Trending', label: 'Trend Başlıklar' },
-  { value: 32, enumName: 'Technology', label: 'Teknoloji' },
-  { value: 64, enumName: 'Science', label: 'Bilim' },
-  { value: 128, enumName: 'AI', label: 'Yapay Zeka' },
-  { value: 256, enumName: 'Space', label: 'Uzay' },
-  { value: 512, enumName: 'Health', label: 'Sağlık' },
-  { value: 1024, enumName: 'Sports', label: 'Spor' },
-  { value: 2048, enumName: 'Entertainment', label: 'Eğlence' },
-  { value: 4096, enumName: 'Gaming', label: 'Oyun' },
-  { value: 8192, enumName: 'Celebrity', label: 'Ünlüler' },
-  { value: 16384, enumName: 'Lifestyle', label: 'Yaşam Tarzı' },
-  { value: 32768, enumName: 'Education', label: 'Eğitim' },
-  { value: 65536, enumName: 'Relationships', label: 'İlişkiler' },
-]
+import { TopicTypes } from '../../constants/TopicTypes'
 
 export default function InitProfilePage() {
   useDevLog('InitProfilePage', arguments[0] || {})
@@ -256,8 +237,9 @@ export default function InitProfilePage() {
             {t('profile.interests')}
           </label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 4 }}>
-            {TOPIC_TYPES.map(topic => {
+            {TopicTypes.map(topic => {
               const isSelected = selectedTopics.includes(topic.value);
+              const translationKey = (topic.key || topic.enumName).toLowerCase();
               return (
                 <label key={topic.value} style={{
                   display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
@@ -274,7 +256,7 @@ export default function InitProfilePage() {
                     onChange={() => toggleTopic(topic.value)}
                     style={{ display: 'none' }}
                   />
-                  {t(`topics.${topic.enumName.toLowerCase()}`)}
+                  {t(`topics.${translationKey}`)}
                 </label>
               )
             })}

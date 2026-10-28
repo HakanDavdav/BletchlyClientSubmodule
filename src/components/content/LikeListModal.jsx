@@ -108,7 +108,7 @@ export default function LikeListModal({ contentItemId, isOpen, onClose, initialT
                   style={{ padding: '8px 16px' }}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <ActorMinimalCard actor={like.actor} showHierarchyBtn={false} clickable={true} />
+                    <ActorMinimalCard actor={like.actor} showHierarchyBtn={false} clickable={true} triggeredNodeIds={like.triggeredNodeIds} />
                   </div>
                   <span
                     style={{

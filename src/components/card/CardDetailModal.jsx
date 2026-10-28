@@ -193,7 +193,7 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
 
 
   return createPortal(
-    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 150 }} role="presentation">
+    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 100000 }} role="presentation">
       <div
         className="modal-box"
         role="dialog"
@@ -275,7 +275,7 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
                       {...node.data}
                       isDormant={node.data.isDormant ?? node.data.IsDormant}
                       showPoint={false}
-                      showMindBtn={false}
+                      showMemoryMapBtn={false}
                       showEditBtn={false}
                       clickable={true}
                     />
@@ -284,7 +284,7 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
                       key={`assigned-actor-${node.data.actorId}`}
                       actor={node.data}
                       showHierarchyBtn={false}
-                      showMindBtn={false}
+                      showMemoryMapBtn={false}
                       showEditBtn={false}
                       clickable={true}
                     />

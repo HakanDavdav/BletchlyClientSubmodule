@@ -54,25 +54,25 @@ const useUIStore = create(
       searchMode: 'general', // 'general' | 'posts' | 'actors' | 'tribes'
       setSearchMode: (mode) => set({ searchMode: mode }),
 
-      // ─── Ambient Bots / Welcome / Mind (profil arka planı seçenekleri) ────────
+      // ─── Ambient Bots / Welcome / Memory Map (profil arka planı seçenekleri) ──
       isBotsAmbience: false,
       toggleBotsAmbience: () =>
         set((state) => ({
           isBotsAmbience: !state.isBotsAmbience,
           isWelcomeAmbience: false,
-          isMindAmbience: false,
+          isMemoryMapAmbience: false,
         })),
       isWelcomeAmbience: false,
       toggleWelcomeAmbience: () =>
         set((state) => ({
           isWelcomeAmbience: !state.isWelcomeAmbience,
           isBotsAmbience: false,
-          isMindAmbience: false,
+          isMemoryMapAmbience: false,
         })),
-      isMindAmbience: false,
-      toggleMindAmbience: () =>
+      isMemoryMapAmbience: false,
+      toggleMemoryMapAmbience: () =>
         set((state) => ({
-          isMindAmbience: !state.isMindAmbience,
+          isMemoryMapAmbience: !state.isMemoryMapAmbience,
           isBotsAmbience: false,
           isWelcomeAmbience: false,
         })),

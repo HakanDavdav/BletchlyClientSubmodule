@@ -12,6 +12,8 @@ import BackButton from '../components/common/BackButton'
 import useAuthStore from '../store/authStore'
 import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
+import { getQueryErrorMessage } from '../utils/errorHelper'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 export default function PostDetailPage() {
   const [searchParams] = useSearchParams()
@@ -31,11 +33,13 @@ export default function PostDetailPage() {
 
   const postId = propPostId || (trendingData && trendingData[0]?.contentItemId)
 
-  const { data: postData, isLoading: isPostLoading } = useQuery({
+  const { data: postData, isLoading: isPostLoading, isError: isPostError, error: postError } = useQuery({
     queryKey: ['post', postId],
     queryFn: () => contentItemApi.getPost(postId).then((r) => r.data?.data ?? null),
     enabled: !!postId,
   })
+
+  useDocumentTitle(postData?.title)
 
   const [page, setPage] = useState(1)
 
@@ -68,10 +72,10 @@ export default function PostDetailPage() {
     )
   }
 
-  if (!postData) {
+  if (isPostError || !postData) {
     return (
       <div className="empty-state">
-        {t('post.not_found')}
+        {getQueryErrorMessage(postError, t, true)}
         <br />
         <button
           className="btn btn-ghost"

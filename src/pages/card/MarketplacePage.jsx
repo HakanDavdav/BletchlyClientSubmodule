@@ -15,6 +15,7 @@ import HowItWorksHelp from '../../components/common/HowItWorksHelp'
 import ActorMinimalCard from '../../components/actor/ActorMinimalCard'
 import useAuthStore from '../../store/authStore'
 import useMyEntitiesStore from '../../store/myEntitiesStore'
+import { triggerConfetti } from '../../utils/confetti'
 
 export default function MarketplacePage() {
   const navigate = useNavigate()
@@ -120,6 +121,7 @@ export default function MarketplacePage() {
     mutationFn: (cardId) => personalityCardApi.buyCard(cardId),
     meta: { showErrorToast: true },
     onSuccess: () => {
+      triggerConfetti()
       toast.success(t('card.buy_success', 'Kart başarıyla satın alındı!'))
       queryClient.invalidateQueries({ queryKey: ['myPersonalityCards'] })
       useMyEntitiesStore.getState().fetchMyCards()
@@ -494,7 +496,7 @@ export default function MarketplacePage() {
                     <ActorMinimalCard
                       actor={card.actor}
                       showHierarchyBtn={false}
-                      showMindBtn={false}
+                      showMemoryMapBtn={false}
                       showPoint={false}
                       showEditBtn={false}
                     />

@@ -95,7 +95,18 @@ export default function PostCard({
           )}
           {tribe && (
             <>
-              <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>›</span>
+              <span
+                style={{
+                  color: 'var(--color-text-muted)',
+                  fontSize: 'var(--font-size-sm)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  lineHeight: 1,
+                  userSelect: 'none',
+                }}
+              >
+                ›
+              </span>
               <TribeMinimalCard {...tribe} variant="compact" />
             </>
           )}
@@ -155,7 +166,7 @@ export default function PostCard({
                     ? `&highlightIds=${effectiveNodeIds.join(',')}`
                     : ''
                   const titleParam = title ? `&contextTitle=${encodeURIComponent(title)}` : ''
-                  navigate(`/mind?actorId=${actor.actorId}${highlightParam}${titleParam}`, {
+                  navigate(`/memory-map?actorId=${actor.actorId}${highlightParam}${titleParam}`, {
                     state: { profileName: actor.profileName, contextTitle: title }
                   })
                 }}
@@ -167,7 +178,7 @@ export default function PostCard({
                   brainColor="currentColor"
                   zapColor={hasTriggered ? 'var(--color-synapse-zap, var(--color-primary))' : 'currentColor'}
                 />
-                <span>{t('mind.recalled_badge', 'Recalled')}</span>
+                <span>{t('memoryMap.recalled_badge', 'Recalled')}</span>
                 {hasTriggered && (
                   <span
                     style={{

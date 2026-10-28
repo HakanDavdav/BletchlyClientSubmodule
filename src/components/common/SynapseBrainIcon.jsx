@@ -2,7 +2,7 @@ import React from 'react'
 import { Brain, Zap } from 'lucide-react'
 
 /**
- * SynapseBrainIcon — Düğüm aktivasyonlu Mind butonları için ikili ikon (Brain + Zap).
+ * SynapseBrainIcon — Düğüm aktivasyonlu Memory Map butonları için ikili ikon (Brain + Zap).
  * Beynin önünde parlayan şimşek svg'si ile hafıza/sinaps çağrışımını temsil eder.
  */
 export default function SynapseBrainIcon({

@@ -1,4 +1,35 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import useMyEntitiesStore from '../../store/myEntitiesStore'
+import { UserCapabilities } from '../../constants/enums'
+
+export function PaletteLockedSlash({ size = '100%', strokeWidth = 2.4 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        pointerEvents: 'none',
+        overflow: 'visible',
+        filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55))',
+      }}
+    >
+      <line
+        x1="2.5"
+        y1="21.5"
+        x2="21.5"
+        y2="2.5"
+        stroke="var(--color-warning)"
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
 
 /** Official Qwen icon from https://simpleicons.org/?q=qwen */
 export function QwenLogo({ size = 30, ...props }) {
@@ -54,20 +85,46 @@ export const MODEL_GLASS_ITEMS = [
   { value: 2, key: 'deepseek', title: 'DeepSeek', Icon: DeepSeekLogo },
 ]
 
-export default function ModelGlassToggle({ value = 0, onChange, disabled = false, style = {} }) {
+export default function ModelGlassToggle({
+  value = 0,
+  onChange,
+  disabled = false,
+  isPremium: isPremiumProp,
+  style = {},
+}) {
+  const storeSettings = useMyEntitiesStore((state) => state.mySettings)
+  const isPremium =
+    isPremiumProp !== undefined
+      ? Boolean(isPremiumProp)
+      : ((storeSettings?.userCapabilities ?? UserCapabilities.Default) & UserCapabilities.Premium) ===
+        UserCapabilities.Premium
+
+  const navigate = useNavigate()
   const [hoveredIdx, setHoveredIdx] = useState(null)
   const activeIndex = MODEL_GLASS_ITEMS.findIndex((m) => m.value === value)
   const safeIndex = activeIndex >= 0 ? activeIndex : 0
 
   const handleSegmentClick = (index) => {
     if (disabled) return
+    const targetModel = MODEL_GLASS_ITEMS[index]
+    const isTargetLocked = targetModel.key === 'deepseek' && !isPremium
+    if (isTargetLocked) {
+      navigate('/premium')
+      return
+    }
+
     if (index === safeIndex) {
-      // Clicking the currently active model or the glass thumb cycles to the next model
-      const nextIndex = (safeIndex + 1) % MODEL_GLASS_ITEMS.length
-      onChange?.(MODEL_GLASS_ITEMS[nextIndex].value)
+      // Clicking the currently active model or the glass thumb cycles to the next available model
+      const allowedItems = isPremium
+        ? MODEL_GLASS_ITEMS
+        : MODEL_GLASS_ITEMS.filter((m) => m.key !== 'deepseek')
+      const currentAllowedIdx = allowedItems.findIndex((m) => m.value === value)
+      const nextItem =
+        allowedItems[(currentAllowedIdx >= 0 ? currentAllowedIdx + 1 : 0) % allowedItems.length]
+      onChange?.(nextItem.value)
     } else {
       // Directly jump to clicked model
-      onChange?.(MODEL_GLASS_ITEMS[index].value)
+      onChange?.(targetModel.value)
     }
   }
 
@@ -132,15 +189,17 @@ export default function ModelGlassToggle({ value = 0, onChange, disabled = false
 
       {/* ─── 3 Model Segments Underneath the Glass ─── */}
       {MODEL_GLASS_ITEMS.map((model, idx) => {
-        const { value: modelVal, title, Icon } = model
+        const { value: modelVal, title, Icon, key: modelKey } = model
         const isSelected = safeIndex === idx
         const isHovered = hoveredIdx === idx
+        const isLocked = modelKey === 'deepseek' && !isPremium
 
         return (
           <button
             key={modelVal}
             type="button"
             aria-label={title}
+            title={isLocked ? `${title} (Pro)` : title}
             disabled={disabled}
             onClick={() => handleSegmentClick(idx)}
             onMouseEnter={() => setHoveredIdx(idx)}
@@ -169,9 +228,10 @@ export default function ModelGlassToggle({ value = 0, onChange, disabled = false
                 width: 44,
                 height: 44,
                 borderRadius: '50%',
+                position: 'relative',
                 transition: 'all 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
                 transform: isSelected ? 'scale(1.15)' : isHovered ? 'scale(1.05)' : 'scale(0.92)',
-                opacity: isSelected ? 1 : isHovered ? 0.9 : 0.55,
+                opacity: isSelected ? 1 : isHovered ? 0.9 : isLocked ? 0.7 : 0.55,
                 // Normal state: monochrome white/gray based on site theme (text-secondary)
                 // Active state: turns to theme color (green or blue)
                 color: isSelected || isHovered
@@ -185,6 +245,7 @@ export default function ModelGlassToggle({ value = 0, onChange, disabled = false
               }}
             >
               <Icon size={28} />
+              {isLocked && <PaletteLockedSlash strokeWidth={2.4} />}
             </div>
           </button>
         )

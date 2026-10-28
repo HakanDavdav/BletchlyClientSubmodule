@@ -23,20 +23,48 @@ export default function TokenModal({
 
   const displayTarget = targetText || email
 
+  const endTimeRef = useRef(null)
+  const hasTimedOutRef = useRef(false)
+
   useEffect(() => {
-    let timer = null
-    if (isOpen) {
-      if (countdown > 0) {
-        timer = setInterval(() => setCountdown((prev) => prev - 1), 1000)
-      } else if (countdown === 0) {
-        if (onTimeout) onTimeout()
-      }
-    } else {
+    if (!isOpen) {
+      endTimeRef.current = null
+      hasTimedOutRef.current = false
       setCountdown(totalSeconds)
       setToken('')
+      return
     }
-    return () => { if (timer) clearInterval(timer) }
-  }, [isOpen, countdown, onTimeout, totalSeconds])
+
+    if (!endTimeRef.current) {
+      endTimeRef.current = Date.now() + totalSeconds * 1000
+      hasTimedOutRef.current = false
+    }
+
+    const updateTimer = () => {
+      if (!endTimeRef.current) return
+      const remaining = Math.max(0, Math.ceil((endTimeRef.current - Date.now()) / 1000))
+      setCountdown(remaining)
+      if (remaining === 0 && !hasTimedOutRef.current) {
+        hasTimedOutRef.current = true
+        if (onTimeout) onTimeout()
+      }
+    }
+
+    updateTimer()
+    const timer = setInterval(updateTimer, 1000)
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        updateTimer()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [isOpen, onTimeout, totalSeconds])
 
   useEffect(() => {
     if (isOpen) {

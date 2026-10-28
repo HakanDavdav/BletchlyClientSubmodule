@@ -36,6 +36,8 @@ import useMyEntitiesStore from '../store/myEntitiesStore'
 import useUIStore from '../store/uiStore'
 import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
+import useDocumentTitle from '../hooks/useDocumentTitle'
+import { getQueryErrorMessage } from '../utils/errorHelper'
 import i18n from '../i18n'
 import { buildOwnedCardIdSet, sortCardsOwnedFirst } from '../utils/cardOwnership'
 import { getMemoryEmblems } from '../components/common/MemoryEmblems'
@@ -66,11 +68,13 @@ export default function TribePage() {
   const [hasMoreMembers, setHasMoreMembers] = useState(true)
   const [isLoadingMoreMembers, setIsLoadingMoreMembers] = useState(false)
 
-  const { data: tribe, isLoading } = useQuery({
+  const { data: tribe, isLoading, isError: isTribeError, error: tribeError } = useQuery({
     queryKey: ['tribe', tribeId],
     queryFn: () => tribeApi.getTribe(tribeId).then((r) => r.data?.data ?? null),
     enabled: !!tribeId,
   })
+
+  useDocumentTitle(tribe?.tribeName)
 
   // Birleştirilmiş üyeler listesi (default gelen ilk 10 + sonradan loadMore ile çekilenler)
   const allMembers = useMemo(() => {
@@ -157,7 +161,7 @@ export default function TribePage() {
         <div className="spinner spinner-lg" />
       </div>
     )
-  if (!tribe) return <div className="empty-state">{t('tribe.not_found')}</div>
+  if (isTribeError || !tribe) return <div className="empty-state">{getQueryErrorMessage(tribeError, t, true)}</div>
 
   const isDormant = Boolean(tribe.isDormant ?? tribe.IsDormant ?? false)
   const isMember = tribe.tribeMemberships?.some((m) => m.actor?.actorId === currentUserId)
@@ -394,7 +398,7 @@ export default function TribePage() {
               <button
                 className="btn btn-outline btn-sm"
                 onClick={() =>
-                  navigate('/mind?tribeId=' + tribeId, { state: { profileName: tribe?.tribeName } })
+                  navigate('/memory-map?tribeId=' + tribeId, { state: { profileName: tribe?.tribeName } })
                 }
               >
                 <Brain size={14} /> {t('tribe.collective_memories', 'Kollektif Anılar')}

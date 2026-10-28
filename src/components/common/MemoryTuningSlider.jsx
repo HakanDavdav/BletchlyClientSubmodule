@@ -1,8 +1,9 @@
+import { useNavigate } from 'react-router-dom'
 import LockedSlash from './LockedSlash'
 import { getMemoryEmblemVisual } from './MemoryEmblems'
 import './MemoryTuningSlider.css'
 
-// Genel çarpan biçimi (×0 .. ×2) — mind tuning sliderları için
+// Genel çarpan biçimi (×0 .. ×2) — hafıza ayarı sliderları için
 export function formatMultiplier(value) {
   return `×${Math.round(value * 100) / 100}`
 }
@@ -25,6 +26,7 @@ export default function MemoryTuningSlider({
   emblemField,
   style = {},
 }) {
+  const navigate = useNavigate()
   const safeValue = Math.min(max, Math.max(min, Number.isFinite(value) ? value : min))
   const percent = max === min ? 0 : Math.round(((safeValue - min) / (max - min)) * 100)
   const isDisabled = disabled || locked
@@ -71,6 +73,22 @@ export default function MemoryTuningSlider({
           <span>{subLeftLabel}</span>
           <span>{subRightLabel}</span>
         </div>
+      )}
+      {locked && (
+        <div
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            navigate('/premium')
+          }}
+          title={title ? `${title} (Pro)` : 'Pro'}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            cursor: 'pointer',
+            zIndex: 10,
+          }}
+        />
       )}
       {locked && <LockedSlash stretch />}
     </div>

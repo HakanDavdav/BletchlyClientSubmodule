@@ -1,6 +1,9 @@
 const DEFAULT_BLUE = '#3b82f6'
 const DEFAULT_GREEN = '#10b981'
 
+export const DEFAULT_THEME_COLOR = DEFAULT_GREEN
+export const FREE_THEME_COLORS = ['#10b981', '#3b82f6', '#ec4899']
+
 export function normalizeHex(hex) {
   if (!hex || typeof hex !== 'string') return null
   let c = hex.trim().replace('#', '')
@@ -15,7 +18,7 @@ export function normalizeHex(hex) {
 }
 
 function hexToRgbTuple(hex) {
-  const normalized = normalizeHex(hex) || DEFAULT_BLUE
+  const normalized = normalizeHex(hex) || DEFAULT_GREEN
   const num = parseInt(normalized.slice(1), 16)
   return [(num >> 16) & 255, (num >> 8) & 255, num & 255]
 }
@@ -65,7 +68,7 @@ export const PRIMARY_VAR_NAMES = [
 ]
 
 export function derivePrimaryVars(baseHex, isDark) {
-  const base = normalizeHex(baseHex) || DEFAULT_BLUE
+  const base = normalizeHex(baseHex) || DEFAULT_GREEN
   const primaryLight = isDark ? mixHex(base, '#000000', 0.72) : mixHex(base, '#ffffff', 0.85)
   const primaryLighter = isDark ? mixHex(base, '#000000', 0.84) : mixHex(base, '#ffffff', 0.93)
   const primaryDark = isDark ? mixHex(base, '#ffffff', 0.55) : mixHex(base, '#000000', 0.28)
@@ -105,7 +108,7 @@ export function clearCustomColorVars(isGreenMode) {
 }
 
 export function derivePersonalityCardVars(baseHex, isDark) {
-  const base = normalizeHex(baseHex) || DEFAULT_BLUE
+  const base = normalizeHex(baseHex) || DEFAULT_GREEN
   const filledBorder = isDark ? mixHex(base, '#ffffff', 0.25) : mixHex(base, '#000000', 0.28)
   const filledText = isDark ? mixHex(base, '#ffffff', 0.55) : mixHex(base, '#000000', 0.28)
   const tribeBorder = isDark ? mixHex(base, '#ffffff', 0.3) : mixHex(base, '#000000', 0.28)
@@ -173,7 +176,7 @@ const BLUE_ACCENT = {
   pulseRgb: [0.23, 0.51, 0.98],
 }
 
-export function deriveAccentPalette({ isGreenMode = false, customColor = null } = {}) {
+export function deriveAccentPalette({ isGreenMode = true, customColor = null } = {}) {
   const custom = normalizeHex(customColor)
   if (!custom) {
     const palette = isGreenMode ? GREEN_ACCENT : BLUE_ACCENT

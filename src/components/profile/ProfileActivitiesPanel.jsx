@@ -54,7 +54,13 @@ export default function ProfileActivitiesPanel({ actorId, profileName }) {
       <div className="profile-activities-header">{t('profile.activity_history')}</div>
       <div className="profile-activities-list" onScroll={handleScroll}>
         {activities.map((a) => (
-          <ActivityItem key={a.activityId} activity={a} currentProfileName={profileName} forceRead={forceRead} />
+          <ActivityItem
+            key={a.activityId}
+            activity={a}
+            currentProfileName={profileName}
+            forceRead={forceRead}
+            variant="profile"
+          />
         ))}
         {isFetching && (
           <div style={{ textAlign: 'center', padding: 8 }}>

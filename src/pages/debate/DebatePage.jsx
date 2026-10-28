@@ -4,6 +4,8 @@ import * as signalR from '@microsoft/signalr'
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import useAuthStore from '../../store/authStore'
+import useIsMobile from '../../hooks/useIsMobile'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 import { actorApi } from '../../api/actorApi'
 import { trackDebate } from '../../utils/analytics'
 import './DebatePage.css'
@@ -61,6 +63,7 @@ export default function DebatePage() {
   const debateId = searchParams.get('id')
   const isSpectator = searchParams.get('spectate') === '1'
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
 
   const { actorId } = useAuthStore()
 
@@ -81,6 +84,8 @@ export default function DebatePage() {
 
   const [proponent, setProponent] = useState(initialProponent)
   const [opponent, setOpponent] = useState(initialOpponent)
+
+  useDocumentTitle(proposition || t('active_debates.title', 'Meydan Okumalar'))
 
   const [activeSpeaker, setActiveSpeaker] = useState(null)
   const [verdict, setVerdict] = useState(null)
@@ -122,21 +127,36 @@ export default function DebatePage() {
   }
 
   const [timeoutSeconds, setTimeoutSeconds] = useState(120)
+  const timerEndRef = useRef(Date.now() + 120 * 1000)
   const initialSignalTimeoutRef = useRef(null)
   const hasReceivedInitialSignalRef = useRef(false)
 
   const resetTimer = (seconds = 120) => {
+    timerEndRef.current = Date.now() + seconds * 1000
     setTimeoutSeconds(seconds)
   }
 
   useEffect(() => {
     if (phase === 'verdict') return
 
-    const interval = setInterval(() => {
-      setTimeoutSeconds((prev) => (prev > 0 ? prev - 1 : 0))
-    }, 1000)
+    const updateTimer = () => {
+      const remaining = Math.max(0, Math.ceil((timerEndRef.current - Date.now()) / 1000))
+      setTimeoutSeconds(remaining)
+    }
 
-    return () => clearInterval(interval)
+    const interval = setInterval(updateTimer, 1000)
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        updateTimer()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [phase])
 
   useEffect(() => {
@@ -219,7 +239,8 @@ export default function DebatePage() {
 
       const icons = []
       const totalPoints = pPoints + oPoints
-      const numIcons = Math.min(300, 72 + Math.floor(totalPoints / 20))
+      const baseIcons = Math.min(300, 72 + Math.floor(totalPoints / 20))
+      const numIcons = isMobile ? Math.round(baseIcons * 0.4) : baseIcons
       for (let i = 0; i < numIcons; i++) {
         const rx = Rx * (1.02 + Math.random() * 0.2)
         const ry = Ry * (1.02 + Math.random() * 0.2)
@@ -265,7 +286,7 @@ export default function DebatePage() {
     const ro = new ResizeObserver(update)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [pPoints, oPoints])
+  }, [pPoints, oPoints, isMobile])
 
   // Auto-enrich profiles for both participants to get actorPoint and missing data
   useEffect(() => {
@@ -716,7 +737,7 @@ export default function DebatePage() {
       connection
         .invoke('Ready', debateId)
         .then(() => setIsReady(true))
-        .catch((err) => toast.error('Failed to send ready signal: ' + err.toString()))
+        .catch((err) => toast.error(t('debate.ready_signal_failed', 'Hazır sinyali gönderilemedi: ') + (err?.message || err?.toString() || '')))
     }
   }
 
@@ -746,7 +767,7 @@ export default function DebatePage() {
           setMyInput('')
           setIsMyTurn(false)
         })
-        .catch((err) => toast.error(err?.message || 'Failed to submit speech: ' + err.toString()))
+        .catch((err) => toast.error(err?.message || (t('debate.speech_submit_failed', 'Konuşma gönderilemedi: ') + (err?.toString() || ''))))
     }
   }
 
@@ -1145,7 +1166,7 @@ export default function DebatePage() {
                       <ActorMinimalCard
                         actor={actorData}
                         showHierarchyBtn={false}
-                        showMindBtn={false}
+                        showMemoryMapBtn={false}
                         showEditBtn={false}
                         showJuryPoints={true}
                         juryProponentScore={jury.proponentScore}

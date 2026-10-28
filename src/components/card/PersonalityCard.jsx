@@ -28,8 +28,10 @@ import BotIcon from '../common/icons/BotIcon'
 import AvatarUpload from '../common/AvatarUpload'
 import ImageWithLoader from '../common/ImageWithLoader'
 import ConfirmModal from '../common/ConfirmModal'
+import PremiumModal from '../common/PremiumModal'
 import useMyEntitiesStore from '../../store/myEntitiesStore'
 import useAuthStore from '../../store/authStore'
+import { UserCapabilities } from '../../constants/enums'
 
 export default function PersonalityCard({
   card,
@@ -72,6 +74,7 @@ export default function PersonalityCard({
   const navigate = useNavigate()
   const myOwnedCards = useMyEntitiesStore((s) => s.myCards)
   const currentActorId = useAuthStore((s) => s.actorId)
+  const isAdmin = useAuthStore((s) => s.isAdmin)
   const storeSettings = useMyEntitiesStore((s) => s.mySettings)
   const [modalType, setModalType] = useState(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
@@ -79,6 +82,12 @@ export default function PersonalityCard({
   const [showFossilTargets, setShowFossilTargets] = useState(false)
   const [showFossilAssigned, setShowFossilAssigned] = useState(false)
   const [isEditorConfirmModalOpen, setIsEditorConfirmModalOpen] = useState(false)
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false)
+
+  const isPremiumUser =
+    Boolean(isAdmin) ||
+    ((storeSettings?.userCapabilities ?? UserCapabilities.Default) & UserCapabilities.Premium) ===
+      UserCapabilities.Premium
 
   const cardOwnershipLimit = storeSettings?.cardOwnershipLimit || 10
 
@@ -263,6 +272,8 @@ export default function PersonalityCard({
                   shape="rect"
                   compact={true}
                   aspectRatio={3 / 4}
+                  isLocked={!isPremiumUser}
+                  onLockedClick={() => navigate('/premium')}
                 />
               </div>
               <input
@@ -410,6 +421,11 @@ export default function PersonalityCard({
           cancelText={t('common.cancel', 'İptal')}
           confirmVariant="danger"
           isLoading={disabled}
+        />
+
+        <PremiumModal
+          isOpen={isPremiumModalOpen}
+          onClose={() => setIsPremiumModalOpen(false)}
         />
       </div>
     )
@@ -955,6 +971,12 @@ export default function PersonalityCard({
               borderRadius: 6,
               zIndex: 3,
               flexShrink: 0,
+              border: lockToggleActive
+                ? '1px solid var(--color-primary)'
+                : '1px solid var(--color-border)',
+              background: lockToggleActive
+                ? 'var(--color-primary-light, rgba(99, 102, 241, 0.12))'
+                : 'var(--color-surface-raised)',
               color: lockToggleActive ? 'var(--color-primary-dark)' : 'var(--color-text-muted)',
             }}
           >
@@ -1063,7 +1085,7 @@ export default function PersonalityCard({
                   <ActorMinimalCard
                     actor={ownerActor}
                     showHierarchyBtn={false}
-                    showMindBtn={false}
+                    showMemoryMapBtn={false}
                     showEditBtn={false}
                     showPoint={false}
                     clickable={true}
@@ -1105,7 +1127,7 @@ export default function PersonalityCard({
                               isDormant={node.data.isDormant ?? node.data.IsDormant}
                               variant="compact"
                               clickable={true}
-                              showMindBtn={false}
+                              showMemoryMapBtn={false}
                               showEditBtn={false}
                               showPoint={false}
                             />
@@ -1114,7 +1136,7 @@ export default function PersonalityCard({
                               key={nodeKey}
                               actor={node.data}
                               showHierarchyBtn={false}
-                              showMindBtn={false}
+                              showMemoryMapBtn={false}
                               showEditBtn={false}
                               showPoint={false}
                               clickable={true}
@@ -1155,7 +1177,7 @@ export default function PersonalityCard({
                               isDormant={node.data.isDormant ?? node.data.IsDormant}
                               variant="compact"
                               clickable={true}
-                              showMindBtn={false}
+                              showMemoryMapBtn={false}
                               showEditBtn={false}
                               showPoint={false}
                             />
@@ -1164,7 +1186,7 @@ export default function PersonalityCard({
                               key={nodeKey}
                               actor={node.data}
                               showHierarchyBtn={false}
-                              showMindBtn={false}
+                              showMemoryMapBtn={false}
                               showEditBtn={false}
                               showPoint={false}
                               clickable={true}
@@ -1202,7 +1224,7 @@ export default function PersonalityCard({
                             isDormant={node.data.isDormant ?? node.data.IsDormant}
                             variant="compact"
                             clickable={true}
-                            showMindBtn={false}
+                            showMemoryMapBtn={false}
                             showEditBtn={false}
                             showPoint={false}
                           />
@@ -1211,7 +1233,7 @@ export default function PersonalityCard({
                             key={nodeKey}
                             actor={node.data}
                             showHierarchyBtn={false}
-                            showMindBtn={false}
+                            showMemoryMapBtn={false}
                             showPoint={false}
                             showEditBtn={false}
                             clickable={true}
@@ -1302,6 +1324,11 @@ export default function PersonalityCard({
           onEditClick={onEditClick}
         />
       )}
+
+      <PremiumModal
+        isOpen={isPremiumModalOpen}
+        onClose={() => setIsPremiumModalOpen(false)}
+      />
     </div>
   )
 }

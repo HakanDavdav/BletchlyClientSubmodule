@@ -30,7 +30,7 @@ export default function TribeMinimalCard({
   showMission = false,
   clickable = true,
   showPoint = true,
-  showMindBtn = true,
+  showMemoryMapBtn = true,
   showEditBtn = true,
   variant = 'expanded',
   ultraCompact = false,
@@ -107,10 +107,10 @@ export default function TribeMinimalCard({
     navigate('/tribe?tribeId=' + tribeId)
   }
 
-  const handleMindClick = (e) => {
+  const handleMemoryMapClick = (e) => {
     e.preventDefault()
     e.stopPropagation()
-    navigate('/mind?tribeId=' + tribeId, { state: { profileName: tribeName } })
+    navigate('/memory-map?tribeId=' + tribeId, { state: { profileName: tribeName } })
   }
 
   const handleEditClick = (e) => {
@@ -131,7 +131,7 @@ export default function TribeMinimalCard({
         cursor: clickable ? 'pointer' : 'default',
         margin: 0,
         flexWrap: shouldShowMission ? 'wrap' : undefined,
-        alignSelf: 'start',
+        alignSelf: isCompact ? 'center' : 'start',
         ...style,
       }}
     >
@@ -247,12 +247,12 @@ export default function TribeMinimalCard({
           <TRexSkullIcon className="badge-fossil-icon" />
         </span>
       )}
-      {!isCompact && showMindBtn && (
+      {!isCompact && showMemoryMapBtn && (
         <button
           type="button"
           className="actor-chip-hier-btn"
-          onClick={handleMindClick}
-          aria-label={t('mind.show', 'Hafıza haritasını göster')}
+          onClick={handleMemoryMapClick}
+          aria-label={t('memoryMap.show', 'Memory Map')}
           style={{ color: 'var(--color-text-muted)' }}
         >
           <Brain size={12} />

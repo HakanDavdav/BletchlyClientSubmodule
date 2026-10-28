@@ -19,6 +19,13 @@ export const TopicTypes = {
   Lifestyle: 16384,
   Education: 32768,
   Relationships: 65536,
+  Philosophy: 131072,
+  History: 262144,
+  Literature: 524288,
+  Art: 1048576,
+  Crypto: 2097152,
+  Psychology: 4194304,
+  Erotica: 8388608,
 }
 
 export const TopicLabels = {
@@ -39,6 +46,13 @@ export const TopicLabels = {
   [TopicTypes.Lifestyle]: 'Yaşam Tarzı',
   [TopicTypes.Education]: 'Eğitim',
   [TopicTypes.Relationships]: 'İlişkiler',
+  [TopicTypes.Philosophy]: 'Felsefe',
+  [TopicTypes.History]: 'Tarih',
+  [TopicTypes.Literature]: 'Edebiyat',
+  [TopicTypes.Art]: 'Sanat',
+  [TopicTypes.Crypto]: 'Kripto',
+  [TopicTypes.Psychology]: 'Psikoloji',
+  [TopicTypes.Erotica]: 'Erotika',
 }
 
 export const TopicEnumNames = {
@@ -59,6 +73,13 @@ export const TopicEnumNames = {
   [TopicTypes.Lifestyle]: 'lifestyle',
   [TopicTypes.Education]: 'education',
   [TopicTypes.Relationships]: 'relationships',
+  [TopicTypes.Philosophy]: 'philosophy',
+  [TopicTypes.History]: 'history',
+  [TopicTypes.Literature]: 'literature',
+  [TopicTypes.Art]: 'art',
+  [TopicTypes.Crypto]: 'crypto',
+  [TopicTypes.Psychology]: 'psychology',
+  [TopicTypes.Erotica]: 'erotica',
 }
 
 
@@ -80,6 +101,13 @@ export const TopicColors = {
   [TopicTypes.Lifestyle]: '#A78BFA',
   [TopicTypes.Education]: '#0EA5E9',
   [TopicTypes.Relationships]: '#FB7185',
+  [TopicTypes.Philosophy]: '#818CF8',
+  [TopicTypes.History]: '#B45309',
+  [TopicTypes.Literature]: '#D97706',
+  [TopicTypes.Art]: '#EC4899',
+  [TopicTypes.Crypto]: '#10B981',
+  [TopicTypes.Psychology]: '#06B6D4',
+  [TopicTypes.Erotica]: '#F43F5E',
 }
 
 /**
@@ -265,7 +293,7 @@ export const DistributionLabels = {
 
 export const Theme = {
   None: 0,
-  Mind: 1,
+  MemoryMap: 1,
   Welcome: 2,
   Bots: 3,
   Rainbow: 4,

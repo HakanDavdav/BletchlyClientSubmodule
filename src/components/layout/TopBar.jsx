@@ -20,7 +20,9 @@ import {
   Users,
   Brain,
   ShieldQuestion,
+  Clock,
 } from 'lucide-react'
+import { getRecentSearches, saveRecentSearch, removeRecentSearch } from '../../utils/recentSearches'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -76,16 +78,16 @@ function PaletteLockedSlash({ size = '100%', strokeWidth = 2 }) {
 }
 
 const COLOR_PRESETS = [
-  { color: '#3b82f6', label: 'Mavi', isDefault: true },
-  { color: '#10b981', label: 'Yeşil', isDefault: true },
-  { color: '#ec4899', label: 'Pembe', isDefault: true },
-  { color: '#8b5cf6', label: 'Mor' },
-  { color: '#06b6d4', label: 'Turkuaz' },
-  { color: '#f97316', label: 'Turuncu' },
-  { color: '#ef4444', label: 'Kırmızı' },
-  { color: '#eab308', label: 'Sarı' },
-  { color: '#14b8a6', label: 'Teal' },
-  { color: '#6366f1', label: 'İndigo' },
+  { key: 'green', color: '#10b981', label: 'Yeşil', isDefault: true },
+  { key: 'blue', color: '#3b82f6', label: 'Mavi', isDefault: true },
+  { key: 'pink', color: '#ec4899', label: 'Pembe', isDefault: true },
+  { key: 'purple', color: '#8b5cf6', label: 'Mor' },
+  { key: 'cyan', color: '#06b6d4', label: 'Turkuaz' },
+  { key: 'orange', color: '#f97316', label: 'Turuncu' },
+  { key: 'red', color: '#ef4444', label: 'Kırmızı' },
+  { key: 'yellow', color: '#eab308', label: 'Sarı' },
+  { key: 'teal', color: '#14b8a6', label: 'Teal' },
+  { key: 'indigo', color: '#6366f1', label: 'İndigo' },
 ]
 
 export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
@@ -169,6 +171,13 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
   const [suggestions, setSuggestions] = useState(null)
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
+  const [recentSearches, setRecentSearches] = useState(() => getRecentSearches())
+
+  useEffect(() => {
+    const handleUpdate = () => setRecentSearches(getRecentSearches())
+    window.addEventListener('recent-searches-updated', handleUpdate)
+    return () => window.removeEventListener('recent-searches-updated', handleUpdate)
+  }, [])
 
   const [filterOrderType, setFilterOrderType] = useState('')
   const [filterStartDate, setFilterStartDate] = useState('')
@@ -284,6 +293,12 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
     myProfile?.userSettings?.userCapabilities ?? UserCapabilities.Default
   )
   const isPremium = (userCapabilities & UserCapabilities.Premium) === UserCapabilities.Premium
+
+  useEffect(() => {
+    if (isLoggedIn && myProfile) {
+      useThemeStore.getState().validateThemePermission(isPremium)
+    }
+  }, [isLoggedIn, myProfile, isPremium])
 
   // Renk seçici sürüklenirken store'a yazmadan CSS değişkenlerini doğrudan DOM'a
   // rAF ile yazar (en fazla çerçeve başına bir kez); seçim bırakılınca store'a commit edilir.
@@ -423,7 +438,6 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
     // Eğer query boş veya çok kısaysa suggestions'ı temizle
     if (!searchQuery || searchQuery.trim().length === 0) {
       setSuggestions(null)
-      setShowSuggestions(false)
       setIsLoadingSuggestions(false)
       return
     }
@@ -490,7 +504,13 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
 
   const handleSearch = (e) => {
     e.preventDefault()
-    if (!searchQuery.trim() && searchMode === 'general') return
+    const trimmed = searchQuery.trim()
+    if (!trimmed && searchMode === 'general') return
+
+    if (trimmed) {
+      saveRecentSearch(trimmed)
+      setRecentSearches(getRecentSearches())
+    }
 
     console.log('handleSearch - filterOrderType:', filterOrderType)
 
@@ -693,15 +713,25 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
               style={{ paddingLeft: 32 }}
               placeholder={t('topbar.search', 'Ara')}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                if (!suppressSuggestionsRef.current) setShowSuggestions(true)
+              }}
+              onFocus={() => {
+                if (!suppressSuggestionsRef.current) setShowSuggestions(true)
+              }}
               onClick={() => {
-                if (suggestions && !suppressSuggestionsRef.current) setShowSuggestions(true)
+                if (!suppressSuggestionsRef.current) setShowSuggestions(true)
               }}
             />
 
-            {/* Search Suggestions Dropdown */}
+            {/* Search Suggestions & Recent Searches Dropdown */}
             <AnimatePresence>
-              {showSuggestions && !isFilterOpen && (suggestions || isLoadingSuggestions) && (
+              {showSuggestions && !isFilterOpen && (
+                searchQuery?.trim()?.length > 0
+                  ? (suggestions || isLoadingSuggestions)
+                  : (recentSearches && recentSearches.length > 0)
+              ) && (
                 <motion.div
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -725,6 +755,113 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                     <div style={{ padding: 16, textAlign: 'center' }}>
                       <div className="spinner spinner-sm" />
                     </div>
+                  ) : (!searchQuery || searchQuery.trim().length === 0) ? (
+                    <div style={{ padding: '6px 8px' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '6px 8px',
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: 'var(--color-text-faint)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                        }}
+                      >
+                        <span>{t('search.recent', 'RECENT')}</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        {recentSearches.slice(0, 5).map((item) => (
+                          <div
+                            key={item}
+                            onClick={() => {
+                              setSearchQuery(item)
+                              setShowSuggestions(false)
+                              saveRecentSearch(item)
+                              setRecentSearches(getRecentSearches())
+                              navigate('/search?query=' + encodeURIComponent(item))
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '8px 10px',
+                              borderRadius: 6,
+                              cursor: 'pointer',
+                              transition: 'background 0.15s ease',
+                              fontSize: 13,
+                              color: 'var(--color-text)',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = 'var(--color-surface-2)'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'transparent'
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8,
+                                minWidth: 0,
+                                flex: 1,
+                              }}
+                            >
+                              <Clock
+                                size={14}
+                                style={{ color: 'var(--color-text-muted)', flexShrink: 0 }}
+                              />
+                              <span
+                                style={{
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {item}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              aria-label={t('common.delete', 'Sil')}
+                              title={t('common.delete', 'Sil')}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                removeRecentSearch(item)
+                                setRecentSearches(getRecentSearches())
+                              }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: 20,
+                                height: 20,
+                                border: 'none',
+                                background: 'transparent',
+                                color: 'var(--color-text-faint)',
+                                cursor: 'pointer',
+                                padding: 0,
+                                marginLeft: 8,
+                                flexShrink: 0,
+                                opacity: 0.6,
+                                transition: 'opacity 0.15s ease',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.opacity = '1'
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.opacity = '0.6'
+                              }}
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   ) : suggestions ? (
                     <div style={{ padding: 8 }}>
                       {searchMode === 'general' ? (
@@ -742,7 +879,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                               >
                                 {t('common.actors', 'Kişiler')}
                               </div>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                              <div className="minimal-card-list">
                                 {suggestions.actors.slice(0, 3).map((actor) => (
                                   <div
                                     key={actor.actorId}
@@ -775,7 +912,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                               >
                                 {t('common.tribes', 'Klanlar')}
                               </div>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                              <div className="minimal-card-list">
                                 {suggestions.tribes.slice(0, 3).map((tribe) => (
                                   <div
                                     key={tribe.tribeId}
@@ -855,7 +992,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                           )}
 
                           {searchMode === 'actors' && suggestions.actors?.length > 0 && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <div className="minimal-card-list">
                               {suggestions.actors.map((actor) => (
                                 <div
                                   key={actor.actorId}
@@ -875,7 +1012,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                           )}
 
                           {searchMode === 'tribes' && suggestions.tribes?.length > 0 && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <div className="minimal-card-list">
                               {suggestions.tribes.map((tribe) => (
                                 <div
                                   key={tribe.tribeId}
@@ -1315,14 +1452,18 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                           <button
                             key={preset.color}
                             type="button"
-                            disabled={locked}
                             aria-disabled={locked || undefined}
                             onClick={() => {
-                              if (locked) return
+                              if (locked) {
+                                setIsPaletteOpen(false)
+                                navigate('/premium')
+                                return
+                              }
                               cancelColorPreview()
                               applyPaletteColor(preset.color)
                             }}
-                            aria-label={preset.label}
+                            aria-label={t(`colors.${preset.key}`, preset.label)}
+                            title={locked ? `${t(`colors.${preset.key}`, preset.label)} (Pro)` : t(`colors.${preset.key}`, preset.label)}
                             style={{
                               position: 'relative',
                               width: 20,
@@ -1334,7 +1475,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                                   ? 'var(--color-text-primary)'
                                   : 'transparent'
                               }`,
-                              cursor: locked ? 'not-allowed' : 'pointer',
+                              cursor: 'pointer',
                               opacity: locked ? 0.6 : 1,
                               padding: 0,
                             }}
@@ -1350,12 +1491,15 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                       {savedCustomColor && (
                         <button
                           type="button"
-                          disabled={!isPremium}
                           aria-disabled={!isPremium || undefined}
                           aria-label={t('topbar.premium_palette_saved', 'Kayıtlı renk')}
-                          title={t('topbar.premium_palette_saved', 'Kayıtlı renk')}
+                          title={!isPremium ? `${t('topbar.premium_palette_saved', 'Kayıtlı renk')} (Pro)` : t('topbar.premium_palette_saved', 'Kayıtlı renk')}
                           onClick={() => {
-                            if (!isPremium) return
+                            if (!isPremium) {
+                              setIsPaletteOpen(false)
+                              navigate('/premium')
+                              return
+                            }
                             cancelColorPreview()
                             applyPaletteColor(savedCustomColor)
                           }}
@@ -1370,7 +1514,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                                 ? 'var(--color-text-primary)'
                                 : 'transparent'
                             }`,
-                            cursor: !isPremium ? 'not-allowed' : 'pointer',
+                            cursor: 'pointer',
                             opacity: !isPremium ? 0.6 : 1,
                             padding: 0,
                           }}
@@ -1382,12 +1526,15 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                       )}
                       <button
                         type="button"
-                        disabled={!isPremium}
                         aria-disabled={!isPremium || undefined}
                         aria-label={t('topbar.premium_palette_custom', 'Custom')}
-                        title={t('topbar.premium_palette_custom', 'Custom')}
+                        title={!isPremium ? `${t('topbar.premium_palette_custom', 'Custom')} (Pro)` : t('topbar.premium_palette_custom', 'Custom')}
                         onClick={() => {
-                          if (!isPremium) return
+                          if (!isPremium) {
+                            setIsPaletteOpen(false)
+                            navigate('/premium')
+                            return
+                          }
                           colorInputRef.current?.click()
                         }}
                         style={{
@@ -1401,7 +1548,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                           display: 'inline-flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          cursor: !isPremium ? 'not-allowed' : 'pointer',
+                          cursor: 'pointer',
                           opacity: !isPremium ? 0.65 : 1,
                           padding: 0,
                         }}
@@ -1431,7 +1578,8 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
             <button
               className="btn-icon"
               onClick={toggleTheme}
-              aria-label={isDarkMode ? 'Açık Tema' : 'Koyu Tema'}
+              aria-label={isDarkMode ? t('topbar.light_mode', 'Açık Tema') : t('topbar.dark_mode', 'Koyu Tema')}
+              title={isDarkMode ? t('topbar.light_mode', 'Açık Tema') : t('topbar.dark_mode', 'Koyu Tema')}
               style={{
                 color: customColor || (isGreenMode ? '#10b981' : '#3b82f6'),
                 width: 30,
@@ -1749,27 +1897,28 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                         keepDropdownOpen
                         wrapperStyle={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}
                       />
-                      {visibleMyTribes.map((tData) => (
-                        <div
-                          key={tData.tribeId}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 4,
-                            margin: '4px 0',
-                            cursor: 'pointer',
-                            minWidth: 0,
-                          }}
-                          onClick={() => {
-                            setIsMyTribesOpen(false)
-                            setTribesDropdownPos(null)
-                          }}
-                        >
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <TribeMinimalCard {...tData} />
+                      <div className="minimal-card-list">
+                        {visibleMyTribes.map((tData) => (
+                          <div
+                            key={tData.tribeId}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              cursor: 'pointer',
+                              minWidth: 0,
+                            }}
+                            onClick={() => {
+                              setIsMyTribesOpen(false)
+                              setTribesDropdownPos(null)
+                            }}
+                          >
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <TribeMinimalCard {...tData} />
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                       {(!myTribes || myTribes.length === 0) && (
                         <p className="text-muted" style={{ padding: 8, textAlign: 'center' }}>
                           {t('common.nothing_here_yet')}
@@ -1875,32 +2024,33 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                         keepDropdownOpen
                         wrapperStyle={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}
                       />
-                      {visibleMyBots.map((b) => (
-                        <div
-                          key={b.actorId}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 4,
-                            margin: '4px 0',
-                            cursor: 'pointer',
-                            minWidth: 0,
-                          }}
-                          onClick={() => {
-                            setIsMyBotsOpen(false)
-                            setBotsDropdownPos(null)
-                          }}
-                        >
+                      <div className="minimal-card-list">
+                        {visibleMyBots.map((b) => (
                           <div
-                            className="lb-card"
-                            style={{ flex: 1, padding: '8px 16px', minWidth: 0 }}
+                            key={b.actorId}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              cursor: 'pointer',
+                              minWidth: 0,
+                            }}
+                            onClick={() => {
+                              setIsMyBotsOpen(false)
+                              setBotsDropdownPos(null)
+                            }}
                           >
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <ActorMinimalCard actor={b} clickable={true} />
+                            <div
+                              className="lb-card"
+                              style={{ flex: 1, padding: '8px 16px', minWidth: 0 }}
+                            >
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <ActorMinimalCard actor={b} clickable={true} />
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                       {(!myBots || myBots.length === 0) && (
                         <p className="text-muted" style={{ padding: 8, textAlign: 'center' }}>
                           {t('common.nothing_here_yet')}
@@ -2066,6 +2216,7 @@ function MobileTopbarControls() {
     setSavedCustomColor,
   } = useThemeStore()
   const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
   const { actorId, isLoggedIn } = useAuthStore()
   const [isLangOpen, setIsLangOpen] = useState(false)
   const [isBotShaking, setIsBotShaking] = useState(false)
@@ -2196,17 +2347,21 @@ function MobileTopbarControls() {
                   <button
                     key={preset.color}
                     type="button"
-                    disabled={locked}
                     aria-disabled={locked || undefined}
                     onClick={() => {
-                      if (locked) return
+                      if (locked) {
+                        setIsPaletteOpen(false)
+                        navigate('/premium')
+                        return
+                      }
                       applyPaletteColor(preset.color)
                     }}
-                    aria-label={preset.label}
+                    aria-label={t(`colors.${preset.key}`, preset.label)}
+                    title={locked ? `${t(`colors.${preset.key}`, preset.label)} (Pro)` : t(`colors.${preset.key}`, preset.label)}
                     className={`topbar-mobile-controls__swatch${
                       activeBase === preset.color ? ' is-active' : ''
                     }${locked ? ' is-locked' : ''}`}
-                    style={{ background: preset.color }}
+                    style={{ background: preset.color, cursor: 'pointer' }}
                   >
                     {locked && (
                       <PaletteLockedSlash strokeWidth={2.2} />
@@ -2219,18 +2374,21 @@ function MobileTopbarControls() {
               {savedCustomColor && (
                 <button
                   type="button"
-                  disabled={!isPremium}
                   aria-disabled={!isPremium || undefined}
                   aria-label={t('topbar.premium_palette_saved', 'Kayıtlı renk')}
-                  title={t('topbar.premium_palette_saved', 'Kayıtlı renk')}
+                  title={!isPremium ? `${t('topbar.premium_palette_saved', 'Kayıtlı renk')} (Pro)` : t('topbar.premium_palette_saved', 'Kayıtlı renk')}
                   onClick={() => {
-                    if (!isPremium) return
+                    if (!isPremium) {
+                      setIsPaletteOpen(false)
+                      navigate('/premium')
+                      return
+                    }
                     applyPaletteColor(savedCustomColor)
                   }}
                   className={`topbar-mobile-controls__swatch${
                     customColor === savedCustomColor ? ' is-active' : ''
                   }${!isPremium ? ' is-locked' : ''}`}
-                  style={{ background: savedCustomColor }}
+                  style={{ background: savedCustomColor, cursor: 'pointer' }}
                 >
                   {!isPremium && (
                     <PaletteLockedSlash strokeWidth={2.2} />
@@ -2239,15 +2397,19 @@ function MobileTopbarControls() {
               )}
               <button
                 type="button"
-                disabled={!isPremium}
                 aria-disabled={!isPremium || undefined}
                 className={`topbar-mobile-controls__palette-custom${!isPremium ? ' is-locked' : ''}`}
                 aria-label={t('topbar.premium_palette_custom', 'Custom')}
-                title={t('topbar.premium_palette_custom', 'Custom')}
+                title={!isPremium ? `${t('topbar.premium_palette_custom', 'Custom')} (Pro)` : t('topbar.premium_palette_custom', 'Custom')}
                 onClick={() => {
-                  if (!isPremium) return
+                  if (!isPremium) {
+                    setIsPaletteOpen(false)
+                    navigate('/premium')
+                    return
+                  }
                   colorInputRef.current?.click()
                 }}
+                style={{ cursor: 'pointer' }}
               >
                 <Edit2 size={13} />
                 {!isPremium && (

@@ -5,26 +5,7 @@ import useAuthStore from '../../store/authStore'
 import useDevLog from '../../utils/useDevLog'
 import { X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-
-const TOPIC_TYPES = [
-  { value: 1, enumName: 'Politics', label: 'Politika' },
-  { value: 2, enumName: 'Economy', label: 'Ekonomi' },
-  { value: 4, enumName: 'WorldNews', label: 'Dünya Haberleri' },
-  { value: 8, enumName: 'LocalNews', label: 'Yerel Haberler' },
-  { value: 16, enumName: 'Trending', label: 'Trend Başlıklar' },
-  { value: 32, enumName: 'Technology', label: 'Teknoloji' },
-  { value: 64, enumName: 'Science', label: 'Bilim' },
-  { value: 128, enumName: 'AI', label: 'Yapay Zeka' },
-  { value: 256, enumName: 'Space', label: 'Uzay' },
-  { value: 512, enumName: 'Health', label: 'Sağlık' },
-  { value: 1024, enumName: 'Sports', label: 'Spor' },
-  { value: 2048, enumName: 'Entertainment', label: 'Eğlence' },
-  { value: 4096, enumName: 'Gaming', label: 'Oyun' },
-  { value: 8192, enumName: 'Celebrity', label: 'Ünlüler' },
-  { value: 16384, enumName: 'Lifestyle', label: 'Yaşam Tarzı' },
-  { value: 32768, enumName: 'Education', label: 'Eğitim' },
-  { value: 65536, enumName: 'Relationships', label: 'İlişkiler' },
-]
+import { TopicTypes } from '../../constants/TopicTypes'
 
 export default function EditProfileModal({ isOpen, onClose }) {
   useDevLog('EditProfileModal', arguments[0] || {})
@@ -182,24 +163,27 @@ export default function EditProfileModal({ isOpen, onClose }) {
             <div className="form-group">
               <label className="text-muted" style={{ fontSize: 14 }}>{t('profile_modal.interests', 'İlgi Alanları')}</label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
-                {TOPIC_TYPES.map(topic => (
-                  <label key={topic.value} style={{
-                    display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer',
-                    padding: '4px 10px', borderRadius: 6, fontSize: 13,
-                    background: selectedTopics.includes(topic.value) ? 'var(--color-primary)' : 'var(--color-surface)',
-                    color: selectedTopics.includes(topic.value) ? '#fff' : 'var(--color-text)',
-                    border: '1px solid var(--color-border)',
-                    transition: 'all 0.15s'
-                  }}>
-                    <input
-                      type="checkbox"
-                      checked={selectedTopics.includes(topic.value)}
-                      onChange={() => toggleTopic(topic.value)}
-                      style={{ display: 'none' }}
-                    />
-                    {t(`topics.${topic.enumName.toLowerCase()}`)}
-                  </label>
-                ))}
+                {TopicTypes.map(topic => {
+                  const translationKey = (topic.key || topic.enumName).toLowerCase();
+                  return (
+                    <label key={topic.value} style={{
+                      display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer',
+                      padding: '4px 10px', borderRadius: 6, fontSize: 13,
+                      background: selectedTopics.includes(topic.value) ? 'var(--color-primary)' : 'var(--color-surface)',
+                      color: selectedTopics.includes(topic.value) ? '#fff' : 'var(--color-text)',
+                      border: '1px solid var(--color-border)',
+                      transition: 'all 0.15s'
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedTopics.includes(topic.value)}
+                        onChange={() => toggleTopic(topic.value)}
+                        style={{ display: 'none' }}
+                      />
+                      {t(`topics.${translationKey}`)}
+                    </label>
+                  );
+                })}
               </div>
             </div>
 

@@ -27,7 +27,7 @@ import FossilIcon from '../components/common/icons/FossilIcon'
 import AngryBotWithSwordsIcon from '../components/common/icons/AngryBotWithSwordsIcon'
 import AmbientBots from '../components/common/ambiances/AmbientBots'
 import WelcomeAmbience from '../components/common/ambiances/WelcomeAmbience'
-import MindAmbience from '../components/common/ambiances/MindAmbience'
+import MemoryMapAmbience from '../components/common/ambiances/MemoryMapAmbience'
 import RainbowCardsAmbience from '../components/common/ambiances/RainbowCardsAmbience'
 import BotFlashCardsIcon from '../components/common/icons/BotFlashCardsIcon'
 import CardContingencyIcon from '../components/common/icons/CardContingencyIcon'
@@ -58,31 +58,14 @@ import useMyEntitiesStore from '../store/myEntitiesStore'
 import useUIStore from '../store/uiStore'
 import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
+import useDocumentTitle from '../hooks/useDocumentTitle'
+import { getQueryErrorMessage } from '../utils/errorHelper'
 import AvatarUpload from '../components/common/AvatarUpload'
 import PremiumModal from '../components/common/PremiumModal'
 import ModifierArrowSvg from '../assets/FigmaNew/modifierarrow.svg?react'
 import TRexSkullIcon from '../assets/t-rex-skull-svgrepo-com.svg?react'
 import { buildOwnedCardIdSet, sortCardsOwnedFirst } from '../utils/cardOwnership'
-
-const TOPIC_TYPES = [
-  { value: 1, enumName: 'Politics', label: 'Politika' },
-  { value: 2, enumName: 'Economy', label: 'Ekonomi' },
-  { value: 4, enumName: 'WorldNews', label: 'Dünya Haberleri' },
-  { value: 8, enumName: 'LocalNews', label: 'Yerel Haberler' },
-  { value: 16, enumName: 'Trending', label: 'Trend Başlıklar' },
-  { value: 32, enumName: 'Technology', label: 'Teknoloji' },
-  { value: 64, enumName: 'Science', label: 'Bilim' },
-  { value: 128, enumName: 'AI', label: 'Yapay Zeka' },
-  { value: 256, enumName: 'Space', label: 'Uzay' },
-  { value: 512, enumName: 'Health', label: 'Sağlık' },
-  { value: 1024, enumName: 'Sports', label: 'Spor' },
-  { value: 2048, enumName: 'Entertainment', label: 'Eğlence' },
-  { value: 4096, enumName: 'Gaming', label: 'Oyun' },
-  { value: 8192, enumName: 'Celebrity', label: 'Ünlüler' },
-  { value: 16384, enumName: 'Lifestyle', label: 'Yaşam Tarzı' },
-  { value: 32768, enumName: 'Education', label: 'Eğitim' },
-  { value: 65536, enumName: 'Relationships', label: 'İlişkiler' },
-]
+import { TopicTypes } from '../constants/TopicTypes'
 
 function FramedThemeIcon({ type, isLocked, size = 20 }) {
   return (
@@ -328,11 +311,13 @@ export default function ProfilePage() {
   const myBots = useMyEntitiesStore((state) => state.myBots)
   const myCards = useMyEntitiesStore((state) => state.myCards)
 
-  const { data: profile, isLoading } = useQuery({
+  const { data: profile, isLoading, isError: isProfileError, error: profileError } = useQuery({
     queryKey: ['actorProfile', actorId],
     queryFn: () => actorApi.getProfile(actorId).then((r) => r.data?.data ?? null),
     enabled: !!actorId,
   })
+
+  useDocumentTitle(profile?.profileName)
 
   const sortedAssignedCards = useMemo(
     () => sortCardsOwnedFirst(profile?.assignedCards || [], buildOwnedCardIdSet(myCards || [])),
@@ -445,7 +430,7 @@ export default function ProfilePage() {
 
   const handleSelectTheme = (targetTheme) => {
     if (!isCurrentUserPremium) {
-      setIsPremiumOpen(true)
+      navigate('/premium')
       return
     }
 
@@ -496,10 +481,10 @@ export default function ProfilePage() {
       >
         <button
           type="button"
-          className={`btn btn-sm ${activeProfileTheme === Theme.Mind ? 'btn-primary' : 'btn-outline'}`}
-          onClick={() => handleSelectTheme(Theme.Mind)}
+          className={`btn btn-sm ${activeProfileTheme === Theme.MemoryMap ? 'btn-primary' : 'btn-outline'}`}
+          onClick={() => handleSelectTheme(Theme.MemoryMap)}
           disabled={themeMutation.isPending}
-          aria-label={t('topbar.mind_ambience', 'Mind Arka Planı')}
+          aria-label={t('topbar.memory_map_ambience', 'Memory Map Ambience')}
           style={{
             flex: 1,
             minWidth: 0,
@@ -512,8 +497,8 @@ export default function ProfilePage() {
             borderTopRightRadius: 0,
             borderBottomRightRadius: 0,
             position: 'relative',
-            zIndex: activeProfileTheme === Theme.Mind ? 2 : 1,
-            ...(activeProfileTheme === Theme.Mind
+            zIndex: activeProfileTheme === Theme.MemoryMap ? 2 : 1,
+            ...(activeProfileTheme === Theme.MemoryMap
               ? {}
               : {
                   borderColor: 'var(--color-border-light)',
@@ -687,7 +672,7 @@ export default function ProfilePage() {
     if (profile?.topicTypes) {
       profile.topicTypes.forEach((t) => {
         if (t?.topicTypeName === undefined || t?.topicTypeName === null) return
-        const match = TOPIC_TYPES.find(
+        const match = TopicTypes.find(
           (opt) =>
             opt.value === t.topicTypeName ||
             opt.enumName === t.topicTypeName ||
@@ -760,7 +745,7 @@ export default function ProfilePage() {
         <div className="spinner spinner-lg" />
       </div>
     )
-  if (!profile) return <div className="empty-state">{t('profile.not_found')}</div>
+  if (isProfileError || !profile) return <div className="empty-state">{getQueryErrorMessage(profileError, t, true)}</div>
 
   const isBot = profile.discriminator === 'Bot'
   const isDormant = Boolean(isBot && (profile.isDormant ?? profile.IsDormant ?? false))
@@ -892,9 +877,9 @@ export default function ProfilePage() {
             <div className={`profile-header-card${isDormant ? ' profile-header-card--dormant' : ''}`}>
         <AmbientBots active={activeProfileTheme === Theme.Bots} />
         <WelcomeAmbience active={activeProfileTheme === Theme.Welcome} />
-        <MindAmbience
+        <MemoryMapAmbience
           profileName={profile?.profileName}
-          active={activeProfileTheme === Theme.Mind}
+          active={activeProfileTheme === Theme.MemoryMap}
         />
         <RainbowCardsAmbience active={activeProfileTheme === Theme.Rainbow} showLiquid={false} />
         <div
@@ -995,8 +980,9 @@ export default function ProfilePage() {
                     {t('profile.interests')}
                   </label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {TOPIC_TYPES.map((topic) => {
+                    {TopicTypes.map((topic) => {
                       const isSelected = editForm.topicTypes.includes(topic.value)
+                      const translationKey = (topic.key || topic.enumName).toLowerCase()
                       return (
                         <label
                           key={topic.value}
@@ -1026,7 +1012,7 @@ export default function ProfilePage() {
                             onChange={() => toggleTopic(topic.value)}
                             style={{ display: 'none' }}
                           />
-                          {t(`topics.${topic.enumName.toLowerCase()}`)}
+                          {t(`topics.${translationKey}`)}
                         </label>
                       )
                     })}
@@ -1069,7 +1055,7 @@ export default function ProfilePage() {
                   max={20}
                   topicTypes={profile.topicTypes
                     .map((t) => {
-                      const match = TOPIC_TYPES.find(
+                      const match = TopicTypes.find(
                         (opt) =>
                           opt.value === t?.topicTypeName ||
                           opt.enumName === t?.topicTypeName ||
@@ -1158,7 +1144,7 @@ export default function ProfilePage() {
                 <button
                   className="btn btn-outline btn-sm"
                   onClick={() =>
-                    navigate('/mind?actorId=' + actorId, {
+                    navigate('/memory-map?actorId=' + actorId, {
                       state: { profileName: profile.profileName },
                     })
                   }

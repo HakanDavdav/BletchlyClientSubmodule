@@ -134,9 +134,10 @@
   transition: all 0.2s ease;
 }
 
-.info-card:hover {
+.info-card:hover,
+.debate-card:hover {
   background: var(--color-surface-2);
-  border-color: var(--color-primary);
+  border-color: var(--color-primary-light);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
@@ -178,6 +179,15 @@
 .personality-card-slot:hover {
   z-index: calc(var(--card-count) + 2);
   transform: translateY(-14px) rotate(0deg);
+}
+
+body:has(.modal-overlay) .personality-card-slot,
+body:has(.modal-overlay) .personality-card-slot:hover,
+body:has(.modal-overlay) .personality-card,
+body:has(.modal-overlay) .personality-card:hover {
+  transform: none !important;
+  z-index: auto !important;
+  pointer-events: none !important;
 }
 
 .personality-card {
@@ -1309,20 +1319,25 @@
   background: var(--color-text-faint);
 }
 
-:root.dark .activity-item {
-  background: var(--color-surface-2); /* Gri */
+:root.dark .activity-item,
+:root.dark .left-debate-item {
+  background: var(--color-surface);
   border-color: var(--color-border);
 }
-:root.dark .activity-item:hover {
-  background: var(--color-surface-3); /* Daha açık Gri */
-  border-color: var(--color-primary-dark);
+:root.dark .activity-item:hover,
+:root.dark .left-debate-item:hover {
+  background: var(--color-surface-2);
+  border-color: var(--color-primary-light);
+  z-index: 2;
 }
 :root.dark .activity-item.unread {
   background: var(--color-primary-lighter);
-  border-color: var(--color-primary-light);
+  border-color: var(--color-border);
 }
 :root.dark .activity-item.unread:hover {
-  background: var(--color-primary-light);
+  background: var(--color-primary-lighter);
+  border-color: var(--color-primary-light);
+  z-index: 2;
 }
 
 /* â”€â”€â”€ Reset â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -2221,7 +2236,7 @@ html.dark .bot-capability-emblem--fossil path {
   inset: 0;
   background: rgb(0 0 0 / 0.4);
   backdrop-filter: blur(4px);
-  z-index: 1000;
+  z-index: 100000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3444,6 +3459,8 @@ html.dark .fossil-stamp-icon path {
   width: auto !important;
   display: inline-flex;
   flex: 0 0 auto;
+  align-items: center;
+  align-self: center !important;
 }
 
 .tribe-card.tribe-card--compact:hover,
@@ -3480,6 +3497,7 @@ html.dark .fossil-stamp-icon path {
   padding: 2px 10px 2px 2px;
   gap: 6px;
   width: fit-content;
+  align-self: center;
 }
 
 .personality-card .actor-chip.actor-chip--selectable,
@@ -4045,6 +4063,7 @@ html.dark .fossil-stamp-icon path {
   border: none !important;
   box-shadow: none !important;
   padding: 0 !important;
+  margin: 0 !important;
 }
 
 .lb-card .actor-chip:hover,
@@ -4052,6 +4071,22 @@ html.dark .fossil-stamp-icon path {
   transform: none !important;
   background: transparent !important;
   box-shadow: none !important;
+}
+
+/* Minimal kart listeleri: kartlar alt alta tam bitişik dizilir */
+.minimal-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.minimal-card-list > * {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.minimal-card-list .tribe-card {
+  margin-bottom: 0;
 }
 
 /* ──────────────────────────────────────────────────────── */
@@ -4068,7 +4103,7 @@ html.dark .fossil-stamp-icon path {
   transition: all var(--transition-base) ease;
 }
 
-/* Ambient bot / welcome / mind / rainbow arka planı: kart içeriğini üstte tut */
+/* Ambient bot / welcome / memory map / rainbow arka planı: kart içeriğini üstte tut */
 .profile-header-card
   > *:not(.ambient-bots):not(.welcome-ambience):not(.mind-ambience):not(.rainbow-cards-ambience) {
   position: relative;
@@ -4388,43 +4423,81 @@ html.dark .fossil-stamp-icon path {
 .profile-activities-list {
   height: 250px;
   overflow-y: auto;
-  padding: var(--space-3);
+  padding: 6px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 3px;
 }
 
 .activity-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-3);
-  padding: var(--space-1) var(--space-3);
+  padding: 9px 12px;
   background: var(--color-bg);
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-md);
   cursor: pointer;
   transition:
-    background-color 350ms ease,
-    border-color 350ms ease,
-    box-shadow 350ms ease,
-    transform var(--transition-fast) ease;
+    background-color 180ms ease,
+    border-color 180ms ease;
   position: relative;
+  min-width: 0;
+  max-width: 100%;
+  flex-shrink: 0;
+  min-height: fit-content;
+  margin-bottom: 0;
 }
 
-.activity-item:hover {
-  background: var(--color-surface);
+.profile-activities-list .activity-item {
+  margin-bottom: 0;
+}
+
+:root.dark .profile-activities-list .activity-item:not(.unread) {
+  background: var(--color-bg);
+  border-color: var(--color-border);
+}
+
+:root.dark .profile-activities-list .activity-item:not(.unread):hover {
+  background: var(--color-surface-2);
   border-color: var(--color-primary-light);
-  transform: translateX(2px);
-  box-shadow: var(--shadow-xs);
+}
+
+.left-debate-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 10px 8px;
+  gap: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease;
+  min-width: 0;
+  max-width: 100%;
+  flex-shrink: 0;
+}
+
+.activity-item:hover,
+.left-debate-item:hover {
+  background: var(--color-surface-2);
+  border-color: var(--color-primary-light);
+  z-index: 2;
+  transform: none;
+  box-shadow: none;
 }
 
 .activity-item.unread {
   background: var(--color-primary-lighter);
-  border-color: var(--color-primary-light);
 }
 
 .activity-item.unread:hover {
-  background: var(--color-primary-light);
+  background: var(--color-primary-lighter);
+  border-color: var(--color-primary-light);
+  z-index: 2;
 }
 
 .activity-dot {
@@ -4433,6 +4506,7 @@ html.dark .fossil-stamp-icon path {
   border-radius: 50%;
   background: var(--color-primary);
   flex-shrink: 0;
+  margin-top: 5px;
   box-shadow: 0 0 6px var(--color-primary);
   opacity: 1;
   transform: scale(1);
@@ -4457,22 +4531,21 @@ html.dark .fossil-stamp-icon path {
 .activity-message {
   font-size: var(--font-size-sm);
   color: var(--color-text);
-  margin-bottom: 2px;
   line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  word-wrap: break-word;
+  min-width: 0;
 }
 
 .activity-time {
-  font-size: var(--font-size-xs);
+  font-size: 10px;
   color: var(--color-text-muted);
-}
-
-textarea {
-  resize: vertical !important;
-}
-
-.activity-time {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
+  align-self: flex-end;
+  opacity: 0.8;
 }
 
 textarea {
@@ -5021,12 +5094,12 @@ textarea {
     min-width: 0;
   }
 
-  /* Mind graph: overlay soldan içeri alınır (drawer rayı + diğer sayfalarla uyum) */
+  /* Memory Map graph: overlay soldan içeri alınır (drawer rayı + diğer sayfalarla uyum) */
   .mind-page-root {
     left: 24px !important;
   }
 
-  /* Mind graph üst barı: kontrol şeridi alt satıra iner ve yatay kaydırılır */
+  /* Memory Map graph üst barı: kontrol şeridi alt satıra iner ve yatay kaydırılır */
   .mind-header {
     flex-wrap: wrap;
     row-gap: 8px;
@@ -5056,7 +5129,7 @@ textarea {
 
 
   /* Hierarchy üst bloğu mobil/tablet: tek kart, 1. satır kimlik,
-     2. satır ana butonlar, 3. satır depth/zoom (Mind mobil gibi) */
+     2. satır ana butonlar, 3. satır depth/zoom (Memory Map mobil gibi) */
   .hierarchy-header {
     left: 12px !important;
     right: 12px !important;
@@ -5421,17 +5494,17 @@ textarea {
   }
 }
 
-/* Mind: mobil "Varsayılan" butonu yalnızca mobilde görünür */
+/* Memory Map: mobil "Varsayılan" butonu yalnızca mobilde görünür */
 .mind-default-mobile {
   display: none !important;
 }
 
-/* Mind: kısa (mobil) toggle etiketi masaüstünde gizli */
+/* Memory Map: kısa (mobil) toggle etiketi masaüstünde gizli */
 .mind-toggle-label-short {
   display: none;
 }
 
-/* Mind: görünüm anahtarları sarmalayıcısı masaüstünde şeffaf; kaydıraç yalnızca mobilde */
+/* Memory Map: görünüm anahtarları sarmalayıcısı masaüstünde şeffaf; kaydıraç yalnızca mobilde */
 .mind-view-toggles-wrap,
 .mind-legend-items-wrap {
   display: contents;
@@ -5441,22 +5514,22 @@ textarea {
   display: none;
 }
 
-/* Mind: mobil "Anılar" tetikleyicisi yalnızca mobilde görünür */
+/* Memory Map: mobil "Anılar" tetikleyicisi yalnızca mobilde görünür */
 .mind-memories-btn {
   display: none !important;
 }
 
-/* Mind: legend + Anılar satır sarmalayıcısı masaüstünde şeffaf (contents) */
+/* Memory Map: legend + Anılar satır sarmalayıcısı masaüstünde şeffaf (contents) */
 .mind-legend-row {
   display: contents;
 }
 
-/* Mind: görünüm anahtarları + Varsayılan hizası (mobilde flex-end'e ezilir) */
+/* Memory Map: görünüm anahtarları + Varsayılan hizası (mobilde flex-end'e ezilir) */
 .mind-actions {
   align-items: center;
 }
 
-/* Mind: kimlik pili + altında bağımsız bağlam başlığı */
+/* Memory Map: kimlik pili + altında bağımsız bağlam başlığı */
 .mind-identity-stack {
   min-width: 0;
 }
@@ -5479,23 +5552,44 @@ textarea {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 38px;
+  height: 32px;
   padding: 0 8px;
   border-radius: 8px;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg);
-  color: var(--color-text-secondary);
+  border: 1.5px solid var(--color-primary);
+  background: transparent;
+  color: var(--color-primary);
   cursor: pointer;
   flex-shrink: 0;
   box-sizing: border-box;
+  transition: all var(--transition-fast, 0.2s ease);
+}
+
+.mind-memory-stats-trigger:hover,
+.mind-memory-stats-trigger[aria-expanded="true"] {
+  background: var(--color-primary-lighter);
+}
+
+.mind-memory-stats-trigger .bot-capability-emblem {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: var(--color-primary) !important;
+}
+
+.mind-memory-stats-trigger .bot-capability-emblem svg {
+  color: var(--color-primary) !important;
+  stroke: var(--color-primary) !important;
+}
+
+.mind-memory-stats-trigger .bot-capability-emblem path {
+  fill: currentColor !important;
 }
 
 .mind-memory-stats-caret {
   font-size: 9px;
   line-height: 1;
   display: inline-block;
-  color: var(--color-text-muted);
-  transition: transform 0.2s ease;
+  color: var(--color-primary);
+  transition: transform var(--transition-fast, 0.2s ease);
 }
 
 .mind-memory-stats-trigger:focus-visible {
@@ -5556,9 +5650,9 @@ textarea {
 
 /* Tablet (641-900) artık mobil yapıyı kullanır (aşağıdaki <=900 bloğu) */
 
-/* Mind üst barı (mobil/tablet <=900): tek bütünleşik bar ve mobil 3+ satır yapı */
+/* Memory Map üst barı (mobil/tablet <=900): tek bütünleşik bar ve mobil 3+ satır yapı */
 @media (max-width: 900px) {
-  /* Mind üst barı: iki ayrık pil yerine tek bütünleşik bar */
+  /* Memory Map üst barı: iki ayrık pil yerine tek bütünleşik bar */
   .mind-header {
     margin: 8px 10px 0 12px;
     padding: 8px 10px !important;
@@ -5785,7 +5879,7 @@ textarea {
   }
 }
 
-/* Mind düğüm detay modalı (mobil/tablet): başlangıç topbar altında,
+/* Memory Map düğüm detay modalı (mobil/tablet): başlangıç topbar altında,
    bitiş mobil alt barın üstünde sabitlenir; modal hiçbir zaman barların altına kaymaz */
 @media (max-width: 900px) {
   .mind-node-backdrop {
@@ -6061,7 +6155,7 @@ textarea {
 
 
 
-  /* Mind düğüm detay modalı: mobilde topbar altı ↔ alt bar üstü arasında sabit kalır */
+  /* Memory Map düğüm detay modalı: mobilde topbar altı ↔ alt bar üstü arasında sabit kalır */
   .mind-node-backdrop {
     align-items: center !important;
     padding: 12px !important;
@@ -6589,6 +6683,189 @@ textarea {
   margin-top: 2px;
 }
 
+/* ─── Premium Modal Memory Showcase Framed Card ─────────────────────── */
+.premium-memory-showcase-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: color-mix(in srgb, var(--color-surface) 40%, transparent);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl, 14px);
+  padding: 14px 16px;
+  gap: 12px;
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.premium-memory-showcase-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.premium-memory-title-area {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.premium-memory-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.premium-memory-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.premium-memory-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  background: color-mix(in srgb, var(--color-warning) 16%, transparent);
+  color: var(--color-warning);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 36%, transparent);
+  text-transform: uppercase;
+}
+
+.premium-memory-desc {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.premium-memory-toggle-group {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2, var(--color-surface));
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.premium-memory-toggle-btn {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+  line-height: 1.4;
+}
+
+.premium-memory-toggle-btn.active {
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 700;
+}
+
+.premium-memory-sliders-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+.premium-memory-slider-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.premium-memory-slider-wrapper--pro {
+  border-radius: 12px;
+}
+
+.premium-memory-slider-badge {
+  position: absolute;
+  top: 7px;
+  right: 10px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 1px 6px;
+  border-radius: 5px;
+  text-transform: uppercase;
+  z-index: 2;
+  pointer-events: none;
+  line-height: 1.4;
+}
+
+.premium-memory-slider-badge--pro {
+  background: color-mix(in srgb, var(--color-warning) 20%, transparent);
+  color: var(--color-warning);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 40%, transparent);
+}
+
+.premium-memory-slider-badge--std {
+  background: color-mix(in srgb, var(--color-text-muted) 15%, transparent);
+  color: var(--color-text-secondary);
+  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+}
+
+.premium-memory-features-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  margin-top: 2px;
+}
+
+.premium-memory-feature-item {
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-surface) 75%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-border) 75%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: border-color 0.15s ease;
+}
+
+.premium-memory-feature-item:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+}
+
+.premium-memory-feature-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.premium-memory-feature-desc {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  line-height: 1.35;
+  margin: 0;
+}
+
 .premium-profile-preview-card > .ambient-bots,
 .premium-profile-preview-card > .welcome-ambience,
 .premium-profile-preview-card > .mind-ambience,
@@ -6647,9 +6924,36 @@ textarea {
   }
 
   .premium-showcase-card,
-  .premium-themes-showcase-card {
+  .premium-themes-showcase-card,
+  .premium-memory-showcase-card {
     padding: 12px 12px !important;
     border-radius: 12px !important;
+  }
+
+  .premium-memory-showcase-header {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  .premium-memory-toggle-group {
+    width: 100% !important;
+  }
+
+  .premium-memory-toggle-btn {
+    flex: 1 !important;
+    justify-content: center !important;
+    padding: 6px 4px !important;
+    font-size: 11px !important;
+  }
+
+  .premium-memory-sliders-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .premium-memory-features-row {
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
   }
 
   .premium-perk-card {
@@ -6885,3 +7189,50 @@ textarea {
     transparent 100%
   );
 }
+
+/* ─── Cookie Consent Banner ─────────────────────────────────────────── */
+.cookie-consent-banner {
+  --cookie-banner-bottom: 24px;
+  position: fixed;
+  bottom: var(--cookie-banner-bottom, 24px);
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: calc(100% - 32px);
+  max-width: 980px;
+  z-index: 9999;
+}
+
+.cookie-consent-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+@media (max-width: 860px) {
+  .cookie-consent-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .cookie-consent-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .cookie-consent-actions button.cookie-btn {
+    flex: 1;
+    text-align: center;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 900px) {
+  .cookie-consent-banner {
+    --cookie-banner-bottom: 74px !important;
+    width: calc(100% - 24px);
+  }
+}
+

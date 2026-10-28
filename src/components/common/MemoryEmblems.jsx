@@ -73,7 +73,7 @@ const EMBLEM_DEFS = [
   },
   {
     key: 'forgetting-speed',
-    field: 'forgetfulnessMultiplier',
+    field: 'ebbinghausHalfLifePeriodMultiplier',
     min: 0,
     max: 2,
     lowBelow: 0.75,
@@ -257,6 +257,38 @@ export function getMemoryEmblems(settings, t) {
       Icon: variant.Icon,
       tone: TONE_BY_STATE[state],
       size: 14,
+    }
+  })
+}
+
+export { EMBLEM_DEFS }
+
+export function getCognitiveEmblemPairs(t) {
+  const desiredOrder = [
+    'incubationPeriodMultiplier',
+    'affinityBiasMultiplier',
+    'ebbinghausHalfLifePeriodMultiplier',
+    'recallPathLimitMultiplier',
+    'maxStrengthMultiplier',
+  ]
+  const sorted = [...EMBLEM_DEFS].sort(
+    (a, b) => desiredOrder.indexOf(a.field) - desiredOrder.indexOf(b.field)
+  )
+  return sorted.map((def) => {
+    const isPro = def.field === 'recallPathLimitMultiplier' || def.field === 'maxStrengthMultiplier'
+    const low = def.variants.low
+    const high = def.variants.high
+    return {
+      key: def.key,
+      field: def.field,
+      title: t(def.titleKey, def.titleDefault),
+      isPro,
+      leftLabel: t(def.leftKey, def.leftDefault),
+      leftDesc: low.descKey ? t(low.descKey, low.descDefault) : t(low.labelKey, low.labelDefault),
+      LeftIcon: low.Icon,
+      rightLabel: t(def.rightKey, def.rightDefault),
+      rightDesc: high.descKey ? t(high.descKey, high.descDefault) : t(high.labelKey, high.labelDefault),
+      RightIcon: high.Icon,
     }
   })
 }

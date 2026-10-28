@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 import App from './App.jsx'
 import './index.css'
 import './components/layout/layout.css'
-import './i18n'
+import i18n from './i18n'
 
 // Toast hata mesajlarına traceId entegrasyonu
 const origToastError = toast.error
@@ -20,7 +20,7 @@ toast.error = (message, options = {}) => {
     } else if (message.response?.headers?.['x-trace-id'] && !opts.traceId) {
       opts.traceId = message.response.headers['x-trace-id']
     }
-    finalMsg = message.message || 'Beklenmeyen bir hata oluştu.'
+    finalMsg = message.message || i18n.t('common.unexpected_error', 'Beklenmeyen bir hata oluştu.')
   }
 
   if (!opts.traceId && typeof window !== 'undefined' && window.__lastApiTraceId) {
@@ -70,7 +70,7 @@ const queryClient = new QueryClient({
       if (!mutation.meta?.showErrorToast) return
 
       const traceId = error.traceId || error.response?.headers?.['x-trace-id']
-      let errorMessages = [error.message || 'Beklenmeyen bir hata oluştu.']
+      let errorMessages = [error.message || i18n.t('common.unexpected_error', 'Beklenmeyen bir hata oluştu.')]
       if (error.response?.data?.errors) {
         if (Array.isArray(error.response.data.errors)) {
           errorMessages = error.response.data.errors.map((e) => e.description || e.message || e)
@@ -99,7 +99,7 @@ const queryClient = new QueryClient({
       if (!query.meta?.showErrorToast) return
 
       const traceId = error.traceId || error.response?.headers?.['x-trace-id']
-      let errorMessages = [error.message || 'Beklenmeyen bir hata oluştu.']
+      let errorMessages = [error.message || i18n.t('common.unexpected_error', 'Beklenmeyen bir hata oluştu.')]
       if (error.response?.data?.errors) {
         if (Array.isArray(error.response.data.errors)) {
           errorMessages = error.response.data.errors.map((e) => e.description || e.message || e)

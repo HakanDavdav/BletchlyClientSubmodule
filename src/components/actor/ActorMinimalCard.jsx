@@ -23,7 +23,7 @@ import { UserCapabilities } from '../../constants/enums'
 export default function ActorMinimalCard({
   actor,
   showHierarchyBtn = true,
-  showMindBtn = true,
+  showMemoryMapBtn = true,
   showPoint = false,
   showJuryPoints = false,
   juryProponentScore = null,
@@ -152,7 +152,7 @@ export default function ActorMinimalCard({
     navigate('/hierarchy?actorId=' + actorId)
   }
 
-  const handleMindClick = (e) => {
+  const handleMemoryMapClick = (e) => {
     e.preventDefault()
     e.stopPropagation()
     let query = ''
@@ -162,7 +162,7 @@ export default function ActorMinimalCard({
     if (contextTitle) {
       query += `&contextTitle=${encodeURIComponent(contextTitle)}`
     }
-    navigate(`/mind?actorId=${actorId}${query}`, { state: { profileName, contextTitle } })
+    navigate(`/memory-map?actorId=${actorId}${query}`, { state: { profileName, contextTitle } })
   }
 
   const handleEditClick = (e) => {
@@ -229,7 +229,7 @@ export default function ActorMinimalCard({
   const hasExtraElements =
     isDormant ||
     (showHierarchyBtn && !selectable) ||
-    (showMindBtn && !selectable && isBot) ||
+    (showMemoryMapBtn && !selectable && isBot) ||
     (showEditBtn && !selectable && isOwner) ||
     (showPoint && actor.actorPoint != null) ||
     showJuryPoints ||
@@ -358,15 +358,15 @@ export default function ActorMinimalCard({
           <Network size={12} />
         </button>
       )}
-      {showMindBtn && !selectable && isBot && (
+      {showMemoryMapBtn && !selectable && isBot && (
         <button
           type="button"
           className="actor-chip-hier-btn"
-          onClick={handleMindClick}
+          onClick={handleMemoryMapClick}
           aria-label={
             hasTriggeredNodes
-              ? `${t('mind.show', 'Zihin Haritası')} (${effectiveTriggeredNodeIds.length} ${t('mind.triggered_nodes', 'tetiklenen anı')})`
-              : t('mind.show', 'Zihin Haritası')
+              ? `${t('memoryMap.show', 'Memory Map')} (${effectiveTriggeredNodeIds.length} ${t('memoryMap.triggered_nodes', 'tetiklenen anı')})`
+              : t('memoryMap.show', 'Memory Map')
           }
         >
           {hasTriggeredNodes ? (

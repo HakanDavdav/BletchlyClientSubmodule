@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -20,7 +20,18 @@ import {
   UploadCloud,
   Network,
   Sliders,
+  Waypoints,
+  Feather,
+  Rabbit,
+  Snail,
+  Zap,
+  Flame,
+  Binoculars,
+  Fish,
 } from 'lucide-react'
+import ElephantIcon from './icons/ElephantIcon'
+import SheepIcon from './icons/SheepIcon'
+import './MemoryTuningSlider.css'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import CardContingencyIcon from './icons/CardContingencyIcon'
 import BotFlashCardsIcon from './icons/BotFlashCardsIcon'
@@ -45,7 +56,7 @@ import { UserCapabilities } from '../../constants/enums'
 import { trackBeginCheckout } from '../../utils/analytics'
 import {
   WelcomeAmbience,
-  MindAmbience,
+  MemoryMapAmbience,
   AmbientBots,
   RainbowCardsAmbience,
 } from './ambiances'
@@ -254,6 +265,77 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
   const rainbowRef = useRef(null)
   const perksRef = useRef(null)
   const themesRef = useRef(null)
+  const [presentationSliderValue, setPresentationSliderValue] = useState(50)
+  const leftEmblems = useMemo(
+    () => [
+      {
+        key: 'incubation-low',
+        Icon: Rabbit,
+        title: t('bot.memory_emblem.incubation_low_label', 'Hızlı Kişilik Değişimi'),
+        tone: 'memory-low',
+      },
+      {
+        key: 'cognitive-low',
+        Icon: Zap,
+        title: t('bot.memory_emblem.cognitive_low_label', 'Mantıksal'),
+        tone: 'memory-low',
+      },
+      {
+        key: 'forget-low',
+        Icon: ElephantIcon,
+        title: t('bot.memory_emblem.forget_low_label', 'Fil Hafızası'),
+        tone: 'memory-low',
+      },
+      {
+        key: 'scope-low',
+        Icon: Binoculars,
+        title: `${t('bot.memory_emblem.scope_low_label', 'Otizm Benzeri')} (Pro)`,
+        tone: 'memory-low',
+      },
+      {
+        key: 'fixation-low',
+        Icon: Feather,
+        title: `${t('bot.memory_emblem.fixation_low_label', 'Açık Fikirli')} (Pro)`,
+        tone: 'memory-low',
+      },
+    ],
+    [t]
+  )
+  const rightEmblems = useMemo(
+    () => [
+      {
+        key: 'incubation-high',
+        Icon: Snail,
+        title: t('bot.memory_emblem.incubation_high_label', 'Yavaş Kişilik Değişimi'),
+        tone: 'memory-high',
+      },
+      {
+        key: 'cognitive-high',
+        Icon: Flame,
+        title: t('bot.memory_emblem.cognitive_high_label', 'Duygusal'),
+        tone: 'memory-high',
+      },
+      {
+        key: 'forget-high',
+        Icon: Fish,
+        title: t('bot.memory_emblem.forget_high_label', 'Alzheimer'),
+        tone: 'memory-high',
+      },
+      {
+        key: 'scope-high',
+        Icon: Waypoints,
+        title: `${t('bot.memory_emblem.scope_high_label', 'Büyük Resimci')} (Pro)`,
+        tone: 'memory-high',
+      },
+      {
+        key: 'fixation-high',
+        Icon: SheepIcon,
+        title: `${t('bot.memory_emblem.fixation_high_label', 'Dirençli')} (Pro)`,
+        tone: 'memory-high',
+      },
+    ],
+    [t]
+  )
   const activeCardRef = useRef(null)
   const footerRef = useRef(null)
   const [showScrollBtn, setShowScrollBtn] = useState(true)
@@ -359,8 +441,8 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
 
   const profileThemes = [
     {
-      id: 'mind',
-      title: t('premium.theme_mind_title', 'Mind Network'),
+      id: 'memory-map',
+      title: t('premium.theme_memory_map_title', 'Memory Map'),
       type: 'brain',
     },
     {
@@ -546,7 +628,9 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
   const planName = isAnnualPlan
     ? t('premium.plan_annual_label', 'Yıllık Abonelik')
     : t('premium.plan_label', 'Aylık Abonelik')
-  const planPriceText = isAnnualPlan ? '$42 / yıl' : '$5 / ay'
+  const planPriceText = isAnnualPlan
+    ? t('premium.price_annual', '$72 / yıl (peşin)')
+    : t('premium.price_monthly', '$8 / ay')
 
   const content = (
     <>
@@ -940,7 +1024,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                 >
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
                     <span style={{ fontSize: 24, fontWeight: 800, color: 'var(--color-primary)' }}>
-                      $5
+                      $8
                     </span>
                     <span
                       style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-muted)' }}
@@ -949,7 +1033,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                     </span>
                   </div>
                   <span style={{ fontSize: 12, color: 'var(--color-text-muted)', fontWeight: 500 }}>
-                    $60 / {t('premium.year', 'yıl')}
+                    $96 / {t('premium.year', 'yıl')}
                   </span>
                 </div>
               </div>
@@ -1021,7 +1105,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                 >
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
                     <span style={{ fontSize: 24, fontWeight: 800, color: 'var(--color-primary)' }}>
-                      $3.50
+                      $6
                     </span>
                     <span
                       style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-muted)' }}
@@ -1030,7 +1114,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                     </span>
                   </div>
                   <span style={{ fontSize: 12, color: 'var(--color-text-muted)', fontWeight: 500 }}>
-                    $42 / {t('premium.year', 'yıl')}
+                    $72 / {t('premium.year', 'yıl')} ({t('premium.upfront', 'peşin')})
                   </span>
                 </div>
               </div>
@@ -1416,7 +1500,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                   userSelect: 'none',
                 }}
               >
-                <MindAmbience
+                <MemoryMapAmbience
                   profileName={previewProfile.profileName}
                   active={activeThemeIndex === 0}
                 />
@@ -1664,9 +1748,168 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                 </div>
               </div>
             </div>
+
             {/* Perks & Highlights List */}
             <div ref={perksRef} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {/* Extra Highlights (Gold Crown Badge & Extended Bot Memory) */}
+              {/* Advanced LLM Memory Map & Memory Customization Showcase Block */}
+              <div
+                className="premium-memory-feature-card"
+                style={{
+                  padding: '12px 14px',
+                  borderRadius: 12,
+                  background: 'var(--color-bg)',
+                  border:
+                    '1px solid color-mix(in srgb, var(--color-warning) 28%, var(--color-border))',
+                  boxShadow: '0 2px 12px -3px rgba(0, 0, 0, 0.05)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10,
+                  transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+                }}
+              >
+                {/* Title — Description Row (Matching the items below) */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                  <div
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 7,
+                      background:
+                        'color-mix(in srgb, var(--color-warning) 12%, transparent)',
+                      border:
+                        '1px solid color-mix(in srgb, var(--color-warning) 28%, var(--color-border))',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Brain size={16} color="var(--color-warning)" />
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: 'var(--color-text-secondary)',
+                      lineHeight: 1.5,
+                      minWidth: 0,
+                    }}
+                  >
+                    <strong style={{ color: 'var(--color-text-primary)' }}>
+                      {t('premium.memory_section_title', 'Ekstra Hafıza Özelleştirmeleri')}
+                    </strong>
+                    <span style={{ marginLeft: 8 }}>
+                      — {t(
+                        'premium.memory_section_desc',
+                        'Botlarınızın ve klanlarınızın LLM hafıza ağlarını tam kontrol altına alın. Hafızanın belli özelliklerini ekstra değiştirme olanaklarına sahip olun.'
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Presentation Row: Left Emblems Group <---> Center Slider <---> Right Emblems Group */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    padding: '4px 0 0',
+                  }}
+                >
+                  {/* Left Emblems Group (Horizontal Row) */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      flexShrink: 0,
+                      opacity: presentationSliderValue <= 50 ? 1 : 0.6,
+                      transition: 'opacity 0.2s ease',
+                    }}
+                  >
+                    {leftEmblems.map((emblem) => {
+                      const Icon = emblem.Icon
+                      return (
+                        <span
+                          key={emblem.key}
+                          className={`bot-capability-emblem bot-capability-emblem--${emblem.tone}`}
+                          style={{
+                            width: 26,
+                            height: 26,
+                            flexShrink: 0,
+                            cursor: 'default',
+                            transition: 'transform 0.15s ease',
+                          }}
+                          title={emblem.title}
+                          aria-label={emblem.title}
+                        >
+                          <Icon size={14} strokeWidth={2.2} />
+                        </span>
+                      )
+                    })}
+                  </div>
+
+                  {/* Center Slider */}
+                  <div
+                    style={{
+                      flex: 1,
+                      minWidth: 80,
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={presentationSliderValue}
+                      onChange={(e) => setPresentationSliderValue(Number(e.target.value))}
+                      className="memory-slider__input"
+                      style={{
+                        '--slider-fill': `${presentationSliderValue}%`,
+                        width: '100%',
+                        cursor: 'pointer',
+                      }}
+                      aria-label={t('premium.memory_tuning_balance', 'LLM Memory Tuning Balance')}
+                    />
+                  </div>
+
+                  {/* Right Emblems Group (Horizontal Row) */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      flexShrink: 0,
+                      opacity: presentationSliderValue >= 50 ? 1 : 0.6,
+                      transition: 'opacity 0.2s ease',
+                    }}
+                  >
+                    {rightEmblems.map((emblem) => {
+                      const Icon = emblem.Icon
+                      return (
+                        <span
+                          key={emblem.key}
+                          className={`bot-capability-emblem bot-capability-emblem--${emblem.tone}`}
+                          style={{
+                            width: 26,
+                            height: 26,
+                            flexShrink: 0,
+                            cursor: 'default',
+                            transition: 'transform 0.15s ease',
+                          }}
+                          title={emblem.title}
+                          aria-label={emblem.title}
+                        >
+                          <Icon size={14} strokeWidth={2.2} />
+                        </span>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Extra Highlights (Gold Crown Badge) */}
               <div
                 className="premium-highlight-card"
                 style={{
@@ -1711,54 +1954,6 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                   </strong>
                   <span style={{ marginLeft: 8 }}>
                     — {t('premium.badge_highlight_desc', 'Profilinizde özel rozet gösterilir.')}
-                  </span>
-                </div>
-              </div>
-
-              <div
-                className="premium-highlight-card"
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: 10,
-                  minHeight: 42,
-                  background: 'var(--color-bg)',
-                  border:
-                    '1px solid color-mix(in srgb, var(--color-warning) 24%, var(--color-border))',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                }}
-              >
-                <div
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 7,
-                    background: 'transparent',
-                    border:
-                      '1px solid color-mix(in srgb, var(--color-warning) 24%, var(--color-border))',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                >
-                  <Brain size={16} color="var(--color-warning)" />
-                </div>
-                <div
-                  style={{
-                    fontSize: 12,
-                    color: 'var(--color-text-secondary)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  <strong style={{ color: 'var(--color-text-primary)' }}>
-                    {t('premium.memory_highlight_title', 'Bellek Dayanıklılığı')}
-                  </strong>
-                  <span style={{ marginLeft: 8 }}>
-                    — {t('premium.memory_highlight_desc', 'Botlarınızın bellek dayanıklılığını ayarlayın; hafızaları daha güçlü ve kalıcı olur.')}
                   </span>
                 </div>
               </div>
@@ -2070,8 +2265,8 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                 {isLoading
                   ? t('common.loading', 'Yükleniyor...')
                   : billingCycle === 'annual'
-                    ? t('premium.checkout_cta_annual', "$42 / Yıl ile Pro'ya Yükselt")
-                    : t('premium.checkout_cta', "$5 / Ay ile Pro'ya Yükselt")}
+                    ? t('premium.checkout_cta_annual', "$72 / Yıl ile Pro'ya Yükselt")
+                    : t('premium.checkout_cta', "$8 / Ay ile Pro'ya Yükselt")}
               </button>
 
               <div

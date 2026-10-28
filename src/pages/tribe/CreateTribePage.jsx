@@ -4,7 +4,7 @@ import { tribeApi } from '../../api/tribeApi'
 import { personalityCardApi } from '../../api/personalityCardApi'
 import { actorApi } from '../../api/actorApi'
 import { useNavigate } from 'react-router-dom'
-import { Users, Loader2, AlertTriangle } from 'lucide-react'
+import { Users, Loader2, AlertTriangle, Lock } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import BackButton from '../../components/common/BackButton'
 import CardSelectionSlots from '../../components/card/CardSelectionSlots'
@@ -42,6 +42,7 @@ export default function CreateTribePage() {
   })
 
   const [selectedCardIds, setSelectedCardIds] = useState([])
+  const [lockedCardIds, setLockedCardIds] = useState([])
 
   const { data: myCards = [] } = useQuery({
     queryKey: ['myPersonalityCards', actorId],
@@ -75,6 +76,7 @@ export default function CreateTribePage() {
     [myTribes]
   )
   const tribeCountLimit = userSettings?.tribeCountLimit ?? storeSettings?.tribeCountLimit ?? 3
+  const cardLockLimit = userSettings?.cardAssignmentLockLimit ?? storeSettings?.cardAssignmentLockLimit ?? 4
   const isTribeLimitReached = activeTribes.length >= tribeCountLimit
 
   // Hafıza dayanıklılığı (Unutkanlık Hızı) ayarı Pro'ya özeldir
@@ -92,7 +94,7 @@ export default function CreateTribePage() {
     mission: '',
     preferredModel: 0,
     affinityBiasMultiplier: 1,
-    forgetfulnessMultiplier: 1,
+    ebbinghausHalfLifePeriodMultiplier: 1,
     maxStrengthMultiplier: 1,
     minStrengthThresholdMultiplier: 1,
     recallPathLimitMultiplier: 1,
@@ -185,6 +187,7 @@ export default function CreateTribePage() {
     mutation.mutate({
       ...payload,
       assignedCardIds: selectedCardIds,
+      lockedCardIds: lockedCardIds.filter((id) => selectedCardIds.includes(id)),
       personalityCardName: personalityCardConfirmed ? personalityCardName : null,
       personalityCardPrompt: personalityCardConfirmed ? personalityCardPrompt : null,
       personalityCardImageUrl: personalityCardConfirmed ? personalityCardImageUrl : null,
@@ -200,6 +203,21 @@ export default function CreateTribePage() {
         ? current.filter((selectedId) => selectedId !== lowerId)
         : [...current, lowerId]
     )
+    setLockedCardIds((current) => current.filter((lockedId) => lockedId !== lowerId))
+  }
+
+  const toggleLockCard = (cardId) => {
+    const lowerId = normalizeCardId(cardId)
+    if (!lowerId) return
+    setLockedCardIds((current) => {
+      const isLocked = current.includes(lowerId)
+      if (isLocked) {
+        return current.filter((lockedId) => lockedId !== lowerId)
+      } else {
+        setSelectedCardIds((prev) => (prev.includes(lowerId) ? prev : [...prev, lowerId]))
+        return [...current, lowerId]
+      }
+    })
   }
 
   const handleTopicToggle = (value) => {
@@ -270,13 +288,13 @@ export default function CreateTribePage() {
                 fontSize: 12,
                 padding: '2px 8px',
                 borderRadius: 12,
-                background: isTribeLimitReached ? 'rgba(239,68,68,0.15)' : 'var(--color-surface-raised)',
-                color: isTribeLimitReached ? '#ef4444' : 'var(--color-text-secondary)',
-                border: `1px solid ${isTribeLimitReached ? '#ef4444' : 'var(--color-border)'}`,
+                background: 'var(--color-surface-raised)',
+                color: 'var(--color-text-secondary)',
+                border: '1px solid var(--color-border)',
                 fontWeight: 600,
               }}
             >
-              {activeTribes.length} / {tribeCountLimit} {t('common.tribe', 'Klan')}
+              {activeTribes.length} / {tribeCountLimit}
             </span>
           </div>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
@@ -459,8 +477,28 @@ export default function CreateTribePage() {
                 textTransform: 'uppercase',
               }}
             >
-              {t('card.select_existing_cards', 'Mevcut kartlardan seçip ekle (Opsiyonel)')}
+              {t('bot.select_unassigned_cards', 'Sahip olduğun kartlarından ekle (Opsiyonel)')}
             </label>
+            {cardLockLimit != null && (
+              <span
+                title={t('profile.card_assignment_lock_limit', 'Kart Kilit Limiti')}
+                style={{
+                  fontSize: 12,
+                  padding: '2px 8px',
+                  borderRadius: 12,
+                  background: 'var(--color-surface-raised)',
+                  color: 'var(--color-text-secondary)',
+                  border: '1px solid var(--color-border)',
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                <Lock size={12} style={{ opacity: 0.8 }} />
+                {t('card.total_lock_allowance', 'Toplam Kilit Hakkı')}: {cardLockLimit}
+              </span>
+            )}
           </div>
           <CardSelectionSlots
             cards={myCards}
@@ -469,6 +507,8 @@ export default function CreateTribePage() {
             disabled={mutation.isPending || mutation.isSuccess}
             showHeader={false}
             slotCount={10}
+            assignLockedCardIds={lockedCardIds}
+            onToggleAssignLock={toggleLockCard}
           />
           <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
             {t('tribe_settings.additional_personality_cards_desc')}
@@ -491,6 +531,7 @@ export default function CreateTribePage() {
           <ModelGlassToggle
             value={formData.preferredModel}
             disabled={mutation.isPending || mutation.isSuccess}
+            isPremium={isPremiumUser}
             onChange={(nextModel) => setFormData((current) => ({ ...current, preferredModel: nextModel }))}
           />
           <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
@@ -521,7 +562,7 @@ export default function CreateTribePage() {
                 title={t('tribe.incubation_title', 'Kişilik Değişim Süresi')}
                 description={t(
                   'tribe.incubation_desc',
-                  'Yeni eklenen Kişilik Kartlarının klanın ortak karakterini değiştirmeden önce ne kadar süre bekleyeceğini belirler. Süre dolduğunda bekleyen kartlar etkinleşerek mevcut kart setinden doğrudan yeni bir ortak kişilik oluşturulur ve Hafıza Ağı bu yeni karaktere uyum sağlayacak şekilde güncellenir. Süreyi kısa tutmak yeni kartları hızla devreye sokar; ancak sık değişim anıların daha dengesiz ve çelişkili bir yapıya bürünmesine neden olarak ortak karakterin oturmasını zorlaştırır.'
+                  'Yeni eklenen Kişilik Kartlarının klanın ortak karakterini değiştirmeden önce ne kadar süre bekleyeceğini belirler. Süre dolduğunda bekleyen kartlar etkinleşerek mevcut kart setinden doğrudan yeni bir ortak kişilik oluşturulur ve Hafıza Haritası bu yeni karaktere uyum sağlayacak şekilde güncellenir. Süreyi kısa tutmak yeni kartları hızla devreye sokar; ancak sık değişim anıların daha dengesiz ve çelişkili bir yapıya bürünmesine neden olarak ortak karakterin oturmasını zorlaştırır.'
                 )}
                 leftLabel={t('tribe.incubation_left', 'Fast Personality Change')}
                 rightLabel={t('tribe.incubation_right', 'Slow Personality Change')}
@@ -573,17 +614,17 @@ export default function CreateTribePage() {
                 title={t('tribe.forgetfulness_title', 'Forgetting Speed')}
                 description={t(
                   'tribe.forgetfulness_desc',
-                  'Determines how quickly unvisited Memories fade over time and how frequently they are cleared from the Memory Network. Towards Elephant Memory, the tribe retains even its oldest experiences for a long time; towards Alzheimer, it quickly forgets unused old memories and focuses only on recent events.'
+                  'Determines how quickly unvisited Memories fade over time and how frequently they are cleared from the Memory Map. Towards Elephant Memory, the tribe retains even its oldest experiences for a long time; towards Alzheimer, it quickly forgets unused old memories and focuses only on recent events.'
                 )}
                 leftLabel={t('tribe.forgetfulness_left', 'Elephant Memory')}
                 rightLabel={t('tribe.forgetfulness_right', 'Alzheimer')}
-                emblemField="forgetfulnessMultiplier"
-                value={formData.forgetfulnessMultiplier}
+                emblemField="ebbinghausHalfLifePeriodMultiplier"
+                value={formData.ebbinghausHalfLifePeriodMultiplier}
                 min={0}
                 max={2}
                 onChange={(v) => {
                   if (!mutation.isPending && !mutation.isSuccess) {
-                    setFormData((current) => ({ ...current, forgetfulnessMultiplier: v }))
+                    setFormData((current) => ({ ...current, ebbinghausHalfLifePeriodMultiplier: v }))
                   }
                 }}
                 disabled={mutation.isPending || mutation.isSuccess}
@@ -626,7 +667,7 @@ export default function CreateTribePage() {
                 title={t('tribe.fixation_title', 'Idea Fixation')}
                 description={t(
                   'tribe.fixation_desc',
-                  'Determines how strongly repeated ideas can solidify in the Memory Network and how easily fading memories are cleared. At the Open-Minded end, no idea becomes overly rigid and fading memories are easily cleared, allowing the tribe to adapt quickly to new ideas. At the Resilient end, repeated thoughts take deep root and even the faintest memories resist being forgotten.'
+                  'Determines how strongly repeated ideas can solidify in the Memory Map and how easily fading memories are cleared. At the Open-Minded end, no idea becomes overly rigid and fading memories are easily cleared, allowing the tribe to adapt quickly to new ideas. At the Resilient end, repeated thoughts take deep root and even the faintest memories resist being forgotten.'
                 )}
                 leftLabel={t('tribe.fixation_left', 'Open-Minded')}
                 rightLabel={t('tribe.fixation_right', 'Resilient')}
