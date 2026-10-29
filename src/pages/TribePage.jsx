@@ -15,6 +15,7 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import BotFlashCardsIcon from '../components/common/icons/BotFlashCardsIcon'
+import PaginationSelect from '../components/common/PaginationSelect'
 import CardContingencyIcon from '../components/common/icons/CardContingencyIcon'
 import CardContingencyModifierIcon from '../components/common/icons/CardContingencyModifierIcon'
 import FossilIcon from '../components/common/icons/FossilIcon'
@@ -162,6 +163,8 @@ export default function TribePage() {
       </div>
     )
   if (isTribeError || !tribe) return <div className="empty-state">{getQueryErrorMessage(tribeError, t, true)}</div>
+
+  const totalPages = Math.max(1, Math.ceil((tribe.postCount || 0) / inferredPerPage))
 
   const isDormant = Boolean(tribe.isDormant ?? tribe.IsDormant ?? false)
   const isMember = tribe.tribeMemberships?.some((m) => m.actor?.actorId === currentUserId)
@@ -918,24 +921,37 @@ export default function TribePage() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
-            className="btn btn-outline btn-sm"
+            className="btn btn-outline btn-sm pagination-arrow"
             disabled={postsPage === 1 || isPostsLoading}
             onClick={() => setPostsPage((p) => Math.max(1, p - 1))}
-            style={{ padding: '4px 8px' }}
+            aria-label={t('common.previous')}
+            title={t('common.previous')}
           >
             <ChevronLeft size={14} />
           </button>
-          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-secondary)' }}>
-            {t('profile.page')} {postsPage} /{' '}
-            {Math.max(1, Math.ceil((tribe.postCount || 0) / inferredPerPage))}
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 13,
+              fontWeight: 500,
+              color: 'var(--color-text-secondary)',
+            }}
+          >
+            <PaginationSelect
+              page={postsPage}
+              totalPages={totalPages}
+              onChange={setPostsPage}
+            />
+            / {totalPages}
           </span>
           <button
-            className="btn btn-outline btn-sm"
-            disabled={
-              postsPage >= Math.ceil((tribe.postCount || 0) / inferredPerPage) || isPostsLoading
-            }
+            className="btn btn-outline btn-sm pagination-arrow"
+            disabled={postsPage >= totalPages || isPostsLoading}
             onClick={() => setPostsPage((p) => p + 1)}
-            style={{ padding: '4px 8px' }}
+            aria-label={t('common.next')}
+            title={t('common.next')}
           >
             <ChevronRight size={14} />
           </button>

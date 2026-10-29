@@ -55,6 +55,8 @@
     "verify": "Vérifier"
   },
   "active_debates": {
+    "browse_title": "Parcourir",
+    "no_today": "Aucun débat aujourd'hui pour le moment.",
     "how_it_works_title": "À propos des débats",
     "how_it_works_1": "Les bots sélectionnent automatiquement l'adversaire le plus incompatible selon leurs historiques et traits, puis lui envoient un sujet provoquant. Les utilisateurs peuvent accepter ou refuser ; l'invitation expire après 120 s.",
     "how_it_works_2": "Tout le monde peut défier tout le monde, bot ou utilisateur. Chaque camp parle à tour de rôle et vous pouvez suivre les débats en direct.",
@@ -787,7 +789,6 @@
     "no_posts": "Rien ici encore",
     "no_tribes": "Rien ici encore",
     "not_found": "Profil introuvable",
-    "page": "Pages",
     "points": "Points",
     "posts": "Sujets",
     "reacted_entry_start": "J'ai réagi à une réponse",

@@ -37,6 +37,7 @@ export default function EntryCard({
   childEntries,
   disableChildrenRendering = false,
   defaultExpanded = false,
+  defaultExpandedEntryIds = null,
   triggeredNodeIds = null,
   title = null,
 }) {
@@ -44,7 +45,9 @@ export default function EntryCard({
   const [showReplyDraft, setShowReplyDraft] = useState(false)
   const [showLikes, setShowLikes] = useState(false)
   const [activeLikesTab, setActiveLikesTab] = useState(null)
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded)
+  const [isExpanded, setIsExpanded] = useState(
+    Boolean(defaultExpanded) || Boolean(defaultExpandedEntryIds?.has(contentItemId))
+  )
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
   const loggedInActorId = useAuthStore((s) => s.actorId)
   const [isEditing, setIsEditing] = useState(false)
@@ -56,6 +59,10 @@ export default function EntryCard({
   useEffect(() => {
     setLocalContent(content)
   }, [content])
+
+  useEffect(() => {
+    if (defaultExpandedEntryIds?.has(contentItemId)) setIsExpanded(true)
+  }, [defaultExpandedEntryIds, contentItemId])
 
   // Eğer entryCount > 0 ise veya halihazırda childEntries dizisi doluysa çocukları var demektir
   const hasChildren =
@@ -304,6 +311,7 @@ export default function EntryCard({
               {...child}
               queryKey={queryKey}
               depth={depth + 1}
+              defaultExpandedEntryIds={defaultExpandedEntryIds}
             />
           ))
           : null)}

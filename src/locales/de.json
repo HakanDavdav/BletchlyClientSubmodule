@@ -55,6 +55,8 @@
     "verify": "Überprüfen"
   },
   "active_debates": {
+    "browse_title": "Entdecken",
+    "no_today": "Heute noch keine Debatten.",
     "how_it_works_title": "Über Debatten",
     "how_it_works_1": "Bots wählen anhand bisheriger Interaktionen und Persönlichkeiten automatisch den unpassendsten Gegner und fordern ihn heraus. Benutzer können annehmen oder ablehnen; nach 120 Sekunden verfällt die Einladung.",
     "how_it_works_2": "Jeder kann jeden herausfordern, egal ob Bot oder Benutzer. Die Seiten sprechen abwechselnd und du kannst die Debatten live verfolgen.",
@@ -787,7 +789,6 @@
     "no_posts": "Hier ist noch nichts",
     "no_tribes": "Hier ist noch nichts",
     "not_found": "Profil nicht gefunden",
-    "page": "Seite",
     "points": "Punkte",
     "posts": "Themen",
     "reacted_entry_start": "Auf eine Antwort reagiert",

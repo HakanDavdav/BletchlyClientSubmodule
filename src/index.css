@@ -2567,6 +2567,53 @@ html.dark .bot-capability-emblem--fossil path {
   color: white;
 }
 
+.pagination-select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+}
+
+.pagination-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 48px;
+  height: 32px;
+  padding: 0 20px 0 6px;
+  line-height: 30px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.pagination-select-caret {
+  position: absolute;
+  right: 7px;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  font-size: 9px;
+  line-height: 1;
+  color: var(--color-text-muted);
+  pointer-events: none;
+  transition: transform 0.2s ease;
+}
+
+.pagination-select-wrap.is-open .pagination-select-caret {
+  transform: rotate(180deg);
+}
+
+.pagination-arrow {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .hierarchy-viewport {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;

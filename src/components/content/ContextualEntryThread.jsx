@@ -11,6 +11,7 @@ export default function ContextualEntryThread({
   depth = 0,
   queryKey,
   hideRootPost = false,
+  defaultExpandedEntryIds = null,
 }) {
   const { isLoggedIn, actorId } = useAuthStore()
   const { t } = useTranslation()
@@ -72,6 +73,7 @@ export default function ContextualEntryThread({
                     depth={idx}
                     isOwner={isOwner(parentEntry)}
                     queryKey={queryKey}
+                    defaultExpandedEntryIds={defaultExpandedEntryIds}
                   />
                 </div>
               ))}
@@ -95,6 +97,7 @@ export default function ContextualEntryThread({
               depth={parentChain.length}
               isOwner={isOwner(entryDto)}
               queryKey={queryKey}
+              defaultExpandedEntryIds={defaultExpandedEntryIds}
             />
           </div>
         </div>
@@ -120,9 +123,9 @@ export default function ContextualEntryThread({
           <EntryCard
             {...entryDto}
             depth={0}
-            defaultExpanded={true}
             isOwner={isOwner(entryDto)}
             queryKey={queryKey}
+            defaultExpandedEntryIds={defaultExpandedEntryIds}
           />
         </div>
       </div>

@@ -1,51 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import useMyEntitiesStore from '../../store/myEntitiesStore'
-import { UserCapabilities } from '../../constants/enums'
-
-export function PaletteLockedSlash({ size = '100%', strokeWidth = 2.4 }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      style={{
-        position: 'absolute',
-        inset: 0,
-        pointerEvents: 'none',
-        overflow: 'visible',
-        filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55))',
-      }}
-    >
-      <line
-        x1="2.5"
-        y1="21.5"
-        x2="21.5"
-        y2="2.5"
-        stroke="var(--color-warning)"
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
-
-/** Official Qwen icon from https://simpleicons.org/?q=qwen */
-export function QwenLogo({ size = 30, ...props }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      style={{ display: 'block' }}
-      {...props}
-    >
-      <path d="M23.919 14.545 20.817 9.17l1.47-2.544a.56.56 0 0 0 0-.566l-1.633-2.83a.57.57 0 0 0-.49-.283h-6.207L12.487.402a.57.57 0 0 0-.49-.284H8.732a.56.56 0 0 0-.49.284L5.139 5.775h-2.94a.56.56 0 0 0-.49.284L.077 8.887a.56.56 0 0 0 0 .567L3.18 14.83l-1.47 2.545a.56.56 0 0 0 0 .566l1.634 2.83a.57.57 0 0 0 .49.283h6.205l1.47 2.545a.57.57 0 0 0 .49.284h3.266a.57.57 0 0 0 .49-.284l3.104-5.375h2.94a.57.57 0 0 0 .49-.283l1.634-2.828a.55.55 0 0 0-.004-.568M8.733.686l1.634 2.828-1.634 2.828H21.8L20.164 9.17H7.425L5.63 6.06Zm1.306 19.801-6.205-.002 1.634-2.83h3.265L2.201 6.344h3.267q3.182 5.517 6.367 11.032zm10.124-5.66L18.53 12l-6.532 11.315-1.634-2.83c2.129-3.673 4.25-7.351 6.373-11.028h3.592l3.102 5.374z" />
-    </svg>
-  )
-}
+import { Bot } from 'lucide-react'
 
 /** Official Mistral AI icon from https://simpleicons.org/?q=mistral */
 export function MistralLogo({ size = 30, ...props }) {
@@ -80,26 +34,17 @@ export function DeepSeekLogo({ size = 30, ...props }) {
 }
 
 export const MODEL_GLASS_ITEMS = [
-  { value: 0, key: 'qwen', title: 'Qwen', Icon: QwenLogo },
+  { value: 3, key: 'deepseek', title: 'DeepSeek V4 Flash', Icon: DeepSeekLogo },
+  { value: 4, key: 'gpt-oss', title: 'GPT-OSS 20B', Icon: Bot },
   { value: 1, key: 'mistral', title: 'Mistral', Icon: MistralLogo },
-  { value: 2, key: 'deepseek', title: 'DeepSeek', Icon: DeepSeekLogo },
 ]
 
 export default function ModelGlassToggle({
-  value = 0,
+  value = 3,
   onChange,
   disabled = false,
-  isPremium: isPremiumProp,
   style = {},
 }) {
-  const storeSettings = useMyEntitiesStore((state) => state.mySettings)
-  const isPremium =
-    isPremiumProp !== undefined
-      ? Boolean(isPremiumProp)
-      : ((storeSettings?.userCapabilities ?? UserCapabilities.Default) & UserCapabilities.Premium) ===
-        UserCapabilities.Premium
-
-  const navigate = useNavigate()
   const [hoveredIdx, setHoveredIdx] = useState(null)
   const activeIndex = MODEL_GLASS_ITEMS.findIndex((m) => m.value === value)
   const safeIndex = activeIndex >= 0 ? activeIndex : 0
@@ -107,23 +52,10 @@ export default function ModelGlassToggle({
   const handleSegmentClick = (index) => {
     if (disabled) return
     const targetModel = MODEL_GLASS_ITEMS[index]
-    const isTargetLocked = targetModel.key === 'deepseek' && !isPremium
-    if (isTargetLocked) {
-      navigate('/premium')
-      return
-    }
-
     if (index === safeIndex) {
-      // Clicking the currently active model or the glass thumb cycles to the next available model
-      const allowedItems = isPremium
-        ? MODEL_GLASS_ITEMS
-        : MODEL_GLASS_ITEMS.filter((m) => m.key !== 'deepseek')
-      const currentAllowedIdx = allowedItems.findIndex((m) => m.value === value)
-      const nextItem =
-        allowedItems[(currentAllowedIdx >= 0 ? currentAllowedIdx + 1 : 0) % allowedItems.length]
+      const nextItem = MODEL_GLASS_ITEMS[(safeIndex + 1) % MODEL_GLASS_ITEMS.length]
       onChange?.(nextItem.value)
     } else {
-      // Directly jump to clicked model
       onChange?.(targetModel.value)
     }
   }
@@ -156,7 +88,7 @@ export default function ModelGlassToggle({
           top: 5,
           bottom: 5,
           left: 5,
-          width: 'calc((100% - 10px) / 3)',
+          width: `calc((100% - 10px) / ${MODEL_GLASS_ITEMS.length})`,
           borderRadius: 9999,
           transform: `translateX(calc(${safeIndex} * 100%))`,
           transition: 'transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1), border-color 0.3s, box-shadow 0.3s',
@@ -192,14 +124,13 @@ export default function ModelGlassToggle({
         const { value: modelVal, title, Icon, key: modelKey } = model
         const isSelected = safeIndex === idx
         const isHovered = hoveredIdx === idx
-        const isLocked = modelKey === 'deepseek' && !isPremium
 
         return (
           <button
             key={modelVal}
             type="button"
             aria-label={title}
-            title={isLocked ? `${title} (Pro)` : title}
+            title={title}
             disabled={disabled}
             onClick={() => handleSegmentClick(idx)}
             onMouseEnter={() => setHoveredIdx(idx)}
@@ -231,7 +162,7 @@ export default function ModelGlassToggle({
                 position: 'relative',
                 transition: 'all 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
                 transform: isSelected ? 'scale(1.15)' : isHovered ? 'scale(1.05)' : 'scale(0.92)',
-                opacity: isSelected ? 1 : isHovered ? 0.9 : isLocked ? 0.7 : 0.55,
+                opacity: isSelected ? 1 : isHovered ? 0.9 : 0.55,
                 // Normal state: monochrome white/gray based on site theme (text-secondary)
                 // Active state: turns to theme color (green or blue)
                 color: isSelected || isHovered
@@ -245,7 +176,6 @@ export default function ModelGlassToggle({
               }}
             >
               <Icon size={28} />
-              {isLocked && <PaletteLockedSlash strokeWidth={2.4} />}
             </div>
           </button>
         )

@@ -231,6 +231,16 @@ export default function ActiveDebatesPage() {
     refetchInterval: 30000,
   })
 
+  const { data: todayData, isLoading: isTodayLoading } = useQuery({
+    queryKey: ['debates', 'today'],
+    queryFn: () =>
+      actorApi.getTodayDebates().then((r) => {
+        const list = r?.data?.data || r?.data
+        return Array.isArray(list) ? list : []
+      }),
+    refetchInterval: 30000,
+  })
+
   const { data: seasonStatus } = useQuery({
     queryKey: ['seasonStatus'],
     queryFn: async () => {
@@ -340,6 +350,7 @@ export default function ActiveDebatesPage() {
   const debates = data || []
   const activeDebates = debates.filter(isLive)
   const recentDebates = debates.filter(isCompleted)
+  const todayDebates = todayData || []
 
   const openDebate = (debate) => {
     const targetDebateId = debate.debateId || debate.DebateId
@@ -488,7 +499,7 @@ export default function ActiveDebatesPage() {
         />
       </div>
 
-      {isLoading ? (
+      {isLoading || isTodayLoading ? (
         <div className="flex justify-center" style={{ padding: 60 }}>
           <div className="spinner spinner-lg" />
         </div>
@@ -504,6 +515,11 @@ export default function ActiveDebatesPage() {
             t('active_debates.recent_title', 'Yakın Zamanda'),
             recentDebates,
             t('active_debates.no_recent', 'Henüz tamamlanmış meydan okuma yok.')
+          )}
+          {renderSection(
+            t('active_debates.browse_title', 'Göz At'),
+            todayDebates,
+            t('active_debates.no_today', 'Bugün henüz meydan okuma yok.')
           )}
         </div>
       )}

@@ -92,7 +92,7 @@ export default function CreateTribePage() {
     tribeName: '',
     imageUrl: '',
     mission: '',
-    preferredModel: 0,
+    preferredModel: 3,
     affinityBiasMultiplier: 1,
     ebbinghausHalfLifePeriodMultiplier: 1,
     maxStrengthMultiplier: 1,

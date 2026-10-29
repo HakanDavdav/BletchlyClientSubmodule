@@ -1867,32 +1867,6 @@ function updateCapillaryPosition(obj, { start, end }, link) {
   let sv = new THREE.Vector3(start.x, start.y, start.z)
   let ev = new THREE.Vector3(end.x, end.y, end.z)
 
-  // Torba bağları: kök ile katmanlı torba/kavramsal düğümler arasındaki hatlar yüzeyden başlar
-  if (link?.isBagLink || link?.isLayer2Link || link?.isLayer3Link || link?.isHistoricalLink) {
-    const rootNode = link.source?.isRoot ? link.source : link.target?.isRoot ? link.target : null
-    const otherNode = rootNode === link.source ? link.target : link.source
-    if (rootNode && otherNode) {
-      const rootV = new THREE.Vector3(rootNode.x || 0, rootNode.y || 0, rootNode.z || 0)
-      const otherV = new THREE.Vector3(otherNode.x || 0, otherNode.y || 0, otherNode.z || 0)
-      const dir = new THREE.Vector3().subVectors(otherV, rootV)
-      const R1 = rootNode.innerBagRadius ?? rootNode.bagRadius ?? BAG_RADIUS
-      const R2 = rootNode.middleBagRadius ?? Math.round(R1 * MIDDLE_BAG_RATIO)
-      const R3 = rootNode.outerBagRadius ?? Math.round(R1 * OUTER_BAG_RATIO)
-
-      let exitRadius = R1
-      if (otherNode.orbLayer === 2) exitRadius = R1
-      else if (otherNode.orbLayer === 3) exitRadius = R2
-      else if (otherNode.orbLayer === 0) exitRadius = R3
-
-      if (dir.length() > exitRadius) {
-        dir.normalize()
-        const surface = rootV.clone().addScaledVector(dir, exitRadius)
-        if (link.source?.isRoot) sv = surface
-        else ev = surface
-      }
-    }
-  }
-
   const len = sv.distanceTo(ev)
   if (len < 1) return true
 

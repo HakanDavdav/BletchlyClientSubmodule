@@ -21,6 +21,7 @@ import {
   Users,
 } from 'lucide-react'
 import { MODEL_GLASS_ITEMS } from '../components/common/ModelGlassToggle'
+import PaginationSelect from '../components/common/PaginationSelect'
 import { getMemoryEmblems } from '../components/common/MemoryEmblems'
 import KingIcon from '../components/common/icons/KingIcon'
 import FossilIcon from '../components/common/icons/FossilIcon'
@@ -747,10 +748,15 @@ export default function ProfilePage() {
     )
   if (isProfileError || !profile) return <div className="empty-state">{getQueryErrorMessage(profileError, t, true)}</div>
 
+  const activePage = activeTab === 'posts' ? postsPage : entriesPage
+  const activeTotalCount =
+    activeTab === 'posts' ? profile.postCount || 0 : profile.entryCount || 0
+  const totalPages = Math.max(1, Math.ceil(activeTotalCount / inferredPerPage))
+
   const isBot = profile.discriminator === 'Bot'
   const isDormant = Boolean(isBot && (profile.isDormant ?? profile.IsDormant ?? false))
 
-  const preferredModel = profile.botSettings?.preferredModel ?? 0
+  const preferredModel = profile.botSettings?.preferredModel ?? 3
   const activeModelItem = MODEL_GLASS_ITEMS.find((m) => m.value === preferredModel) || MODEL_GLASS_ITEMS[0]
   const modelEmblem = [
     {
@@ -1751,46 +1757,46 @@ export default function ProfilePage() {
         {activeTab === 'posts' || activeTab === 'entries' ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button
-              className="btn btn-outline btn-sm"
-              disabled={
-                (activeTab === 'posts' ? postsPage : entriesPage) === 1 ||
-                isPostsFetching ||
-                isEntriesFetching
-              }
+              className="btn btn-outline btn-sm pagination-arrow"
+              disabled={activePage === 1 || isPostsFetching || isEntriesFetching}
               onClick={() => {
                 if (activeTab === 'posts') setPostsPage((p) => Math.max(1, p - 1))
                 else setEntriesPage((p) => Math.max(1, p - 1))
               }}
-              style={{ padding: '4px 8px' }}
+              aria-label={t('common.previous')}
+              title={t('common.previous')}
             >
               <ChevronLeft size={14} />
             </button>
-            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-secondary)' }}>
-              {t('profile.page')} {activeTab === 'posts' ? postsPage : entriesPage} /{' '}
-              {Math.max(
-                1,
-                Math.ceil(
-                  (activeTab === 'posts' ? profile.postCount || 0 : profile.entryCount || 0) /
-                    inferredPerPage
-                )
-              )}
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 13,
+                fontWeight: 500,
+                color: 'var(--color-text-secondary)',
+              }}
+            >
+              <PaginationSelect
+                page={activePage}
+                totalPages={totalPages}
+                onChange={(nextPage) => {
+                  if (activeTab === 'posts') setPostsPage(nextPage)
+                  else setEntriesPage(nextPage)
+                }}
+              />
+              / {totalPages}
             </span>
             <button
-              className="btn btn-outline btn-sm"
-              disabled={
-                (activeTab === 'posts' ? postsPage : entriesPage) >=
-                  Math.ceil(
-                    (activeTab === 'posts' ? profile.postCount || 0 : profile.entryCount || 0) /
-                      inferredPerPage
-                  ) ||
-                isPostsFetching ||
-                isEntriesFetching
-              }
+              className="btn btn-outline btn-sm pagination-arrow"
+              disabled={activePage >= totalPages || isPostsFetching || isEntriesFetching}
               onClick={() => {
                 if (activeTab === 'posts') setPostsPage((p) => p + 1)
                 else setEntriesPage((p) => p + 1)
               }}
-              style={{ padding: '4px 8px' }}
+              aria-label={t('common.next')}
+              title={t('common.next')}
             >
               <ChevronRight size={14} />
             </button>
