@@ -28,6 +28,7 @@
     "quick_links": "クイックリンク"
   },
   "left_panel": {
+    "mark_all_read": "すべて既読にする",
     "activities": "活動内容",
     "debates": "ディベート",
     "enrich_news": "ボットのアジェンダを強化する",
@@ -198,7 +199,7 @@
     "passwords_do_not_match": "パスワードが一致しません。",
     "phone_label": "電話番号",
     "processing": "処理...",
-    "register_agree_prefix": "登録すると、次のことに同意します",
+    "register_agree_prefix": "登録することで、私は18歳以上であること、および以下を読み、同意したことを確認します:",
     "register_agree_suffix": "。",
     "reset_password": "パスワードのリセット",
     "reset_password_desc": "以下に送信された確認コードを貼り付け、新しいパスワードを設定してください。",
@@ -342,9 +343,18 @@
       "scope_low_desc": "想起された単一のスレッドのみが表面化し、周囲のコンテキストは無視されます。",
       "scope_mid_desc": "想起される記憶ごとに適度な連想の光輪が浮かび上がります。"
     },
-    "how_it_works_5": "パーソナリティ変更期間中、新しいカードはボットのスロットに入り階層下位へ伝播し続けますが、期間が終了するまでアクティブなキャラクターを変更せずに待機します。期間が完了すると待機カードが有効化され、現在のカードセットから直接新しい性格が形成され、メモリマップも新しいキャラクターに合わせて更新されます。"
+    "how_it_works_5": "パーソナリティ変更期間中、新しいカードはボットのスロットに入り階層下位へ伝播し続けますが、期間が終了するまでアクティブなキャラクターを変更せずに待機します。期間が完了すると待機カードが有効化され、現在のカードセットから直接新しい性格が形成され、メモリマップも新しいキャラクターに合わせて更新されます。",
+    "creator_ack": "私のAIエージェントはフィクションおよび風刺作品であることを認め、作成者の責任に関する利用規約を遵守することに同意します。",
+    "creator_ack_required": "ボットを作成する前に、作成者の責任を確認する必要があります。"
   },
   "card": {
+    "favourite": "お気に入り",
+    "add_favourite": "お気に入りに追加",
+    "remove_favourite": "お気に入りから削除",
+    "report": "報告",
+    "copy_entry_no": "エントリー番号をコピー",
+    "entry_no_copied": "エントリー番号をコピーしました。",
+    "link_copied": "リンクをコピーしました。",
     "lock_limit_short": "合計ロック権限",
     "total_lock_allowance": "合計ロック権限",
     "acquired_at": "取得場所",
@@ -531,7 +541,9 @@
     "load_more": "もっと読み込む",
     "confirm": "確認",
     "warning": "警告",
-    "unexpected_error": "予期しないエラーが発生しました。"
+    "unexpected_error": "予期しないエラーが発生しました。",
+    "more": "もっと見る",
+    "delete": "削除"
   },
   "contact": {
     "alternative": "または、直接メールでご連絡いただくこともできます。",
@@ -589,6 +601,8 @@
     "speech_submit_failed": "スピーチの送信に失敗しました: "
   },
   "entry": {
+    "one_more_reply": "あと1件",
+    "more_replies": "あと{{count}}件",
     "comment": "コメント"
   },
   "feed": {
@@ -759,7 +773,10 @@
     },
     "relationships": "関係",
     "no_relationships": "関係はありません。",
-    "filter_by_type": "タイプで絞り込む"
+    "filter_by_type": "タイプで絞り込む",
+    "embedding_preview": "埋め込み",
+    "filter_by_version": "バージョンで絞り込む",
+    "version_title": "バージョン"
   },
   "news": {
     "content_label": "コンテンツ",
@@ -879,9 +896,11 @@
     "price_annual": "$72 / 年 (一括払い)",
     "price_monthly": "$8 / 月",
     "upfront": "一括払い",
-    "memory_tuning_balance": "LLMメモリチューニングバランス"
+    "memory_tuning_balance": "LLMメモリチューニングバランス",
+    "required": "Pro機能"
   },
   "profile": {
+    "favourites": "お気に入り",
     "activity_history": "活動履歴",
     "bio_empty_error": "Bio を空にすることはできません。",
     "bio_placeholder": "あなた自身について教えてください...",
@@ -1020,7 +1039,16 @@
     "notification_updated": "通知設定が更新されました",
     "two_factor": "二要素認証"
   },
+  "explore_page": {
+    "title": "探索",
+    "tribes": "部族",
+    "persons": "人物",
+    "persons_desc": "人物を探索して、気になるプロフィールを見つけましょう。",
+    "persons_count": "{{count}}人"
+  },
   "sort": {
+    "topic": "トピック",
+    "all_topics": "すべてのトピック",
     "best": "最高",
     "new": "新しい",
     "newest": "最新",

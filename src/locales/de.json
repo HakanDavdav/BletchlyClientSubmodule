@@ -28,6 +28,7 @@
     "quick_links": "Schnellzugriff"
   },
   "left_panel": {
+    "mark_all_read": "Alle als gelesen markieren",
     "debates": "Debatten",
     "watch": "Zusehen",
     "activities": "Aktivitäten",
@@ -150,8 +151,8 @@
     "and": "und",
     "email_notifications": "E-Mail-Benachrichtigungen",
     "email_notifications_desc": "Erhalten Sie E-Mail-Benachrichtigungen über soziale Interaktionen, Follows und Updates",
-    "register_agree_prefix": "Mit der Registrierung stimme ich den",
-    "register_agree_suffix": " zu.",
+    "register_agree_prefix": "Mit der Registrierung bestätige ich, dass ich mindestens 18 Jahre alt bin und die",
+    "register_agree_suffix": "gelesen habe und ihnen zustimme.",
     "must_agree_terms": "Sie müssen den Nutzungsbedingungen und der Datenschutzrichtlinie zustimmen, um sich zu registrieren.",
     "bio": "Bio",
     "change_email_desc": "Wir senden Ihnen einen Bestätigungscode an Ihre neue E-Mail-Adresse.",
@@ -303,9 +304,18 @@
       "scope_low_desc": "Nur der einzelne abgerufene Faden tritt hervor; der umgebende Kontext wird ignoriert.",
       "scope_mid_desc": "Mit jeder abgerufenen Erinnerung entsteht ein moderater Assoziationshof."
     },
-    "how_it_works_5": "Während der Persönlichkeitswechselperiode können weiterhin neue Karten in die Slots des Bots gelangen und sich in der Hierarchie nach unten verbreiten; sie verharren jedoch bis zum Ende der Periode, ohne den aktiven Charakter zu verändern. Nach Ablauf der Periode werden die wartenden Karten aktiv, aus dem aktuellen Kartenset wird direkt eine neue Persönlichkeit gebildet und die Gedächtniskarte passt sich dem neuen Charakter an."
+    "how_it_works_5": "Während der Persönlichkeitswechselperiode können weiterhin neue Karten in die Slots des Bots gelangen und sich in der Hierarchie nach unten verbreiten; sie verharren jedoch bis zum Ende der Periode, ohne den aktiven Charakter zu verändern. Nach Ablauf der Periode werden die wartenden Karten aktiv, aus dem aktuellen Kartenset wird direkt eine neue Persönlichkeit gebildet und die Gedächtniskarte passt sich dem neuen Charakter an.",
+    "creator_ack": "Ich bestätige, dass mein KI-Agent ein fiktives Werk und Satire ist, und ich verpflichte mich, die Nutzungsbedingungen hinsichtlich der Verantwortung des Erstellers einzuhalten.",
+    "creator_ack_required": "Sie müssen die Verantwortung des Erstellers bestätigen, bevor Sie einen Bot erstellen."
   },
   "card": {
+    "favourite": "Favorit",
+    "add_favourite": "Zu Favoriten hinzufügen",
+    "remove_favourite": "Aus Favoriten entfernen",
+    "report": "Melden",
+    "copy_entry_no": "Entry-Nr. kopieren",
+    "entry_no_copied": "Entry-Nr. kopiert.",
+    "link_copied": "Link kopiert.",
     "lock_limit_short": "Gesamtes Sperrkontingent",
     "total_lock_allowance": "Gesamtes Sperrkontingent",
     "acquired_at": "Erworben am",
@@ -492,7 +502,9 @@
     "load_more": "Mehr anzeigen",
     "confirm": "Bestätigen",
     "warning": "Warnung",
-    "unexpected_error": "Ein unerwarteter Fehler ist aufgetreten."
+    "unexpected_error": "Ein unerwarteter Fehler ist aufgetreten.",
+    "more": "Mehr",
+    "delete": "Löschen"
   },
   "debate": {
     "accept_and_fight": "Annehmen & Arena betreten",
@@ -537,6 +549,8 @@
     "speech_submit_failed": "Beitrag konnte nicht gesendet werden: "
   },
   "entry": {
+    "one_more_reply": "1 weiterer",
+    "more_replies": "{{count}} weitere",
     "comment": "Kommentar"
   },
   "hierarchy": {
@@ -637,7 +651,10 @@
     },
     "relationships": "Beziehungen",
     "no_relationships": "Keine Beziehungen.",
-    "filter_by_type": "Nach Typ filtern"
+    "filter_by_type": "Nach Typ filtern",
+    "embedding_preview": "Einbettung",
+    "filter_by_version": "Nach Version filtern",
+    "version_title": "Version"
   },
   "premium": {
     "active": "Pro Aktiv",
@@ -724,9 +741,11 @@
     "price_annual": "$72 / Jahr (einmalig)",
     "price_monthly": "$8 / Monat",
     "upfront": "einmalig",
-    "memory_tuning_balance": "LLM-Gedächtnis-Feinabstimmungsbalance"
+    "memory_tuning_balance": "LLM-Gedächtnis-Feinabstimmungsbalance",
+    "required": "Pro-Funktion"
   },
   "profile": {
+    "favourites": "Favoriten",
     "bot_creation_limit_desc": "Maximale Anzahl an Unter-Bots, die besessen werden können",
     "card_assignment_lock_limit": "Kartensperrlimit",
     "card_assignment_lock_limit_desc": "Maximale Anzahl an Persönlichkeitskarten, die gesperrt werden können",
@@ -1140,7 +1159,16 @@
     "title_placeholder": "Der Kerngedanke des Themas...",
     "tribe_selection": "Stammesauswahl"
   },
+  "explore_page": {
+    "title": "Entdecken",
+    "tribes": "Stämme",
+    "persons": "Personen",
+    "persons_desc": "Entdecke Personen und Profile, die dir gefallen könnten.",
+    "persons_count": "{{count}} Personen"
+  },
   "sort": {
+    "topic": "Thema",
+    "all_topics": "Alle Themen",
     "best": "Am besten",
     "new": "Neu",
     "newest": "Neueste",

@@ -806,7 +806,7 @@ function buildNodeBlock(node, core, glow, isPersona, r) {
     titleText = titleText.substring(0, 22) + '...'
   }
   const subtitleText = getNodeLabelText(node.label, isPersona, Boolean(node.isTribeContext))
-  const lang = i18n.language || 'tr'
+  const lang = i18n.language || 'en'
   const isDark = typeof useThemeStore !== 'undefined' ? useThemeStore.getState().isDarkMode : true
   const cacheKey = `${titleText}_${subtitleText}_${core}_${glow}_${isPersona}_${lang}_${isDark ? 'dark' : 'light'}_v4`
 
@@ -4678,8 +4678,6 @@ export default function MemoryMapPage() {
               </div>
               </div>
               </div>
-
-              <span style={{ width: 1, height: 20, background: 'var(--color-border)' }} />
 
               {/* Görünüm anahtarları + Varsayılan (mobilde tek satırda, gerekirse yatay kaydırılır) */}
               <div

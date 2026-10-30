@@ -12,7 +12,7 @@ export default function FooterBar() {
       </Link>
       •
       <Link to="/how-it-works" style={{ color: 'inherit', textDecoration: 'none' }}>
-        {t('footer.how_it_works', 'Nasıl Çalışır?')}
+        {t('footer.how_it_works', 'Nasıl Çalışır')}
       </Link>
       •
       <Link to="/contact" style={{ color: 'inherit', textDecoration: 'none' }}>
@@ -25,6 +25,10 @@ export default function FooterBar() {
       •
       <Link to="/terms" style={{ color: 'inherit', textDecoration: 'none' }}>
         Terms of Service
+      </Link>
+      •
+      <Link to="/cookie-policy" style={{ color: 'inherit', textDecoration: 'none' }}>
+        Cookie Policy
       </Link>
       •<span>© 2026 Bletchly</span>
     </footer>

@@ -21,7 +21,7 @@ import {
   Users,
 } from 'lucide-react'
 import { MODEL_GLASS_ITEMS } from '../components/common/ModelGlassToggle'
-import PaginationSelect from '../components/common/PaginationSelect'
+import PaginationSelect, { PaginationTotal } from '../components/common/PaginationSelect'
 import { getMemoryEmblems } from '../components/common/MemoryEmblems'
 import KingIcon from '../components/common/icons/KingIcon'
 import FossilIcon from '../components/common/icons/FossilIcon'
@@ -156,6 +156,7 @@ export default function ProfilePage() {
   const [showFossilProfileTribes, setShowFossilProfileTribes] = useState(false)
   const [postsPage, setPostsPage] = useState(1)
   const [entriesPage, setEntriesPage] = useState(1)
+  const [favouritesPage, setFavouritesPage] = useState(1)
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false)
   const inferredPerPage = 5
   // Profil sekmeleri: mobilde yatay kaydırma göstergesi (kaydıraç) durumu
@@ -380,6 +381,7 @@ export default function ProfilePage() {
     activeTab,
     profile?.postCount,
     profile?.entryCount,
+    profile?.favouriteCount,
     visibleProfileBots.length,
     visibleProfileTribes.length,
   ])
@@ -740,6 +742,16 @@ export default function ProfilePage() {
     enabled: !!actorId && activeTab === 'entries',
   })
 
+  const {
+    data: favouritesData,
+    isLoading: isFavouritesLoading,
+    isFetching: isFavouritesFetching,
+  } = useQuery({
+    queryKey: ['profile-favourites', actorId, favouritesPage],
+    queryFn: () => actorApi.getProfileFavourites(actorId, favouritesPage).then((r) => r.data?.data || []),
+    enabled: !!actorId && activeTab === 'favourites',
+  })
+
   if (isLoading)
     return (
       <div className="flex justify-center" style={{ padding: 40 }}>
@@ -748,9 +760,18 @@ export default function ProfilePage() {
     )
   if (isProfileError || !profile) return <div className="empty-state">{getQueryErrorMessage(profileError, t, true)}</div>
 
-  const activePage = activeTab === 'posts' ? postsPage : entriesPage
+  const activePage =
+    activeTab === 'posts'
+      ? postsPage
+      : activeTab === 'favourites'
+        ? favouritesPage
+        : entriesPage
   const activeTotalCount =
-    activeTab === 'posts' ? profile.postCount || 0 : profile.entryCount || 0
+    activeTab === 'posts'
+      ? profile.postCount || 0
+      : activeTab === 'favourites'
+        ? profile.favouriteCount || 0
+        : profile.entryCount || 0
   const totalPages = Math.max(1, Math.ceil(activeTotalCount / inferredPerPage))
 
   const isBot = profile.discriminator === 'Bot'
@@ -1738,7 +1759,7 @@ export default function ProfilePage() {
             </div>
           )}
           <div className="profile-tab-group" ref={profileTabGroupRef}>
-            {['posts', 'entries', 'bots', 'tribes'].map((tab) => (
+            {['posts', 'entries', 'favourites', 'bots', 'tribes'].map((tab) => (
               <button
                 key={tab}
                 className={`profile-tab-btn ${activeTab === tab ? 'active' : ''}`}
@@ -1746,6 +1767,7 @@ export default function ProfilePage() {
               >
                 {tab === 'posts' && `${t('profile.posts')} (${profile.postCount ?? 0})`}
                 {tab === 'entries' && `${t('profile.entries')} (${profile.entryCount ?? 0})`}
+                {tab === 'favourites' && `${t('profile.favourites', 'Favoriler')} (${profile.favouriteCount ?? 0})`}
                 {tab === 'bots' && `${t('profile.bots')} (${visibleProfileBots.length})`}
                 {tab === 'tribes' && `${t('profile.tribes')} (${visibleProfileTribes.length})`}
               </button>
@@ -1754,13 +1776,14 @@ export default function ProfilePage() {
         </div>
 
         {/* Paging Controls */}
-        {activeTab === 'posts' || activeTab === 'entries' ? (
+        {activeTab === 'posts' || activeTab === 'entries' || activeTab === 'favourites' ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button
               className="btn btn-outline btn-sm pagination-arrow"
-              disabled={activePage === 1 || isPostsFetching || isEntriesFetching}
+              disabled={activePage === 1 || isPostsFetching || isEntriesFetching || isFavouritesFetching}
               onClick={() => {
                 if (activeTab === 'posts') setPostsPage((p) => Math.max(1, p - 1))
+                else if (activeTab === 'favourites') setFavouritesPage((p) => Math.max(1, p - 1))
                 else setEntriesPage((p) => Math.max(1, p - 1))
               }}
               aria-label={t('common.previous')}
@@ -1783,16 +1806,22 @@ export default function ProfilePage() {
                 totalPages={totalPages}
                 onChange={(nextPage) => {
                   if (activeTab === 'posts') setPostsPage(nextPage)
+                  else if (activeTab === 'favourites') setFavouritesPage(nextPage)
                   else setEntriesPage(nextPage)
                 }}
               />
-              / {totalPages}
+              / <PaginationTotal totalPages={totalPages} onChange={(nextPage) => {
+                  if (activeTab === 'posts') setPostsPage(nextPage)
+                  else if (activeTab === 'favourites') setFavouritesPage(nextPage)
+                  else setEntriesPage(nextPage)
+                }} />
             </span>
             <button
               className="btn btn-outline btn-sm pagination-arrow"
-              disabled={activePage >= totalPages || isPostsFetching || isEntriesFetching}
+              disabled={activePage >= totalPages || isPostsFetching || isEntriesFetching || isFavouritesFetching}
               onClick={() => {
                 if (activeTab === 'posts') setPostsPage((p) => p + 1)
+                else if (activeTab === 'favourites') setFavouritesPage((p) => p + 1)
                 else setEntriesPage((p) => p + 1)
               }}
               aria-label={t('common.next')}
@@ -1840,6 +1869,23 @@ export default function ProfilePage() {
             <div className="flex-col gap-6">
               {entriesData.map((e) => (
                 <ContextualEntryThread key={e.contentItemId} entryDto={e} />
+              ))}
+            </div>
+          ))}
+
+        {activeTab === 'favourites' &&
+          (isFavouritesLoading ? (
+            <div className="spinner spinner-md" style={{ margin: '40px auto', display: 'block' }} />
+          ) : !favouritesData || favouritesData.length === 0 ? (
+            <p className="empty-state">{t('common.nothing_here_yet')}</p>
+          ) : (
+            <div className="flex-col gap-6">
+              {favouritesData.map((f) => (
+                f.isPost ? (
+                  <PostCard key={f.contentItemId} {...f.post} />
+                ) : (
+                  <ContextualEntryThread key={f.contentItemId} entryDto={f.entry} />
+                )
               ))}
             </div>
           ))}

@@ -20,7 +20,7 @@ export function TopicTag({ topicType, size = 'sm', onClick, clickable = true }) 
     if (clickable) {
       e.stopPropagation()
       const targetTopic = enumName || topicType
-      navigate(`/tribes?topic=${encodeURIComponent(targetTopic)}`)
+      navigate(`/explore?topic=${encodeURIComponent(targetTopic)}`)
     }
   }
 

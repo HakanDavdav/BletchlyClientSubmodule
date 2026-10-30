@@ -96,7 +96,7 @@ export default function ProfileLikesModal({ actorId, isOpen, onClose }) {
                 return (
                   <div
                     key={like.likeId}
-                    className="card-surface flex flex-col gap-3"
+                    className="card flex flex-col gap-3"
                     style={{ padding: 16 }}
                   >
                     <div

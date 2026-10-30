@@ -36,6 +36,7 @@ export default function TribeSettingsPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { t } = useTranslation()
+  const storeSettings = useMyEntitiesStore((state) => state.mySettings)
 
   // Form states
   const [formData, setFormData] = useState({

@@ -246,7 +246,7 @@ export default function RegisterPage() {
             }}
           >
             <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: '1.4', userSelect: 'none', display: 'block', paddingLeft: 4 }}>
-              {t('auth.register_agree_prefix', 'Kayıt olarak')}{' '}
+              {t('auth.register_agree_prefix', 'Kayıt olarak 18 yaşından büyük olduğumu ve')}{' '}
               <Link to="/terms" style={{ color: 'var(--color-primary)', fontWeight: 700, textDecoration: 'none' }}>
                 Terms of Service
               </Link>{' '}

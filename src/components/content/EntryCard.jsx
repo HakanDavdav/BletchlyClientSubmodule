@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Pencil, Trash2, MessageSquare, Smile, CirclePlus, CircleMinus, Brain } from 'lucide-react'
+import { Pencil, Trash2, MessageSquare, Smile, CirclePlus, CircleMinus, Brain, Star } from 'lucide-react'
 import SynapseBrainIcon from '../common/SynapseBrainIcon'
 import { getShortTimeAgo } from '../../utils/formatTime'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -13,6 +13,10 @@ import useAuthStore from '../../store/authStore'
 import useUIStore from '../../store/uiStore'
 import useDevLog from '../../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
+import toast from 'react-hot-toast'
+import useFavourite from '../../hooks/useFavourite'
+import { buildReportMessage, copyText, getEntryUrl, shareContent } from '../../utils/contentActions'
+import CardUtilityMenu from './CardUtilityMenu'
 
 /**
  * EntryCard — plan.md Component #9
@@ -30,6 +34,7 @@ export default function EntryCard({
   userReaction,
   userLikeId,
   depth = 0,
+  entryDepth = null,
   isOwner = false,
   onDelete,
   onEdit,
@@ -55,6 +60,7 @@ export default function EntryCard({
   const queryClient = useQueryClient()
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { isFavourite, isPending: isFavouritePending, toggleFavourite } = useFavourite(contentItemId)
 
   useEffect(() => {
     setLocalContent(content)
@@ -101,8 +107,36 @@ export default function EntryCard({
 
   // Maksimum 5 seviye derinliğe kadar CSS sınıfı atanır (depth-1, depth-2, ..., depth-5)
   const depthClass = depth > 0 ? (depth >= 5 ? 'depth-5' : `depth-${depth}`) : ''
+  const resolvedDepth = Number(entryDepth ?? depth ?? 0)
+  const canReply = resolvedDepth < 5
 
   const effectiveTitle = title || localContent?.slice(0, 60) || t('entry.comment', 'Yorum')
+  const entryUrl = getEntryUrl(contentItemId)
+
+  const handleCopyEntryNo = async (e) => {
+    e.stopPropagation()
+    await copyText(contentItemId)
+    toast.success(t('card.entry_no_copied', 'Entry no kopyalandı.'))
+  }
+
+  const handleShare = async (e) => {
+    e.stopPropagation()
+    const result = await shareContent({ title: effectiveTitle, text: effectiveTitle, url: entryUrl })
+    if (result === 'copied') toast.success(t('card.link_copied', 'Bağlantı kopyalandı.'))
+  }
+
+  const handleReport = (e) => {
+    e.stopPropagation()
+    navigate('/contact', {
+      state: {
+        reportMessage: buildReportMessage({
+          contentItemId,
+          contentType: 'entry',
+          title: effectiveTitle,
+        }),
+      },
+    })
+  }
 
   return (
     <>
@@ -123,7 +157,7 @@ export default function EntryCard({
               {t('card.deleted_user')}
             </span>
           )}
-          <span className="text-muted entry-card-header-date" style={{ marginLeft: 'auto' }}>
+          <span className="text-muted entry-card-header-date" style={{ marginLeft: 'auto', alignSelf: 'flex-start' }}>
             {timeAgo}
           </span>
         </div>
@@ -172,6 +206,13 @@ export default function EntryCard({
                     <CirclePlus size={19} strokeWidth={2.4} />
                   )}
                 </button>
+                {!isExpanded && (entryCount ?? 0) > 0 && (
+                  <span className="entry-replies-count">
+                    {(entryCount ?? 0) === 1
+                      ? t('entry.one_more_reply', '1 more')
+                      : t('entry.more_replies', '{{count}} more', { count: entryCount ?? 0 })}
+                  </span>
+                )}
                 {isLoadingChildren && (
                   <span className="text-muted" style={{ fontSize: 12, marginLeft: -4 }}>
                     ...
@@ -191,8 +232,6 @@ export default function EntryCard({
                   setShowLikes(true)
                 }}
               />
-              {/* Mobilde tarih, reaksiyon satırının en sağında gösterilir */}
-              <span className="footer-mobile-date text-muted">{timeAgo}</span>
             </div>
             {actor?.discriminator === 'Bot' && (() => {
               const effectiveNodeIds = (triggeredNodeIds && triggeredNodeIds.length > 0)
@@ -238,7 +277,7 @@ export default function EntryCard({
                 </button>
               )
             })()}
-            {isLoggedIn && (
+            {isLoggedIn && canReply && (
               <button className="btn btn-ghost btn-sm" onClick={() => setShowReplyDraft((v) => !v)}>
                 <MessageSquare size={13} />
                 {t('post.reply')}
@@ -272,10 +311,31 @@ export default function EntryCard({
               </button>
             </div>
           )}
+
+          <div className="card-utility-actions">
+            <button
+              className={`btn btn-ghost btn-sm card-utility-btn${isFavourite ? ' is-active' : ''}`}
+              onClick={(e) => {
+                e.stopPropagation()
+                toggleFavourite()
+              }}
+              disabled={!isLoggedIn || isFavouritePending}
+              aria-label={isFavourite ? t('card.remove_favourite', 'Favorilerden çıkar') : t('card.add_favourite', 'Favorilere ekle')}
+              title={isFavourite ? t('card.remove_favourite', 'Favorilerden çıkar') : t('card.add_favourite', 'Favorilere ekle')}
+            >
+              <Star size={13} fill={isFavourite ? 'currentColor' : 'none'} />
+              <span className="card-utility-label">{t('card.favourite', 'Favori')}</span>
+            </button>
+            <CardUtilityMenu
+              onShare={() => handleShare({ stopPropagation: () => {} })}
+              onReport={() => handleReport({ stopPropagation: () => {} })}
+              onCopyEntryNo={() => handleCopyEntryNo({ stopPropagation: () => {} })}
+            />
+          </div>
         </div>
 
         {/* Inline Reply Draft */}
-        {showReplyDraft && (
+        {showReplyDraft && canReply && (
           <div style={{ marginTop: 24 }}>
             <EntryDraft
               parentContentItemId={contentItemId}
@@ -311,6 +371,7 @@ export default function EntryCard({
               {...child}
               queryKey={queryKey}
               depth={depth + 1}
+              entryDepth={child.depth}
               defaultExpandedEntryIds={defaultExpandedEntryIds}
             />
           ))

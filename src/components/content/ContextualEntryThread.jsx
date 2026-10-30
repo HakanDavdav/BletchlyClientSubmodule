@@ -71,6 +71,7 @@ export default function ContextualEntryThread({
                   <EntryCard
                     {...parentEntry}
                     depth={idx}
+                    entryDepth={parentEntry.depth}
                     isOwner={isOwner(parentEntry)}
                     queryKey={queryKey}
                     defaultExpandedEntryIds={defaultExpandedEntryIds}
@@ -95,6 +96,7 @@ export default function ContextualEntryThread({
             <EntryCard
               {...entryDto}
               depth={parentChain.length}
+              entryDepth={entryDto.depth}
               isOwner={isOwner(entryDto)}
               queryKey={queryKey}
               defaultExpandedEntryIds={defaultExpandedEntryIds}
@@ -123,6 +125,7 @@ export default function ContextualEntryThread({
           <EntryCard
             {...entryDto}
             depth={0}
+            entryDepth={entryDto.depth}
             isOwner={isOwner(entryDto)}
             queryKey={queryKey}
             defaultExpandedEntryIds={defaultExpandedEntryIds}

@@ -9,7 +9,7 @@ import EntryCard from '../components/content/EntryCard'
 import ContextualEntryThread from '../components/content/ContextualEntryThread'
 import EntryDraft from '../components/content/EntryDraft'
 import BackButton from '../components/common/BackButton'
-import PaginationSelect from '../components/common/PaginationSelect'
+import PaginationSelect, { PaginationTotal } from '../components/common/PaginationSelect'
 import useAuthStore from '../store/authStore'
 import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
@@ -142,7 +142,7 @@ export default function PostDetailPage() {
           totalPages={totalPages}
           onChange={setPage}
         />
-        / {totalPages}
+        / <PaginationTotal totalPages={totalPages} onChange={setPage} />
       </span>
       <button
         className="btn btn-outline btn-sm pagination-arrow"

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   ArrowLeft,
   Edit3,
@@ -13,7 +13,9 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import BackButton from '../../components/common/BackButton'
 import { contentItemApi } from '../../api/contentItemApi'
 import { TopicTypes } from '../../constants/TopicTypes'
+import TribeMinimalCard from '../../components/tribe/TribeMinimalCard'
 import useMyEntitiesStore from '../../store/myEntitiesStore'
+import useUIStore from '../../store/uiStore'
 import useDevLog from '../../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
@@ -31,6 +33,9 @@ export default function CreateEditPostPage() {
   const isEditMode = Boolean(postId)
 
   const myTribes = useMyEntitiesStore(s => s.myTribes)
+  const setRightPanelTribeId = useUIStore((s) => s.setRightPanelTribeId)
+  const [isTribeDropdownOpen, setIsTribeDropdownOpen] = useState(false)
+  const tribeDropdownRef = useRef(null)
 
   const [formData, setFormData] = useState({
     title: '',
@@ -38,6 +43,22 @@ export default function CreateEditPostPage() {
     topicTypes: [],
     tribeId: '',
   })
+
+  useEffect(() => {
+    const handler = (event) => {
+      if (tribeDropdownRef.current && !tribeDropdownRef.current.contains(event.target)) {
+        setIsTribeDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  useEffect(() => {
+    if (isEditMode) return
+    setRightPanelTribeId(formData.tribeId || null)
+    return () => setRightPanelTribeId(null)
+  }, [formData.tribeId, isEditMode, setRightPanelTribeId])
 
   // Fetch existing data if in Edit Mode
   const { data: existingPost, isLoading: isLoadingExisting } = useQuery({
@@ -131,6 +152,12 @@ export default function CreateEditPostPage() {
   }
 
   const canSubmit = formData.title.trim() !== '' && formData.content.trim() !== '' && !mutation.isPending
+  const selectedTribe = myTribes?.find((tribe) => tribe.tribeId === formData.tribeId)
+
+  const selectTribe = (tribeId) => {
+    setFormData((prev) => ({ ...prev, tribeId }))
+    setIsTribeDropdownOpen(false)
+  }
 
   if (isEditMode && isLoadingExisting) {
     return (
@@ -192,29 +219,93 @@ export default function CreateEditPostPage() {
           >
             {t('post.tribe_selection')}
           </label>
-          <select
-            value={formData.tribeId}
-            onChange={(e) => setFormData({ ...formData, tribeId: e.target.value })}
-            disabled={mutation.isPending || mutation.isSuccess || isEditMode}
-            style={{
-              width: '100%',
-              padding: '14px 16px',
-              borderRadius: 12,
-              border: '1.5px solid var(--color-border)',
-              background: 'var(--color-surface)',
-              color: 'var(--color-text-primary)',
-              fontSize: 14,
-              fontFamily: 'inherit',
-              outline: 'none',
-              transition: 'border-color 0.2s',
-              boxSizing: 'border-box',
-            }}
-          >
-            <option value="">{t('post.global')}</option>
-            {myTribes?.map(t => (
-              <option key={t.tribeId} value={t.tribeId}>{t.tribeName}</option>
-            ))}
-          </select>
+          <div ref={tribeDropdownRef} style={{ position: 'relative' }}>
+            <button
+              type="button"
+              disabled={mutation.isPending || mutation.isSuccess || isEditMode}
+              onClick={() => setIsTribeDropdownOpen((value) => !value)}
+              style={{
+                width: '100%',
+                padding: '14px 16px',
+                borderRadius: 12,
+                border: '1.5px solid var(--color-border)',
+                background: 'var(--color-surface)',
+                color: 'var(--color-text-primary)',
+                fontSize: 14,
+                fontFamily: 'inherit',
+                outline: 'none',
+                transition: 'border-color 0.2s',
+                boxSizing: 'border-box',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: mutation.isPending || mutation.isSuccess || isEditMode ? 'not-allowed' : 'pointer',
+                opacity: mutation.isPending || mutation.isSuccess || isEditMode ? 0.7 : 1,
+              }}
+            >
+              <span>{selectedTribe?.tribeName || t('post.global')}</span>
+              <span
+                aria-hidden="true"
+                style={{
+                  fontSize: 9,
+                  lineHeight: 1,
+                  display: 'inline-block',
+                  transform: isTribeDropdownOpen ? 'rotate(180deg)' : 'none',
+                  transition: 'transform 0.2s',
+                }}
+              >
+                ▼
+              </span>
+            </button>
+            {isTribeDropdownOpen && !mutation.isPending && !mutation.isSuccess && !isEditMode && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                  left: 0,
+                  right: 0,
+                  zIndex: 60,
+                  background: 'var(--color-bg)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 12,
+                  boxShadow: 'var(--shadow-lg)',
+                  padding: 8,
+                  maxHeight: 320,
+                  overflowY: 'auto',
+                }}
+              >
+                <button
+                  type="button"
+                  className={`btn btn-sm ${formData.tribeId ? 'btn-ghost' : 'btn-primary'}`}
+                  style={{
+                    width: '100%',
+                    minHeight: 36,
+                    justifyContent: 'flex-start',
+                    marginBottom: 4,
+                    padding: '7px 12px',
+                  }}
+                  onClick={() => selectTribe('')}
+                >
+                  {t('post.global')}
+                </button>
+                {myTribes?.map((tribe) => (
+                  <div
+                    key={tribe.tribeId}
+                    className={`create-post-tribe-option${formData.tribeId === tribe.tribeId ? ' is-selected' : ''}`}
+                    onClick={() => selectTribe(tribe.tribeId)}
+                  >
+                    <TribeMinimalCard
+                      tribe={tribe}
+                      clickable={false}
+                      showEditBtn={false}
+                      showMemoryMapBtn={false}
+                      showPoint={false}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Title */}

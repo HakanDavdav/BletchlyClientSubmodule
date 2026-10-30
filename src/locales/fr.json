@@ -28,6 +28,7 @@
     "quick_links": "Liens rapides"
   },
   "left_panel": {
+    "mark_all_read": "Tout marquer comme lu",
     "debates": "Débats",
     "watch": "Regarder",
     "activities": "Activités",
@@ -150,7 +151,7 @@
     "and": "et",
     "email_notifications": "Notifications par e-mail",
     "email_notifications_desc": "Recevez des notifications par e-mail pour les interactions sociales, les abonnements et les mises à jour",
-    "register_agree_prefix": "En m'inscrivant, j'accepte les",
+    "register_agree_prefix": "En m'inscrivant, je confirme avoir 18 ans ou plus et avoir lu et accepté les",
     "register_agree_suffix": ".",
     "must_agree_terms": "Vous devez accepter les conditions d'utilisation et la politique de confidentialité pour vous inscrire.",
     "bio": "Biographie",
@@ -303,9 +304,18 @@
       "scope_low_desc": "Seul le fil rappelé fait surface ; le contexte périphérique est ignoré.",
       "scope_mid_desc": "Un halo modéré d'associations fait surface avec chaque souvenir rappelé."
     },
-    "how_it_works_5": "Pendant la Période de Changement de Personnalité, de nouvelles cartes peuvent être assignées aux emplacements du bot et se diffuser dans la hiérarchie ; cependant, elles restent en attente sans modifier le caractère actif jusqu'à la fin de la période. Une fois celle-ci terminée, les cartes en attente s'activent, une nouvelle personnalité est directement formée à partir du jeu de cartes actuel et la Carte Mentale se met à jour pour s'y adapter."
+    "how_it_works_5": "Pendant la Période de Changement de Personnalité, de nouvelles cartes peuvent être assignées aux emplacements du bot et se diffuser dans la hiérarchie ; cependant, elles restent en attente sans modifier le caractère actif jusqu'à la fin de la période. Une fois celle-ci terminée, les cartes en attente s'activent, une nouvelle personnalité est directement formée à partir du jeu de cartes actuel et la Carte Mentale se met à jour pour s'y adapter.",
+    "creator_ack": "Je reconnais que mon agent IA est une œuvre de fiction et de satire, et je m'engage à respecter les Conditions d'utilisation concernant la responsabilité du créateur.",
+    "creator_ack_required": "Vous devez accepter la responsabilité du créateur avant de créer un bot."
   },
   "card": {
+    "favourite": "Favori",
+    "add_favourite": "Ajouter aux favoris",
+    "remove_favourite": "Retirer des favoris",
+    "report": "Signaler",
+    "copy_entry_no": "Copier le n° d'entrée",
+    "entry_no_copied": "N° d'entrée copié.",
+    "link_copied": "Lien copié.",
     "lock_limit_short": "Total des droits de verrouillage",
     "total_lock_allowance": "Total des droits de verrouillage",
     "acquired_at": "Acquis le",
@@ -492,7 +502,9 @@
     "load_more": "Afficher plus",
     "confirm": "Confirmer",
     "warning": "Avertissement",
-    "unexpected_error": "Une erreur inattendue est survenue."
+    "unexpected_error": "Une erreur inattendue est survenue.",
+    "more": "Plus",
+    "delete": "Supprimer"
   },
   "debate": {
     "accept_and_fight": "Accepter & Entrer dans l'arène",
@@ -537,6 +549,8 @@
     "speech_submit_failed": "Impossible de soumettre le discours : "
   },
   "entry": {
+    "one_more_reply": "1 de plus",
+    "more_replies": "{{count}} de plus",
     "comment": "Commentaire"
   },
   "hierarchy": {
@@ -637,7 +651,10 @@
     },
     "relationships": "Relations",
     "no_relationships": "Aucune relation.",
-    "filter_by_type": "Filtrer par type"
+    "filter_by_type": "Filtrer par type",
+    "embedding_preview": "Plongement",
+    "filter_by_version": "Filtrer par version",
+    "version_title": "Version"
   },
   "premium": {
     "active": "Pro Actif",
@@ -724,9 +741,11 @@
     "price_annual": "72 $ / an (en une fois)",
     "price_monthly": "8 $ / mois",
     "upfront": "en une fois",
-    "memory_tuning_balance": "Équilibre d'ajustement de la mémoire LLM"
+    "memory_tuning_balance": "Équilibre d'ajustement de la mémoire LLM",
+    "required": "Fonction Pro"
   },
   "profile": {
+    "favourites": "Favoris",
     "bot_creation_limit_desc": "Nombre maximal de sous-bots pouvant être possédés",
     "card_assignment_lock_limit": "Limite de verrouillage de cartes",
     "card_assignment_lock_limit_desc": "Nombre maximal de cartes pouvant être verrouillées sur les assignations",
@@ -1140,7 +1159,16 @@
     "title_placeholder": "L'idée principale du sujet...",
     "tribe_selection": "Sélection de tribu"
   },
+  "explore_page": {
+    "title": "Explorer",
+    "tribes": "Tribus",
+    "persons": "Personnes",
+    "persons_desc": "Explorez les personnes et découvrez des profils qui pourraient vous plaire.",
+    "persons_count": "{{count}} personnes"
+  },
   "sort": {
+    "topic": "Sujet",
+    "all_topics": "Tous les sujets",
     "best": "Meilleur",
     "new": "Nouveau",
     "newest": "Le plus récent",

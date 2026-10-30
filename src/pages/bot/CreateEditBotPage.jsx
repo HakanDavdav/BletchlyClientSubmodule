@@ -29,6 +29,7 @@ import { buildOwnedCardIdSet, normalizeCardId } from '../../utils/cardOwnership'
 import { trackCreateBot } from '../../utils/analytics'
 
 const RANDOM_BOT_NAMES = ['GigaChad', 'Nietzsche', 'Doge', 'Kitty']
+const BOT_CREATOR_ACK_KEY = 'bletchly_bot_creator_ack'
 
 export default function CreateEditBotPage() {
   useDevLog('CreateEditBotPage', arguments[0] || {})
@@ -47,6 +48,14 @@ export default function CreateEditBotPage() {
   // If botId is provided, we are in Edit mode
   const isEditMode = Boolean(botId)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [creatorAcknowledged, setCreatorAcknowledged] = useState(() => {
+    try {
+      return localStorage.getItem(BOT_CREATOR_ACK_KEY) === 'true'
+    } catch {
+      return false
+    }
+  })
+  const [hasCreatorAckError, setHasCreatorAckError] = useState(false)
 
   const [formData, setFormData] = useState({
     profileName: '',
@@ -267,10 +276,32 @@ export default function CreateEditBotPage() {
     setIsDeleteModalOpen(true)
   }
 
+  const handleCreatorAckChange = (e) => {
+    const checked = e.target.checked
+    setCreatorAcknowledged(checked)
+    if (checked) setHasCreatorAckError(false)
+    try {
+      localStorage.setItem(BOT_CREATOR_ACK_KEY, checked ? 'true' : 'false')
+    } catch {
+      // Storage unavailable; keep the choice in memory for this session.
+    }
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
 
     if (mutation.isPending) return
+
+    if (!isEditMode && !creatorAcknowledged) {
+      setHasCreatorAckError(true)
+      toast.error(
+        t(
+          'bot.creator_ack_required',
+          'Bot oluşturmadan önce yaratıcı sorumluluğunu kabul etmelisiniz.'
+        )
+      )
+      return
+    }
 
     if (isBotLimitReached) {
       toast.error(
@@ -1135,6 +1166,45 @@ export default function CreateEditBotPage() {
           <span>{totalSelectedCount}</span>
         </div>
 
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {!isEditMode && (
+          <div
+            style={{
+              marginBottom: 0,
+              padding: '12px 16px',
+              backgroundColor: 'rgba(59, 130, 246, 0.05)',
+              borderRadius: 8,
+              border:
+                hasCreatorAckError && !creatorAcknowledged
+                  ? '1px solid var(--color-error)'
+                  : '1px solid rgba(59, 130, 246, 0.2)',
+              transition: 'border-color 0.2s ease-in-out',
+            }}
+          >
+            <SelectionMarker
+              checked={creatorAcknowledged}
+              onChange={handleCreatorAckChange}
+              disabled={mutation.isPending || mutation.isSuccess}
+            >
+              <span
+                style={{
+                  fontSize: 12,
+                  color: 'var(--color-text-secondary)',
+                  lineHeight: '1.4',
+                  userSelect: 'none',
+                  display: 'block',
+                  paddingLeft: 4,
+                }}
+              >
+                {t(
+                  'bot.creator_ack',
+                  'AI Ajanımın kurgusal ve hiciv amaçlı bir eser olduğunu kabul ediyor ve yaratıcı sorumluluğuna ilişkin Hizmet Şartları’na uymayı taahhüt ediyorum.'
+                )}
+              </span>
+            </SelectionMarker>
+          </div>
+        )}
+
         {/* Submit button */}
         <div style={{ marginTop: 0 }}>
           <button
@@ -1161,6 +1231,7 @@ export default function CreateEditBotPage() {
               <>{isEditMode ? t('action.save', 'Kaydet') : t('action.generate')}</>
             )}
           </button>
+        </div>
         </div>
       </form>
 

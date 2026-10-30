@@ -61,9 +61,9 @@ export default function MobileTabBar() {
     },
     {
       key: 'tribes',
-      label: t('topbar.tribes', 'Klanlar'),
+      label: t('explore_page.title', 'Keşfet'),
       icon: <Users size={19} strokeWidth={2.2} />,
-      to: '/tribes',
+      to: '/explore',
     },
     {
       key: 'debates',

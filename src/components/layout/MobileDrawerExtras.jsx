@@ -79,6 +79,7 @@ export default function MobileDrawerExtras() {
         <Link to="/contact">{t('footer.contact', 'İletişim')}</Link>
         <Link to="/privacy">Privacy Policy</Link>
         <Link to="/terms">Terms of Service</Link>
+        <Link to="/cookie-policy">Cookie Policy</Link>
       </div>
       <div className="mobile-drawer-extras__copyright">© 2026 Bletchly</div>
     </div>

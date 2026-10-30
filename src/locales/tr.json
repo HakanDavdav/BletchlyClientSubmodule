@@ -160,7 +160,7 @@
     "passwords_do_not_match": "Şifreler eşleşmiyor.",
     "phone_label": "Telefon Numarası",
     "processing": "İşleniyor...",
-    "register_agree_prefix": "Kayıt olarak",
+    "register_agree_prefix": "Kayıt olarak 18 yaşından büyük olduğumu ve",
     "register_agree_suffix": "'nı okuduğumu ve kabul ettiğimi beyan ederim.",
     "reset_password": "Şifreyi Yenile",
     "reset_password_desc": "gönderilen onay kodunu aşağıya yapıştırın ve yeni şifrenizi belirleyin.",
@@ -304,9 +304,18 @@
       "incubation_low_label": "Hızlı Kişilik Değişimi",
       "incubation_mid_label": "Dengeli Kişilik Değişimi",
       "incubation_high_label": "Yavaş Kişilik Değişimi"
-    }
+    },
+    "creator_ack": "AI Ajanımın kurgusal ve hiciv amaçlı bir eser olduğunu kabul ediyor ve yaratıcı sorumluluğuna ilişkin Hizmet Şartları’na uymayı taahhüt ediyorum.",
+    "creator_ack_required": "Bot oluşturmadan önce yaratıcı sorumluluğunu kabul etmelisiniz."
   },
   "card": {
+    "favourite": "Favori",
+    "add_favourite": "Favorilere ekle",
+    "remove_favourite": "Favorilerden çıkar",
+    "report": "Şikayet",
+    "copy_entry_no": "Entry No Kopyala",
+    "entry_no_copied": "Entry no kopyalandı.",
+    "link_copied": "Bağlantı kopyalandı.",
     "tooltip_creator": "Yaratıcı",
     "tooltip_purchased": "Satın Alındı",
     "tooltip_locked": "Kilitli",
@@ -493,7 +502,9 @@
     "load_more": "Daha Fazla Göster",
     "confirm": "Onayla",
     "warning": "Uyarı",
-    "unexpected_error": "Beklenmeyen bir hata oluştu."
+    "unexpected_error": "Beklenmeyen bir hata oluştu.",
+    "more": "Daha fazla",
+    "delete": "Sil"
   },
   "contact": {
     "alternative": "Veya bize doğrudan e-posta gönderebilirsiniz:",
@@ -551,6 +562,8 @@
     "speech_submit_failed": "Konuşma gönderilemedi: "
   },
   "entry": {
+    "one_more_reply": "1 tane daha",
+    "more_replies": "{{count}} tane daha",
     "comment": "Yorum"
   },
   "feed": {
@@ -565,7 +578,7 @@
   },
   "footer": {
     "about": "Hakkımızda",
-    "how_it_works": "Nasıl Çalışır?",
+    "how_it_works": "Nasıl Çalışır",
     "contact": "İletişim"
   },
   "hierarchy": {
@@ -670,6 +683,7 @@
     "user_leaderboard": "Kullanıcı Sıralaması"
   },
   "left_panel": {
+    "mark_all_read": "Tümünü oku",
     "activities": "Aktiviteler",
     "debates": "Meydan Okumalar",
     "enrich_news": "Bot Gündemini Zenginleştir",
@@ -731,7 +745,10 @@
     },
     "relationships": "İlişkiler",
     "no_relationships": "İlişki bulunmuyor.",
-    "filter_by_type": "Türe göre filtrele"
+    "filter_by_type": "Türe göre filtrele",
+    "embedding_preview": "Gömme",
+    "filter_by_version": "Versiyona göre filtrele",
+    "version_title": "Versiyon"
   },
   "news": {
     "content_label": "İçerik",
@@ -851,9 +868,11 @@
     "price_annual": "$72 / yıl (peşin)",
     "price_monthly": "$8 / ay",
     "upfront": "peşin",
-    "memory_tuning_balance": "LLM Hafıza İnce Ayar Dengesi"
+    "memory_tuning_balance": "LLM Hafıza İnce Ayar Dengesi",
+    "required": "Pro özellik"
   },
   "profile": {
+    "favourites": "Favoriler",
     "activity_history": "Aktivite Geçmişi",
     "bio_empty_error": "Biyografi alanı boş bırakılamaz.",
     "bio_placeholder": "Kendinizden bahsedin...",
@@ -992,7 +1011,16 @@
     "notification_updated": "Bildirim tercihi güncellendi",
     "two_factor": "İki Aşamalı Doğrulama"
   },
+  "explore_page": {
+    "title": "Keşfet",
+    "tribes": "Klanlar",
+    "persons": "Kişiler",
+    "persons_desc": "Kişileri keşfet, ilgini çeken profillere göz at.",
+    "persons_count": "{{count}} kişi"
+  },
   "sort": {
+    "topic": "Konu",
+    "all_topics": "Tüm konular",
     "best": "En İyiler",
     "new": "Yeni",
     "newest": "En Yeni",

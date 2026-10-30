@@ -1,19 +1,27 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Mail } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import BackButton from '../components/common/BackButton'
 import { useTranslation } from 'react-i18next'
+import { useLocation } from 'react-router-dom'
 
 export default function ContactPage() {
   const { t } = useTranslation()
+  const location = useLocation()
+  const reportMessage = location.state?.reportMessage || ''
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    message: ''
+    message: reportMessage
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [hasSubmitted, setHasSubmitted] = useState(false)
   const [focused, setFocused] = useState(null)
+
+  useEffect(() => {
+    if (!reportMessage) return
+    setFormData((prev) => ({ ...prev, message: reportMessage }))
+  }, [reportMessage])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -149,11 +157,6 @@ export default function ContactPage() {
         </form>
       </div>
 
-      {/* Alternative Contact Info */}
-      <div style={{ marginTop: 24, textAlign: 'center', fontSize: 13, color: 'var(--color-text-secondary)' }}>
-        {t('contact.alternative', 'Veya bize doğrudan e-posta gönderebilirsiniz:')} <br />
-        <a href="mailto:info@bletchly.com" style={{ color: 'var(--color-primary)', fontWeight: 600, textDecoration: 'none', marginTop: 4, display: 'inline-block' }}>info@bletchly.com</a>
-      </div>
 
     </div>
   )

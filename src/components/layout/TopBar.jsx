@@ -17,7 +17,7 @@ import {
   Edit2,
   Lock,
   X,
-  Users,
+  Compass,
   Brain,
   ShieldQuestion,
   Clock,
@@ -31,7 +31,8 @@ import { searchApi } from '../../api/searchApi'
 import { actorApi } from '../../api/actorApi'
 import { identityApi } from '../../api/identityApi'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
-import { OrderType, OrderTypeLabels, UserCapabilities } from '../../constants/enums'
+import { OrderType, OrderTypeLabels, TopicColors, UserCapabilities } from '../../constants/enums'
+import { TopicTypes } from '../../constants/TopicTypes'
 import TribeMinimalCard from '../tribe/TribeMinimalCard'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
 import PostMinimalCard from '../content/PostMinimalCard'
@@ -133,6 +134,8 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
     searchMode,
     activeLeftCacheType,
     setActiveLeftCacheType,
+    activeLeftTopicType,
+    setActiveLeftTopicType,
   } = useUIStore()
   const langs = [
     { code: 'tr', label: 'Türkçe', flagUrl: 'https://flagcdn.com/tr.svg' },
@@ -146,7 +149,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
 
   const { t, i18n } = useTranslation()
   const isMobile = useIsMobile()
-  const rawLang = (i18n.language || 'tr').toLowerCase()
+  const rawLang = (i18n.language || 'en').toLowerCase()
   const activeLangObj =
     langs.find((l) => l.code === rawLang || l.code === rawLang.split('-')[0]) || langs[0]
   const currentLang = activeLangObj.code
@@ -166,6 +169,8 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
   const [showFossilTribes, setShowFossilTribes] = useState(false)
   const [showFossilBots, setShowFossilBots] = useState(false)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [isTopicOpen, setIsTopicOpen] = useState(false)
+  const [topicDropdownPos, setTopicDropdownPos] = useState(null)
   const [tribesDropdownPos, setTribesDropdownPos] = useState(null)
   const [botsDropdownPos, setBotsDropdownPos] = useState(null)
   const [suggestions, setSuggestions] = useState(null)
@@ -208,6 +213,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
   const searchRef = useRef(null)
   const langRef = useRef(null)
   const paletteRef = useRef(null)
+  const topicRef = useRef(null)
   const colorInputRef = useRef(null)
   const colorRafRef = useRef(null)
   const pendingPreviewColorRef = useRef(null)
@@ -408,6 +414,10 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
       }
       if (filterRef.current && !filterRef.current.contains(e.target)) {
         setIsFilterOpen(false)
+      }
+      if (topicRef.current && !topicRef.current.contains(e.target)) {
+        setIsTopicOpen(false)
+        setTopicDropdownPos(null)
       }
       if (searchRef.current && !searchRef.current.contains(e.target)) {
         setShowSuggestions(false)
@@ -1786,31 +1796,138 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
         <button
           className={`btn hide-under-900 ${activeLeftCacheType === 'trending' ? 'btn-primary' : 'btn-ghost'}`}
           style={{ padding: '6px 10px', minWidth: '80px', fontSize: 12 }}
-          onClick={() => setActiveLeftCacheType('trending')}
+          onClick={() => {
+            setActiveLeftTopicType(null)
+            setActiveLeftCacheType('trending')
+          }}
         >
           {t('sort.popular', 'Popüler')}
         </button>
         <button
           className={`btn hide-under-900 ${activeLeftCacheType === 'recent' ? 'btn-primary' : 'btn-ghost'}`}
           style={{ padding: '6px 10px', minWidth: '80px', fontSize: 12 }}
-          onClick={() => setActiveLeftCacheType('recent')}
+          onClick={() => {
+            setActiveLeftTopicType(null)
+            setActiveLeftCacheType('recent')
+          }}
         >
           {t('sort.new')}
         </button>
         <button
           className={`btn hide-under-900 ${activeLeftCacheType === 'mostLiked' ? 'btn-primary' : 'btn-ghost'}`}
           style={{ padding: '6px 10px', minWidth: '80px', fontSize: 12 }}
-          onClick={() => setActiveLeftCacheType('mostLiked')}
+          onClick={() => {
+            setActiveLeftTopicType(null)
+            setActiveLeftCacheType('mostLiked')
+          }}
         >
           {t('sort.best', 'En İyiler')}
         </button>
         <button
           className={`btn hide-under-900 ${activeLeftCacheType === 'mostDisliked' ? 'btn-primary' : 'btn-ghost'}`}
           style={{ padding: '6px 10px', minWidth: '80px', fontSize: 12 }}
-          onClick={() => setActiveLeftCacheType('mostDisliked')}
+          onClick={() => {
+            setActiveLeftTopicType(null)
+            setActiveLeftCacheType('mostDisliked')
+          }}
         >
           {t('sort.worst', 'En Kötüler')}
         </button>
+
+        <div className="hide-under-900" ref={topicRef} style={{ position: 'relative' }}>
+          <button
+            className={`btn ${activeLeftCacheType === 'topicPopular' ? 'btn-primary' : 'btn-ghost'}`}
+            style={{ padding: '6px 10px', minWidth: 42, fontSize: 12 }}
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect()
+              const menuWidth = 320
+              setTopicDropdownPos({
+                top: rect.bottom + 4,
+                left: Math.min(window.innerWidth - menuWidth - 8, Math.max(8, rect.left)),
+              })
+              setIsTopicOpen((value) => !value)
+            }}
+            aria-label={t('sort.topic', 'Konu')}
+            title={t('sort.topic', 'Konu')}
+          >
+            ...
+          </button>
+          <AnimatePresence>
+            {isTopicOpen && topicDropdownPos && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                style={{
+                  position: 'fixed',
+                  top: topicDropdownPos.top,
+                  left: topicDropdownPos.left,
+                  background: 'var(--color-bg)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 12,
+                  boxShadow: 'var(--shadow-lg)',
+                  zIndex: 200,
+                  width: 320,
+                  maxHeight: 360,
+                  overflowY: 'auto',
+                  padding: 10,
+                }}
+              >
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveLeftTopicType(null)
+                      setActiveLeftCacheType('trending')
+                      setIsTopicOpen(false)
+                    }}
+                    style={{
+                      padding: '5px 14px',
+                      borderRadius: 20,
+                      fontSize: 13,
+                      fontWeight: activeLeftTopicType == null ? 600 : 500,
+                      cursor: 'pointer',
+                      background: activeLeftTopicType == null ? 'var(--color-primary)' : 'transparent',
+                      color: activeLeftTopicType == null ? '#fff' : 'var(--color-text-secondary)',
+                      border: `1px solid ${activeLeftTopicType == null ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    {t('sort.all_topics', 'Tüm konular')}
+                  </button>
+                  {TopicTypes.map((topic) => {
+                    const color = TopicColors[topic.value] || 'var(--color-primary)'
+                    const isSelected = activeLeftTopicType === topic.value
+                    return (
+                      <button
+                        key={topic.value}
+                        type="button"
+                        onClick={() => {
+                          setActiveLeftTopicType(topic.value)
+                          setActiveLeftCacheType('topicPopular')
+                          setIsTopicOpen(false)
+                        }}
+                        style={{
+                          padding: '5px 14px',
+                          borderRadius: 20,
+                          fontSize: 13,
+                          fontWeight: isSelected ? 600 : 500,
+                          cursor: 'pointer',
+                          background: isSelected ? color : `${color}18`,
+                          color: isSelected ? '#fff' : color,
+                          border: `1px solid ${isSelected ? color : `${color}55`}`,
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        {t(`topics.${topic.key || topic.enumName?.toLowerCase()}`, topic.label)}
+                      </button>
+                    )
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         <div
           className="hide-under-900"
@@ -2161,12 +2278,12 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
           </IconActionButton>
 
           <IconActionButton
-            to="/tribes"
-            title={t('topbar.tribes', 'Klanlar')}
-            aria-label={t('topbar.tribes', 'Klanlar')}
+            to="/explore"
+            title={t('explore_page.title', 'Keşfet')}
+            aria-label={t('explore_page.title', 'Keşfet')}
             style={{ width: 38, height: 38, boxSizing: 'border-box' }}
           >
-            <Users size={19} strokeWidth={2.2} />
+            <Compass size={19} strokeWidth={2.2} />
           </IconActionButton>
 
           <IconActionButton
@@ -2245,7 +2362,7 @@ function MobileTopbarControls() {
     { code: 'fr', label: 'Français', flagUrl: 'https://flagcdn.com/fr.svg' },
     { code: 'ar', label: 'العربية', flagUrl: 'https://flagcdn.com/sa.svg' },
   ]
-  const rawLang = (i18n.language || 'tr').toLowerCase()
+  const rawLang = (i18n.language || 'en').toLowerCase()
   const activeLangObj =
     langs.find((l) => l.code === rawLang || l.code === rawLang.split('-')[0]) || langs[0]
 

@@ -25,6 +25,7 @@ export default function ActorMinimalCard({
   showHierarchyBtn = true,
   showMemoryMapBtn = true,
   showPoint = false,
+  showBio = false,
   showJuryPoints = false,
   juryProponentScore = null,
   juryOpponentScore = null,
@@ -110,6 +111,8 @@ export default function ActorMinimalCard({
   const actorId = actor.actorId || actor.ActorId || actor.id || actor.Id
   const profileName = actor.profileName || actor.ProfileName || actor.name || actor.Name
   const imageUrl = actor.imageUrl !== undefined ? actor.imageUrl : (actor.ImageUrl !== undefined ? actor.ImageUrl : null)
+  const bio = actor.bio ?? actor.Bio ?? null
+  const actorPoint = actor.actorPoint ?? actor.ActorPoint ?? null
   const discriminator = actor.discriminator || actor.Discriminator || 'Bot'
   const isBot = (discriminator || '').toLowerCase() === 'bot'
   const isDormant = Boolean(isBot && (actor.isDormant ?? actor.IsDormant ?? false))
@@ -173,6 +176,167 @@ export default function ActorMinimalCard({
     } else if (isMyBot) {
       navigate('/edit-bot?botId=' + actorId)
     }
+  }
+
+  if (variant === 'explore') {
+    const exploreHasTriggered = effectiveTriggeredNodeIds && effectiveTriggeredNodeIds.length > 0
+    return (
+      <div
+        className={`tribe-card tribe-card--expanded${isDormant ? ' tribe-card--dormant' : ''}`}
+        onClick={handleActorClick}
+        style={{
+          width: '100%',
+          maxWidth: '100%',
+          cursor: clickable ? 'pointer' : 'default',
+          margin: 0,
+        }}
+      >
+        <ActorAvatar
+          profileName={profileName}
+          imageUrl={imageUrl}
+          discriminator={discriminator}
+          actorId={actorId}
+          size="md"
+          clickable={false}
+        />
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div className="tribe-card-name truncate">
+            {clickable ? (
+              <Link
+                to={'/profile?actorId=' + actorId}
+                style={{ color: 'inherit', textDecoration: 'none' }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {profileName || t('actor.unnamed', 'İsimsiz')}
+              </Link>
+            ) : (
+              profileName || t('actor.unnamed', 'İsimsiz')
+            )}
+          </div>
+        </div>
+
+        {matchingCardsCount > 0 && (
+          <div
+            className="actor-chip-card-stack"
+            onClick={clickable ? handleActorClick : undefined}
+            style={{
+              display: 'flex',
+              alignItems: 'flex-end',
+              flexShrink: 0,
+              cursor: clickable ? 'pointer' : 'default',
+              pointerEvents: clickable ? 'auto' : 'none',
+            }}
+          >
+            {visibleCards.map((card, idx) => (
+              <span
+                key={card.id ?? idx}
+                className="actor-chip-card-item"
+                style={{
+                  position: 'relative',
+                  marginLeft: idx === 0 ? 0 : -10,
+                  zIndex: idx + 1,
+                  display: 'inline-flex',
+                  alignItems: 'flex-end',
+                }}
+              >
+                <CardIcon
+                  crowned
+                  purchased={card.acquisitionType === 1}
+                  width={21}
+                  height={24}
+                  style={{ display: 'block' }}
+                />
+              </span>
+            ))}
+          </div>
+        )}
+
+        {isDormant && (
+          <span className="badge-fossil badge-fossil--plain">
+            <TRexSkullIcon className="badge-fossil-icon" />
+          </span>
+        )}
+
+        {showHierarchyBtn && (
+          <button
+            type="button"
+            className="actor-chip-hier-btn"
+            onClick={handleHierarchyClick}
+            aria-label={t('actor.show_hierarchy', 'Hiyerarşiyi göster')}
+          >
+            <Network size={12} />
+          </button>
+        )}
+        {showMemoryMapBtn && (
+          <button
+            type="button"
+            className="actor-chip-hier-btn"
+            onClick={handleMemoryMapClick}
+            aria-label={
+              exploreHasTriggered
+                ? `${t('memoryMap.show', 'Memory Map')} (${effectiveTriggeredNodeIds.length} ${t('memoryMap.triggered_nodes', 'tetiklenen anı')})`
+                : t('memoryMap.show', 'Memory Map')
+            }
+          >
+            {exploreHasTriggered ? (
+              <SynapseBrainIcon brainSize={12} zapSize={8} brainColor="currentColor" zapColor="var(--color-synapse-zap, var(--color-primary))" />
+            ) : (
+              <Brain size={12} />
+            )}
+          </button>
+        )}
+        {showEditBtn && isOwner && !isDormant && (
+          <button
+            type="button"
+            className="actor-chip-hier-btn"
+            onClick={handleEditClick}
+            aria-label={t('action.edit')}
+          >
+            <Edit2 size={12} />
+          </button>
+        )}
+        {showEditBtn && showPremiumBtn && isOwner && !isDormant && (
+          <Link
+            to="/premium"
+            className="actor-chip-premium-btn"
+            onClick={(e) => e.stopPropagation()}
+            aria-label={isPremiumOwner ? t('premium.active', 'Pro Aktif') : t('premium.title', 'Pro')}
+          >
+            {isPremiumOwner ? (
+              <KingIcon size={16} />
+            ) : (
+              <ModifierArrowSvg
+                width={16}
+                height={22}
+                className="modifier-arrow"
+                style={{ display: 'block' }}
+              />
+            )}
+          </Link>
+        )}
+
+        {showPoint && actorPoint != null && (
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              color: 'var(--color-text-muted)',
+              backgroundColor: 'var(--color-surface-2)',
+              padding: '2px 6px',
+              borderRadius: 12,
+            }}
+          >
+            {actorPoint.toLocaleString()} P
+          </span>
+        )}
+
+        {showBio && bio && (
+          <div className="tribe-card-mission" title={bio}>
+            {bio}
+          </div>
+        )}
+      </div>
+    )
   }
 
   if (isUltraCompact) {

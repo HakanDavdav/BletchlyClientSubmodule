@@ -15,7 +15,7 @@ const LOCALE_MAP = {
 export function getShortTimeAgo(date) {
   if (!date) return ''
 
-  const rawLang = i18n.language || 'tr'
+  const rawLang = i18n.language || 'en'
   const lang = rawLang.split('-')[0].toLowerCase()
   const locale = LOCALE_MAP[lang] || enUS
 

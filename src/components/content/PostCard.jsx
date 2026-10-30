@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { getShortTimeAgo } from '../../utils/formatTime'
-import { Pencil, Trash2, MessageSquare, Smile, Brain } from 'lucide-react'
+import { Pencil, Trash2, MessageSquare, Smile, Brain, Star } from 'lucide-react'
 import SynapseBrainIcon from '../common/SynapseBrainIcon'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
 import TribeMinimalCard from '../tribe/TribeMinimalCard'
@@ -15,6 +15,10 @@ import useAuthStore from '../../store/authStore'
 import useUIStore from '../../store/uiStore'
 import useDevLog from '../../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
+import toast from 'react-hot-toast'
+import useFavourite from '../../hooks/useFavourite'
+import { buildReportMessage, getPostUrl, shareContent } from '../../utils/contentActions'
+import CardUtilityMenu from './CardUtilityMenu'
 
 /**
  * PostCard — tam post görünümü (PostDto'dan).
@@ -48,6 +52,7 @@ export default function PostCard({
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
   const loggedInActorId = useAuthStore((s) => s.actorId)
   const { t } = useTranslation()
+  const { isFavourite, isPending: isFavouritePending, toggleFavourite } = useFavourite(contentItemId)
 
   const isDeletedPost = title === '[Deleted]' && content === '[Deleted]'
   const isOwnerInternal = !isDeletedPost && (isOwner || (loggedInActorId && actor?.actorId === loggedInActorId))
@@ -66,6 +71,26 @@ export default function PostCard({
   })
 
   const timeAgo = getShortTimeAgo(createdAt)
+  const postUrl = getPostUrl(contentItemId)
+
+  const handleShare = async (e) => {
+    e.stopPropagation()
+    const result = await shareContent({ title: title || t('card.untitled', 'Başlıksız'), text: title || '', url: postUrl })
+    if (result === 'copied') toast.success(t('card.link_copied', 'Bağlantı kopyalandı.'))
+  }
+
+  const handleReport = (e) => {
+    e.stopPropagation()
+    navigate('/contact', {
+      state: {
+        reportMessage: buildReportMessage({
+          contentItemId,
+          contentType: 'post',
+          title,
+        }),
+      },
+    })
+  }
 
   return (
     <article
@@ -114,12 +139,24 @@ export default function PostCard({
         <span className="text-muted post-card-header-date" style={{ marginLeft: 'auto' }}>{timeAgo}</span>
       </div>
 
-      {/* Topic Tags */}
-      {topicTypes && topicTypes.length > 0 && (
-        <div style={{ marginTop: 8 }}>
-          <TopicTagList topicTypes={topicTypes} />
-        </div>
-      )}
+      {/* Topic Tags + mobile date */}
+      <div
+        className="post-card-topic-row"
+        style={{
+          marginTop: topicTypes && topicTypes.length > 0 ? 8 : 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          minWidth: 0,
+        }}
+      >
+        {topicTypes && topicTypes.length > 0 && (
+          <div style={{ minWidth: 0 }}>
+            <TopicTagList topicTypes={topicTypes} />
+          </div>
+        )}
+        <span className="text-muted post-card-topic-date">{timeAgo}</span>
+      </div>
 
       {/* Title */}
       <h2 className="post-card-title">
@@ -149,8 +186,6 @@ export default function PostCard({
                 setShowLikes(true)
               }}
             />
-            {/* Mobilde tarih, reaksiyon satırının en sağında gösterilir */}
-            <span className="footer-mobile-date text-muted">{timeAgo}</span>
           </div>
           {actor?.discriminator === 'Bot' && (() => {
             const effectiveNodeIds = (triggeredNodeIds && triggeredNodeIds.length > 0)
@@ -230,6 +265,26 @@ export default function PostCard({
             </button>
           </div>
         )}
+
+        <div className="card-utility-actions">
+          <button
+            className={`btn btn-ghost btn-sm card-utility-btn${isFavourite ? ' is-active' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation()
+              toggleFavourite()
+            }}
+            disabled={!isLoggedIn || isFavouritePending}
+            aria-label={isFavourite ? t('card.remove_favourite', 'Favorilerden çıkar') : t('card.add_favourite', 'Favorilere ekle')}
+            title={isFavourite ? t('card.remove_favourite', 'Favorilerden çıkar') : t('card.add_favourite', 'Favorilere ekle')}
+          >
+            <Star size={13} fill={isFavourite ? 'currentColor' : 'none'} />
+            <span className="card-utility-label">{t('card.favourite', 'Favori')}</span>
+          </button>
+          <CardUtilityMenu
+            onShare={() => handleShare({ stopPropagation: () => {} })}
+            onReport={() => handleReport({ stopPropagation: () => {} })}
+          />
+        </div>
       </div>
 
       {showLikes && (

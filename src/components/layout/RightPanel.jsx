@@ -8,8 +8,10 @@ import { actorApi } from '../../api/actorApi'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
 import ActorAvatar from '../actor/ActorAvatar'
 import TribeMinimalCard from '../tribe/TribeMinimalCard'
+import TribePage from '../../pages/TribePage'
 import useAuthStore from '../../store/authStore'
 import useMyEntitiesStore from '../../store/myEntitiesStore'
+import useUIStore from '../../store/uiStore'
 import useDevLog from '../../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 
@@ -22,24 +24,36 @@ export default function RightPanel() {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
 
   const myBots = useMyEntitiesStore((s) => s.myBots)
+  const rightPanelTribeId = useUIStore((s) => s.rightPanelTribeId)
 
   const { data: userLeaderboard } = useQuery({
     queryKey: ['cache', 'user-leaderboard'],
     queryFn: () => searchApi.getUserLeaderboard().then(parseCacheResponse),
     staleTime: 60_000,
+    enabled: !rightPanelTribeId,
   })
 
   const { data: botLeaderboard } = useQuery({
     queryKey: ['cache', 'bot-leaderboard'],
     queryFn: () => searchApi.getBotLeaderboard().then(parseCacheResponse),
     staleTime: 60_000,
+    enabled: !rightPanelTribeId,
   })
 
   const { data: tribeLeaderboard } = useQuery({
     queryKey: ['cache', 'tribe-leaderboard'],
     queryFn: () => searchApi.getTribeLeaderboard().then(parseCacheResponse),
     staleTime: 60_000,
+    enabled: !rightPanelTribeId,
   })
+
+  if (rightPanelTribeId) {
+    return (
+      <aside className="layout-right" style={{ padding: '8px 6px' }}>
+        <TribePage tribeId={rightPanelTribeId} embedded />
+      </aside>
+    )
+  }
 
   return (
     <aside className="layout-right" style={{ padding: '16px 0' }}>
@@ -138,6 +152,10 @@ export default function RightPanel() {
           •
           <Link to="/terms" style={{ color: 'inherit', textDecoration: 'none' }}>
             Terms of Service
+          </Link>{' '}
+          •
+          <Link to="/cookie-policy" style={{ color: 'inherit', textDecoration: 'none' }}>
+            Cookie Policy
           </Link>
         </div>
       </div>

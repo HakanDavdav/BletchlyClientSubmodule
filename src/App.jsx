@@ -38,7 +38,7 @@ import MarketplacePage from './pages/card/MarketplacePage'
 import PersonalityCardHierarchyPage from './pages/card/PersonalityCardHierarchyPage'
 import HierarchyPage from './pages/HierarchyPage'
 import BasicConceptsPage from './pages/BasicConceptsPage'
-import TribesPage from './pages/TribesPage'
+import ExplorePage from './pages/ExplorePage'
 import ActiveDebatesPage from './pages/ActiveDebatesPage'
 import EnrichNewsPoolPage from './pages/news/EnrichNewsPoolPage'
 import AboutPage from './pages/AboutPage'
@@ -47,6 +47,7 @@ import HowItWorksPage from './pages/HowItWorksPage'
 import PremiumPage from './pages/PremiumPage'
 import PrivacyPolicyPage from './pages/legal/PrivacyPolicyPage'
 import TermsOfServicePage from './pages/legal/TermsOfServicePage'
+import CookiePolicyPage from './pages/legal/CookiePolicyPage'
 import DebatePage from './pages/debate/DebatePage'
 import DebateTranscriptPage from './pages/debate/DebateTranscriptPage'
 import InvitationModal from './components/debate/InvitationModal'
@@ -346,10 +347,12 @@ export default function App() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/privacy" element={<PrivacyPolicyPage />} />
             <Route path="/terms" element={<TermsOfServicePage />} />
+            <Route path="/cookie-policy" element={<CookiePolicyPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/debate" element={<DebatePage />} />
             <Route path="/debate-transcript" element={<DebateTranscriptPage />} />
-            <Route path="/tribes" element={<TribesPage />} />
+            <Route path="/explore" element={<ExplorePage />} />
+            <Route path="/tribes" element={<Navigate to="/explore" replace />} />
             <Route path="/active-debates" element={<ActiveDebatesPage />} />
             <Route path="/how-it-works" element={<HowItWorksPage />} />
             <Route path="/premium" element={<PremiumPage />} />

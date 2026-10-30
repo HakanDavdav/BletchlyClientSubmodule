@@ -3837,6 +3837,13 @@ html.dark .fossil-stamp-icon path {
   display: none;
 }
 
+.post-card-topic-date {
+  display: none;
+  margin-left: auto;
+  font-size: var(--font-size-sm, 12px);
+  white-space: nowrap;
+}
+
 /* â”€â”€â”€ Premium Entry Card (Comments) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .entry-card {
   background: var(--color-surface);
@@ -5000,11 +5007,11 @@ textarea {
 }
 
 .season-option-btn:hover {
-  background: var(--color-bg-secondary);
+  background: var(--color-surface-2);
 }
 
 .season-option-btn.active {
-  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 
 /* ─── TopicTag ────────────────────────────────────────────────────────── */
@@ -5051,15 +5058,38 @@ textarea {
 /* ════════════════════════════════════════════════════════════════════ */
 
 /* Sol drawer cache tipi sekmeleri — masaüstünde üst barda gösterilir */
+.left-cache-tabs-row {
+  display: none;
+}
+
 .left-cache-tabs {
   display: none;
 }
 
 @media (max-width: 900px) {
-  .left-cache-tabs {
+  .left-cache-tabs-row {
     display: flex;
+    align-items: center;
     gap: 6px;
     padding: 4px 10px 8px;
+  }
+
+  .left-cache-tabs {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    gap: 6px;
+    padding: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .left-cache-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .left-topic-menu-btn {
+    flex-shrink: 0;
   }
 
   .left-cache-tab {
@@ -5538,6 +5568,12 @@ textarea {
   /* Sayfa başlıkları */
   h1 {
     font-size: 20px !important;
+  }
+
+  /* Mobil/tablet sayfa tanıtım başlıkları: tüm sayfalarda eşit ve biraz daha büyük */
+  div:has(> .page-header-icon):not(.verdict-banner__content) h1 {
+    font-size: 24px !important;
+    line-height: 30px !important;
   }
 }
 
@@ -6054,10 +6090,8 @@ textarea {
     display: flex;
     align-items: center;
     gap: 8px;
-    flex-basis: 100%;
+    flex: 0 0 auto;
     order: -1;
-    border-bottom: 1px solid var(--color-border-light);
-    padding-bottom: 10px;
   }
 
   /* EntryCard zemini surface olduğu için açık renkli ayraç kayboluyordu;
@@ -6073,9 +6107,12 @@ textarea {
     white-space: nowrap;
   }
 
-  .post-card-header-date,
-  .entry-card-header-date {
+  .post-card-header-date {
     display: none;
+  }
+
+  .post-card-topic-date {
+    display: inline;
   }
 
   .post-card-footer > div:nth-child(2),
@@ -6155,8 +6192,8 @@ textarea {
 
   /* Sayfa tanıtım başlıkları (Kart Marketi, Meydan Okumalar vb.): mobilde bir tık büyük ve bloklarla dikeyde tam eşit */
   div:has(> .page-header-icon):not(.verdict-banner__content) h1 {
-    font-size: 20px !important;
-    line-height: 26px !important;
+    font-size: 24px !important;
+    line-height: 30px !important;
   }
 
   /* HowItWorksHelp modalı: mobilde "i" ikonları kaldırılır, sadece metin kalır */
@@ -7283,3 +7320,245 @@ textarea {
   }
 }
 
+
+.card-utility-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.card-utility-btn {
+  gap: 5px;
+}
+
+.card-utility-btn.is-active {
+  color: var(--color-primary);
+}
+
+.card-utility-label {
+  font-size: 11px;
+}
+
+.entry-replies-count {
+  font-size: 11px;
+  line-height: 1;
+  color: var(--color-text-muted);
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .post-card-footer,
+  .entry-card-footer {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .post-card-footer::-webkit-scrollbar,
+  .entry-card-footer::-webkit-scrollbar {
+    display: none;
+  }
+
+  .post-card-footer > div:first-child,
+  .entry-card-footer > div:first-child {
+    display: flex;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+  }
+
+  .card-utility-actions {
+    margin-left: 0;
+  }
+
+  .card-utility-label {
+    display: none;
+  }
+}
+
+.create-post-tribe-option {
+  padding: 4px 6px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.create-post-tribe-option.is-selected {
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+
+.create-post-tribe-option .tribe-card {
+  margin-bottom: 0;
+}
+
+.tribe-page-embedded {
+  padding-bottom: 0;
+}
+
+.tribe-page-embedded .profile-header-card {
+  padding: 14px 12px;
+  gap: 10px;
+}
+
+.tribe-page-embedded .profile-header-row {
+  flex-direction: column !important;
+  gap: 10px !important;
+  align-items: center !important;
+}
+
+.tribe-page-embedded .profile-header-left {
+  order: 2;
+  width: 100%;
+  align-items: center !important;
+  text-align: center;
+}
+
+.tribe-page-embedded .profile-header-left .flex.items-center {
+  justify-content: center;
+}
+
+.tribe-page-embedded .profile-header-left .flex.flex-wrap {
+  justify-content: center;
+}
+
+.tribe-page-embedded .profile-header-left .flex.flex-wrap.profile-header-actions {
+  justify-content: flex-start;
+  justify-content: safe center;
+}
+
+.tribe-page-embedded .profile-header-left .topic-tag-list {
+  justify-content: center;
+}
+
+.tribe-page-embedded .tribe-founded {
+  justify-content: center;
+}
+
+.tribe-page-embedded .profile-header-divider {
+  display: none !important;
+}
+
+.tribe-page-embedded .profile-header-right {
+  order: 1;
+  width: 100% !important;
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  align-items: flex-start !important;
+}
+
+.tribe-page-embedded .profile-header-right .flex.flex-col {
+  width: auto;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.tribe-page-embedded .profile-stats-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.tribe-page-embedded .profile-tabs-container {
+  padding: 0 4px;
+}
+
+.tribe-page-embedded .profile-tab-group {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tribe-page-embedded .profile-tab-group::-webkit-scrollbar {
+  display: none;
+}
+
+.pagination-total-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 32px;
+  padding: 0;
+  margin: 0;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.pagination-total-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* Profil sekmeleri: mobil/tablet tek satır + yatay kaydırma (Memory Map legend standardı) */
+@media (max-width: 900px) {
+  .profile-tabs-container {
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding: 0 4px;
+  }
+
+  .profile-tab-group {
+    flex: 1 1 auto;
+    min-width: 0;
+    flex-wrap: nowrap;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .profile-tab-group::-webkit-scrollbar {
+    display: none;
+  }
+
+  .profile-tab-group-wrap {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .profile-tab-group-wrap .profile-tab-group {
+    flex: 0 0 auto;
+  }
+
+  .profile-tabs-scrollbar {
+    display: block;
+    position: relative;
+    height: 1px;
+    margin: 0 0 3px;
+    background: var(--color-border);
+  }
+
+  .profile-tabs-scrollbar-thumb {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: var(--color-primary);
+    transition: left 0.05s linear;
+  }
+
+  .profile-tab-btn {
+    flex: 0 0 auto;
+    padding: 9px 8px;
+    font-size: 12.5px;
+    white-space: nowrap;
+  }
+
+  .profile-tabs-container > .vtree-fossil-pill,
+  .profile-tabs-container > div:last-child {
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+}

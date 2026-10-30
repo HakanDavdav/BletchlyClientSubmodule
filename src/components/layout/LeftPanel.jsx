@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { PenSquare, Flame, Clock8, ThumbsUp, Skull, PackageOpen, Swords, Eye } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -13,6 +14,8 @@ import AngryBotWithSwordsIcon from '../common/icons/AngryBotWithSwordsIcon'
 import useAuthStore from '../../store/authStore'
 import useUIStore from '../../store/uiStore'
 import useDevLog from '../../utils/useDevLog'
+import { TopicTypes } from '../../constants/TopicTypes'
+import { TopicColors } from '../../constants/enums'
 import { useTranslation } from 'react-i18next'
 
 export default function LeftPanel() {
@@ -24,12 +27,41 @@ export default function LeftPanel() {
     toggleActivities,
     activeLeftCacheType,
     setActiveLeftCacheType,
+    activeLeftTopicType,
+    setActiveLeftTopicType,
     isDebatesExpanded,
     toggleDebates,
   } = useUIStore()
   const queryClient = useQueryClient()
   const { t } = useTranslation()
   const lastCountRef = useRef(-1)
+  const [isMobileTopicOpen, setIsMobileTopicOpen] = useState(false)
+  const [mobileTopicPos, setMobileTopicPos] = useState(null)
+  const mobileTopicBtnRef = useRef(null)
+  const mobileTopicPanelRef = useRef(null)
+
+  useEffect(() => {
+    const handleOutside = (event) => {
+      if (
+        mobileTopicBtnRef.current &&
+        !mobileTopicBtnRef.current.contains(event.target) &&
+        !mobileTopicPanelRef.current?.contains(event.target)
+      ) {
+        setIsMobileTopicOpen(false)
+        setMobileTopicPos(null)
+      }
+    }
+    const handleResize = () => {
+      setIsMobileTopicOpen(false)
+      setMobileTopicPos(null)
+    }
+    document.addEventListener('mousedown', handleOutside)
+    window.addEventListener('resize', handleResize)
+    return () => {
+      document.removeEventListener('mousedown', handleOutside)
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [])
 
   // ─── Cache Widgets ────────────────────────────────────────────────────────
   const { data: recentPosts } = useQuery({
@@ -53,6 +85,13 @@ export default function LeftPanel() {
   const { data: mostDislikedEntries } = useQuery({
     queryKey: ['cache', 'most-disliked'],
     queryFn: () => searchApi.getMostDislikedEntries().then(parseCacheResponse),
+    staleTime: 60_000,
+  })
+
+  const { data: topicPopularPosts } = useQuery({
+    queryKey: ['cache', 'topic-popular', activeLeftTopicType],
+    queryFn: () => searchApi.getTrendingPostsByTopic(activeLeftTopicType).then((r) => r.data?.data || []),
+    enabled: !!activeLeftTopicType && activeLeftCacheType === 'topicPopular',
     staleTime: 60_000,
   })
 
@@ -98,6 +137,15 @@ export default function LeftPanel() {
     },
   })
 
+  const markAllReadMutation = useMutation({
+    mutationFn: () => actorApi.markAllActivitiesRead(),
+    meta: { showErrorToast: true },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['activities'] })
+      queryClient.invalidateQueries({ queryKey: ['activities-unread'] })
+    },
+  })
+
   // Panel açıldığında veya yeni veri yüklendiğinde, ekrandaki tüm okumadığımız aktiviteleri otomatik okundu işaretle
   useEffect(() => {
     if (isActivitiesExpanded && activities?.length > 0) {
@@ -108,6 +156,26 @@ export default function LeftPanel() {
       }
     }
   }, [isActivitiesExpanded, activities])
+
+  const activeTopicLabel = React.useMemo(() => {
+    const topic = TopicTypes.find((item) => item.value === activeLeftTopicType)
+    return topic ? t(`topics.${topic.key || topic.enumName?.toLowerCase()}`, topic.label) : ''
+  }, [activeLeftTopicType, t])
+
+  const handleTopicChange = (value) => {
+    const numericValue = value ? Number(value) : null
+    setActiveLeftTopicType(numericValue)
+    setActiveLeftCacheType(numericValue ? 'topicPopular' : 'trending')
+  }
+
+  const toggleMobileTopics = (event) => {
+    event.stopPropagation()
+    const rect = event.currentTarget.getBoundingClientRect()
+    const panelWidth = Math.min(320, window.innerWidth - 16)
+    const left = Math.min(window.innerWidth - panelWidth - 8, Math.max(8, rect.right - panelWidth))
+    setMobileTopicPos({ top: rect.bottom + 6, left, width: panelWidth })
+    setIsMobileTopicOpen((value) => !value)
+  }
 
   const handleToggleActivities = () => {
     if (!isActivitiesExpanded) {
@@ -282,53 +350,80 @@ export default function LeftPanel() {
       {/* ─── Activities ──────── */}
       {isLoggedIn && (
         <div style={{ marginBottom: 4 }}>
-          <button
-            onClick={handleToggleActivities}
+          <div
             style={{
-              width: '100%',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
+              gap: 8,
               padding: '8px 16px',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
             }}
           >
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              {t('left_panel.activities')}
-              {unreadCount > 0 && (
-                <span
-                  style={{
-                    background: 'var(--color-primary)',
-                    color: 'white',
-                    borderRadius: 99,
-                    fontSize: 10,
-                    fontWeight: 700,
-                    padding: '1px 6px',
-                    minWidth: 18,
-                    textAlign: 'center',
-                  }}
-                >
-                  {unreadCount}
-                </span>
-              )}
-            </span>
-            <span
+            <button
+              onClick={handleToggleActivities}
               style={{
+                flex: 1,
+                minWidth: 0,
+                display: 'flex',
+                alignItems: 'center',
+                padding: 0,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 13,
+                fontWeight: 600,
+                color: 'var(--color-text-secondary)',
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {t('left_panel.activities')}
+                {unreadCount > 0 && (
+                  <span
+                    style={{
+                      background: 'var(--color-primary)',
+                      color: 'white',
+                      borderRadius: 99,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      padding: '1px 6px',
+                      minWidth: 18,
+                      textAlign: 'center',
+                    }}
+                  >
+                    {unreadCount}
+                  </span>
+                )}
+              </span>
+            </button>
+            {isActivitiesExpanded && (
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => markAllReadMutation.mutate()}
+                disabled={markAllReadMutation.isPending || (unreadCount ?? 0) === 0}
+                style={{ flexShrink: 0, whiteSpace: 'nowrap' }}
+              >
+                {t('left_panel.mark_all_read', 'Tümünü oku')}
+              </button>
+            )}
+            <button
+              onClick={handleToggleActivities}
+              aria-label={isActivitiesExpanded ? t('common.collapse', 'Daralt') : t('common.expand', 'Genişlet')}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                cursor: 'pointer',
                 fontSize: 11,
                 color: 'var(--color-text-muted)',
                 transform: isActivitiesExpanded ? 'rotate(180deg)' : 'none',
                 transition: 'transform var(--transition-fast)',
                 display: 'inline-block',
+                flexShrink: 0,
               }}
             >
               ▼
-            </span>
-          </button>
+            </button>
+          </div>
 
           <AnimatePresence>
             {isActivitiesExpanded && (
@@ -464,23 +559,116 @@ export default function LeftPanel() {
       {isLoggedIn && <hr className="divider" style={{ margin: '4px 0' }} />}
 
       {/* ─── Cache type selector (yalnızca mobil drawer; masaüstünde üst barda) ────── */}
-      <div className="left-cache-tabs hscroll-strip">
-        {[
-          { key: 'trending', label: t('sort.popular', 'Popüler') },
-          { key: 'recent', label: t('sort.new', 'Yeni') },
-          { key: 'mostLiked', label: t('sort.best', 'En İyiler') },
-          { key: 'mostDisliked', label: t('sort.worst', 'En Kötüler') },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            className={`left-cache-tab${activeLeftCacheType === tab.key ? ' is-active' : ''}`}
-            onClick={() => setActiveLeftCacheType(tab.key)}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="left-cache-tabs-row">
+        <div className="left-cache-tabs hscroll-strip">
+          {[
+            { key: 'trending', label: t('sort.popular', 'Popüler') },
+            { key: 'recent', label: t('sort.new', 'Yeni') },
+            { key: 'mostLiked', label: t('sort.best', 'En İyiler') },
+            { key: 'mostDisliked', label: t('sort.worst', 'En Kötüler') },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              className={`left-cache-tab${activeLeftCacheType === tab.key ? ' is-active' : ''}`}
+              onClick={() => {
+                setActiveLeftTopicType(null)
+                setActiveLeftCacheType(tab.key)
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <button
+          ref={mobileTopicBtnRef}
+          type="button"
+          className={`btn ${activeLeftCacheType === 'topicPopular' ? 'btn-primary' : 'btn-ghost'} left-topic-menu-btn`}
+          style={{ padding: '6px 10px', minWidth: 42, fontSize: 12 }}
+          onClick={toggleMobileTopics}
+          aria-haspopup="menu"
+          aria-expanded={isMobileTopicOpen}
+          aria-label={t('sort.topic', 'Konu')}
+          title={t('sort.topic', 'Konu')}
+        >
+          ...
+        </button>
       </div>
+
+      {isMobileTopicOpen && mobileTopicPos && createPortal(
+        <div
+          ref={mobileTopicPanelRef}
+          role="menu"
+          style={{
+            position: 'fixed',
+            top: mobileTopicPos.top,
+            left: mobileTopicPos.left,
+            width: mobileTopicPos.width,
+            maxHeight: 'min(360px, 60vh)',
+            overflowY: 'auto',
+            background: 'var(--color-bg)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 12,
+            boxShadow: 'var(--shadow-lg)',
+            padding: 8,
+            zIndex: 500,
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 6,
+          }}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              handleTopicChange('')
+              setIsMobileTopicOpen(false)
+              setMobileTopicPos(null)
+            }}
+            style={{
+              padding: '5px 14px',
+              borderRadius: 20,
+              fontSize: 13,
+              fontWeight: activeLeftTopicType == null ? 600 : 500,
+              cursor: 'pointer',
+              background: activeLeftTopicType == null ? 'var(--color-primary)' : 'transparent',
+              color: activeLeftTopicType == null ? '#fff' : 'var(--color-text-secondary)',
+              border: `1px solid ${activeLeftTopicType == null ? 'var(--color-primary)' : 'var(--color-border)'}`,
+            }}
+          >
+            {t('sort.all_topics', 'Tüm konular')}
+          </button>
+          {TopicTypes.map((topic) => {
+            const color = TopicColors[topic.value] || 'var(--color-primary)'
+            const isSelected = activeLeftTopicType === topic.value
+            return (
+              <button
+                key={topic.value}
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  handleTopicChange(String(topic.value))
+                  setIsMobileTopicOpen(false)
+                  setMobileTopicPos(null)
+                }}
+                style={{
+                  padding: '5px 14px',
+                  borderRadius: 20,
+                  fontSize: 13,
+                  fontWeight: isSelected ? 600 : 500,
+                  cursor: 'pointer',
+                  background: isSelected ? color : `${color}18`,
+                  color: isSelected ? '#fff' : color,
+                  border: `1px solid ${isSelected ? color : `${color}55`}`,
+                }}
+              >
+                {t(`topics.${topic.key || topic.enumName?.toLowerCase()}`, topic.label)}
+              </button>
+            )
+          })}
+        </div>,
+        document.body
+      )}
 
       {/* ─── Cache Widgets ────── */}
       {activeLeftCacheType === 'recent' && (
@@ -497,6 +685,14 @@ export default function LeftPanel() {
           title={t('sort.worst', 'En Kötüler')}
           items={mostDislikedEntries}
           type="entry"
+        />
+      )}
+
+      {activeLeftCacheType === 'topicPopular' && (
+        <CacheWidget
+          title={`${t('sort.popular', 'Popüler')}${activeTopicLabel ? ` • ${activeTopicLabel}` : ''}`}
+          items={topicPopularPosts}
+          type="post"
         />
       )}
 
@@ -576,21 +772,7 @@ function CacheWidget({ title, items, type }) {
         </span>
 
         {maxItems > 0 && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              background: 'var(--color-surface)',
-              border: '1px solid var(--color-border)',
-              borderRadius: 6,
-              padding: '2px 6px',
-              minWidth: 40,
-              justifyContent: 'center',
-            }}
-          >
-            <LimitDropdown limit={limit} onChange={setLimit} maxItems={maxItems} t={t} />
-          </div>
+          <LimitDropdown limit={limit} onChange={setLimit} maxItems={maxItems} t={t} />
         )}
       </div>
 
@@ -640,28 +822,25 @@ function LimitDropdown({ limit, onChange, maxItems, t }) {
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button
+        type="button"
+        className="btn btn-ghost btn-sm"
         onClick={() => setOpen((v) => !v)}
         onMouseDown={(e) => e.preventDefault()}
+        aria-haspopup="listbox"
+        aria-expanded={open}
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 5.5,
-          background: 'none',
-          border: 'none',
-          color: 'var(--color-text-secondary)',
-          fontSize: 11,
+          padding: '4px 8px',
+          minWidth: 42,
+          fontSize: 12,
           fontWeight: 600,
-          cursor: 'pointer',
-          padding: '1px 2px',
-          fontFamily: 'inherit',
-          lineHeight: 1,
-          outline: 'none',
+          gap: 5,
         }}
       >
         {limit}
         <span
+          aria-hidden="true"
           style={{
-            fontSize: 7.5,
+            fontSize: 8,
             color: 'var(--color-text-muted)',
             transform: open ? 'rotate(180deg)' : 'none',
             transition: 'transform var(--transition-fast)',
@@ -673,17 +852,18 @@ function LimitDropdown({ limit, onChange, maxItems, t }) {
       </button>
       {open && (
         <div
+          role="listbox"
           style={{
             position: 'absolute',
-            top: 'calc(100% + 4px)',
+            top: 'calc(100% + 6px)',
             right: 0,
-            background: 'var(--color-surface-2)',
+            background: 'var(--color-bg)',
             border: '1px solid var(--color-border)',
-            borderRadius: 6,
-            padding: 3,
+            borderRadius: 12,
+            padding: 6,
             zIndex: 100,
-            minWidth: 55,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            minWidth: 64,
+            boxShadow: 'var(--shadow-lg)',
           }}
         >
           {options.map((opt) => (
@@ -695,28 +875,32 @@ function LimitDropdown({ limit, onChange, maxItems, t }) {
               }}
               onMouseDown={(e) => e.preventDefault()}
               style={{
-                display: 'block',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 width: '100%',
-                background: opt.value === limit ? 'var(--color-primary-light)' : 'none',
+                background:
+                  opt.value === limit
+                    ? 'color-mix(in srgb, var(--color-primary) 12%, transparent)'
+                    : 'transparent',
                 border: 'none',
-                color:
-                  opt.value === limit ? 'var(--color-primary-dark)' : 'var(--color-text-secondary)',
-                fontSize: 10.5,
+                color: opt.value === limit ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                fontSize: 12,
                 fontWeight: opt.value === limit ? 700 : 500,
-                padding: '4px 6px',
-                borderRadius: 4,
+                padding: '6px 10px',
+                borderRadius: 8,
                 cursor: 'pointer',
                 textAlign: 'center',
                 fontFamily: 'inherit',
-                lineHeight: 1,
+                lineHeight: 1.2,
                 outline: 'none',
                 transition: 'background 0.15s',
               }}
               onMouseEnter={(e) => {
-                if (opt.value !== limit) e.currentTarget.style.background = 'var(--color-surface)'
+                if (opt.value !== limit) e.currentTarget.style.background = 'var(--color-surface-2)'
               }}
               onMouseLeave={(e) => {
-                if (opt.value !== limit) e.currentTarget.style.background = 'none'
+                if (opt.value !== limit) e.currentTarget.style.background = 'transparent'
               }}
             >
               {opt.label}

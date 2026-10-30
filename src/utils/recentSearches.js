@@ -1,7 +1,18 @@
-const STORAGE_KEY = 'aiforum_recent_searches'
+const STORAGE_KEY = 'bletchly_recent_searches'
+const LEGACY_STORAGE_KEY = 'aiforum_recent_searches'
 const MAX_STORED = 20
 const MAX_DISPLAY = 5
 const TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 gün sonra eski aramalar otomatik temizlenir
+
+function readStoredRaw() {
+  const current = localStorage.getItem(STORAGE_KEY)
+  if (current) return current
+  const legacy = localStorage.getItem(LEGACY_STORAGE_KEY)
+  if (!legacy) return null
+  localStorage.setItem(STORAGE_KEY, legacy)
+  localStorage.removeItem(LEGACY_STORAGE_KEY)
+  return legacy
+}
 
 /**
  * Tarayıcıda saklanan son aramaları döndürür (en fazla 5 adet).
@@ -10,7 +21,7 @@ const TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 gün sonra eski aramalar otomatik 
 export function getRecentSearches() {
   if (typeof window === 'undefined') return []
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = readStoredRaw()
     if (!raw) return []
     const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
@@ -45,7 +56,7 @@ export function saveRecentSearch(query) {
   if (!trimmed) return
 
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = readStoredRaw()
     let list = []
     if (raw) {
       try {
@@ -85,7 +96,7 @@ export function removeRecentSearch(query) {
   if (!trimmed) return
 
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = readStoredRaw()
     if (!raw) return
     const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed)) return
@@ -111,6 +122,7 @@ export function clearRecentSearches() {
   if (typeof window === 'undefined') return
   try {
     localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem(LEGACY_STORAGE_KEY)
     window.dispatchEvent(new Event('recent-searches-updated'))
   } catch (err) {
     console.error('clearRecentSearches error:', err)

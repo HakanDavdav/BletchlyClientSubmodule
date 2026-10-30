@@ -25,12 +25,17 @@ const useUIStore = create(
       // ─── Left Panel ───────────────────────────────────────────────────────────
       activeLeftCacheType: 'recent',
       setActiveLeftCacheType: (type) => set({ activeLeftCacheType: type }),
+      activeLeftTopicType: null,
+      setActiveLeftTopicType: (topicType) => set({ activeLeftTopicType: topicType }),
 
       isActivitiesExpanded: false,
       toggleActivities: () => set((state) => ({ isActivitiesExpanded: !state.isActivitiesExpanded })),
 
       isDebatesExpanded: false,
       toggleDebates: () => set((state) => ({ isDebatesExpanded: !state.isDebatesExpanded })),
+
+      rightPanelTribeId: null,
+      setRightPanelTribeId: (tribeId) => set({ rightPanelTribeId: tribeId }),
 
       // ─── Limitler & Miras Paneli (Profil + Tribe sayfaları ORTAK state) ───────
       // Biri açılırsa diğeri de açık kalır; navigasyonlar arasında hatırlanır.

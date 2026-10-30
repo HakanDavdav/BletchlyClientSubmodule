@@ -28,7 +28,7 @@ export default function MainLayout({ children, pendingInvitation = null, onOpenI
   const isWidePage =
     location.pathname.startsWith('/hierarchy') ||
     location.pathname.startsWith('/card-hierarchy') ||
-    location.pathname.startsWith('/tribes') ||
+    location.pathname.startsWith('/explore') ||
     location.pathname.startsWith('/how-it-works') ||
     location.pathname.startsWith('/premium')
   const drawerRef = useRef(null)

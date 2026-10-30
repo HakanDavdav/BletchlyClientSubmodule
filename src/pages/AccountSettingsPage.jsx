@@ -133,8 +133,8 @@ export default function AccountSettingsPage() {
           style={{
             padding: '16px 20px',
             borderRadius: 14,
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
+            background: 'rgba(59, 130, 246, 0.05)',
+            border: '1px solid rgba(59, 130, 246, 0.2)',
             display: 'flex',
             alignItems: 'center',
           }}

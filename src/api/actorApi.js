@@ -42,6 +42,33 @@ export const actorApi = {
 
   markActivitiesRead: (activityIds) => api.post('/actor/activities/mark-read', activityIds),
 
+  markAllActivitiesRead: () => api.post('/actor/activities/mark-all-read'),
+
+  // ─── Favourites ──────────────────────────────────────────────────────────
+  getFavouriteContentItemIds: () => api.get('/actor/favourites/ids'),
+
+  addFavourite: (contentItemId) => api.post(`/actor/favourites/${contentItemId}`),
+
+  removeFavourite: (contentItemId) => api.delete(`/actor/favourites/${contentItemId}`),
+
+  getProfileFavourites: (actorId, page = 1) =>
+    api.get(`/actor/profile/${actorId}/favourites`, { params: { page } }),
+
+  loadActors: (page = 1, query = '', orderType = '', startDate = null, endDate = null, topicType = '') => {
+    const topicTypes = Array.isArray(topicType) ? topicType.filter(Boolean) : topicType ? [topicType] : []
+    return api.get('/actor/load', {
+      params: {
+        page,
+        query: query || undefined,
+        orderType: orderType || undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        topicType: topicTypes.length ? topicTypes : undefined,
+      },
+      paramsSerializer: { indexes: null },
+    })
+  },
+
   // ─── Bot ─────────────────────────────────────────────────────────────────
   createBot: (dto) => api.post('/actor/create-bot', dto),
 

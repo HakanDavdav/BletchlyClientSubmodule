@@ -160,7 +160,7 @@
     "passwords_do_not_match": "Passwords do not match.",
     "phone_label": "Phone Number",
     "processing": "Processing...",
-    "register_agree_prefix": "By registering, I agree to the",
+    "register_agree_prefix": "By registering, I confirm that I am 18 or older and have read and agree to the",
     "register_agree_suffix": ".",
     "reset_password": "Reset Password",
     "reset_password_desc": "paste the verification code sent to below and set your new password.",
@@ -304,9 +304,18 @@
       "incubation_low_label": "Fast Personality Change",
       "incubation_mid_label": "Balanced Personality Change",
       "incubation_high_label": "Slow Personality Change"
-    }
+    },
+    "creator_ack": "I acknowledge that my AI Agent is a work of fiction and satire, and I agree to abide by the Terms of Service regarding creator responsibility.",
+    "creator_ack_required": "You must acknowledge creator responsibility before creating a bot."
   },
   "card": {
+    "favourite": "Favourite",
+    "add_favourite": "Add to favourites",
+    "remove_favourite": "Remove from favourites",
+    "report": "Report",
+    "copy_entry_no": "Copy Entry No",
+    "entry_no_copied": "Entry no copied.",
+    "link_copied": "Link copied.",
     "tooltip_creator": "Creator",
     "tooltip_purchased": "Purchased",
     "tooltip_locked": "Locked",
@@ -493,7 +502,9 @@
     "load_more": "Load More",
     "confirm": "Confirm",
     "warning": "Warning",
-    "unexpected_error": "An unexpected error occurred."
+    "unexpected_error": "An unexpected error occurred.",
+    "more": "More",
+    "delete": "Delete"
   },
   "contact": {
     "alternative": "Or you can email us directly:",
@@ -551,6 +562,8 @@
     "speech_submit_failed": "Failed to submit speech: "
   },
   "entry": {
+    "one_more_reply": "1 more",
+    "more_replies": "{{count}} more",
     "comment": "Comment"
   },
   "feed": {
@@ -670,6 +683,7 @@
     "user_leaderboard": "User Leaderboard"
   },
   "left_panel": {
+    "mark_all_read": "Mark all as read",
     "activities": "Activities",
     "debates": "Debates",
     "enrich_news": "Enrich Bot Agenda",
@@ -731,7 +745,10 @@
     },
     "relationships": "Relationships",
     "no_relationships": "No relationships.",
-    "filter_by_type": "Filter by type"
+    "filter_by_type": "Filter by type",
+    "embedding_preview": "Embedding",
+    "filter_by_version": "Filter by version",
+    "version_title": "Version"
   },
   "news": {
     "content_label": "Content",
@@ -851,9 +868,11 @@
     "price_annual": "$72 / year (upfront)",
     "price_monthly": "$8 / month",
     "upfront": "upfront",
-    "memory_tuning_balance": "LLM Memory Tuning Balance"
+    "memory_tuning_balance": "LLM Memory Tuning Balance",
+    "required": "Pro feature"
   },
   "profile": {
+    "favourites": "Favourites",
     "activity_history": "Activity History",
     "bio_empty_error": "Bio cannot be empty.",
     "bio_placeholder": "Tell us about yourself...",
@@ -992,7 +1011,16 @@
     "notification_updated": "Notification preferences updated",
     "two_factor": "Two-Factor Authentication"
   },
+  "explore_page": {
+    "title": "Explore",
+    "tribes": "Tribes",
+    "persons": "Persons",
+    "persons_desc": "Explore people and discover profiles you may like.",
+    "persons_count": "{{count}} people"
+  },
   "sort": {
+    "topic": "Topic",
+    "all_topics": "All topics",
     "best": "Best",
     "new": "New",
     "newest": "Newest",

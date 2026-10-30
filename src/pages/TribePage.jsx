@@ -15,7 +15,7 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import BotFlashCardsIcon from '../components/common/icons/BotFlashCardsIcon'
-import PaginationSelect from '../components/common/PaginationSelect'
+import PaginationSelect, { PaginationTotal } from '../components/common/PaginationSelect'
 import CardContingencyIcon from '../components/common/icons/CardContingencyIcon'
 import CardContingencyModifierIcon from '../components/common/icons/CardContingencyModifierIcon'
 import FossilIcon from '../components/common/icons/FossilIcon'
@@ -23,7 +23,6 @@ import TRexSkullIcon from '../assets/t-rex-skull-svgrepo-com.svg?react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { tribeApi } from '../api/tribeApi'
 import BackButton from '../components/common/BackButton'
-import TribeMinimalCard from '../components/tribe/TribeMinimalCard'
 import { TopicTagList } from '../components/topic/TopicTag'
 import { TopicTypes } from '../constants/TopicTypes'
 import ImageWithLoader from '../components/common/ImageWithLoader'
@@ -43,9 +42,9 @@ import i18n from '../i18n'
 import { buildOwnedCardIdSet, sortCardsOwnedFirst } from '../utils/cardOwnership'
 import { getMemoryEmblems } from '../components/common/MemoryEmblems'
 
-export default function TribePage() {
+export default function TribePage({ tribeId: propTribeId = null, embedded = false }) {
   const [searchParams] = useSearchParams()
-  const tribeId = searchParams.get('tribeId')
+  const tribeId = propTribeId || searchParams.get('tribeId')
   const [postsPage, setPostsPage] = useState(1)
   const inferredPerPage = 5
   useDevLog('TribePage', arguments[0] || {})
@@ -75,7 +74,7 @@ export default function TribePage() {
     enabled: !!tribeId,
   })
 
-  useDocumentTitle(tribe?.tribeName)
+  useDocumentTitle(embedded ? '' : tribe?.tribeName)
 
   // Birleştirilmiş üyeler listesi (default gelen ilk 10 + sonradan loadMore ile çekilenler)
   const allMembers = useMemo(() => {
@@ -243,9 +242,9 @@ export default function TribePage() {
   const memoryEmblems = getMemoryEmblems(tribe, t)
 
   return (
-    <div className="flex-col gap-4">
+    <div className={`flex-col gap-4${embedded ? ' tribe-page-embedded' : ''}`}>
       <div className="flex items-center gap-3 px-2" style={{ marginBottom: 8 }}>
-        <BackButton style={{ marginBottom: 0 }} />
+        {!embedded && <BackButton style={{ marginBottom: 0 }} />}
         <button
           type="button"
           className="btn-icon"
@@ -514,21 +513,21 @@ export default function TribePage() {
                 <div
                   style={{
                     position: 'absolute',
-                    bottom: 4,
-                    right: 4,
-                    width: 32,
-                    height: 32,
+                    bottom: -6,
+                    right: -4,
+                    width: 23,
+                    height: 23,
                     borderRadius: '50%',
                     background: tribeGradeColor,
                     color: '#fff',
                     fontWeight: 900,
-                    fontSize: 15,
+                    fontSize: 10,
                     lineHeight: 1,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    border: '3px solid var(--color-surface)',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.4)',
+                    border: '2px solid var(--color-surface)',
+                    boxShadow: '0 1px 4px rgba(0, 0, 0, 0.28)',
                     zIndex: 10,
                     userSelect: 'none',
                   }}
@@ -944,7 +943,7 @@ export default function TribePage() {
               totalPages={totalPages}
               onChange={setPostsPage}
             />
-            / {totalPages}
+            / <PaginationTotal totalPages={totalPages} onChange={setPostsPage} />
           </span>
           <button
             className="btn btn-outline btn-sm pagination-arrow"
