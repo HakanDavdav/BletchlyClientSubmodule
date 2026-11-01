@@ -31,16 +31,11 @@ import TRexSkullIcon from '../../assets/t-rex-skull-svgrepo-com.svg?react'
 
 function isNodeFossil(child) {
   if (!child) return false
-  // Tombstone (feshedilmiş/silinmiş) düğümler özünde fosilleşmiş düğümlerle
-  // aynı anlama gelir; bu yüzden onlar da fosil gibi ele alınır.
   return Boolean(
     child.isDormant ||
     child.IsDormant ||
-    child.isDeleted ||
-    child.IsDeleted ||
     child.data?.isDormant ||
     child.data?.IsDormant ||
-    child.data?.isDeleted ||
     child.bot?.isDormant ||
     child.bot?.IsDormant ||
     child.tribe?.isDormant ||
@@ -123,6 +118,8 @@ function buildCardHierarchyTree(card, includeHistory = false) {
       card: card,
       isRoot: false,
       isDeleted: false,
+      hasFossilChildren: Boolean(owner.hasFossilChildren ?? owner.HasFossilChildren),
+      hasDeletedChildren: Boolean(owner.hasDeletedChildren ?? owner.HasDeletedChildren),
       children: [],
     }
     if (node.ownershipId) ownerNodesByOwnershipId.set(node.ownershipId, node)
@@ -157,6 +154,8 @@ function buildCardHierarchyTree(card, includeHistory = false) {
       isDeleted: Boolean(ass.isDeleted || ass.IsDeleted),
       isLocked: Boolean(ass.isLocked),
       assignedAt: ass.assignedAt,
+      hasFossilChildren: Boolean(ass.hasFossilChildren ?? ass.HasFossilChildren),
+      hasDeletedChildren: Boolean(ass.hasDeletedChildren ?? ass.HasDeletedChildren),
       children: [],
     }
   })
@@ -226,29 +225,46 @@ function CardTreeNode({
   expandTrigger,
   parentId = null,
   showFossils = false,
+  includeHistory = false,
   expandedAncestorIds,
   onToggleAncestor,
   fossilAncestors = null,
   isEnjectedFossil = false,
+  cardId,
+  onLoadNodeAssignments,
 }) {
   const { t } = useTranslation()
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const [localFossilExpanded, setLocalFossilExpanded] = useState(null)
+  const [localFossilExpanded, setLocalFossilExpanded] = useState(false)
+  const [isLoadingFossils, setIsLoadingFossils] = useState(false)
+  const [fetchedNodeFossils, setFetchedNodeFossils] = useState(false)
+
+  const sourceActorId =
+    node.nodeType === 'owner'
+      ? (node.actorId || node.actor?.actorId)
+      : (node.targetId || node.bot?.actorId || node.data?.actorId)
+
+  useEffect(() => {
+    if (!showFossils && !includeHistory) {
+      setLocalFossilExpanded(false)
+    }
+  }, [showFossils, includeHistory])
 
   useEffect(() => {
     if (expandTrigger > 0) {
       setIsCollapsed(isAllCollapsed)
-      if (showFossils) {
+      if (showFossils || includeHistory) {
         setLocalFossilExpanded(!isAllCollapsed)
       } else {
         setLocalFossilExpanded(false)
       }
     }
-  }, [expandTrigger, isAllCollapsed, showFossils])
+  }, [expandTrigger, isAllCollapsed, showFossils, includeHistory])
 
   const allChildren = node.children || []
-  const directActiveChildren = allChildren.filter((c) => !isNodeFossil(c))
-  const allFossilChildren = allChildren.filter((c) => isNodeFossil(c))
+  const directActiveChildren = allChildren.filter((c) => !isNodeFossil(c) && !c.isDeleted && !c.IsDeleted)
+  const allFossilChildren = allChildren.filter((c) => isNodeFossil(c) && !c.isDeleted && !c.IsDeleted)
+  const allDeletedChildren = allChildren.filter((c) => Boolean(c.isDeleted || c.IsDeleted))
 
   const pureFossilChildren = []
   const fossilAncestorsWithActiveDescendants = []
@@ -279,11 +295,36 @@ function CardTreeNode({
 
   const totalActive = displayActiveChildren.length + enjectedFossilChildren.length
   const totalPureFossils = pureFossilChildren.length
-  const hasChildren = totalActive > 0 || totalPureFossils > 0
+  const totalDeleted = allDeletedChildren.length
 
-  const effectiveFossilExpanded = localFossilExpanded !== null ? localFossilExpanded : showFossils
+  const hasFossilHint = Boolean(node.hasFossilChildren ?? node.HasFossilChildren ?? node.data?.hasFossilChildren ?? node.data?.HasFossilChildren)
+  const hasDeletedHint = Boolean(node.hasDeletedChildren ?? node.HasDeletedChildren ?? node.data?.hasDeletedChildren ?? node.data?.HasDeletedChildren)
+
+  const hasFossil = hasFossilHint || totalPureFossils > 0
+  const hasDeleted = hasDeletedHint || totalDeleted > 0
+  const showArchiveGroup = (showFossils && hasFossil) || (includeHistory && hasDeleted) || totalPureFossils > 0 || totalDeleted > 0
+  const hasChildren = totalActive > 0 || showArchiveGroup
+
+  const effectiveFossilExpanded = Boolean(localFossilExpanded)
   // Fosil (dormant) ve tombstone (feshedilmiş) düğümler aynı şekilde ele alınır
   const isFossilLike = isNodeFossil(node)
+
+  const handleToggleFossils = async () => {
+    const nextState = !effectiveFossilExpanded
+    setLocalFossilExpanded(nextState)
+
+    if (nextState && !fetchedNodeFossils && onLoadNodeAssignments && sourceActorId) {
+      setIsLoadingFossils(true)
+      try {
+        const fetchDormant = Boolean(hasFossilHint || totalPureFossils > 0 || showFossils)
+        const fetchHistory = Boolean(hasDeletedHint || totalDeleted > 0 || includeHistory)
+        await onLoadNodeAssignments(sourceActorId, fetchDormant, fetchHistory)
+        setFetchedNodeFossils(true)
+      } finally {
+        setIsLoadingFossils(false)
+      }
+    }
+  }
 
   return (
     <div className={`vtree-node${node.nodeType === 'tribe' ? ' vtree-node--tribe' : ''}`}>
@@ -546,13 +587,22 @@ function CardTreeNode({
         )}
 
         {/* Toggle Expand/Collapse Button */}
-        {hasChildren && (
+        {totalActive > 0 && (
           <button
             type="button"
             className="vtree-toggle-btn"
-            onClick={(e) => {
+            onClick={async (e) => {
               e.stopPropagation()
-              setIsCollapsed((c) => !c)
+              const nextCollapsed = !isCollapsed
+              setIsCollapsed(nextCollapsed)
+              if (!nextCollapsed && (showFossils || includeHistory) && !fetchedNodeFossils && onLoadNodeAssignments && sourceActorId) {
+                try {
+                  await onLoadNodeAssignments(sourceActorId, showFossils, includeHistory)
+                  setFetchedNodeFossils(true)
+                } catch (err) {
+                  console.error('Failed to expand node assignments:', err)
+                }
+              }
             }}
             aria-label={
               isCollapsed
@@ -566,12 +616,12 @@ function CardTreeNode({
       </div>
 
       {/* Children Branches */}
-      {hasChildren && !isCollapsed && (
+      {((totalActive > 0 && !isCollapsed) || (totalActive === 0 && showArchiveGroup)) && (
         <div className="vtree-children-container">
           <div className="vtree-stem-down" />
           <div className="vtree-children-row">
             {/* 1. Araya Enjekte Edilmiş Fosil Atalar */}
-            {enjectedFossilChildren.map((child) => (
+            {totalActive > 0 && !isCollapsed && enjectedFossilChildren.map((child) => (
               <div key={`enjected-${child.id}`} className="vtree-child-branch vtree-child-branch--enjected-fossil">
                 <div className="vtree-branch-line" />
                 <CardTreeNode
@@ -580,15 +630,18 @@ function CardTreeNode({
                   isAllCollapsed={isAllCollapsed}
                   expandTrigger={expandTrigger}
                   showFossils={showFossils}
+                  includeHistory={includeHistory}
                   expandedAncestorIds={expandedAncestorIds}
                   onToggleAncestor={onToggleAncestor}
                   isEnjectedFossil={true}
+                  cardId={cardId}
+                  onLoadNodeAssignments={onLoadNodeAssignments}
                 />
               </div>
             ))}
 
             {/* 2. Aktif & Terfi Etmiş Birimler */}
-            {displayActiveChildren.map((child) => (
+            {totalActive > 0 && !isCollapsed && displayActiveChildren.map((child) => (
               <div key={child.id} className="vtree-child-branch">
                 <div className="vtree-branch-line" />
                 <CardTreeNode
@@ -597,16 +650,19 @@ function CardTreeNode({
                   isAllCollapsed={isAllCollapsed}
                   expandTrigger={expandTrigger}
                   showFossils={showFossils}
+                  includeHistory={includeHistory}
                   expandedAncestorIds={expandedAncestorIds}
                   onToggleAncestor={onToggleAncestor}
                   fossilAncestors={child._fossilAncestors}
                   isEnjectedFossil={Boolean(child._isEnjectedFossil)}
+                  cardId={cardId}
+                  onLoadNodeAssignments={onLoadNodeAssignments}
                 />
               </div>
             ))}
 
-            {/* 3. Saf Fosil Birimleri Grubu (Açılım Noktasında Sabit Hap + Alt Dallar) */}
-            {totalPureFossils > 0 && (
+            {/* 3. Fosil & Geçmiş Sirkülasyon Grubu (Açılım Noktasında Sabit Hap + Alt Dallar) */}
+            {showArchiveGroup && (
               <div className="vtree-child-branch vtree-child-branch--fossil-group">
                 <div className="vtree-branch-line" />
                 <div
@@ -617,15 +673,53 @@ function CardTreeNode({
                   <button
                     type="button"
                     className={`vtree-fossil-pill ${effectiveFossilExpanded ? 'vtree-fossil-pill--expanded' : ''}`}
-                    onClick={() => setLocalFossilExpanded(!effectiveFossilExpanded)}
+                    onClick={handleToggleFossils}
+                    disabled={isLoadingFossils}
                     aria-label={
-                      effectiveFossilExpanded
-                        ? t('hierarchy.hide_fossils', 'Fosilleşmiş alt birimleri daralt')
-                        : t('hierarchy.show_fossils', 'Fosilleşmiş alt birimleri göster')
+                      hasFossil && hasDeleted
+                        ? (effectiveFossilExpanded ? t('hierarchy.hide_archive', 'Fosil ve silinmiş alt birimleri daralt') : t('hierarchy.show_archive', 'Fosil ve silinmiş alt birimleri göster'))
+                        : hasFossil
+                          ? (effectiveFossilExpanded ? t('hierarchy.hide_fossils', 'Fosilleşmiş alt birimleri daralt') : t('hierarchy.show_fossils', 'Fosilleşmiş alt birimleri göster'))
+                          : (effectiveFossilExpanded ? t('hierarchy.hide_deleted', 'Silinmiş alt birimleri daralt') : t('hierarchy.show_deleted', 'Silinmiş alt birimleri göster'))
+                    }
+                    title={
+                      hasFossil && hasDeleted
+                        ? (effectiveFossilExpanded ? t('hierarchy.hide_archive', 'Fosil ve silinmiş alt birimleri daralt') : t('hierarchy.show_archive', 'Fosil ve silinmiş alt birimleri göster'))
+                        : hasFossil
+                          ? (effectiveFossilExpanded ? t('hierarchy.hide_fossils', 'Fosilleşmiş alt birimleri daralt') : t('hierarchy.show_fossils', 'Fosilleşmiş alt birimleri göster'))
+                          : (effectiveFossilExpanded ? t('hierarchy.hide_deleted', 'Silinmiş alt birimleri daralt') : t('hierarchy.show_deleted', 'Silinmiş alt birimleri göster'))
                     }
                   >
-                    <TRexSkullIcon className="badge-fossil-icon" />
-                    <span>{totalPureFossils}</span>
+                    {hasFossil && hasDeleted ? (
+                      <>
+                        <TRexSkullIcon className="badge-fossil-icon" />
+                        <span style={{ opacity: 0.5, fontSize: 11, lineHeight: 1 }}>/</span>
+                        <Trash2 size={13} strokeWidth={2.2} style={{ flexShrink: 0 }} />
+                      </>
+                    ) : hasFossil ? (
+                      <TRexSkullIcon className="badge-fossil-icon" />
+                    ) : (
+                      <Trash2 size={13} strokeWidth={2.2} style={{ flexShrink: 0 }} />
+                    )}
+                    {isLoadingFossils ? (
+                      <div className="spinner spinner-sm" style={{ width: 12, height: 12, borderWidth: 1.5 }} />
+                    ) : (
+                      effectiveFossilExpanded && (
+                        hasFossil && hasDeleted ? (
+                          (totalPureFossils > 0 || totalDeleted > 0) && (
+                            <span>
+                              {totalPureFossils > 0 ? totalPureFossils : 0}
+                              <span style={{ opacity: 0.5, margin: '0 2px' }}>/</span>
+                              {totalDeleted > 0 ? totalDeleted : 0}
+                            </span>
+                          )
+                        ) : hasFossil ? (
+                          totalPureFossils > 0 && <span>{totalPureFossils}</span>
+                        ) : (
+                          totalDeleted > 0 && <span>{totalDeleted}</span>
+                        )
+                      )
+                    )}
                     {effectiveFossilExpanded ? (
                       <CircleMinus size={15} strokeWidth={2.2} />
                     ) : (
@@ -647,8 +741,29 @@ function CardTreeNode({
                             isAllCollapsed={isAllCollapsed}
                             expandTrigger={expandTrigger}
                             showFossils={showFossils}
+                            includeHistory={includeHistory}
                             expandedAncestorIds={expandedAncestorIds}
                             onToggleAncestor={onToggleAncestor}
+                            cardId={cardId}
+                            onLoadNodeAssignments={onLoadNodeAssignments}
+                          />
+                        </div>
+                      ))}
+
+                      {allDeletedChildren.map((child) => (
+                        <div key={child.id} className="vtree-child-branch vtree-child-branch--fossil vtree-child-branch--deleted">
+                          <div className="vtree-branch-line" />
+                          <CardTreeNode
+                            node={child}
+                            parentId={`fossil-pill-${node.id}`}
+                            isAllCollapsed={isAllCollapsed}
+                            expandTrigger={expandTrigger}
+                            showFossils={showFossils}
+                            includeHistory={includeHistory}
+                            expandedAncestorIds={expandedAncestorIds}
+                            onToggleAncestor={onToggleAncestor}
+                            cardId={cardId}
+                            onLoadNodeAssignments={onLoadNodeAssignments}
                           />
                         </div>
                       ))}
@@ -678,9 +793,9 @@ export default function PersonalityCardHierarchyPage() {
     error: queryError,
     refetch: loadHierarchy,
   } = useQuery({
-    queryKey: ['cardHierarchy', cardId, includeHistory],
+    queryKey: ['cardHierarchy', cardId],
     queryFn: async () => {
-      const res = await personalityCardApi.getCardHierarchy(cardId, includeHistory)
+      const res = await personalityCardApi.getCardHierarchy(cardId)
       const payload = res.data?.data !== undefined ? res.data.data : res.data
       if (payload && (payload.personalityCardId || payload.cardId || res.data?.success)) {
         return payload
@@ -740,9 +855,43 @@ export default function PersonalityCardHierarchyPage() {
 
   const treeContainerRef = useRef(null)
 
+  const [extraAssignments, setExtraAssignments] = useState([])
+
+  useEffect(() => {
+    setExtraAssignments([])
+  }, [cardId])
+
+  const mergedCardData = useMemo(() => {
+    if (!cardData) return null
+    if (extraAssignments.length === 0) return cardData
+    const existingIds = new Set((cardData.assignments || []).map((a) => a.assignmentId))
+    const newAssignments = extraAssignments.filter((a) => !existingIds.has(a.assignmentId))
+    return {
+      ...cardData,
+      assignments: [...(cardData.assignments || []), ...newAssignments],
+    }
+  }, [cardData, extraAssignments])
+
+  const handleLoadNodeAssignments = useCallback(async (sourceActorId, fetchFossils = false, fetchHistory = false) => {
+    if (!cardId || !sourceActorId) return
+    try {
+      const res = await personalityCardApi.getNodeAssignments(cardId, sourceActorId, fetchFossils, fetchHistory)
+      const assignments = res.data?.data || []
+      if (assignments.length > 0) {
+        setExtraAssignments((prev) => {
+          const prevIds = new Set(prev.map((a) => a.assignmentId))
+          const newlyFound = assignments.filter((a) => !prevIds.has(a.assignmentId))
+          return [...prev, ...newlyFound]
+        })
+      }
+    } catch (err) {
+      console.error('Failed to load node assignments:', err)
+    }
+  }, [cardId])
+
   const treeRoot = useMemo(() => {
-    return buildCardHierarchyTree(cardData, includeHistory)
-  }, [cardData, includeHistory])
+    return buildCardHierarchyTree(mergedCardData, includeHistory)
+  }, [mergedCardData, includeHistory])
 
   const fossilCount = useMemo(() => {
     const countFossils = (node) => {
@@ -756,22 +905,9 @@ export default function PersonalityCardHierarchyPage() {
   }, [treeRoot])
 
   const deletedAssignmentCount = useMemo(() => {
-    if (!cardData || !Array.isArray(cardData.assignments)) return 0
-    return cardData.assignments.filter((ass) => ass.isDeleted || ass.IsDeleted).length
-  }, [cardData])
-
-  const [lastKnownDeletedCount, setLastKnownDeletedCount] = useState(0)
-
-  useEffect(() => {
-    if (includeHistory && cardData && Array.isArray(cardData.assignments)) {
-      const count = cardData.assignments.filter((ass) => ass.isDeleted || ass.IsDeleted).length
-      if (count > 0) {
-        setLastKnownDeletedCount(count)
-      }
-    }
-  }, [includeHistory, cardData])
-
-  const displayDeletedCount = includeHistory ? deletedAssignmentCount : lastKnownDeletedCount
+    if (!mergedCardData || !Array.isArray(mergedCardData.assignments)) return 0
+    return mergedCardData.assignments.filter((ass) => ass.isDeleted || ass.IsDeleted).length
+  }, [mergedCardData])
 
   // İlk giriş (oto-zoom) ile Default butonunun birebir aynı görünümü üretmesi için ortak rutin:
   // içeriğe sığacak zoom hesapla → yatayda ortala (pan) → dikeyde başlangıcı en üstte tut.
@@ -1242,80 +1378,74 @@ export default function PersonalityCardHierarchyPage() {
             >
               <Minus size={12} />
             </button>
+
+            <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
+
+            {/* Fosil Düğümleri Göster / Gizle Toggle */}
+            <FossilTogglePill
+              count={fossilCount}
+              open={showFossils}
+              showCountOnlyWhenOpen={true}
+              onToggle={() => setShowFossils((prev) => !prev)}
+              style={{ flexShrink: 0 }}
+            />
+
+            {/* Tarihsel Sirkülasyon / Çöp Kutusu Hap Butoncuğu (FossilTogglePill Tasarımı) */}
+            <button
+              type="button"
+              className={`vtree-fossil-pill ${includeHistory ? 'vtree-fossil-pill--expanded' : ''}`}
+              onClick={() => setIncludeHistory((prev) => !prev)}
+              aria-label={includeHistory ? t('hierarchy.history_mode_on', 'Tarihsel Sirkülasyon') : t('hierarchy.history_mode_off', 'Aktif Sirkülasyon')}
+              title={t('hierarchy.history_mode_tooltip', 'Tüm geçmiş aktarım sirkülasyonunu göster')}
+              style={{ flexShrink: 0 }}
+            >
+              <Trash2
+                size={14}
+                style={{
+                  flexShrink: 0,
+                }}
+              />
+              {includeHistory && deletedAssignmentCount > 0 && <span>{deletedAssignmentCount}</span>}
+              {includeHistory ? (
+                <CircleMinus size={15} strokeWidth={2.2} />
+              ) : (
+                <CirclePlus size={15} strokeWidth={2.2} />
+              )}
+            </button>
           </div>
 
           <div className="hierarchy-toolbar-main">
             {/* Expand / Collapse All */}
-          <button
-            type="button"
-            className={`btn btn-sm hierarchy-toggle-btn ${!isAllCollapsed ? 'hierarchy-toggle-btn--active' : ''}`}
-            onClick={handleToggleAll}
-            disabled={!treeRoot}
-            aria-label={isAllCollapsed ? t('hierarchy.expand_all', 'Tümünü Genişlet') : t('hierarchy.collapse_all', 'Tümünü Daralt')}
-            style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '0 12px', height: 26 }}
-          >
-            {isAllCollapsed ? <Maximize2 size={12} /> : <Minimize2 size={12} />}
-            <span>{isAllCollapsed ? t('hierarchy.expand_all', 'Tümünü Genişlet') : t('hierarchy.collapse_all', 'Tümünü Daralt')}</span>
-          </button>
+            <button
+              type="button"
+              className={`btn btn-sm hierarchy-toggle-btn ${!isAllCollapsed ? 'hierarchy-toggle-btn--active' : ''}`}
+              onClick={handleToggleAll}
+              disabled={!treeRoot}
+              aria-label={isAllCollapsed ? t('hierarchy.expand_all', 'Tümünü Genişlet') : t('hierarchy.collapse_all', 'Tümünü Daralt')}
+              style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '0 12px', height: 26 }}
+            >
+              {isAllCollapsed ? <Maximize2 size={12} /> : <Minimize2 size={12} />}
+              <span>{isAllCollapsed ? t('hierarchy.expand_all', 'Tümünü Genişlet') : t('hierarchy.collapse_all', 'Tümünü Daralt')}</span>
+            </button>
 
-          {/* Fosil Düğümleri Göster / Gizle Toggle */}
-          <FossilTogglePill
-            count={fossilCount}
-            open={showFossils}
-            onToggle={() => setShowFossils((prev) => !prev)}
-            style={{ flexShrink: 0 }}
-          />
+            <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
 
-          {/* Tarihsel Sirkülasyon / Çöp Kutusu Hap Butoncuğu (FossilTogglePill Tasarımı) */}
-          <button
-            type="button"
-            className={`vtree-fossil-pill ${includeHistory ? 'vtree-fossil-pill--expanded' : ''}`}
-            onClick={() => {
-              setIncludeHistory((prev) => {
-                const next = !prev
-                if (next) {
-                  setIsAllCollapsed(true)
-                  setExpandTrigger((c) => c + 1)
-                }
-                return next
-              })
-            }}
-            aria-label={includeHistory ? t('hierarchy.history_mode_on', 'Tarihsel Sirkülasyon') : t('hierarchy.history_mode_off', 'Aktif Sirkülasyon')}
-            title={t('hierarchy.history_mode_tooltip', 'Tüm geçmiş aktarım sirkülasyonunu göster')}
-            style={{ flexShrink: 0 }}
-          >
-            <Trash2
-              size={14}
-              style={{
-                flexShrink: 0,
-              }}
-            />
-            <span>{displayDeletedCount}</span>
-            {includeHistory ? (
-              <CircleMinus size={15} strokeWidth={2.2} />
-            ) : (
-              <CirclePlus size={15} strokeWidth={2.2} />
-            )}
-          </button>
-
-          <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
-
-          {/* Default Görünüm */}
-          <button
-            type="button"
-            className="btn btn-primary btn-sm"
-            onClick={handleDefaultView}
-            disabled={!treeRoot}
-            aria-label={t('hierarchy.default_view', 'Varsayılan')}
-            style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '0 12px', height: 26 }}
-          >
-            <Focus size={12} />
-            <span>{t('hierarchy.default_view', 'Varsayılan')}</span>
-          </button>
+            {/* Default Görünüm */}
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={handleDefaultView}
+              disabled={!treeRoot}
+              aria-label={t('hierarchy.default_view', 'Varsayılan')}
+              style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '0 12px', height: 26 }}
+            >
+              <Focus size={12} />
+              <span>{t('hierarchy.default_view', 'Varsayılan')}</span>
+            </button>
           </div>
         </div>
-        </div>
       </div>
+    </div>
 
       {/* ── Main Canvas (Drag-to-pan & Zoom) ────────────────────────────────── */}
       <div
@@ -1420,8 +1550,11 @@ export default function PersonalityCardHierarchyPage() {
               isAllCollapsed={isAllCollapsed}
               expandTrigger={expandTrigger}
               showFossils={showFossils}
+              includeHistory={includeHistory}
               expandedAncestorIds={expandedAncestorIds}
               onToggleAncestor={handleToggleAncestor}
+              cardId={cardId}
+              onLoadNodeAssignments={handleLoadNodeAssignments}
             />
           </div>
           </div>

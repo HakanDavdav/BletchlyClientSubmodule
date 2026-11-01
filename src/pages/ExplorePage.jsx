@@ -154,12 +154,12 @@ export default function ExplorePage() {
 
   // ─── Explore pool (Areas reference) ────────────────────────────────────────
   const { data: exploreTribes = [], isLoading: isExploreLoading } = useQuery({
-    queryKey: ['tribesExplore'],
+    queryKey: ['tribesExplore', showFossils],
     queryFn: async () => {
       const pages = await Promise.all(
         Array.from({ length: EXPLORE_PAGE_COUNT }, (_, i) =>
           tribeApi
-            .loadTribes(i + 1, '', 'Crowded', null, null, '')
+            .loadTribes(i + 1, '', 'Crowded', null, null, '', showFossils)
             .then((res) => res.data?.data || [])
         )
       )
@@ -169,10 +169,10 @@ export default function ExplorePage() {
     staleTime: 60_000,
   })
 
-  const visibleExploreTribes = useMemo(
-    () => (showFossils ? exploreTribes : exploreTribes.filter((tr) => !isDormantItem(tr))),
-    [exploreTribes, showFossils]
-  )
+  const visibleExploreTribes = useMemo(() => {
+    if (!showFossils) return exploreTribes.filter((tr) => !isDormantItem(tr))
+    return [...exploreTribes].sort((a, b) => (isDormantItem(a) ? 1 : 0) - (isDormantItem(b) ? 1 : 0))
+  }, [exploreTribes, showFossils])
 
   const featuredTribes = useMemo(() => visibleExploreTribes.slice(0, 12), [visibleExploreTribes])
 
@@ -197,12 +197,12 @@ export default function ExplorePage() {
   }, [visibleExploreTribes])
 
   const { data: exploreActors = [], isLoading: isExploreActorsLoading } = useQuery({
-    queryKey: ['actorsExplore'],
+    queryKey: ['actorsExplore', showFossils],
     queryFn: async () => {
       const pages = await Promise.all(
         Array.from({ length: EXPLORE_PAGE_COUNT }, (_, i) =>
           actorApi
-            .loadActors(i + 1, '', '', null, null, '')
+            .loadActors(i + 1, '', '', null, null, '', showFossils)
             .then((res) => res.data?.data || [])
         )
       )
@@ -212,10 +212,10 @@ export default function ExplorePage() {
     staleTime: 60_000,
   })
 
-  const visibleExploreActors = useMemo(
-    () => (showFossils ? exploreActors : exploreActors.filter((actor) => !isDormantItem(actor))),
-    [exploreActors, showFossils]
-  )
+  const visibleExploreActors = useMemo(() => {
+    if (!showFossils) return exploreActors.filter((actor) => !isDormantItem(actor))
+    return [...exploreActors].sort((a, b) => (isDormantItem(a) ? 1 : 0) - (isDormantItem(b) ? 1 : 0))
+  }, [exploreActors, showFossils])
 
   const featuredActors = useMemo(() => visibleExploreActors.slice(0, 12), [visibleExploreActors])
 
@@ -278,7 +278,7 @@ export default function ExplorePage() {
     isFetchingNextPage,
     isLoading,
   } = useInfiniteQuery({
-    queryKey: ['tribesList', activeAreas],
+    queryKey: ['tribesList', activeAreas, showFossils],
     queryFn: ({ pageParam = 1 }) =>
       tribeApi
         .loadTribes(
@@ -289,7 +289,8 @@ export default function ExplorePage() {
           null,
           activeAreas
             .map((value) => TopicTypes.find((x) => x.value === value)?.enumName)
-            .filter(Boolean)
+            .filter(Boolean),
+          showFossils
         )
         .then((res) => res.data?.data || []),
     getNextPageParam: (lastPage, allPages) =>
@@ -306,7 +307,7 @@ export default function ExplorePage() {
     isFetchingNextPage: isFetchingNextActorPage,
     isLoading: isActorsLoading,
   } = useInfiniteQuery({
-    queryKey: ['actorsList', activeAreas],
+    queryKey: ['actorsList', activeAreas, showFossils],
     queryFn: ({ pageParam = 1 }) =>
       actorApi
         .loadActors(
@@ -317,7 +318,8 @@ export default function ExplorePage() {
           null,
           activeAreas
             .map((value) => TopicTypes.find((x) => x.value === value)?.enumName)
-            .filter(Boolean)
+            .filter(Boolean),
+          showFossils
         )
         .then((res) => res.data?.data || []),
     getNextPageParam: (lastPage, allPages) =>
@@ -334,18 +336,21 @@ export default function ExplorePage() {
     setVisibleCount(20)
   }, [activeAreas, mode])
 
-  const visibleTribes = useMemo(
-    () =>
-      (showFossils ? allFetchedTribes : allFetchedTribes.filter((tr) => !isDormantItem(tr)))
-        .slice(0, visibleCount),
-    [allFetchedTribes, visibleCount, showFossils]
-  )
-  const visibleActors = useMemo(
-    () =>
-      (showFossils ? allFetchedActors : allFetchedActors.filter((actor) => !isDormantItem(actor)))
-        .slice(0, visibleCount),
-    [allFetchedActors, visibleCount, showFossils]
-  )
+  const visibleTribes = useMemo(() => {
+    const list = showFossils ? allFetchedTribes : allFetchedTribes.filter((tr) => !isDormantItem(tr))
+    const sorted = showFossils
+      ? [...list].sort((a, b) => (isDormantItem(a) ? 1 : 0) - (isDormantItem(b) ? 1 : 0))
+      : list
+    return sorted.slice(0, visibleCount)
+  }, [allFetchedTribes, visibleCount, showFossils])
+
+  const visibleActors = useMemo(() => {
+    const list = showFossils ? allFetchedActors : allFetchedActors.filter((actor) => !isDormantItem(actor))
+    const sorted = showFossils
+      ? [...list].sort((a, b) => (isDormantItem(a) ? 1 : 0) - (isDormantItem(b) ? 1 : 0))
+      : list
+    return sorted.slice(0, visibleCount)
+  }, [allFetchedActors, visibleCount, showFossils])
 
   const loadMoreRef = useRef(null)
 
@@ -455,7 +460,7 @@ export default function ExplorePage() {
   const activeFossilSource = hasActiveFilter
     ? (isPersons ? allFetchedActors : allFetchedTribes)
     : (isPersons ? exploreActors : exploreTribes)
-  const fossilCount = activeFossilSource.filter(isDormantItem).length
+  const fossilCount = useMemo(() => activeFossilSource.filter(isDormantItem).length, [activeFossilSource])
   const activeAreaSections = (isPersons ? actorAreaSections : areaSections).map((section) => ({
     ...section,
     items: isPersons ? section.actors : section.tribes,
@@ -485,6 +490,7 @@ export default function ExplorePage() {
             count={fossilCount}
             open={showFossils}
             onToggle={() => setShowFossils((prev) => !prev)}
+            loading={showFossils && (activeIsLoading || activeIsExploreLoading)}
           />
         </div>
       </div>

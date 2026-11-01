@@ -8,7 +8,7 @@ import TRexSkullIcon from '../../assets/t-rex-skull-svgrepo-com.svg?react'
  * Fosil yoksa da "0" yazarak görünür kalır.
  */
 export default function FossilTogglePill({
-  count = 0,
+  count = null,
   open = false,
   onToggle,
   keepDropdownOpen = false,
@@ -17,9 +17,12 @@ export default function FossilTogglePill({
   title,
   titleOpen,
   small = false,
+  showCountOnlyWhenOpen = true,
+  loading = false,
 }) {
   const { t } = useTranslation()
   const iconSize = small ? 12 : 15
+  const hasCount = !loading && count !== null && count !== undefined && count > 0 && (!showCountOnlyWhenOpen || open)
 
   const button = (
     <button
@@ -43,7 +46,11 @@ export default function FossilTogglePill({
       style={style}
     >
       <TRexSkullIcon className="badge-fossil-icon" />
-      <span>{count}</span>
+      {loading ? (
+        <div className="spinner spinner-sm" style={{ width: small ? 10 : 12, height: small ? 10 : 12, borderWidth: 1.5 }} />
+      ) : (
+        hasCount && <span>{count}</span>
+      )}
       {open ? (
         <CircleMinus size={iconSize} strokeWidth={2.2} />
       ) : (

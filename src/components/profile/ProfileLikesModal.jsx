@@ -132,11 +132,13 @@ export default function ProfileLikesModal({ actorId, isOpen, onClose }) {
                           return (
                             <button
                               className="btn btn-ghost btn-sm"
+                              title={t('memoryMap.recalled_badge', 'Recalled')}
+                              aria-label={t('memoryMap.recalled_badge', 'Recalled')}
                               onClick={(e) => {
                                 e.stopPropagation()
                                 navigate(`/memory-map?actorId=${like.actor?.actorId}${highlightParam}`)
                               }}
-                              style={{ gap: 5 }}
+                              style={{ gap: 3.5 }}
                             >
                               <SynapseBrainIcon
                                 brainSize={13}

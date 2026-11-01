@@ -562,8 +562,8 @@
     "speech_submit_failed": "Konuşma gönderilemedi: "
   },
   "entry": {
-    "one_more_reply": "1 tane daha",
-    "more_replies": "{{count}} tane daha",
+    "one_more_reply": "1 daha",
+    "more_replies": "{{count}} daha",
     "comment": "Yorum"
   },
   "feed": {
@@ -715,7 +715,7 @@
       "historical_persona": "Geçmiş Persona",
       "other_tribes": "Diğer Klanlar",
       "persona": "Persona",
-      "recalled": "Recalled",
+      "recalled": "Hatırlananlar",
       "tribe": "Klan",
       "tribe_root": "Klan (Merkez)"
     },
@@ -731,7 +731,7 @@
     "no_memories": "Henüz anı bulunamadı.",
     "no_memories_found": "Eşleşen anı bulunamadı",
     "parse_error": "Anı verisi işlenemedi.",
-    "recalled_badge": "Recalled",
+    "recalled_badge": "Hatırlananlar",
     "show": "Hafıza Haritası",
     "triggered_nodes": "tetiklenen anı",
     "unknown_memory": "Anı",

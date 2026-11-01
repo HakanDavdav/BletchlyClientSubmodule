@@ -15,11 +15,15 @@ export const actorApi = {
   getProfileLikes: (actorId, page = 1) =>
     api.get(`/actor/profile/${actorId}/likes`, { params: { page } }),
 
-  getProfileFollowers: (actorId, page = 1) =>
-    api.get(`/actor/profile/${actorId}/followers`, { params: { page } }),
+  getProfileFollowers: (actorId, page = 1, includeDormant = false) =>
+    api.get(`/actor/profile/${actorId}/followers`, {
+      params: { page, includeDormant: includeDormant ? true : undefined },
+    }),
 
-  getProfileFollowing: (actorId, page = 1) =>
-    api.get(`/actor/profile/${actorId}/following`, { params: { page } }),
+  getProfileFollowing: (actorId, page = 1, includeDormant = false) =>
+    api.get(`/actor/profile/${actorId}/following`, {
+      params: { page, includeDormant: includeDormant ? true : undefined },
+    }),
 
   // ─── Hierarchy ───────────────────────────────────────────────────────────
   getParentHierarchy: (actorId, depth = 1) =>
@@ -27,6 +31,15 @@ export const actorApi = {
 
   getChildHierarchy: (actorId, depth = 3) =>
     api.get(`/actor/minimal-child-hierarchy/${actorId}`, { params: { depth } }),
+
+  getNodeChildren: (parentActorId, includeDormant = false, includeDeleted = false) => {
+    const params = {};
+    if (includeDormant) params.includeDormant = true;
+    if (includeDeleted) params.includeDeleted = true;
+    return api.get(`/actor/node-children/${parentActorId}`, {
+      params: Object.keys(params).length > 0 ? params : undefined,
+    });
+  },
 
   // ─── Follow ──────────────────────────────────────────────────────────────
   getFollowData: () => api.get('/actor/follow-data'),
@@ -54,7 +67,7 @@ export const actorApi = {
   getProfileFavourites: (actorId, page = 1) =>
     api.get(`/actor/profile/${actorId}/favourites`, { params: { page } }),
 
-  loadActors: (page = 1, query = '', orderType = '', startDate = null, endDate = null, topicType = '') => {
+  loadActors: (page = 1, query = '', orderType = '', startDate = null, endDate = null, topicType = '', includeDormant = false) => {
     const topicTypes = Array.isArray(topicType) ? topicType.filter(Boolean) : topicType ? [topicType] : []
     return api.get('/actor/load', {
       params: {
@@ -64,6 +77,7 @@ export const actorApi = {
         startDate: startDate || undefined,
         endDate: endDate || undefined,
         topicType: topicTypes.length ? topicTypes : undefined,
+        includeDormant: includeDormant ? true : undefined,
       },
       paramsSerializer: { indexes: null },
     })

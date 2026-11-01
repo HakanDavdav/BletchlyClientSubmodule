@@ -268,10 +268,11 @@ export default function InitProfilePage() {
           style={{
             padding: '16px 20px',
             borderRadius: 14,
-            background: 'rgba(59, 130, 246, 0.05)',
-            border: '1px solid rgba(59, 130, 246, 0.2)',
+            background: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
             display: 'flex',
             alignItems: 'center',
+            transition: 'border-color 0.2s ease-in-out, background-color 0.2s ease-in-out',
           }}
         >
           <SelectionMarker

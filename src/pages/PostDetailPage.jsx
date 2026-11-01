@@ -117,7 +117,7 @@ export default function PostDetailPage() {
   }
 
   const paginationControls = postData.entryCount > inferredPerPage ? (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+    <div className="pagination-controls" style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
       <button
         className="btn btn-outline btn-sm pagination-arrow"
         disabled={page === 1 || isEntriesFetching}
@@ -128,6 +128,7 @@ export default function PostDetailPage() {
         <ChevronLeft size={14} />
       </button>
       <span
+        className="pagination-page-info"
         style={{
           display: 'inline-flex',
           alignItems: 'center',

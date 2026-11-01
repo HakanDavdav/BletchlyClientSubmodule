@@ -2,6 +2,14 @@ import { useEffect } from 'react'
 
 const MOBILE_QUERY = '(max-width: 900px)'
 
+const isExcludedFromDrawerSwipe = (target) => {
+  const node = target instanceof Element ? target : target?.parentElement
+  if (!node || typeof node.closest !== 'function') return false
+  return !!node.closest(
+    '.left-cache-tabs-row, .left-cache-tabs-wrap, .left-cache-tabs, [data-no-drawer-swipe], .hscroll-strip'
+  )
+}
+
 /**
  * Mobil sol drawer için jestler:
  * - Ekranın sol kenarından sağa sürükleme drawer'ı açar.
@@ -201,6 +209,7 @@ export default function useDrawerSwipe({
     }
 
     const onTouchStart = (e) => {
+      if (isExcludedFromDrawerSwipe(e.target)) return
       const t = e.touches[0]
       if (t) start(t.clientX, t.clientY, 'touch')
     }
@@ -212,6 +221,7 @@ export default function useDrawerSwipe({
 
     const onPointerDown = (e) => {
       if (e.pointerType !== 'mouse' || e.button !== 0) return
+      if (isExcludedFromDrawerSwipe(e.target)) return
       start(e.clientX, e.clientY, 'mouse')
     }
     const onPointerMove = (e) => {

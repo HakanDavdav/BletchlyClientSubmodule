@@ -743,7 +743,7 @@
       "historical_persona": "شخصية تاريخية",
       "other_tribes": "قبائل أخرى",
       "persona": "شخصية",
-      "recalled": "وأشار",
+      "recalled": "المُسترجعة",
       "tribe": "قبيلة",
       "tribe_root": "القبيلة (الجذر)"
     },
@@ -759,7 +759,7 @@
     "no_memories": "لم يتم العثور على ذكريات.",
     "no_memories_found": "لم يتم العثور على ذكريات مطابقة",
     "parse_error": "فشل في تحليل بيانات الذاكرة.",
-    "recalled_badge": "وأشار",
+    "recalled_badge": "المُسترجعة",
     "show": "خريطة الذاكرة",
     "triggered_nodes": "الذاكرة أثارت",
     "unknown_memory": "ذاكرة",

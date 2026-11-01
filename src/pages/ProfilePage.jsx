@@ -328,21 +328,21 @@ export default function ProfilePage() {
 
   const isDormantItem = (item) => Boolean(item?.isDormant ?? item?.IsDormant ?? false)
 
-  const visibleProfileBots = useMemo(
-    () =>
-      showFossilProfileBots
-        ? profile?.bots || []
-        : (profile?.bots || []).filter((b) => !isDormantItem(b)),
-    [profile, showFossilProfileBots]
-  )
+  const visibleProfileBots = useMemo(() => {
+    const list = profile?.bots || []
+    if (!showFossilProfileBots) {
+      return list.filter((b) => !isDormantItem(b))
+    }
+    return [...list].sort((a, b) => (isDormantItem(a) ? 1 : 0) - (isDormantItem(b) ? 1 : 0))
+  }, [profile, showFossilProfileBots])
 
-  const visibleProfileTribes = useMemo(
-    () =>
-      showFossilProfileTribes
-        ? profile?.tribes || []
-        : (profile?.tribes || []).filter((t) => !isDormantItem(t)),
-    [profile, showFossilProfileTribes]
-  )
+  const visibleProfileTribes = useMemo(() => {
+    const list = profile?.tribes || []
+    if (!showFossilProfileTribes) {
+      return list.filter((t) => !isDormantItem(t))
+    }
+    return [...list].sort((a, b) => (isDormantItem(a) ? 1 : 0) - (isDormantItem(b) ? 1 : 0))
+  }, [profile, showFossilProfileTribes])
 
   const fossilProfileBotCount = useMemo(
     () => (profile?.bots || []).filter((b) => isDormantItem(b)).length,
@@ -773,6 +773,67 @@ export default function ProfilePage() {
         ? profile.favouriteCount || 0
         : profile.entryCount || 0
   const totalPages = Math.max(1, Math.ceil(activeTotalCount / inferredPerPage))
+  const isPagingFetching = isPostsFetching || isEntriesFetching || isFavouritesFetching
+
+  const renderPaginationControls = () => (
+    <div className="pagination-controls" style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+      <button
+        className="btn btn-outline btn-sm pagination-arrow"
+        disabled={activePage === 1 || isPagingFetching}
+        onClick={() => {
+          if (activeTab === 'posts') setPostsPage((p) => Math.max(1, p - 1))
+          else if (activeTab === 'favourites') setFavouritesPage((p) => Math.max(1, p - 1))
+          else setEntriesPage((p) => Math.max(1, p - 1))
+        }}
+        aria-label={t('common.previous')}
+        title={t('common.previous')}
+      >
+        <ChevronLeft size={14} />
+      </button>
+      <span
+        className="pagination-page-info"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          fontSize: 13,
+          fontWeight: 500,
+          color: 'var(--color-text-secondary)',
+        }}
+      >
+        <PaginationSelect
+          page={activePage}
+          totalPages={totalPages}
+          onChange={(nextPage) => {
+            if (activeTab === 'posts') setPostsPage(nextPage)
+            else if (activeTab === 'favourites') setFavouritesPage(nextPage)
+            else setEntriesPage(nextPage)
+          }}
+        />
+        / <PaginationTotal
+          totalPages={totalPages}
+          onChange={(nextPage) => {
+            if (activeTab === 'posts') setPostsPage(nextPage)
+            else if (activeTab === 'favourites') setFavouritesPage(nextPage)
+            else setEntriesPage(nextPage)
+          }}
+        />
+      </span>
+      <button
+        className="btn btn-outline btn-sm pagination-arrow"
+        disabled={activePage >= totalPages || isPagingFetching}
+        onClick={() => {
+          if (activeTab === 'posts') setPostsPage((p) => p + 1)
+          else if (activeTab === 'favourites') setFavouritesPage((p) => p + 1)
+          else setEntriesPage((p) => p + 1)
+        }}
+        aria-label={t('common.next')}
+        title={t('common.next')}
+      >
+        <ChevronRight size={14} />
+      </button>
+    </div>
+  )
 
   const isBot = profile.discriminator === 'Bot'
   const isDormant = Boolean(isBot && (profile.isDormant ?? profile.IsDormant ?? false))
@@ -1777,59 +1838,7 @@ export default function ProfilePage() {
 
         {/* Paging Controls */}
         {activeTab === 'posts' || activeTab === 'entries' || activeTab === 'favourites' ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button
-              className="btn btn-outline btn-sm pagination-arrow"
-              disabled={activePage === 1 || isPostsFetching || isEntriesFetching || isFavouritesFetching}
-              onClick={() => {
-                if (activeTab === 'posts') setPostsPage((p) => Math.max(1, p - 1))
-                else if (activeTab === 'favourites') setFavouritesPage((p) => Math.max(1, p - 1))
-                else setEntriesPage((p) => Math.max(1, p - 1))
-              }}
-              aria-label={t('common.previous')}
-              title={t('common.previous')}
-            >
-              <ChevronLeft size={14} />
-            </button>
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: 13,
-                fontWeight: 500,
-                color: 'var(--color-text-secondary)',
-              }}
-            >
-              <PaginationSelect
-                page={activePage}
-                totalPages={totalPages}
-                onChange={(nextPage) => {
-                  if (activeTab === 'posts') setPostsPage(nextPage)
-                  else if (activeTab === 'favourites') setFavouritesPage(nextPage)
-                  else setEntriesPage(nextPage)
-                }}
-              />
-              / <PaginationTotal totalPages={totalPages} onChange={(nextPage) => {
-                  if (activeTab === 'posts') setPostsPage(nextPage)
-                  else if (activeTab === 'favourites') setFavouritesPage(nextPage)
-                  else setEntriesPage(nextPage)
-                }} />
-            </span>
-            <button
-              className="btn btn-outline btn-sm pagination-arrow"
-              disabled={activePage >= totalPages || isPostsFetching || isEntriesFetching || isFavouritesFetching}
-              onClick={() => {
-                if (activeTab === 'posts') setPostsPage((p) => p + 1)
-                else if (activeTab === 'favourites') setFavouritesPage((p) => p + 1)
-                else setEntriesPage((p) => p + 1)
-              }}
-              aria-label={t('common.next')}
-              title={t('common.next')}
-            >
-              <ChevronRight size={14} />
-            </button>
-          </div>
+          renderPaginationControls()
         ) : activeTab === 'bots' ? (
           <FossilTogglePill
             count={fossilProfileBotCount}
@@ -1857,6 +1866,19 @@ export default function ProfilePage() {
               {postsData.map((p) => (
                 <PostCard key={p.contentItemId} {...p} />
               ))}
+              {totalPages > 1 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    marginTop: 16,
+                    paddingTop: 16,
+                    borderTop: '1px solid var(--color-border)',
+                  }}
+                >
+                  {renderPaginationControls()}
+                </div>
+              )}
             </div>
           ))}
 
@@ -1870,6 +1892,19 @@ export default function ProfilePage() {
               {entriesData.map((e) => (
                 <ContextualEntryThread key={e.contentItemId} entryDto={e} />
               ))}
+              {totalPages > 1 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    marginTop: 16,
+                    paddingTop: 16,
+                    borderTop: '1px solid var(--color-border)',
+                  }}
+                >
+                  {renderPaginationControls()}
+                </div>
+              )}
             </div>
           ))}
 
@@ -1887,6 +1922,19 @@ export default function ProfilePage() {
                   <ContextualEntryThread key={f.contentItemId} entryDto={f.entry} />
                 )
               ))}
+              {totalPages > 1 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    marginTop: 16,
+                    paddingTop: 16,
+                    borderTop: '1px solid var(--color-border)',
+                  }}
+                >
+                  {renderPaginationControls()}
+                </div>
+              )}
             </div>
           ))}
 

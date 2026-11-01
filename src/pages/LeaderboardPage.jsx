@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next'
 import useThemeStore from '../store/themeStore'
 import HowItWorksHelp from '../components/common/HowItWorksHelp'
 import { getQueryErrorMessage } from '../utils/errorHelper'
+import { useHorizontalScrollIndicator } from '../hooks/useHorizontalScrollIndicator'
 
 export default function LeaderboardPage() {
   const [searchParams] = useSearchParams()
@@ -34,6 +35,7 @@ export default function LeaderboardPage() {
   const type = (searchParams.get('type') || 'user') === 'actor' ? 'user' : searchParams.get('type') || 'user'
   const seasonParam = searchParams.get('season') || 'current'
   const isCurrentSeason = seasonParam === 'current'
+  const [typesRef, typesScroll] = useHorizontalScrollIndicator([isCurrentSeason])
 
   const [seasonDropdownOpen, setSeasonDropdownOpen] = useState(false)
   const dropdownRef = useRef(null)
@@ -315,37 +317,47 @@ export default function LeaderboardPage() {
           </div>
 
           {/* Toggle Buttons: Users, Bots, Tribes — mobilde yatay kaydırılır */}
-          <div className="hscroll-strip" style={{ display: 'flex', gap: 6 }}>
-            <button
-              className={`btn btn-sm ${type === 'user' ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => handleTypeChange('user')}
-              style={{ borderRadius: 20, padding: '6px 14px' }}
-            >
-              {t('common.users', 'Kullanıcılar')}
-            </button>
-            <button
-              className={`btn btn-sm ${type === 'bot' ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => handleTypeChange('bot')}
-              style={{ borderRadius: 20, padding: '6px 14px' }}
-            >
-              {t('common.bots', 'Botlar')}
-            </button>
-            <button
-              className={`btn btn-sm ${type === 'tribe' ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => handleTypeChange('tribe')}
-              style={{ borderRadius: 20, padding: '6px 14px' }}
-            >
-              {t('common.tribes', 'Klanlar')}
-            </button>
-            {isCurrentSeason && (
+          <div className="leaderboard-types-wrap">
+            {typesScroll.scrollable && (
+              <div className="leaderboard-types-scrollbar" aria-hidden="true">
+                <div
+                  className="leaderboard-types-scrollbar-thumb"
+                  style={{ width: `${typesScroll.width}%`, left: `${typesScroll.left}%` }}
+                />
+              </div>
+            )}
+            <div className="hscroll-strip leaderboard-types-strip" ref={typesRef} style={{ display: 'flex', gap: 6 }}>
               <button
-                className={`btn btn-sm ${type === 'card' ? 'btn-primary' : 'btn-outline'}`}
-                onClick={() => handleTypeChange('card')}
+                className={`btn btn-sm ${type === 'user' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => handleTypeChange('user')}
                 style={{ borderRadius: 20, padding: '6px 14px' }}
               >
-                {t('common.cards', 'Kişilik Kartları')}
+                {t('common.users', 'Kullanıcılar')}
               </button>
-            )}
+              <button
+                className={`btn btn-sm ${type === 'bot' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => handleTypeChange('bot')}
+                style={{ borderRadius: 20, padding: '6px 14px' }}
+              >
+                {t('common.bots', 'Botlar')}
+              </button>
+              <button
+                className={`btn btn-sm ${type === 'tribe' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => handleTypeChange('tribe')}
+                style={{ borderRadius: 20, padding: '6px 14px' }}
+              >
+                {t('common.tribes', 'Klanlar')}
+              </button>
+              {isCurrentSeason && (
+                <button
+                  className={`btn btn-sm ${type === 'card' ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() => handleTypeChange('card')}
+                  style={{ borderRadius: 20, padding: '6px 14px' }}
+                >
+                  {t('common.cards', 'Kişilik Kartları')}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

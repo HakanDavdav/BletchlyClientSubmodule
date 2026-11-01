@@ -3510,7 +3510,8 @@ html.dark .fossil-stamp-icon path {
   border-radius: var(--radius-md);
   width: auto !important;
   display: inline-flex;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
   align-items: center;
   align-self: center !important;
 }
@@ -3764,6 +3765,7 @@ html.dark .fossil-stamp-icon path {
 
 /* ─── Post Card ───────────────────────────────────────────────────────── */
 .post-card {
+  container-type: inline-size;
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
@@ -3849,8 +3851,45 @@ html.dark .fossil-stamp-icon path {
   white-space: nowrap;
 }
 
+.post-card-header,
+.entry-card-header {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+.post-card-header-main,
+.entry-card-header-main {
+  display: flex !important;
+  align-items: center !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.post-card-header-date,
+.entry-card-header-date {
+  font-size: 12px;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  margin-left: auto !important;
+  align-self: flex-start !important;
+  line-height: 1.2;
+}
+
+.card-comments-btn,
+.card-reply-btn,
+.card-recalled-btn {
+  padding-left: 6px !important;
+  padding-right: 6px !important;
+  gap: 3px !important;
+}
+
 /* â”€â”€â”€ Premium Entry Card (Comments) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .entry-card {
+  container-type: inline-size;
   background: var(--color-surface);
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-lg);
@@ -5067,7 +5106,24 @@ textarea {
   display: none;
 }
 
+.left-cache-tabs-wrap {
+  display: contents;
+}
+
+.left-cache-tabs-scrollbar {
+  display: none;
+}
+
 .left-cache-tabs {
+  display: none;
+}
+
+/* Leaderboard kategori sekmeleri kaydıraç sarmalayıcısı — masaüstünde şeffaf */
+.leaderboard-types-wrap {
+  display: contents;
+}
+
+.leaderboard-types-scrollbar {
   display: none;
 }
 
@@ -5077,16 +5133,50 @@ textarea {
     align-items: center;
     gap: 6px;
     padding: 4px 10px 8px;
+    touch-action: pan-x;
+  }
+
+  .left-cache-tabs-wrap {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    touch-action: pan-x;
+  }
+
+  .left-cache-tabs-wrap .left-cache-tabs {
+    flex: 0 0 auto;
+  }
+
+  .left-cache-tabs-scrollbar {
+    display: block;
+    position: relative;
+    height: 1px;
+    margin: 0 0 3px;
+    background: var(--color-border);
+    touch-action: none;
+    pointer-events: none;
+  }
+
+  .left-cache-tabs-scrollbar-thumb {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: var(--color-primary);
+    transition: left 0.05s linear;
   }
 
   .left-cache-tabs {
     display: flex;
-    flex: 1;
+    width: 100%;
     min-width: 0;
     gap: 6px;
     padding: 0;
     overflow-x: auto;
     scrollbar-width: none;
+    touch-action: pan-x;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
   }
 
   .left-cache-tabs::-webkit-scrollbar {
@@ -5250,6 +5340,34 @@ textarea {
     min-width: 0;
   }
 
+  .leaderboard-controls .leaderboard-types-wrap {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .leaderboard-controls .leaderboard-types-wrap .leaderboard-types-strip {
+    width: 100%;
+    flex: 0 0 auto;
+  }
+
+  .leaderboard-types-scrollbar {
+    display: block;
+    position: relative;
+    height: 1px;
+    margin: 0 0 3px;
+    background: var(--color-border);
+  }
+
+  .leaderboard-types-scrollbar-thumb {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: var(--color-primary);
+    transition: left 0.05s linear;
+  }
+
   .leaderboard-controls .hscroll-strip {
     flex: 1 1 auto;
     min-width: 0;
@@ -5290,7 +5408,7 @@ textarea {
 
 
   /* Hierarchy üst bloğu mobil/tablet: tek kart, 1. satır kimlik,
-     2. satır ana butonlar, 3. satır depth/zoom (Memory Map mobil gibi) */
+     2. satır depth/zoom (%26, +, -, Derinlik), 3. satır ana butonlar (Tümünü Daralt, Varsayılan vb.) */
   .hierarchy-header {
     left: 12px !important;
     right: 12px !important;
@@ -5356,11 +5474,11 @@ textarea {
     min-width: 0;
   }
 
-  .hierarchy-toolbar-main {
+  .hierarchy-toolbar-secondary {
     order: 1;
   }
 
-  .hierarchy-toolbar-secondary {
+  .hierarchy-toolbar-main {
     order: 2;
   }
 
@@ -5380,12 +5498,18 @@ textarea {
     margin-left: auto;
   }
 
+  .hierarchy-toolbar-secondary > .vtree-fossil-pill:first-of-type,
+  .hierarchy-toolbar-secondary > button.vtree-fossil-pill:first-of-type {
+    margin-left: auto;
+  }
+
   .hierarchy-toolbar-main > div[style*='width: 1px'],
   .hierarchy-toolbar-secondary > div[style*='width: 1px'],
   .hierarchy-toolbar > div[style*='width: 1px'] {
     display: none;
   }
 
+  .hierarchy-depth,
   .hierarchy-count-badge {
     display: none !important;
   }
@@ -6094,28 +6218,7 @@ textarea {
     height: 18px !important;
   }
 
-  .post-card-footer > div,
-  .entry-card-footer > div {
-    flex-wrap: wrap;
-    row-gap: 6px;
-  }
-
-  /* Like/Dislike/BrutallyDislike kendi satırında; yorum + Recalled
-     (ve cevapla/katla) bir alt satırda sıralanır. İki satır arasına,
-     kart üstündeki çizgiyle aynı tasarımda düz yatay ayraç konur.
-     Sol grup display:contents ile footer'a düzleşir; böylece sahip
-     aksiyonları (düzenle/sil) de aynı satırda sağa yaslanır. */
-  .post-card-footer > div:first-child,
-  .entry-card-footer > div:first-child {
-    display: contents;
-  }
-
-  .entry-card-footer {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  /* Entry kart sahip aksiyonları mobilde görünür (yorum/Recalled satırında) */
+  /* Entry kart sahip aksiyonları mobilde görünür */
   .entry-card-footer .hide-under-1200 {
     display: flex !important;
   }
@@ -6170,21 +6273,6 @@ textarea {
     margin-left: 72px;
   }
 
-  .footer-react-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex: 0 0 auto;
-    order: -1;
-  }
-
-  /* EntryCard zemini surface olduğu için açık renkli ayraç kayboluyordu;
-     kart hover/click olmadan da çizgi görünür kalsın */
-  .entry-card .footer-react-row {
-    border-bottom-color: var(--color-border);
-    order: 0;
-  }
-
   /* Entry kartlarda +/- butonu en solda kalsın; yanındaki "2 more"
      yazısı biraz daha yaklaşıp hafifçe büyüsün */
   .entry-replies-count {
@@ -6195,21 +6283,13 @@ textarea {
   .footer-mobile-date {
     display: inline;
     margin-left: auto;
-    font-size: var(--font-size-sm, 12px);
+    font-size: 10.5px;
     white-space: nowrap;
   }
 
-  .post-card-header-date {
-    display: none;
-  }
-
-  .post-card-topic-date {
-    display: inline;
-  }
-
-  .post-card-footer > div:nth-child(2),
-  .entry-card-footer > div:nth-child(2) {
-    margin-left: auto;
+  .post-card-header-date,
+  .entry-card-header-date {
+    font-size: 10.5px;
   }
 
   /* Mobilde sayfa başlığı (ikon + h1 + açıklama) her zaman en üstte kalır:
@@ -6695,6 +6775,7 @@ textarea {
   }
 
   /* Kart hiyerarşisi barı 320px'e sığsın: sayaç rozetleri gizlenir */
+  .hierarchy-depth,
   .hierarchy-count-badge {
     display: none !important;
   }
@@ -7446,23 +7527,40 @@ textarea {
   white-space: nowrap;
 }
 
+/* ─── Kart Alt Barı (Footer) Mobil Düzeni: 2 Varyasyon ─────────────────── */
+
+/* VARYASYON 1: Geniş Mobil & Tablet (max-width: 900px)
+   Yeterli alan olduğunda tüm alt aksiyonlar (reaksiyonlar, Recalled, Yorumlar, ...)
+   tek satırda yatay olarak hizalanır. */
 @media (max-width: 900px) {
   .post-card-footer,
   .entry-card-footer {
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .post-card-footer > div:first-child,
-  .entry-card-footer > div:first-child {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
     min-width: 0;
   }
 
+  .post-footer-left,
+  .entry-footer-left {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: nowrap;
+    min-width: 0;
+  }
+
+  .footer-react-row {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
   .card-utility-actions {
-    margin-left: 0;
+    margin-left: auto;
+    flex-shrink: 0;
   }
 
   .card-utility-fav-item {
@@ -7484,6 +7582,18 @@ textarea {
     padding: 3px 8px;
     font-size: 11px;
     gap: 4px;
+    white-space: nowrap;
+  }
+
+  .post-card-footer .card-comments-btn,
+  .post-card-footer .card-reply-btn,
+  .post-card-footer .card-recalled-btn,
+  .entry-card-footer .card-comments-btn,
+  .entry-card-footer .card-reply-btn,
+  .entry-card-footer .card-recalled-btn {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+    gap: 2.5px !important;
   }
 
   .post-card-footer .btn-sm > svg,
@@ -7538,6 +7648,188 @@ textarea {
 
   .entry-replies-count {
     font-size: 10.5px;
+  }
+
+  /* Kart Tarihleri (PostCard & EntryCard) mobilde daha küçük */
+  .post-card-header-date,
+  .post-card-topic-date,
+  .entry-card-header-date {
+    font-size: 10.5px !important;
+    line-height: 1.2;
+    opacity: 0.85;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  /* Mobil Sayfalama (< 1 / 4 > Pagination) Boyut Küçültmesi */
+  .pagination-controls {
+    gap: 5px !important;
+  }
+
+  .pagination-arrow {
+    width: 26px !important;
+    min-width: 26px !important;
+    height: 26px !important;
+    border-radius: 6px !important;
+    padding: 0 !important;
+  }
+
+  .pagination-arrow > svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+
+  .pagination-select-wrap {
+    height: 26px !important;
+  }
+
+  .pagination-select {
+    min-width: 36px !important;
+    width: 38px !important;
+    height: 26px !important;
+    line-height: 24px !important;
+    font-size: 11.5px !important;
+    padding: 0 14px 0 5px !important;
+    border-radius: 6px !important;
+  }
+
+  .pagination-select-caret {
+    right: 4px !important;
+    font-size: 7.5px !important;
+  }
+
+  .pagination-total-btn {
+    min-width: 32px !important;
+    width: auto !important;
+    padding: 0 6px !important;
+    height: 26px !important;
+    font-size: 11.5px !important;
+    border-radius: 6px !important;
+  }
+
+  .pagination-page-info {
+    font-size: 11.5px !important;
+    gap: 4px !important;
+  }
+}
+
+/* VARYASYON 2: Fazla Dar Mobil Versiyon (max-width: 480px / container max-width: 480px)
+   Mobil ekran veya kart alanı çok daraldığında alt blok kendi içinde 2 satıra bölünür:
+   - 1. Satır: like, dislike, brutally dislike (.footer-react-row)
+   - 2. Satır: Yorumlar / Cevapla, Recalled, ... butonları */
+@media (max-width: 480px) {
+  .post-card-footer,
+  .entry-card-footer {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    row-gap: 8px !important;
+    column-gap: 4px !important;
+  }
+
+  .post-footer-left,
+  .entry-footer-left {
+    display: contents !important;
+  }
+
+  /* 1. Satır: like, dislike, brutally dislike tam satır genişliği kaplar */
+  .post-card-footer .footer-react-row,
+  .entry-card-footer .footer-react-row {
+    order: 1 !important;
+    width: 100% !important;
+    flex: 1 1 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+    border-bottom: none !important;
+  }
+
+  /* 2. Satır: Yorumlar, Recalled, ... */
+  .entry-expand-btn {
+    order: 10 !important;
+  }
+
+  .entry-replies-count {
+    order: 11 !important;
+  }
+
+  .card-comments-btn,
+  .card-reply-btn {
+    order: 12 !important;
+  }
+
+  .card-recalled-btn {
+    order: 20 !important;
+  }
+
+  .card-owner-actions {
+    order: 30 !important;
+  }
+
+  .card-utility-actions {
+    order: 40 !important;
+    margin-left: auto !important;
+  }
+}
+
+@container (max-width: 480px) {
+  .post-card-footer,
+  .entry-card-footer {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    row-gap: 8px !important;
+    column-gap: 4px !important;
+  }
+
+  .post-footer-left,
+  .entry-footer-left {
+    display: contents !important;
+  }
+
+  /* 1. Satır: like, dislike, brutally dislike tam satır genişliği kaplar */
+  .post-card-footer .footer-react-row,
+  .entry-card-footer .footer-react-row {
+    order: 1 !important;
+    width: 100% !important;
+    flex: 1 1 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+    border-bottom: none !important;
+  }
+
+  /* 2. Satır: Yorumlar, Recalled, ... */
+  .entry-expand-btn {
+    order: 10 !important;
+  }
+
+  .entry-replies-count {
+    order: 11 !important;
+  }
+
+  .card-comments-btn,
+  .card-reply-btn {
+    order: 12 !important;
+  }
+
+  .card-recalled-btn {
+    order: 20 !important;
+  }
+
+  .card-owner-actions {
+    order: 30 !important;
+  }
+
+  .card-utility-actions {
+    order: 40 !important;
+    margin-left: auto !important;
   }
 }
 

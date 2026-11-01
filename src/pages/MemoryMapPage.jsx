@@ -3637,24 +3637,26 @@ export default function MemoryMapPage() {
   const availableVersions = useMemo(() => {
     const s = new Set()
     sortedNodes.forEach((n) => {
-      if (n.personaVersion) s.add(Number(n.personaVersion))
+      const v = n.personaVersion != null ? Number(n.personaVersion) : null
+      if (Number.isFinite(v) && v > 0) {
+        s.add(v)
+      }
     })
     if (s.size === 0) s.add(1)
     return Array.from(s).sort((a, b) => a - b)
   }, [sortedNodes])
 
-  // Mini versiyon filtresi seçenekleri: 'all', 1, 2, 3, 4, 5 (ve grafikte varsa 5'ten büyük versiyonlar)
+  // Mini versiyon filtresi seçenekleri: 'all' ve yalnızca grafikte gerçekten mevcut olan versiyonlar
   const versionOptions = useMemo(() => {
-    const list = [1, 2, 3, 4, 5]
-    if (availableVersions && availableVersions.length > 0) {
-      availableVersions.forEach((v) => {
-        if (Number.isFinite(v) && v > 5 && !list.includes(v)) {
-          list.push(v)
-        }
-      })
-    }
-    return ['all', ...list]
+    return ['all', ...availableVersions]
   }, [availableVersions])
+
+  // Seçili versiyon grafikten kaybolursa veya yeni aktör yüklendiğinde filtreyi temizle
+  useEffect(() => {
+    if (graphVersionFilter !== null && !availableVersions.includes(graphVersionFilter)) {
+      setGraphVersionFilter(null)
+    }
+  }, [availableVersions, graphVersionFilter])
 
   const filteredNodes = useMemo(() => {
     let list = sortedNodes

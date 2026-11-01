@@ -251,7 +251,7 @@ export default function LoginPage() {
             />
           </div>
 
-          <div style={{ marginTop: 8, padding: '12px 16px', backgroundColor: 'rgba(59, 130, 246, 0.05)', borderRadius: 8, border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+          <div style={{ marginTop: 8, padding: '12px 16px', backgroundColor: 'var(--color-surface)', borderRadius: 8, border: '1px solid var(--color-border)', transition: 'border-color 0.2s ease-in-out, background-color 0.2s ease-in-out' }}>
             <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: '1.4', display: 'block', textAlign: 'center' }}>
               {t('auth.agree_prefix', 'Giriş yaparak')}{' '}
               <Link to="/terms" style={{ color: 'var(--color-primary)', fontWeight: 700, textDecoration: 'none' }}>

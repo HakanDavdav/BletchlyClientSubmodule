@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { createPortal } from 'react-dom'
 import { ThumbsUp, ThumbsDown, Skull } from 'lucide-react'
 import { contentItemApi } from '../../api/contentItemApi'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
 import ModalHeader from '../common/ModalHeader'
+import FossilTogglePill from '../common/FossilTogglePill'
 import { ReactionType } from '../../constants/enums'
 import useDevLog from '../../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
@@ -22,6 +23,7 @@ const ReactionIcons = {
 export default function LikeListModal({ contentItemId, isOpen, onClose, initialTab = null }) {
   useDevLog('LikeListModal', arguments[0] || {})
   const { t } = useTranslation()
+  const [showFossils, setShowFossils] = useState(false)
 
   const activeTab = initialTab
 
@@ -39,10 +41,10 @@ export default function LikeListModal({ contentItemId, isOpen, onClose, initialT
   }
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: ['likes', contentItemId, activeTab],
+    queryKey: ['likes', contentItemId, activeTab, showFossils],
     queryFn: async ({ pageParam = 1 }) => {
       try {
-        const res = await contentItemApi.getContentItemLikes(contentItemId, pageParam, activeTab)
+        const res = await contentItemApi.getContentItemLikes(contentItemId, pageParam, activeTab, showFossils)
         return {
           items: res.data?.data || [],
           nextPage: res.data?.data?.length === 10 ? pageParam + 1 : undefined,
@@ -57,6 +59,18 @@ export default function LikeListModal({ contentItemId, isOpen, onClose, initialT
 
   // Bütün sayfaların içeriğini tek array'de topla
   const items = data?.pages?.flatMap((page) => page.items) || []
+
+  const isDormantLike = (like) => {
+    const actor = like?.actor
+    return Boolean(actor?.isDormant ?? actor?.IsDormant ?? false)
+  }
+  const fossilCount = useMemo(() => items.filter(isDormantLike).length, [items])
+  const visibleItems = useMemo(() => {
+    if (!showFossils) {
+      return items.filter((l) => !isDormantLike(l))
+    }
+    return [...items].sort((a, b) => (isDormantLike(a) ? 1 : 0) - (isDormantLike(b) ? 1 : 0))
+  }, [items, showFossils])
 
   // Infinite scroll için onScroll handler
   const handleScroll = (e) => {
@@ -89,6 +103,14 @@ export default function LikeListModal({ contentItemId, isOpen, onClose, initialT
         <ModalHeader
           title={getTitle()}
           onClose={onClose}
+          actions={
+            <FossilTogglePill
+              count={fossilCount}
+              open={showFossils}
+              onToggle={() => setShowFossils((v) => !v)}
+              loading={showFossils && isLoading}
+            />
+          }
           style={{ padding: '0 0 12px 0', marginBottom: 14 }}
         />
 
@@ -97,11 +119,11 @@ export default function LikeListModal({ contentItemId, isOpen, onClose, initialT
             <div style={{ textAlign: 'center', padding: 24 }}>
               <div className="spinner spinner-md" />
             </div>
-          ) : items.length === 0 ? (
+          ) : visibleItems.length === 0 ? (
             <p className="empty-state">{t('common.nothing_here_yet', 'Henüz burada hiçbir şey yok')}</p>
           ) : (
             <div className="minimal-card-list" style={{ padding: '4px 4px 8px 4px' }}>
-              {items.map((like) => (
+              {visibleItems.map((like) => (
                 <div
                   key={like.likeId}
                   className="lb-card flex items-center justify-between"
@@ -133,7 +155,7 @@ export default function LikeListModal({ contentItemId, isOpen, onClose, initialT
                   <div className="spinner spinner-sm" />
                 </div>
               )}
-              {!isFetchingNextPage && !hasNextPage && items.length > 0 && (
+              {!isFetchingNextPage && !hasNextPage && visibleItems.length > 0 && (
                 <p
                   className="text-muted"
                   style={{ padding: 16, textAlign: 'center', fontSize: 13 }}

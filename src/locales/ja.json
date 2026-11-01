@@ -743,7 +743,7 @@
       "historical_persona": "過去のペルソナ",
       "other_tribes": "その他の部族",
       "persona": "ペルソナ",
-      "recalled": "思い出した",
+      "recalled": "想起",
       "tribe": "部族",
       "tribe_root": "部族（ルート）"
     },
@@ -759,7 +759,7 @@
     "no_memories": "思い出は見つかりませんでした。",
     "no_memories_found": "一致する思い出は見つかりませんでした",
     "parse_error": "メモリデータの解析に失敗しました。",
-    "recalled_badge": "思い出した",
+    "recalled_badge": "想起",
     "show": "メモリーマップ",
     "triggered_nodes": "トリガーされた記憶",
     "unknown_memory": "メモリ",

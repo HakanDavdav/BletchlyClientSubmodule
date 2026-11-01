@@ -95,13 +95,12 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
   const isDormantMember = (member) =>
     Boolean(member?.actor?.isDormant ?? member?.actor?.IsDormant ?? false)
 
-  const visibleMembers = useMemo(
-    () =>
-      showFossilMembers
-        ? allMembers
-        : allMembers.filter((m) => !isDormantMember(m)),
-    [allMembers, showFossilMembers]
-  )
+  const visibleMembers = useMemo(() => {
+    if (!showFossilMembers) {
+      return allMembers.filter((m) => !isDormantMember(m))
+    }
+    return [...allMembers].sort((a, b) => (isDormantMember(a) ? 1 : 0) - (isDormantMember(b) ? 1 : 0))
+  }, [allMembers, showFossilMembers])
 
   const fossilMemberCount = useMemo(
     () => allMembers.filter((m) => isDormantMember(m)).length,
@@ -912,64 +911,88 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
       </AnimatePresence>
 
       {/* ─── Posts Section ─── */}
-      <div className="profile-tabs-container" style={{ marginTop: 8 }}>
-        <div className="profile-tab-group">
-          <button className="profile-tab-btn active" style={{ cursor: 'default' }}>
-            {t('profile.posts')} ({tribe.postCount ?? 0})
-          </button>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button
-            className="btn btn-outline btn-sm pagination-arrow"
-            disabled={postsPage === 1 || isPostsLoading}
-            onClick={() => setPostsPage((p) => Math.max(1, p - 1))}
-            aria-label={t('common.previous')}
-            title={t('common.previous')}
-          >
-            <ChevronLeft size={14} />
-          </button>
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              fontSize: 13,
-              fontWeight: 500,
-              color: 'var(--color-text-secondary)',
-            }}
-          >
-            <PaginationSelect
-              page={postsPage}
-              totalPages={totalPages}
-              onChange={setPostsPage}
-            />
-            / <PaginationTotal totalPages={totalPages} onChange={setPostsPage} />
-          </span>
-          <button
-            className="btn btn-outline btn-sm pagination-arrow"
-            disabled={postsPage >= totalPages || isPostsLoading}
-            onClick={() => setPostsPage((p) => p + 1)}
-            aria-label={t('common.next')}
-            title={t('common.next')}
-          >
-            <ChevronRight size={14} />
-          </button>
-        </div>
-      </div>
-
-      <div style={{ minHeight: 400, marginTop: 16 }}>
-        {isPostsLoading ? (
-          <div className="spinner spinner-md" style={{ margin: '40px auto', display: 'block' }} />
-        ) : !postsData || postsData.length === 0 ? (
-          <p className="empty-state">{t('common.nothing_here_yet')}</p>
-        ) : (
-          <div className="flex-col gap-4">
-            {postsData.map((p) => (
-              <PostCard key={p.contentItemId} {...p} />
-            ))}
+      {(() => {
+        const paginationControls = (
+          <div className="pagination-controls" style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <button
+              className="btn btn-outline btn-sm pagination-arrow"
+              disabled={postsPage === 1 || isPostsLoading}
+              onClick={() => setPostsPage((p) => Math.max(1, p - 1))}
+              aria-label={t('common.previous')}
+              title={t('common.previous')}
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <span
+              className="pagination-page-info"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 13,
+                fontWeight: 500,
+                color: 'var(--color-text-secondary)',
+              }}
+            >
+              <PaginationSelect
+                page={postsPage}
+                totalPages={totalPages}
+                onChange={setPostsPage}
+              />
+              / <PaginationTotal totalPages={totalPages} onChange={setPostsPage} />
+            </span>
+            <button
+              className="btn btn-outline btn-sm pagination-arrow"
+              disabled={postsPage >= totalPages || isPostsLoading}
+              onClick={() => setPostsPage((p) => p + 1)}
+              aria-label={t('common.next')}
+              title={t('common.next')}
+            >
+              <ChevronRight size={14} />
+            </button>
           </div>
-        )}
-      </div>
+        )
+
+        return (
+          <>
+            <div className="profile-tabs-container" style={{ marginTop: 8 }}>
+              <div className="profile-tab-group">
+                <button className="profile-tab-btn active" style={{ cursor: 'default' }}>
+                  {t('profile.posts')} ({tribe.postCount ?? 0})
+                </button>
+              </div>
+              {paginationControls}
+            </div>
+
+            <div style={{ minHeight: 400, marginTop: 16 }}>
+              {isPostsLoading ? (
+                <div className="spinner spinner-md" style={{ margin: '40px auto', display: 'block' }} />
+              ) : !postsData || postsData.length === 0 ? (
+                <p className="empty-state">{t('common.nothing_here_yet')}</p>
+              ) : (
+                <div className="flex-col gap-4">
+                  {postsData.map((p) => (
+                    <PostCard key={p.contentItemId} {...p} />
+                  ))}
+                  {totalPages > 1 && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        marginTop: 16,
+                        paddingTop: 16,
+                        borderTop: '1px solid var(--color-border)',
+                      }}
+                    >
+                      {paginationControls}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </>
+        )
+      })()}
 
       <ProfileModifiersModal
         profile={{ ...tribe, discriminator: 'Tribe' }}

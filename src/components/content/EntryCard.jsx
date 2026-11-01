@@ -142,22 +142,33 @@ export default function EntryCard({
     <>
       <div className={`entry-card ${depthClass}`} style={{ animation: 'fadeIn 0.2s ease' }}>
         {/* Header */}
-        <div className="flex items-start" style={{ marginBottom: 8, marginLeft: -4 }}>
-          {actor ? (
-            <ActorMinimalCard
-              actor={actor}
-              showHierarchyBtn={true}
-              contextTitle={effectiveTitle}
-            />
-          ) : (
-            <span
-              className="text-muted"
-              style={{ paddingLeft: 8, fontSize: 'var(--font-size-sm)', fontWeight: 500 }}
-            >
-              {t('card.deleted_user')}
-            </span>
-          )}
-          <span className="text-muted entry-card-header-date" style={{ marginLeft: 'auto', alignSelf: 'flex-start' }}>
+        <div className="entry-card-header flex items-start justify-between" style={{ gap: 8, marginBottom: 8, marginLeft: -4, width: '100%' }}>
+          <div className="entry-card-header-main flex items-center" style={{ minWidth: 0, flex: '1 1 auto', flexWrap: 'nowrap', overflow: 'hidden' }}>
+            {actor ? (
+              <ActorMinimalCard
+                actor={actor}
+                showHierarchyBtn={true}
+                contextTitle={effectiveTitle}
+              />
+            ) : (
+              <span
+                className="text-muted"
+                style={{ paddingLeft: 8, fontSize: 'var(--font-size-sm)', fontWeight: 500 }}
+              >
+                {t('card.deleted_user')}
+              </span>
+            )}
+          </div>
+          <span
+            className="text-muted entry-card-header-date"
+            style={{
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              marginLeft: 'auto',
+              alignSelf: 'flex-start',
+              lineHeight: 1.2,
+            }}
+          >
             {timeAgo}
           </span>
         </div>
@@ -183,7 +194,7 @@ export default function EntryCard({
         {/* Footer */}
         <div className="entry-card-footer">
           {/* Sol: Reaksiyon + yorum sayısı */}
-          <div className="flex items-center gap-2">
+          <div className="entry-footer-left flex items-center" style={{ gap: 5 }}>
             {hasChildren && (
               <>
                 <button
@@ -241,7 +252,9 @@ export default function EntryCard({
               const hasTriggered = effectiveNodeIds && effectiveNodeIds.length > 0
               return (
                 <button
-                  className="btn btn-ghost btn-sm"
+                  className="btn btn-ghost btn-sm card-recalled-btn"
+                  title={t('memoryMap.recalled_badge', 'Recalled')}
+                  aria-label={t('memoryMap.recalled_badge', 'Recalled')}
                   onClick={(e) => {
                     e.stopPropagation()
                     const highlightParam = hasTriggered
@@ -252,7 +265,7 @@ export default function EntryCard({
                       state: { profileName: actor.profileName, contextTitle: effectiveTitle }
                     })
                   }}
-                  style={{ gap: 5 }}
+                  style={{ gap: 3.5 }}
                 >
                   <SynapseBrainIcon
                     brainSize={13}
@@ -279,7 +292,7 @@ export default function EntryCard({
               )
             })()}
             {isLoggedIn && canReply && (
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowReplyDraft((v) => !v)}>
+              <button className="btn btn-ghost btn-sm card-reply-btn card-comments-btn" onClick={() => setShowReplyDraft((v) => !v)}>
                 <MessageSquare size={13} />
                 {t('post.reply')}
               </button>
@@ -288,7 +301,7 @@ export default function EntryCard({
 
           {/* Sağ: Owner actions */}
           {isOwnerInternal && (
-            <div className="flex items-center gap-1 hide-under-1200">
+            <div className="card-owner-actions flex items-center gap-1 hide-under-1200">
               <button
                 className="btn-icon"
                 onClick={(e) => {

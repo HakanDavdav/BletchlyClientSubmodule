@@ -1,9 +1,11 @@
+import { useState, useMemo } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { createPortal } from 'react-dom'
 import { Crown } from 'lucide-react'
 import { personalityCardApi } from '../../api/personalityCardApi'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
 import ModalHeader from '../common/ModalHeader'
+import FossilTogglePill from '../common/FossilTogglePill'
 import useDevLog from '../../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 import i18n from '../../i18n'
@@ -21,16 +23,17 @@ function formatDate(value) {
 export default function CardActorListModal({ cardId, type, isOpen, onClose }) {
   useDevLog('CardActorListModal', arguments[0] || {})
   const { t } = useTranslation()
+  const [showFossils, setShowFossils] = useState(false)
   // type is 'owners' or 'assignees'
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: ['card-actor-list', cardId, type],
+    queryKey: ['card-actor-list', cardId, type, showFossils],
     queryFn: async ({ pageParam = 1 }) => {
       try {
         const res =
           type === 'owners'
-            ? await personalityCardApi.getCardOwners(cardId, pageParam)
-            : await personalityCardApi.getCardAssignees(cardId, pageParam)
+            ? await personalityCardApi.getCardOwners(cardId, pageParam, showFossils)
+            : await personalityCardApi.getCardAssignees(cardId, pageParam, showFossils)
         return {
           items: res.data?.data || [],
           nextPage: res.data?.data?.length === 10 ? pageParam + 1 : undefined,
@@ -44,6 +47,23 @@ export default function CardActorListModal({ cardId, type, isOpen, onClose }) {
   })
 
   const items = data?.pages?.flatMap((page) => page.items) || []
+
+  const isDormantItem = (item) => {
+    const actor = type === 'owners' ? (item?.actor || item) : item
+    return Boolean(actor?.isDormant ?? actor?.IsDormant ?? false)
+  }
+
+  const fossilCount = useMemo(() => items.filter(isDormantItem).length, [items, type])
+  const visibleItems = useMemo(() => {
+    if (!showFossils) {
+      return items.filter((item) => !isDormantItem(item))
+    }
+    return [...items].sort((a, b) => {
+      const aDormant = isDormantItem(a) ? 1 : 0
+      const bDormant = isDormantItem(b) ? 1 : 0
+      return aDormant - bDormant
+    })
+  }, [items, showFossils, type])
 
   const handleScroll = (e) => {
     const { scrollTop, scrollHeight, clientHeight } = e.target
@@ -82,6 +102,14 @@ export default function CardActorListModal({ cardId, type, isOpen, onClose }) {
         <ModalHeader
           title={type === 'owners' ? t('card.owners', 'Sahipler') : t('card.assignees', 'Atanmış Botlar')}
           onClose={onClose}
+          actions={
+            <FossilTogglePill
+              count={fossilCount}
+              open={showFossils}
+              onToggle={() => setShowFossils((v) => !v)}
+              loading={showFossils && isLoading}
+            />
+          }
           style={{ padding: '0 0 12px 0', marginBottom: 14 }}
         />
 
@@ -90,11 +118,11 @@ export default function CardActorListModal({ cardId, type, isOpen, onClose }) {
             <div style={{ textAlign: 'center', padding: 24 }}>
               <div className="spinner spinner-md" />
             </div>
-          ) : items.length === 0 ? (
+          ) : visibleItems.length === 0 ? (
             <p className="empty-state">{t('common.nothing_here_yet', 'Henüz burada hiçbir şey yok')}</p>
           ) : (
             <div className="minimal-card-list" style={{ padding: '4px 4px 8px 4px' }}>
-              {items.map((item, idx) => {
+              {visibleItems.map((item, idx) => {
                 const isOwnerType = type === 'owners'
                 const actor = isOwnerType ? (item.actor || item) : item
                 const acqType = isOwnerType ? item.acquisitionType : null
@@ -186,7 +214,7 @@ export default function CardActorListModal({ cardId, type, isOpen, onClose }) {
                   <div className="spinner spinner-sm" />
                 </div>
               )}
-              {!isFetchingNextPage && !hasNextPage && items.length > 0 && (
+              {!isFetchingNextPage && !hasNextPage && visibleItems.length > 0 && (
                 <p
                   className="text-muted"
                   style={{ padding: 16, textAlign: 'center', fontSize: 13 }}

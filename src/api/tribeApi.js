@@ -3,7 +3,7 @@ import api from './axios'
 // ─── Tribe API ────────────────────────────────────────────────────────────────
 
 export const tribeApi = {
-  loadTribes: (page = 1, query = '', orderType = '', startDate = null, endDate = null, topicType = '') => {
+  loadTribes: (page = 1, query = '', orderType = '', startDate = null, endDate = null, topicType = '', includeDormant = false) => {
     const topicTypes = Array.isArray(topicType) ? topicType.filter(Boolean) : topicType ? [topicType] : []
     return api.get('/tribe/load', {
       params: {
@@ -13,6 +13,7 @@ export const tribeApi = {
         startDate: startDate || undefined,
         endDate: endDate || undefined,
         topicType: topicTypes.length ? topicTypes : undefined,
+        includeDormant: includeDormant ? true : undefined,
       },
       paramsSerializer: { indexes: null },
     })

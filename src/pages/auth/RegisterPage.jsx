@@ -233,10 +233,10 @@ export default function RegisterPage() {
         <div style={{ 
           marginTop: 8, 
           padding: '12px 16px', 
-          backgroundColor: 'rgba(59, 130, 246, 0.05)', 
+          backgroundColor: 'var(--color-surface)', 
           borderRadius: 8, 
-          border: (hasTermsError && !agreedToTerms) ? '1px solid var(--color-error)' : '1px solid rgba(59, 130, 246, 0.2)',
-          transition: 'border-color 0.2s ease-in-out'
+          border: (hasTermsError && !agreedToTerms) ? '1px solid var(--color-error)' : '1px solid var(--color-border)',
+          transition: 'border-color 0.2s ease-in-out, background-color 0.2s ease-in-out'
         }}>
           <SelectionMarker 
             checked={agreedToTerms} 

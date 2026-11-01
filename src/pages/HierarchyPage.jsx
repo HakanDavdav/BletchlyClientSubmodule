@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { Maximize2, Network, Plus, Minus, Focus } from 'lucide-react'
+import { Maximize2, Network, Plus, Minus, Focus, Trash2, CirclePlus, CircleMinus } from 'lucide-react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { actorApi } from '../api/actorApi'
@@ -34,6 +34,7 @@ export default function HierarchyPage() {
   const [fetchDepth, setFetchDepth] = useState(1)
   const [actorName, setActorName] = useState('')
   const [showFossils, setShowFossils] = useState(false)
+  const [showDeleted, setShowDeleted] = useState(false)
 
   const fossilCount = useMemo(() => {
     const countFossils = (node) => {
@@ -49,6 +50,19 @@ export default function HierarchyPage() {
       return count
     }
     return countFossils(treeData)
+  }, [treeData])
+
+  const deletedCount = useMemo(() => {
+    const countDeleted = (node) => {
+      if (!node) return 0
+      let count = 0
+      for (const bot of node.bots || []) {
+        if (bot.isDeleted ?? bot.IsDeleted ?? false) count += 1
+        count += countDeleted(bot)
+      }
+      return count
+    }
+    return countDeleted(treeData)
   }, [treeData])
 
   const [zoomLevel, setZoomLevel] = useState(0.82)
@@ -545,6 +559,7 @@ export default function HierarchyPage() {
 
             {/* Zoom Level Göstergesi */}
             <span
+              className="hierarchy-zoom-pct"
               style={{
                 fontSize: 12,
                 fontWeight: 600,
@@ -575,6 +590,35 @@ export default function HierarchyPage() {
             >
               <Minus size={12} />
             </button>
+
+            <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
+
+            {/* Fosil Düğümleri Göster / Gizle Toggle */}
+            <FossilTogglePill
+              count={fossilCount}
+              open={showFossils}
+              showCountOnlyWhenOpen={true}
+              onToggle={() => setShowFossils((prev) => !prev)}
+              style={{ flexShrink: 0 }}
+            />
+
+            {/* Silinmiş Düğümleri Göster / Gizle Toggle (Trash2) */}
+            <button
+              type="button"
+              className={`vtree-fossil-pill ${showDeleted ? 'vtree-fossil-pill--expanded' : ''}`}
+              onClick={() => setShowDeleted((prev) => !prev)}
+              aria-label={showDeleted ? t('hierarchy.hide_deleted', 'Silinmişleri Gizle') : t('hierarchy.show_deleted', 'Silinmişleri Göster')}
+              title={t('hierarchy.show_deleted_tooltip', 'Silinmiş düğümleri göster')}
+              style={{ flexShrink: 0 }}
+            >
+              <Trash2 size={14} style={{ flexShrink: 0 }} />
+              {showDeleted && deletedCount > 0 && <span>{deletedCount}</span>}
+              {showDeleted ? (
+                <CircleMinus size={15} strokeWidth={2.2} />
+              ) : (
+                <CirclePlus size={15} strokeWidth={2.2} />
+              )}
+            </button>
             </div>
 
             <div className="hierarchy-toolbar-main">
@@ -597,14 +641,6 @@ export default function HierarchyPage() {
               )}
               <span>{t('hierarchy.expand_all', 'Tümünü Genişlet')}</span>
             </button>
-
-            {/* Fosil Düğümleri Göster / Gizle Toggle */}
-            <FossilTogglePill
-              count={fossilCount}
-              open={showFossils}
-              onToggle={() => setShowFossils((prev) => !prev)}
-              style={{ flexShrink: 0 }}
-            />
 
             <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
 
@@ -703,6 +739,7 @@ export default function HierarchyPage() {
             zoomLevel={zoomLevel}
             onPulse={handlePulse}
             showFossils={showFossils}
+            showDeleted={showDeleted}
           />
           </div>
         ) : (

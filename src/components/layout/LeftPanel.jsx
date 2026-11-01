@@ -17,6 +17,7 @@ import useDevLog from '../../utils/useDevLog'
 import { TopicTypes } from '../../constants/TopicTypes'
 import { TopicColors } from '../../constants/enums'
 import { useTranslation } from 'react-i18next'
+import { useHorizontalScrollIndicator } from '../../hooks/useHorizontalScrollIndicator'
 
 export default function LeftPanel() {
   useDevLog('LeftPanel', arguments[0] || {})
@@ -39,6 +40,27 @@ export default function LeftPanel() {
   const [mobileTopicPos, setMobileTopicPos] = useState(null)
   const mobileTopicBtnRef = useRef(null)
   const mobileTopicPanelRef = useRef(null)
+  const [cacheTabsRef, cacheTabsScroll] = useHorizontalScrollIndicator([])
+
+  // Sekmelerde yatay kaydırma yaparken dokunma jestinin sol çekmeceye (drawer swipe)
+  // yayılmasını engelleyerek çekmecenin sürüklenmesini önle
+  useEffect(() => {
+    const el = cacheTabsRef.current
+    if (!el) return undefined
+    const stopProp = (e) => {
+      e.stopPropagation()
+    }
+    el.addEventListener('touchstart', stopProp, { passive: true })
+    el.addEventListener('touchmove', stopProp, { passive: true })
+    el.addEventListener('touchend', stopProp, { passive: true })
+    el.addEventListener('pointerdown', stopProp, { passive: true })
+    return () => {
+      el.removeEventListener('touchstart', stopProp)
+      el.removeEventListener('touchmove', stopProp)
+      el.removeEventListener('touchend', stopProp)
+      el.removeEventListener('pointerdown', stopProp)
+    }
+  }, [cacheTabsRef])
 
   useEffect(() => {
     const handleOutside = (event) => {
@@ -559,26 +581,37 @@ export default function LeftPanel() {
       {isLoggedIn && <hr className="divider" style={{ margin: '4px 0' }} />}
 
       {/* ─── Cache type selector (yalnızca mobil drawer; masaüstünde üst barda) ────── */}
-      <div className="left-cache-tabs-row">
-        <div className="left-cache-tabs hscroll-strip">
-          {[
-            { key: 'trending', label: t('sort.popular', 'Popüler') },
-            { key: 'recent', label: t('sort.new', 'Yeni') },
-            { key: 'mostLiked', label: t('sort.best', 'En İyiler') },
-            { key: 'mostDisliked', label: t('sort.worst', 'En Kötüler') },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              className={`left-cache-tab${activeLeftCacheType === tab.key ? ' is-active' : ''}`}
-              onClick={() => {
-                setActiveLeftTopicType(null)
-                setActiveLeftCacheType(tab.key)
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
+      <div className="left-cache-tabs-row" data-no-drawer-swipe="true">
+        <div className="left-cache-tabs-wrap" data-no-drawer-swipe="true">
+          {cacheTabsScroll.scrollable && (
+            <div className="left-cache-tabs-scrollbar" aria-hidden="true" data-no-drawer-swipe="true">
+              <div
+                className="left-cache-tabs-scrollbar-thumb"
+                style={{ width: `${cacheTabsScroll.width}%`, left: `${cacheTabsScroll.left}%` }}
+              />
+            </div>
+          )}
+          <div className="left-cache-tabs hscroll-strip" ref={cacheTabsRef} data-no-drawer-swipe="true">
+            {[
+              { key: 'trending', label: t('sort.popular', 'Popüler') },
+              { key: 'recent', label: t('sort.new', 'Yeni') },
+              { key: 'mostLiked', label: t('sort.best', 'En İyiler') },
+              { key: 'mostDisliked', label: t('sort.worst', 'En Kötüler') },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                className={`left-cache-tab${activeLeftCacheType === tab.key ? ' is-active' : ''}`}
+                data-no-drawer-swipe="true"
+                onClick={() => {
+                  setActiveLeftTopicType(null)
+                  setActiveLeftCacheType(tab.key)
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
         <button
           ref={mobileTopicBtnRef}

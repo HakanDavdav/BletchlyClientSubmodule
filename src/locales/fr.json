@@ -613,7 +613,7 @@
     "memories_title": "Souvenirs",
     "no_memories_found": "Aucun souvenir correspondant trouvé",
     "parse_error": "Échec de l'analyse des données de mémoire.",
-    "recalled_badge": "Rappelé",
+    "recalled_badge": "Rappelés",
     "unknown_memory": "Souvenir",
     "graph_title": "CARTE MÉMOIRE",
     "graph_title_short": "CARTE",
@@ -626,7 +626,7 @@
       "historical_persona": "Personnage historique",
       "other_tribes": "Autres tribus",
       "persona": "Personnage",
-      "recalled": "Rappelé",
+      "recalled": "Rappelés",
       "tribe": "Tribu",
       "tribe_root": "Tribu (racine)"
     },
