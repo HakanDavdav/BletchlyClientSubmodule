@@ -14,6 +14,9 @@ import {
   CircleAlert,
   CircleMinus,
   CirclePlus,
+  Check,
+  Trash2,
+  History,
 } from 'lucide-react'
 import { personalityCardApi } from '../../api/personalityCardApi'
 import BackButton from '../../components/common/BackButton'
@@ -85,7 +88,7 @@ function collectPromotedActiveCardChildren(fossilNode, ancestorsSoFar = [], expa
 }
 
 // ── Tree Builder Algorithm ──────────────────────────────────────────────────
-function buildCardHierarchyTree(card) {
+function buildCardHierarchyTree(card, includeHistory = false) {
   if (!card) return null
 
   const root = {
@@ -98,9 +101,9 @@ function buildCardHierarchyTree(card) {
   }
 
   const rawOwners = Array.isArray(card.owners) ? card.owners : []
-  const rawAssignments = (Array.isArray(card.assignments) ? card.assignments : []).filter(
-    (ass) => !ass.isDeleted && !ass.IsDeleted
-  )
+  const rawAssignments = Array.isArray(card.assignments)
+    ? (includeHistory ? card.assignments : card.assignments.filter((ass) => !ass.isDeleted && !ass.IsDeleted))
+    : []
 
   const ownerNodesByOwnershipId = new Map()
   const ownerNodesByActorId = new Map()
@@ -151,7 +154,7 @@ function buildCardHierarchyTree(card) {
           : { tribeId: targetId, tribeName: 'Bilinmeyen Klan' }),
       bot: ass.bot,
       tribe: ass.tribe,
-      isDeleted: Boolean(ass.isDeleted),
+      isDeleted: Boolean(ass.isDeleted || ass.IsDeleted),
       isLocked: Boolean(ass.isLocked),
       assignedAt: ass.assignedAt,
       children: [],
@@ -354,6 +357,62 @@ function CardTreeNode({
             <Crown size={12} strokeWidth={2.5} />
           </div>
         ) : null}
+
+        {/* Assignment Durum Rozeti (Bitişik kısa tire ve solunda Tik / Çöp İkonu) */}
+        {(node.nodeType === 'bot' || node.nodeType === 'tribe') && (
+          <div
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: '50%',
+              transform: 'translate(-100%, -50%)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              zIndex: 4,
+              pointerEvents: 'auto',
+              userSelect: 'none',
+            }}
+          >
+            {/* İkon */}
+            <div
+              title={
+                node.isDeleted
+                  ? t('hierarchy.carrier_deleted', 'Silinmiş Atama (Eski Taşıyıcı)')
+                  : t('hierarchy.carrier_active', 'Aktif Taşıyıcı')
+              }
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 22,
+                height: 22,
+                borderRadius: '50%',
+                background: 'var(--color-bg)',
+                border: `1.5px solid ${node.isDeleted ? 'var(--color-error)' : 'var(--color-primary)'}`,
+                color: node.isDeleted ? 'var(--color-error)' : 'var(--color-primary)',
+                boxShadow: 'var(--shadow-xs, 0 1px 3px rgba(0,0,0,0.12))',
+                cursor: 'help',
+                flexShrink: 0,
+              }}
+            >
+              {node.isDeleted ? (
+                <Trash2 size={12} strokeWidth={2.4} />
+              ) : (
+                <Check size={12} strokeWidth={2.8} />
+              )}
+            </div>
+
+            {/* Bitişik kısacık yatay çizgi (--) */}
+            <div
+              style={{
+                width: 10,
+                height: 2,
+                background: node.isDeleted ? 'var(--color-error)' : 'var(--color-primary)',
+                flexShrink: 0,
+              }}
+            />
+          </div>
+        )}
 
         {/* Render Node Content */}
         {node.nodeType === 'card' ? (
@@ -611,6 +670,7 @@ export default function PersonalityCardHierarchyPage() {
   const [searchParams] = useSearchParams()
   const cardId = searchParams.get('cardId') || searchParams.get('ownershipId')
   const navigate = useNavigate()
+  const [includeHistory, setIncludeHistory] = useState(false)
 
   const {
     data: cardData = null,
@@ -618,9 +678,9 @@ export default function PersonalityCardHierarchyPage() {
     error: queryError,
     refetch: loadHierarchy,
   } = useQuery({
-    queryKey: ['cardHierarchy', cardId],
+    queryKey: ['cardHierarchy', cardId, includeHistory],
     queryFn: async () => {
-      const res = await personalityCardApi.getCardHierarchy(cardId)
+      const res = await personalityCardApi.getCardHierarchy(cardId, includeHistory)
       const payload = res.data?.data !== undefined ? res.data.data : res.data
       if (payload && (payload.personalityCardId || payload.cardId || res.data?.success)) {
         return payload
@@ -681,8 +741,8 @@ export default function PersonalityCardHierarchyPage() {
   const treeContainerRef = useRef(null)
 
   const treeRoot = useMemo(() => {
-    return buildCardHierarchyTree(cardData)
-  }, [cardData])
+    return buildCardHierarchyTree(cardData, includeHistory)
+  }, [cardData, includeHistory])
 
   const fossilCount = useMemo(() => {
     const countFossils = (node) => {
@@ -694,6 +754,24 @@ export default function PersonalityCardHierarchyPage() {
     }
     return countFossils(treeRoot)
   }, [treeRoot])
+
+  const deletedAssignmentCount = useMemo(() => {
+    if (!cardData || !Array.isArray(cardData.assignments)) return 0
+    return cardData.assignments.filter((ass) => ass.isDeleted || ass.IsDeleted).length
+  }, [cardData])
+
+  const [lastKnownDeletedCount, setLastKnownDeletedCount] = useState(0)
+
+  useEffect(() => {
+    if (includeHistory && cardData && Array.isArray(cardData.assignments)) {
+      const count = cardData.assignments.filter((ass) => ass.isDeleted || ass.IsDeleted).length
+      if (count > 0) {
+        setLastKnownDeletedCount(count)
+      }
+    }
+  }, [includeHistory, cardData])
+
+  const displayDeletedCount = includeHistory ? deletedAssignmentCount : lastKnownDeletedCount
 
   // İlk giriş (oto-zoom) ile Default butonunun birebir aynı görünümü üretmesi için ortak rutin:
   // içeriğe sığacak zoom hesapla → yatayda ortala (pan) → dikeyde başlangıcı en üstte tut.
@@ -816,8 +894,8 @@ export default function PersonalityCardHierarchyPage() {
       button: e.button,
       startX: e.pageX,
       startY: e.pageY,
-      startPanX: panOffset.x,
-      startPanY: panOffset.y,
+      startPanX: panOffsetRef.current.x,
+      startPanY: panOffsetRef.current.y,
       hasMoved: false,
     }
     setIsPanning(true)
@@ -835,10 +913,12 @@ export default function PersonalityCardHierarchyPage() {
       }
 
       // Transform bazlı sınırsız pan: scroll alanına takılmaz, istenildiği kadar gidilir
-      setPanOffset({
+      const newPan = {
         x: panState.current.startPanX + deltaX,
         y: panState.current.startPanY + deltaY,
-      })
+      }
+      panOffsetRef.current = newPan
+      setPanOffset(newPan)
     }
 
     const handleMouseUp = () => {
@@ -881,17 +961,54 @@ export default function PersonalityCardHierarchyPage() {
     }
   }, [])
 
+  // Kamera orta noktasını (viewport center) referans alarak yakınlaştır/uzaklaştır
+  const handleZoom = useCallback((targetZoomOrFn) => {
+    const container = containerRef.current
+    if (!container) return
+
+    const prevZoom = zoomLevelRef.current
+    const nextZoom = typeof targetZoomOrFn === 'function'
+      ? targetZoomOrFn(prevZoom)
+      : targetZoomOrFn
+
+    const clampedZoom = Math.min(2.5, Math.max(0.05, +nextZoom.toFixed(2)))
+    if (clampedZoom === prevZoom) return
+
+    const rect = container.getBoundingClientRect()
+    const cs = window.getComputedStyle(container)
+    const padLeft = parseFloat(cs.paddingLeft) || 0
+    const padTop = parseFloat(cs.paddingTop) || 0
+
+    // Kameranın tam orta noktası (viewport center)
+    const cx = (rect.width / 2) - padLeft
+    const cy = (rect.height / 2) - padTop
+
+    const ratio = clampedZoom / prevZoom
+    const pan = panOffsetRef.current
+
+    const newPan = {
+      x: cx - (cx - pan.x) * ratio,
+      y: cy - (cy - pan.y) * ratio,
+    }
+
+    panOffsetRef.current = newPan
+    zoomLevelRef.current = clampedZoom
+
+    setPanOffset(newPan)
+    setZoomLevel(clampedZoom)
+  }, [])
+
   // Mouse tekerleği: Normal tekerlek ile kamerayı kaydır (pan), Ctrl + tekerlek ile zoom yap
   useEffect(() => {
     const targetEl = blockRef.current || containerRef.current
     if (!targetEl) return
 
     const handleWheel = (e) => {
-      // 1. Ctrl + Tekerlek veya Meta + Tekerlek (Trackpad pinch dahil) -> Kamera Yakınlaştır / Uzaklaştır (Zoom)
+      // 1. Ctrl + Tekerlek veya Meta + Tekerlek (Trackpad pinch dahil) -> Kamera Yakınlaştır / Uzaklaştır (Kamera merkezli)
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault()
         const factor = Math.abs(e.deltaY) < 20 ? -e.deltaY * 0.005 : (e.deltaY < 0 ? 0.05 : -0.05)
-        setZoomLevel((prev) => Math.min(2.5, Math.max(0.05, +(prev + factor).toFixed(2))))
+        handleZoom((prev) => prev + factor)
         return
       }
 
@@ -900,17 +1017,19 @@ export default function PersonalityCardHierarchyPage() {
       const dx = e.shiftKey ? -e.deltaY : -e.deltaX
       const dy = e.shiftKey ? 0 : -e.deltaY
 
-      setPanOffset((prev) => ({
-        x: prev.x + dx,
-        y: prev.y + dy,
-      }))
+      const newPan = {
+        x: panOffsetRef.current.x + dx,
+        y: panOffsetRef.current.y + dy,
+      }
+      panOffsetRef.current = newPan
+      setPanOffset(newPan)
     }
 
     targetEl.addEventListener('wheel', handleWheel, { passive: false })
     return () => {
       targetEl.removeEventListener('wheel', handleWheel)
     }
-  }, [isLoading])
+  }, [handleZoom, isLoading])
 
   const handleToggleAll = () => {
     setIsAllCollapsed((prev) => !prev)
@@ -956,26 +1075,38 @@ export default function PersonalityCardHierarchyPage() {
         }}
       >
         {/* Left: Back button & Card Identity Badge */}
+        <div
+          className="hierarchy-header-left"
+          style={{
+            pointerEvents: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            minHeight: 44,
+            background: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 12,
+            padding: '6px 14px',
+            boxShadow: 'var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1))',
+            maxWidth: '100%',
+            minWidth: 0,
+            flexShrink: 1,
+          }}
+        >
+          <BackButton style={{ marginBottom: 0, width: 30, height: 30, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', flexShrink: 0 }} />
+          <div style={{ width: 1, height: 24, background: 'var(--color-border)', flexShrink: 0 }} />
+
           <div
-            className="hierarchy-header-left"
+            className="hierarchy-header-identity"
             style={{
-              pointerEvents: 'auto',
               display: 'flex',
               alignItems: 'center',
-              gap: 12,
-              minHeight: 44,
-              background: 'var(--color-surface)',
-              border: '1px solid var(--color-border)',
-              borderRadius: 12,
-              padding: '6px 14px',
-              boxShadow: 'var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1))',
-              maxWidth: '55%',
+              gap: 8,
+              minWidth: 0,
+              flex: '1 1 auto',
+              overflow: 'hidden',
             }}
           >
-            <BackButton style={{ marginBottom: 0, width: 30, height: 30, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }} />
-            <div style={{ width: 1, height: 24, background: 'var(--color-border)' }} />
-
-          <div className="hierarchy-header-identity" style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
             <Network size={16} color="var(--color-primary)" style={{ flexShrink: 0, display: 'block' }} />
             <span
               className="hierarchy-header-label"
@@ -986,9 +1117,15 @@ export default function PersonalityCardHierarchyPage() {
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
                 whiteSpace: 'nowrap',
+                flexShrink: 0,
               }}
             >
-              {t('hierarchy.card_hierarchy_title', 'Card Hierarchy')}
+              <span className="hierarchy-header-label-full">
+                {t('hierarchy.card_hierarchy_title', 'Card Hierarchy')}
+              </span>
+              <span className="hierarchy-header-label-short">
+                {t('hierarchy.card_hierarchy_title_short', 'Kart')}
+              </span>
             </span>
             <span className="hierarchy-header-bullet" style={{ color: 'var(--color-primary)', flexShrink: 0, transform: 'translateY(-1px)' }}>•</span>
             <span
@@ -1006,6 +1143,7 @@ export default function PersonalityCardHierarchyPage() {
                 cursor: 'pointer',
                 transform: 'translateY(1px)',
                 minWidth: 0,
+                flex: '0 1 auto',
               }}
             >
               {card?.cardName ? `${card.cardName}` : t('hierarchy.no_name', 'isim')}
@@ -1014,7 +1152,7 @@ export default function PersonalityCardHierarchyPage() {
         </div>
 
         {/* Right: Controls Toolbar */}
-        <div className="hierarchy-header-right">
+        <div className="hierarchy-header-right" style={{ flexShrink: 0 }}>
         <div
           className="hierarchy-toolbar"
           style={{
@@ -1030,86 +1168,84 @@ export default function PersonalityCardHierarchyPage() {
             boxShadow: 'var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1))',
           }}
         >
-          {/* Owners Count Badge */}
-          <div
-            className="hierarchy-count-badge"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              fontSize: 12,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              padding: '0 4px',
-            }}
-          >
-            <Crown size={14} color="var(--color-warning)" />
-            <span>{ownersCount}</span>
-            <span className="hierarchy-count-badge__text" style={{ fontSize: 11, opacity: 0.7 }}>{t('card.owners', 'Sahip')}</span>
-          </div>
-
-          <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
-
-          {/* Node Count Badge */}
-          <div
-            className="hierarchy-count-badge"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              fontSize: 12,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              padding: '0 4px',
-            }}
-          >
-            <BotIconLucide size={14} color="var(--color-primary)" />
-            <span>{assignmentsCount}</span>
-            <span className="hierarchy-count-badge__text" style={{ fontSize: 11, opacity: 0.7 }}>{t('card.assignees', 'Atama')}</span>
-          </div>
-
           <div className="hierarchy-toolbar-secondary">
-          <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
+            {/* Owners Count Badge */}
+            <div
+              className="hierarchy-count-badge"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                fontSize: 12,
+                fontWeight: 600,
+                color: 'var(--color-text-secondary)',
+                padding: '0 4px',
+              }}
+            >
+              <Crown size={14} color="var(--color-warning)" />
+              <span>{ownersCount}</span>
+              <span className="hierarchy-count-badge__text" style={{ fontSize: 11, opacity: 0.7 }}>{t('card.owners', 'Sahip')}</span>
+            </div>
 
-          {/* Zoom Level Indicator */}
-          <span
-            className="hierarchy-zoom-pct"
-            style={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              minWidth: 42,
-              textAlign: 'center',
-            }}
-          >
-            {Math.round(zoomLevel * 100)}%
-          </span>
+            <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
 
-          {/* Zoom Controls */}
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm hierarchy-zoom-btn"
-            onClick={() => setZoomLevel((z) => Math.min(2.0, +(z + 0.1).toFixed(2)))}
-            aria-label={t('hierarchy.zoom_in', 'Büyüt (+)')}
-            style={{ flexShrink: 0, width: 26, height: 26, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          >
-            <Plus size={12} />
-          </button>
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm hierarchy-zoom-btn"
-            onClick={() => setZoomLevel((z) => Math.max(0.05, +(z - 0.1).toFixed(2)))}
-            aria-label={t('hierarchy.zoom_out', 'Küçült (-)')}
-            style={{ flexShrink: 0, width: 26, height: 26, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          >
-            <Minus size={12} />
-          </button>
+            {/* Node Count Badge */}
+            <div
+              className="hierarchy-count-badge"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                fontSize: 12,
+                fontWeight: 600,
+                color: 'var(--color-text-secondary)',
+                padding: '0 4px',
+              }}
+            >
+              <BotIconLucide size={14} color="var(--color-primary)" />
+              <span>{assignmentsCount}</span>
+              <span className="hierarchy-count-badge__text" style={{ fontSize: 11, opacity: 0.7 }}>{t('card.assignees', 'Atama')}</span>
+            </div>
+
+            <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
+
+            {/* Zoom Level Indicator */}
+            <span
+              className="hierarchy-zoom-pct"
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: 'var(--color-text-secondary)',
+                minWidth: 42,
+                textAlign: 'center',
+              }}
+            >
+              {Math.round(zoomLevel * 100)}%
+            </span>
+
+            {/* Zoom Controls */}
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm hierarchy-zoom-btn"
+              onClick={() => handleZoom((z) => z + 0.1)}
+              aria-label={t('hierarchy.zoom_in', 'Büyüt (+)')}
+              style={{ flexShrink: 0, width: 26, height: 26, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Plus size={12} />
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm hierarchy-zoom-btn"
+              onClick={() => handleZoom((z) => z - 0.1)}
+              aria-label={t('hierarchy.zoom_out', 'Küçült (-)')}
+              style={{ flexShrink: 0, width: 26, height: 26, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Minus size={12} />
+            </button>
           </div>
 
           <div className="hierarchy-toolbar-main">
-          <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
-
-          {/* Expand / Collapse All */}
+            {/* Expand / Collapse All */}
           <button
             type="button"
             className={`btn btn-sm hierarchy-toggle-btn ${!isAllCollapsed ? 'hierarchy-toggle-btn--active' : ''}`}
@@ -1129,6 +1265,38 @@ export default function PersonalityCardHierarchyPage() {
             onToggle={() => setShowFossils((prev) => !prev)}
             style={{ flexShrink: 0 }}
           />
+
+          {/* Tarihsel Sirkülasyon / Çöp Kutusu Hap Butoncuğu (FossilTogglePill Tasarımı) */}
+          <button
+            type="button"
+            className={`vtree-fossil-pill ${includeHistory ? 'vtree-fossil-pill--expanded' : ''}`}
+            onClick={() => {
+              setIncludeHistory((prev) => {
+                const next = !prev
+                if (next) {
+                  setIsAllCollapsed(true)
+                  setExpandTrigger((c) => c + 1)
+                }
+                return next
+              })
+            }}
+            aria-label={includeHistory ? t('hierarchy.history_mode_on', 'Tarihsel Sirkülasyon') : t('hierarchy.history_mode_off', 'Aktif Sirkülasyon')}
+            title={t('hierarchy.history_mode_tooltip', 'Tüm geçmiş aktarım sirkülasyonunu göster')}
+            style={{ flexShrink: 0 }}
+          >
+            <Trash2
+              size={14}
+              style={{
+                flexShrink: 0,
+              }}
+            />
+            <span>{displayDeletedCount}</span>
+            {includeHistory ? (
+              <CircleMinus size={15} strokeWidth={2.2} />
+            ) : (
+              <CirclePlus size={15} strokeWidth={2.2} />
+            )}
+          </button>
 
           <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
 
@@ -1225,7 +1393,7 @@ export default function PersonalityCardHierarchyPage() {
           >
           <div
             ref={treeContainerRef}
-            className="hierarchy-tree-container"
+            className="hierarchy-tree-container personality-card-tree-container"
             style={{
               zoom: zoomLevel,
               '--tree-zoom': zoomLevel,

@@ -110,8 +110,8 @@ export default function HierarchyPage() {
       button: e.button,
       startX: e.pageX,
       startY: e.pageY,
-      startPanX: panOffset.x,
-      startPanY: panOffset.y,
+      startPanX: panOffsetRef.current.x,
+      startPanY: panOffsetRef.current.y,
       hasMoved: false,
     }
     setIsPanning(true)
@@ -129,10 +129,12 @@ export default function HierarchyPage() {
       }
 
       // Transform bazlı sınırsız pan: scroll alanına takılmaz, istenildiği kadar gidilir
-      setPanOffset({
+      const newPan = {
         x: panState.current.startPanX + deltaX,
         y: panState.current.startPanY + deltaY,
-      })
+      }
+      panOffsetRef.current = newPan
+      setPanOffset(newPan)
     }
 
     const handleMouseUp = () => {
@@ -175,38 +177,54 @@ export default function HierarchyPage() {
     }
   }, [])
 
+  // Kamera orta noktasını (viewport center) referans alarak yakınlaştır/uzaklaştır
+  const handleZoom = useCallback((targetZoomOrFn) => {
+    const container = containerRef.current
+    if (!container) return
+
+    const prevZoom = zoomLevelRef.current
+    const nextZoom = typeof targetZoomOrFn === 'function'
+      ? targetZoomOrFn(prevZoom)
+      : targetZoomOrFn
+
+    const clampedZoom = Math.min(2.5, Math.max(0.05, +nextZoom.toFixed(2)))
+    if (clampedZoom === prevZoom) return
+
+    const rect = container.getBoundingClientRect()
+    const cs = window.getComputedStyle(container)
+    const padLeft = parseFloat(cs.paddingLeft) || 0
+    const padTop = parseFloat(cs.paddingTop) || 0
+
+    // Kameranın tam orta noktası (viewport center)
+    const cx = (rect.width / 2) - padLeft
+    const cy = (rect.height / 2) - padTop
+
+    const ratio = clampedZoom / prevZoom
+    const pan = panOffsetRef.current
+
+    const newPan = {
+      x: cx - (cx - pan.x) * ratio,
+      y: cy - (cy - pan.y) * ratio,
+    }
+
+    panOffsetRef.current = newPan
+    zoomLevelRef.current = clampedZoom
+
+    setPanOffset(newPan)
+    setZoomLevel(clampedZoom)
+  }, [])
+
   // Mouse tekerleği: Normal tekerlek ile kamerayı kaydır (pan), Ctrl + tekerlek ile zoom yap
   useEffect(() => {
     const targetEl = blockRef.current || containerRef.current
     if (!targetEl) return
 
     const handleWheel = (e) => {
-      // 1. Ctrl + Tekerlek veya Meta + Tekerlek (Trackpad pinch dahil) -> Kamera Yakınlaştır / Uzaklaştır (Zoom)
+      // 1. Ctrl + Tekerlek veya Meta + Tekerlek (Trackpad pinch dahil) -> Kamera Yakınlaştır / Uzaklaştır (Kamera merkezli)
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault()
         const factor = Math.abs(e.deltaY) < 20 ? -e.deltaY * 0.005 : (e.deltaY < 0 ? 0.05 : -0.05)
-        const prev = zoomLevelRef.current
-        const next = Math.min(2.5, Math.max(0.05, +(prev + factor).toFixed(2)))
-        if (next === prev) return
-
-        // İmlecin altındaki dünya noktasını sabit tut: içerik imleç lokasyonuna
-        // doğru yakınlaşsın (aksi halde top-left'e göre büyüyüp sola kayıyor).
-        const container = containerRef.current
-        if (container) {
-          const rect = container.getBoundingClientRect()
-          const cs = window.getComputedStyle(container)
-          const padLeft = parseFloat(cs.paddingLeft) || 0
-          const padTop = parseFloat(cs.paddingTop) || 0
-          const cx = e.clientX - rect.left - padLeft
-          const cy = e.clientY - rect.top - padTop
-          const ratio = next / prev
-          const pan = panOffsetRef.current
-          setPanOffset({
-            x: cx - (cx - pan.x) * ratio,
-            y: cy - (cy - pan.y) * ratio,
-          })
-        }
-        setZoomLevel(next)
+        handleZoom((prev) => prev + factor)
         return
       }
 
@@ -215,17 +233,19 @@ export default function HierarchyPage() {
       const dx = e.shiftKey ? -e.deltaY : -e.deltaX
       const dy = e.shiftKey ? 0 : -e.deltaY
 
-      setPanOffset((prev) => ({
-        x: prev.x + dx,
-        y: prev.y + dy,
-      }))
+      const newPan = {
+        x: panOffsetRef.current.x + dx,
+        y: panOffsetRef.current.y + dy,
+      }
+      panOffsetRef.current = newPan
+      setPanOffset(newPan)
     }
 
     targetEl.addEventListener('wheel', handleWheel, { passive: false })
     return () => {
       targetEl.removeEventListener('wheel', handleWheel)
     }
-  }, [isLoading])
+  }, [handleZoom, isLoading])
 
   // İlk giriş (oto-zoom) ile Default butonunun birebir aynı görünümü üretmesi için ortak rutin:
   // doğal boyut ilk seferde ölçülüp önbelleğe alınır; Default'a art arda basınca sapma (drift) olmaz.
@@ -376,26 +396,38 @@ export default function HierarchyPage() {
         }}
       >
         {/* Sol Üst Blok: Geri Dön Butonu & Aktör Kimlik Kartı */}
+        <div
+          className="hierarchy-header-left"
+          style={{
+            pointerEvents: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            minHeight: 44,
+            background: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 12,
+            padding: '6px 14px',
+            boxShadow: 'var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1))',
+            maxWidth: '100%',
+            minWidth: 0,
+            flexShrink: 1,
+          }}
+        >
+          <BackButton style={{ marginBottom: 0, width: 30, height: 30, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', flexShrink: 0 }} />
+          <div style={{ width: 1, height: 24, background: 'var(--color-border)', flexShrink: 0 }} />
+
           <div
-            className="hierarchy-header-left"
+            className="hierarchy-header-identity"
             style={{
-              pointerEvents: 'auto',
               display: 'flex',
               alignItems: 'center',
-              gap: 12,
-              minHeight: 44,
-              background: 'var(--color-surface)',
-              border: '1px solid var(--color-border)',
-              borderRadius: 12,
-              padding: '6px 14px',
-              boxShadow: 'var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1))',
-              maxWidth: '55%',
+              gap: 8,
+              minWidth: 0,
+              flex: '1 1 auto',
+              overflow: 'hidden',
             }}
           >
-            <BackButton style={{ marginBottom: 0, width: 30, height: 30, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }} />
-          <div style={{ width: 1, height: 24, background: 'var(--color-border)' }} />
-
-          <div className="hierarchy-header-identity" style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
             <Network size={16} color="var(--color-primary)" style={{ flexShrink: 0, display: 'block' }} />
             <span
               className="hierarchy-header-label"
@@ -406,9 +438,15 @@ export default function HierarchyPage() {
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
                 whiteSpace: 'nowrap',
+                flexShrink: 0,
               }}
             >
-              {t('hierarchy.profile_hierarchy_title', 'Profile Hierarchy')}
+              <span className="hierarchy-header-label-full">
+                {t('hierarchy.profile_hierarchy_title', 'Profile Hierarchy')}
+              </span>
+              <span className="hierarchy-header-label-short">
+                {t('hierarchy.profile_hierarchy_title_short', 'Profil')}
+              </span>
             </span>
             <span className="hierarchy-header-bullet" style={{ color: 'var(--color-primary)', flexShrink: 0, transform: 'translateY(-1px)' }}>•</span>
             <span
@@ -426,6 +464,7 @@ export default function HierarchyPage() {
                 cursor: actorId ? 'pointer' : 'default',
                 transform: 'translateY(1px)',
                 minWidth: 0,
+                flex: '0 1 auto',
               }}
             >
               {actorName || t('hierarchy.no_name', 'isim')}
@@ -440,8 +479,9 @@ export default function HierarchyPage() {
             pointerEvents: 'none',
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
+            alignItems: 'flex-end',
             gap: 10,
+            flexShrink: 0,
           }}
         >
           {/* Sağ Üst Blok: Derinlik, Zoom & Genişletme Araçları */}
@@ -520,7 +560,7 @@ export default function HierarchyPage() {
             <button
               type="button"
               className="btn btn-ghost btn-sm hierarchy-zoom-btn"
-              onClick={() => setZoomLevel((z) => Math.min(2.0, +(z + 0.05).toFixed(2)))}
+              onClick={() => handleZoom((z) => z + 0.05)}
               aria-label={t('hierarchy.zoom_in', 'Büyüt (+)')}
               style={{ flexShrink: 0, width: 26, height: 26, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
@@ -529,7 +569,7 @@ export default function HierarchyPage() {
             <button
               type="button"
               className="btn btn-ghost btn-sm hierarchy-zoom-btn"
-              onClick={() => setZoomLevel((z) => Math.max(0.05, +(z - 0.05).toFixed(2)))}
+              onClick={() => handleZoom((z) => z - 0.05)}
               aria-label={t('hierarchy.zoom_out', 'Küçült (-)')}
               style={{ flexShrink: 0, width: 26, height: 26, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
@@ -538,8 +578,6 @@ export default function HierarchyPage() {
             </div>
 
             <div className="hierarchy-toolbar-main">
-            <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
-
             {/* Tümünü Genişlet Butonu */}
             <button
               type="button"

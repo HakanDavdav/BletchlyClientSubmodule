@@ -2710,6 +2710,11 @@ html.dark .bot-capability-emblem--fossil path {
   position: relative;
 }
 
+/* Personality Card Hierarchy: genişletilmiş yatay kart aralığı (-- bağlı durum rozetleri için) */
+.personality-card-tree-container .vtree-children-row {
+  gap: 56px;
+}
+
 .vtree-child-branch {
   display: flex;
   flex-direction: column;
@@ -5113,18 +5118,97 @@ textarea {
   }
 }
 
-/* Hierarchy araç çubuğu grupları masaüstünde akışı bozmaz */
-.hierarchy-toolbar-secondary,
-.hierarchy-toolbar-main {
-  display: contents;
+/* Hierarchy üst kimlik etiketi kısa/uzun responsive yönetimi */
+.hierarchy-header-label-short {
+  display: none;
 }
 
-@media (min-width: 901px) and (max-width: 1200px) {
+@media (max-width: 1100px) {
+  .hierarchy-header-label-full {
+    display: none;
+  }
+
+  .hierarchy-header-label-short {
+    display: inline;
+  }
+}
+
+/* Hierarchy araç çubuğu grupları temel stilleri */
+.hierarchy-toolbar-secondary,
+.hierarchy-toolbar-main {
+  display: flex;
+  align-items: center;
+}
+
+/* Hierarchy araç çubuğu (masaüstü): Mind Page mind-controls gibi 2 satırlı hafif ekstra compact yapı */
+@media (min-width: 901px) {
+  .hierarchy-header {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+  }
+
+  .hierarchy-header-left {
+    display: flex !important;
+    align-items: center !important;
+    min-width: 0 !important;
+    flex: 0 1 auto !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .hierarchy-header-identity {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    overflow: hidden !important;
+  }
+
+  .hierarchy-header-right {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+  }
+
+  .hierarchy-toolbar {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    row-gap: 6px !important;
+    gap: 6px !important;
+    width: min-content !important;
+    margin-left: auto !important;
+    padding: 6px 12px !important;
+    min-height: 0 !important;
+    flex-shrink: 0 !important;
+  }
+
   .hierarchy-toolbar-secondary,
-  .hierarchy-count-badge,
-  .hierarchy-toolbar > div[style*='width: 1px'],
-  .hierarchy-toolbar-main > div[style*='width: 1px']:first-child {
-    display: none !important;
+  .hierarchy-toolbar-main {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    white-space: nowrap !important;
+    justify-content: flex-end !important;
+    width: 100% !important;
+  }
+
+  .hierarchy-toolbar-secondary {
+    order: 1;
+  }
+
+  .hierarchy-toolbar-main {
+    order: 2;
+  }
+
+  .hierarchy-toolbar .vtree-fossil-pill {
+    height: 26px;
+    box-sizing: border-box;
   }
 }
 
