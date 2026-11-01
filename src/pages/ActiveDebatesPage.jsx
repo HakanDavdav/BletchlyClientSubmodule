@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import * as signalR from '@microsoft/signalr'
-import { Eye, Swords, Trophy } from 'lucide-react'
+import { Check, Eye, Swords, Trophy } from 'lucide-react'
 import BackButton from '../components/common/BackButton'
 import AngryBotWithSwordsIcon from '../components/common/icons/AngryBotWithSwordsIcon'
 import ActorAvatar from '../components/actor/ActorAvatar'
@@ -39,33 +39,6 @@ function DebateCard({ debate, actorId, onOpen }) {
         height: 'fit-content',
       }}
     >
-      {completed && (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <span
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: '0.5px',
-              textTransform: 'uppercase',
-              color: 'var(--color-text-muted)',
-            }}
-          >
-            {t('debate.completed_status', 'Tamamlandı')}
-          </span>
-          <span
-            style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-secondary)' }}
-          >
-            {debate.proponentScore ?? debate.ProponentScore ?? '-'} - {debate.opponentScore ?? debate.OpponentScore ?? '-'}
-          </span>
-        </div>
-      )}
-
       <div
         style={{
           display: 'grid',
@@ -91,6 +64,18 @@ function DebateCard({ debate, actorId, onOpen }) {
                 borderRadius: '50%',
                 background: 'var(--color-primary)',
                 animation: 'debatePulse 1.6s infinite',
+                flexShrink: 0,
+                marginRight: 'auto',
+                marginLeft: 2,
+              }}
+            />
+          )}
+          {completed && (
+            <Check
+              size={15}
+              strokeWidth={2.5}
+              style={{
+                color: 'var(--color-primary)',
                 flexShrink: 0,
                 marginRight: 'auto',
                 marginLeft: 2,
@@ -208,7 +193,19 @@ function DebateCard({ debate, actorId, onOpen }) {
             ? isParticipant
               ? t('debate.join_debate', 'Meydan Okumaya Katıl')
               : t('debate.watch_live', 'Canlı İzle')
-            : t('debate.view_transcript', 'Transkripti Gör')}
+            : t('debate.view_transcript', 'Görüntüle')}
+          {completed && (
+            <span
+              style={{
+                marginLeft: 'auto',
+                fontSize: 12,
+                fontWeight: 700,
+                color: 'var(--color-text-secondary)',
+              }}
+            >
+              {debate.proponentScore ?? debate.ProponentScore ?? '-'} - {debate.opponentScore ?? debate.OpponentScore ?? '-'}
+            </span>
+          )}
         </div>
       </div>
     </div>

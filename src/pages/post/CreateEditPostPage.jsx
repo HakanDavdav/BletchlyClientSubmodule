@@ -281,7 +281,6 @@ export default function CreateEditPostPage() {
                     width: '100%',
                     minHeight: 36,
                     justifyContent: 'flex-start',
-                    marginBottom: 4,
                     padding: '7px 12px',
                   }}
                   onClick={() => selectTribe('')}

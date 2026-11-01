@@ -540,7 +540,7 @@ export default function LeaderboardPage() {
         </div>
       ) : (
         /* Regular List for Users, Bots, Tribes */
-        <div className="flex-col gap-2">
+        <div className="minimal-card-list">
           {isLoading ? (
             <div className="flex justify-center" style={{ padding: 40 }}>
               <div className="spinner spinner-lg" />

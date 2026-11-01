@@ -93,7 +93,7 @@ export default function CardActorListModal({ cardId, type, isOpen, onClose }) {
           ) : items.length === 0 ? (
             <p className="empty-state">{t('common.nothing_here_yet', 'Henüz burada hiçbir şey yok')}</p>
           ) : (
-            <div className="flex flex-col gap-2" style={{ padding: '4px 4px 8px 4px' }}>
+            <div className="minimal-card-list" style={{ padding: '4px 4px 8px 4px' }}>
               {items.map((item, idx) => {
                 const isOwnerType = type === 'owners'
                 const actor = isOwnerType ? (item.actor || item) : item

@@ -846,7 +846,7 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
         </div>
       </div>
 
-      <div className="flex-col gap-2">
+      <div className="minimal-card-list">
         {visibleMembers.length === 0 && fossilMemberCount === 0 ? (
           <p className="empty-state">{t('common.nothing_here_yet')}</p>
         ) : (

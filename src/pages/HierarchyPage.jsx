@@ -1,12 +1,12 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Maximize2, Network, Plus, Minus, Focus } from 'lucide-react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { actorApi } from '../api/actorApi'
 import BackButton from '../components/common/BackButton'
 import HierarchyTree from '../components/hierarchy/HierarchyTree'
+import FossilTogglePill from '../components/common/FossilTogglePill'
 import HeartSvg from '../assets/FigmaNew/heart.svg?react'
-import TRexSkullIcon from '../assets/t-rex-skull-svgrepo-com.svg?react'
 import useDevLog from '../utils/useDevLog'
 import useTouchPanZoom from '../hooks/useTouchPanZoom'
 import { useTranslation } from 'react-i18next'
@@ -34,6 +34,23 @@ export default function HierarchyPage() {
   const [fetchDepth, setFetchDepth] = useState(1)
   const [actorName, setActorName] = useState('')
   const [showFossils, setShowFossils] = useState(false)
+
+  const fossilCount = useMemo(() => {
+    const countFossils = (node) => {
+      if (!node) return 0
+      let count = 0
+      for (const tribe of node.tribes || []) {
+        if (tribe.isDormant ?? tribe.IsDormant ?? false) count += 1
+      }
+      for (const bot of node.bots || []) {
+        if (bot.isDormant ?? bot.IsDormant ?? false) count += 1
+        count += countFossils(bot)
+      }
+      return count
+    }
+    return countFossils(treeData)
+  }, [treeData])
+
   const [zoomLevel, setZoomLevel] = useState(0.82)
   const [isViewReady, setIsViewReady] = useState(false)
   // Sınırsız pan: scroll sınırları yerine transform translate ile her yöne serbest kaydırma
@@ -544,25 +561,12 @@ export default function HierarchyPage() {
             </button>
 
             {/* Fosil Düğümleri Göster / Gizle Toggle */}
-            <button
-              type="button"
-              className={`btn btn-sm hierarchy-toggle-btn ${showFossils ? 'hierarchy-toggle-btn--active' : ''}`}
-              onClick={() => setShowFossils((prev) => !prev)}
-              disabled={!treeData}
-              aria-label={t('hierarchy.toggle_fossils', 'Fosil düğümleri göster/gizle')}
-              style={{
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-                padding: '0 12px',
-                height: 26,
-              }}
-            >
-              <TRexSkullIcon className="badge-fossil-icon" />
-              <span>{showFossils ? t('common.enabled', 'Enabled') : t('common.disabled', 'Disabled')}</span>
-            </button>
+            <FossilTogglePill
+              count={fossilCount}
+              open={showFossils}
+              onToggle={() => setShowFossils((prev) => !prev)}
+              style={{ flexShrink: 0 }}
+            />
 
             <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
 

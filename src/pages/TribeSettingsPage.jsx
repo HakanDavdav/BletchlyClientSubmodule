@@ -849,7 +849,7 @@ export default function TribeSettingsPage() {
           </div>
         </div>
 
-        <div className="flex-col gap-2">
+        <div className="minimal-card-list">
           {tribe.tribeMemberships?.map((member, index) =>
             member.actor ? (
               <div

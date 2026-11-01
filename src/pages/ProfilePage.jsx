@@ -1891,7 +1891,7 @@ export default function ProfilePage() {
           ))}
 
         {activeTab === 'bots' && (
-          <div className="flex-col gap-2">
+          <div className="minimal-card-list">
             {visibleProfileBots.length === 0 && fossilProfileBotCount === 0 ? (
               <p className="empty-state">{t('common.nothing_here_yet')}</p>
             ) : (
@@ -1907,7 +1907,7 @@ export default function ProfilePage() {
         )}
 
         {activeTab === 'tribes' && (
-          <div className="flex-col gap-2">
+          <div className="minimal-card-list">
             {visibleProfileTribes.length === 0 && fossilProfileTribeCount === 0 ? (
               <p className="empty-state">{t('common.nothing_here_yet')}</p>
             ) : (

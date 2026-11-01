@@ -3041,14 +3041,23 @@ export default function MemoryMapPage() {
       const pathRels = path.Relationships || []
 
       for (let i = 0; i < pathRels.length; i++) {
-        if (i + 1 < pathNodes.length) {
-          const sourceId = pathNodes[i].id || pathNodes[i].name || JSON.stringify(pathNodes[i])
-          const targetId =
-            pathNodes[i + 1].id || pathNodes[i + 1].name || JSON.stringify(pathNodes[i + 1])
-          const rawRel = pathRels[i]
-          const relType = typeof rawRel === 'object' ? rawRel?.type : rawRel
-          const affinity = typeof rawRel === 'object' ? rawRel?.affinity : null
-          const strength = typeof rawRel === 'object' ? rawRel?.strength : null
+        const rawRel = pathRels[i]
+        const sourceId =
+          rawRel?.source ||
+          (i + 1 < pathNodes.length
+            ? pathNodes[i].id || pathNodes[i].name || JSON.stringify(pathNodes[i])
+            : null)
+        const targetId =
+          rawRel?.target ||
+          (i + 1 < pathNodes.length
+            ? pathNodes[i + 1].id || pathNodes[i + 1].name || JSON.stringify(pathNodes[i + 1])
+            : null)
+
+        if (!sourceId || !targetId) continue
+
+        const relType = typeof rawRel === 'object' ? rawRel?.type : rawRel
+        const affinity = typeof rawRel === 'object' ? rawRel?.affinity : null
+        const strength = typeof rawRel === 'object' ? rawRel?.strength : null
 
           const linkKey = `${sourceId}-${relType}-${targetId}`
           if (!linksSet.has(linkKey)) {
@@ -3106,7 +3115,6 @@ export default function MemoryMapPage() {
             })
           }
         }
-      }
     })
 
     // ── 3. Paralel bağ yelpazesi (fan-out) ───────────────────────────────────

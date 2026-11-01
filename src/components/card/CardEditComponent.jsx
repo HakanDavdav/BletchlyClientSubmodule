@@ -516,10 +516,8 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
             </div>
           ) : (
             <div
+              className="minimal-card-list"
               style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 8,
                 maxHeight: 190,
                 overflowY: 'auto',
                 padding: '4px 6px 6px 4px',

@@ -1,9 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Copy, Flag, MoreHorizontal, Share2 } from 'lucide-react'
+import { Copy, Flag, MoreHorizontal, Share2, Star } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-export default function CardUtilityMenu({ onShare, onReport, onCopyEntryNo }) {
+export default function CardUtilityMenu({
+  onShare,
+  onReport,
+  onCopyEntryNo,
+  isFavourite = false,
+  onToggleFavourite,
+  favouriteDisabled = false,
+}) {
   const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const [position, setPosition] = useState(null)
@@ -96,6 +103,21 @@ export default function CardUtilityMenu({ onShare, onReport, onCopyEntryNo }) {
             zIndex: 400,
           }}
         >
+          {onToggleFavourite && (
+            <button
+              type="button"
+              role="menuitem"
+              className="btn btn-ghost btn-sm card-utility-fav-item"
+              style={{ width: '100%', justifyContent: 'flex-start' }}
+              onClick={run(onToggleFavourite)}
+              disabled={favouriteDisabled}
+            >
+              <Star size={14} fill={isFavourite ? 'currentColor' : 'none'} />
+              {isFavourite
+                ? t('card.remove_favourite', 'Favorilerden çıkar')
+                : t('card.add_favourite', 'Favorilere ekle')}
+            </button>
+          )}
           <button
             type="button"
             role="menuitem"

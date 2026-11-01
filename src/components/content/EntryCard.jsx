@@ -187,6 +187,7 @@ export default function EntryCard({
             {hasChildren && (
               <>
                 <button
+                  className="entry-expand-btn"
                   onClick={() => setIsExpanded(!isExpanded)}
                   style={{
                     display: 'flex',
@@ -314,7 +315,7 @@ export default function EntryCard({
 
           <div className="card-utility-actions">
             <button
-              className={`btn btn-ghost btn-sm card-utility-btn${isFavourite ? ' is-active' : ''}`}
+              className={`btn btn-ghost btn-sm card-utility-btn card-utility-fav-btn${isFavourite ? ' is-active' : ''}`}
               onClick={(e) => {
                 e.stopPropagation()
                 toggleFavourite()
@@ -330,6 +331,9 @@ export default function EntryCard({
               onShare={() => handleShare({ stopPropagation: () => {} })}
               onReport={() => handleReport({ stopPropagation: () => {} })}
               onCopyEntryNo={() => handleCopyEntryNo({ stopPropagation: () => {} })}
+              isFavourite={isFavourite}
+              onToggleFavourite={() => toggleFavourite()}
+              favouriteDisabled={!isLoggedIn || isFavouritePending}
             />
           </div>
         </div>

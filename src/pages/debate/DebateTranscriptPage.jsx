@@ -44,7 +44,7 @@ export default function DebateTranscriptPage() {
   const debate = fetchedDebate || initialDebate
 
   useDocumentTitle(
-    debate?.proposition || t('debate.transcript_title', 'Meydan Okuma Transkripti')
+    debate?.proposition || t('debate.transcript_title', 'Meydan Okuma')
   )
 
   const proponent = debate?.proponent || {}
@@ -247,7 +247,7 @@ export default function DebateTranscriptPage() {
                 letterSpacing: '0.5px',
               }}
             >
-              {t('debate.transcript_title', 'Meydan Okuma Transkripti')}
+              {t('debate.transcript_title', 'Meydan Okuma')}
             </span>
             <div
               style={{
@@ -382,7 +382,7 @@ export default function DebateTranscriptPage() {
                   <div style={{ fontSize: '1.05rem', fontWeight: '600' }}>
                     {debate.debateTranscript
                       ? debate.debateTranscript
-                      : t('debate.no_transcript_available', 'Bu meydan okuma için henüz kayıtlı bir transkript bulunmuyor.')}
+                      : t('debate.no_transcript_available', 'Bu meydan okuma için henüz kayıt bulunmuyor.')}
                   </div>
                 </div>
               )}

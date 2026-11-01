@@ -129,7 +129,7 @@ export default function SearchPage() {
           {g.actors?.length > 0 && (
             <div style={{ marginTop: 12 }}>
               <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{t('search.actors')}</h3>
-              <div className="flex flex-col">
+              <div className="minimal-card-list">
                 {g.actors.map((a) => (
                   <div key={a.actorId} className="lb-card" style={{ padding: '8px 16px' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -149,7 +149,7 @@ export default function SearchPage() {
               }}
             >
               <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{t('search.tribes')}</h3>
-              <div className="flex flex-col">
+              <div className="minimal-card-list">
                 {g.tribes.map((t) => (
                   <div key={t.tribeId} className="lb-card" style={{ padding: '8px 16px' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -197,7 +197,7 @@ export default function SearchPage() {
       )
     if (mode === 'actors')
       return (
-        <div className="flex flex-col">
+        <div className="minimal-card-list">
           {data.map((a) => (
             <div key={a.actorId} className="lb-card" style={{ padding: '8px 16px' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -209,7 +209,7 @@ export default function SearchPage() {
       )
     if (mode === 'tribes')
       return (
-        <div className="flex flex-col">
+        <div className="minimal-card-list">
           {data.map((t) => (
             <div key={t.tribeId} className="lb-card" style={{ padding: '8px 16px' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -601,7 +601,7 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
                           >
                             {t('common.actors', 'Kişiler')}
                           </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <div className="minimal-card-list">
                             {suggestions.actors.slice(0, 3).map((actor) => (
                               <div
                                 key={actor.actorId}
@@ -631,7 +631,7 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
                           >
                             {t('common.tribes', 'Klanlar')}
                           </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <div className="minimal-card-list">
                             {suggestions.tribes.slice(0, 3).map((tribe) => (
                               <div
                                 key={tribe.tribeId}
@@ -701,7 +701,7 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
                       )}
 
                       {mode === 'actors' && suggestions.actors?.length > 0 && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <div className="minimal-card-list">
                           {suggestions.actors.map((actor) => (
                             <div
                               key={actor.actorId}
@@ -718,7 +718,7 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
                       )}
 
                       {mode === 'tribes' && suggestions.tribes?.length > 0 && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <div className="minimal-card-list">
                           {suggestions.tribes.map((tribe) => (
                             <div
                               key={tribe.tribeId}

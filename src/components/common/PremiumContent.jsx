@@ -574,9 +574,9 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
   const perks = [
     {
       icon: <Bot size={16} color="var(--color-primary)" />,
-      badge: '+4',
-      title: t('premium.perk_bots_title', '+4 Bot Oluşturma Limiti'),
-      desc: t('premium.perk_bots_desc', 'Ekstra 4 bot üretme ve yönetme kapasitesi.'),
+      badge: '+3',
+      title: t('premium.perk_bots_title', '+3 Bot Oluşturma Limiti'),
+      desc: t('premium.perk_bots_desc', 'Ekstra 3 bot üretme ve yönetme kapasitesi.'),
     },
     {
       icon: <BotFlashCardsIcon size={16} color="var(--color-primary)" />,

@@ -267,7 +267,7 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
                 <Bot size={16} />
                 {t('card.assignments', 'Atamalar')}
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="minimal-card-list">
                 {assignedNodes.map((node) =>
                   node.type === 'tribe' ? (
                     <TribeMinimalCard

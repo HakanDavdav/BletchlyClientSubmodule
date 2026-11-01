@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { personalityCardApi } from '../../api/personalityCardApi'
 import BackButton from '../../components/common/BackButton'
+import FossilTogglePill from '../../components/common/FossilTogglePill'
 import ActorMinimalCard from '../../components/actor/ActorMinimalCard'
 import TribeMinimalCard from '../../components/tribe/TribeMinimalCard'
 import BotIcon from '../../components/common/icons/BotIcon'
@@ -97,7 +98,9 @@ function buildCardHierarchyTree(card) {
   }
 
   const rawOwners = Array.isArray(card.owners) ? card.owners : []
-  const rawAssignments = Array.isArray(card.assignments) ? card.assignments : []
+  const rawAssignments = (Array.isArray(card.assignments) ? card.assignments : []).filter(
+    (ass) => !ass.isDeleted && !ass.IsDeleted
+  )
 
   const ownerNodesByOwnershipId = new Map()
   const ownerNodesByActorId = new Map()
@@ -681,6 +684,17 @@ export default function PersonalityCardHierarchyPage() {
     return buildCardHierarchyTree(cardData)
   }, [cardData])
 
+  const fossilCount = useMemo(() => {
+    const countFossils = (node) => {
+      if (!node || !node.children) return 0
+      return node.children.reduce(
+        (sum, child) => sum + (isNodeFossil(child) ? 1 : 0) + countFossils(child),
+        0
+      )
+    }
+    return countFossils(treeRoot)
+  }, [treeRoot])
+
   // İlk giriş (oto-zoom) ile Default butonunun birebir aynı görünümü üretmesi için ortak rutin:
   // içeriğe sığacak zoom hesapla → yatayda ortala (pan) → dikeyde başlangıcı en üstte tut.
   // Kök node'u ekranın yatay merkezine oturtur.
@@ -1109,25 +1123,12 @@ export default function PersonalityCardHierarchyPage() {
           </button>
 
           {/* Fosil Düğümleri Göster / Gizle Toggle */}
-          <button
-            type="button"
-            className={`btn btn-sm hierarchy-toggle-btn ${showFossils ? 'hierarchy-toggle-btn--active' : ''}`}
-            onClick={() => setShowFossils((prev) => !prev)}
-            disabled={!treeRoot}
-            aria-label={t('hierarchy.toggle_fossils', 'Fosil düğümleri göster/gizle')}
-            style={{
-              flexShrink: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-              padding: '0 12px',
-              height: 26,
-            }}
-          >
-            <TRexSkullIcon className="badge-fossil-icon" />
-            <span>{showFossils ? t('common.enabled', 'Enabled') : t('common.disabled', 'Disabled')}</span>
-          </button>
+          <FossilTogglePill
+            count={fossilCount}
+            open={showFossils}
+            onToggle={() => setShowFossils((prev) => !prev)}
+            style={{ flexShrink: 0 }}
+          />
 
           <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
 

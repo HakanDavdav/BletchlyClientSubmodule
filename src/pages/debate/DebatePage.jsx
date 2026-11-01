@@ -109,6 +109,10 @@ export default function DebatePage() {
   const pPoints = proponent.actorPoint || 0
   const oPoints = opponent.actorPoint || 0
 
+  const juriesRef = useRef([])
+  juriesRef.current = juries
+  const juryFlyerKey = juries.map((j) => j.id || j.profileName || j.name || '').join('|')
+
   const [debateBots, setDebateBots] = useState([])
   const arenaWrapRef = useRef(null)
   const readyBlockRef = useRef(null)
@@ -241,6 +245,8 @@ export default function DebatePage() {
       const totalPoints = pPoints + oPoints
       const baseIcons = Math.min(300, 72 + Math.floor(totalPoints / 20))
       const numIcons = isMobile ? Math.round(baseIcons * 0.4) : baseIcons
+      const juryList = juriesRef.current || []
+      const juryFlyerCount = Math.min(4, Math.max(2, Math.ceil(juryList.length / 1.5)))
       for (let i = 0; i < numIcons; i++) {
         const rx = Rx * (1.02 + Math.random() * 0.2)
         const ry = Ry * (1.02 + Math.random() * 0.2)
@@ -249,8 +255,9 @@ export default function DebatePage() {
         const y = offsetY + Math.sin(theta) * ry
         const size = 16 + Math.random() * 12
         const angleRad = Math.atan2(Math.sin(theta) * ry, Math.cos(theta) * rx)
-        const rotation = (angleRad * 180) / Math.PI + 90
-        const opacity = 0.35 + Math.random() * 0.4
+        const jury = i < juryFlyerCount ? juryList[i % juryList.length] : null
+        const rotation = jury ? 0 : (angleRad * 180) / Math.PI + 90
+        const opacity = jury ? 0.8 + Math.random() * 0.2 : 0.35 + Math.random() * 0.4
         const delay = Math.random() * 4
         const duration = 1.6 + Math.random() * 2.4
         const excitedSpeed = (0.2 + Math.random() * 0.25).toFixed(2)
@@ -260,8 +267,8 @@ export default function DebatePage() {
         let botType = 'normal'
         if (r < 0.25) botType = 'angry'
         else if (r < 0.5) botType = 'lazy'
-        const hasSword = Math.random() < 0.15
-        const hasShield = Math.random() < 0.15
+        const hasSword = !jury && Math.random() < 0.15
+        const hasShield = !jury && Math.random() < 0.15
         icons.push({
           id: i,
           x,
@@ -277,6 +284,7 @@ export default function DebatePage() {
           botType,
           hasSword,
           hasShield,
+          jury,
         })
       }
       setDebateBots(icons)
@@ -286,7 +294,7 @@ export default function DebatePage() {
     const ro = new ResizeObserver(update)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [pPoints, oPoints, isMobile])
+  }, [pPoints, oPoints, isMobile, juryFlyerKey])
 
   // Auto-enrich profiles for both participants to get actorPoint and missing data
   useEffect(() => {
@@ -901,22 +909,35 @@ export default function DebatePage() {
                     justifyContent: 'center',
                   }}
                 >
-                  {bot.hasSword && (
-                    <div style={{ position: 'absolute', right: '55%', bottom: '-5%', transform: 'rotate(-25deg)', zIndex: 2, opacity: 0.9 }}>
-                      <SwordIcon size={bot.size * 0.8} />
-                    </div>
-                  )}
-                  {bot.botType === 'angry' ? (
-                    <AngryBotIcon size={bot.size} />
-                  ) : bot.botType === 'lazy' ? (
-                    <LazyBotIcon size={bot.size} />
+                  {bot.jury ? (
+                    <ActorAvatar
+                      profileName={bot.jury.profileName || bot.jury.name}
+                      imageUrl={bot.jury.imageUrl}
+                      actorId={bot.jury.id}
+                      discriminator={bot.jury.discriminator || 'Bot'}
+                      size="sm"
+                      hideBadge
+                    />
                   ) : (
-                    <BotIcon size={bot.size} />
-                  )}
-                  {bot.hasShield && (
-                    <div style={{ position: 'absolute', left: '55%', bottom: '-5%', transform: 'rotate(25deg)', zIndex: 2, opacity: 0.9 }}>
-                      <ShieldIcon size={bot.size * 0.8} />
-                    </div>
+                    <>
+                      {bot.hasSword && (
+                        <div style={{ position: 'absolute', right: '55%', bottom: '-5%', transform: 'rotate(-25deg)', zIndex: 2, opacity: 0.9 }}>
+                          <SwordIcon size={bot.size * 0.8} />
+                        </div>
+                      )}
+                      {bot.botType === 'angry' ? (
+                        <AngryBotIcon size={bot.size} />
+                      ) : bot.botType === 'lazy' ? (
+                        <LazyBotIcon size={bot.size} />
+                      ) : (
+                        <BotIcon size={bot.size} />
+                      )}
+                      {bot.hasShield && (
+                        <div style={{ position: 'absolute', left: '55%', bottom: '-5%', transform: 'rotate(25deg)', zIndex: 2, opacity: 0.9 }}>
+                          <ShieldIcon size={bot.size * 0.8} />
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -990,7 +1011,7 @@ export default function DebatePage() {
                         padding: '10px 20px',
                       }}
                     >
-                      {t('debate.spectating_wait', 'Meydan okuma başlangıcını izliyorsunuz...')}
+                      {t('debate.spectating_wait', 'Waiting...')}
                     </span>
                   )}
                 </div>

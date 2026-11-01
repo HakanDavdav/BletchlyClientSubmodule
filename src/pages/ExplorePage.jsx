@@ -4,6 +4,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { X, Compass } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import BackButton from '../components/common/BackButton'
+import FossilTogglePill from '../components/common/FossilTogglePill'
 import TribeMinimalCard from '../components/tribe/TribeMinimalCard'
 import { TopicTag } from '../components/topic/TopicTag'
 import { tribeApi } from '../api/tribeApi'
@@ -49,10 +50,20 @@ const getActorTopicValues = (actor) => {
   return [...new Set(values.filter((v) => v != null))]
 }
 
+const isDormantItem = (item) =>
+  Boolean(
+    item?.isDormant ??
+    item?.IsDormant ??
+    item?.actor?.isDormant ??
+    item?.actor?.IsDormant ??
+    false
+  )
+
 export default function ExplorePage() {
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const mode = searchParams.get('type') === 'persons' ? 'persons' : 'tribes'
+  const [showFossils, setShowFossils] = useState(false)
 
   const setMode = (nextMode) => {
     const nextParams = new URLSearchParams(searchParams)
@@ -158,11 +169,16 @@ export default function ExplorePage() {
     staleTime: 60_000,
   })
 
-  const featuredTribes = useMemo(() => exploreTribes.slice(0, 12), [exploreTribes])
+  const visibleExploreTribes = useMemo(
+    () => (showFossils ? exploreTribes : exploreTribes.filter((tr) => !isDormantItem(tr))),
+    [exploreTribes, showFossils]
+  )
+
+  const featuredTribes = useMemo(() => visibleExploreTribes.slice(0, 12), [visibleExploreTribes])
 
   const areaSections = useMemo(() => {
     const map = new Map()
-    exploreTribes.forEach((tr) => {
+    visibleExploreTribes.forEach((tr) => {
       getTribeTopicValues(tr).forEach((value) => {
         if (!map.has(value)) {
           const meta = TopicTypes.find((x) => x.value === value)
@@ -178,7 +194,7 @@ export default function ExplorePage() {
       })
     })
     return [...map.values()].sort((a, b) => b.tribes.length - a.tribes.length)
-  }, [exploreTribes])
+  }, [visibleExploreTribes])
 
   const { data: exploreActors = [], isLoading: isExploreActorsLoading } = useQuery({
     queryKey: ['actorsExplore'],
@@ -196,11 +212,16 @@ export default function ExplorePage() {
     staleTime: 60_000,
   })
 
-  const featuredActors = useMemo(() => exploreActors.slice(0, 12), [exploreActors])
+  const visibleExploreActors = useMemo(
+    () => (showFossils ? exploreActors : exploreActors.filter((actor) => !isDormantItem(actor))),
+    [exploreActors, showFossils]
+  )
+
+  const featuredActors = useMemo(() => visibleExploreActors.slice(0, 12), [visibleExploreActors])
 
   const actorAreaSections = useMemo(() => {
     const map = new Map()
-    exploreActors.forEach((actor) => {
+    visibleExploreActors.forEach((actor) => {
       getActorTopicValues(actor).forEach((value) => {
         if (!map.has(value)) {
           const meta = TopicTypes.find((x) => x.value === value)
@@ -216,7 +237,7 @@ export default function ExplorePage() {
       })
     })
     return [...map.values()].sort((a, b) => b.actors.length - a.actors.length)
-  }, [exploreActors])
+  }, [visibleExploreActors])
 
   // Explore sections: cards fill 2 rows per area (3 columns on web = 6 cards)
   const sectionsRef = useRef(null)
@@ -313,8 +334,18 @@ export default function ExplorePage() {
     setVisibleCount(20)
   }, [activeAreas, mode])
 
-  const visibleTribes = allFetchedTribes.slice(0, visibleCount)
-  const visibleActors = allFetchedActors.slice(0, visibleCount)
+  const visibleTribes = useMemo(
+    () =>
+      (showFossils ? allFetchedTribes : allFetchedTribes.filter((tr) => !isDormantItem(tr)))
+        .slice(0, visibleCount),
+    [allFetchedTribes, visibleCount, showFossils]
+  )
+  const visibleActors = useMemo(
+    () =>
+      (showFossils ? allFetchedActors : allFetchedActors.filter((actor) => !isDormantItem(actor)))
+        .slice(0, visibleCount),
+    [allFetchedActors, visibleCount, showFossils]
+  )
 
   const loadMoreRef = useRef(null)
 
@@ -419,8 +450,12 @@ export default function ExplorePage() {
   const activeVisibleItems = isPersons ? visibleActors : visibleTribes
   const activeRenderCard = isPersons ? renderActorCard : renderTribeCard
   const activeIsExploreLoading = isPersons ? isExploreActorsLoading : isExploreLoading
-  const activeExploreItems = isPersons ? exploreActors : exploreTribes
+  const activeExploreItems = isPersons ? visibleExploreActors : visibleExploreTribes
   const activeFeaturedItems = isPersons ? featuredActors : featuredTribes
+  const activeFossilSource = hasActiveFilter
+    ? (isPersons ? allFetchedActors : allFetchedTribes)
+    : (isPersons ? exploreActors : exploreTribes)
+  const fossilCount = activeFossilSource.filter(isDormantItem).length
   const activeAreaSections = (isPersons ? actorAreaSections : areaSections).map((section) => ({
     ...section,
     items: isPersons ? section.actors : section.tribes,
@@ -431,7 +466,7 @@ export default function ExplorePage() {
     <div className="flex-col gap-4" style={{ paddingBottom: 60, width: '100%' }}>
       <div className="px-2" style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <BackButton style={{ marginBottom: 0 }} />
-        <div className="hscroll-strip" style={{ display: 'flex', gap: 6 }}>
+        <div className="hscroll-strip" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           <button
             className={`btn btn-sm ${mode === 'tribes' ? 'btn-primary' : 'btn-outline'}`}
             onClick={() => setMode('tribes')}
@@ -446,6 +481,11 @@ export default function ExplorePage() {
           >
             {t('explore_page.persons', 'Kişiler')}
           </button>
+          <FossilTogglePill
+            count={fossilCount}
+            open={showFossils}
+            onToggle={() => setShowFossils((prev) => !prev)}
+          />
         </div>
       </div>
 

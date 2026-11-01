@@ -680,11 +680,9 @@ export default function PersonalityCard({
     )
     return (
       <div
+        className="minimal-card-list"
         style={{
-          display: 'flex',
-          flexDirection: 'column',
           alignItems: 'flex-start',
-          gap: 2,
           flex: 1,
           minWidth: 0,
         }}
