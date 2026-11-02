@@ -9,6 +9,7 @@ import AngryBotWithSwordsIcon from '../components/common/icons/AngryBotWithSword
 import ActorAvatar from '../components/actor/ActorAvatar'
 import ActorMinimalCard from '../components/actor/ActorMinimalCard'
 import { actorApi } from '../api/actorApi'
+import { debateApi } from '../api/debateApi'
 import { searchApi } from '../api/searchApi'
 import useAuthStore from '../store/authStore'
 import HowItWorksHelp from '../components/common/HowItWorksHelp'
@@ -221,7 +222,7 @@ export default function ActiveDebatesPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['debates', 'all', actorId],
     queryFn: () =>
-      actorApi.getDebates(actorId, 1).then((r) => {
+      debateApi.loadLobbyDebates().then((r) => {
         const list = r?.data?.data || r?.data
         return Array.isArray(list) ? list : []
       }),
@@ -267,61 +268,58 @@ export default function ActiveDebatesPage() {
 
         connection.onreconnected(() => {
           if (connection && connection.state === signalR.HubConnectionState.Connected) {
-            connection.invoke('JoinActiveDebatesLobby').catch(console.error)
+            connection.invoke('JoinDebateLobby')
           }
         })
 
-        connection.on('ReceiveActiveDebatesUpdate', (rawMessage) => {
+        // Standardized granular signal: DebateCreated
+        connection.on('DebateCreated', async (debateId) => {
           try {
-            const event = typeof rawMessage === 'string' ? JSON.parse(rawMessage) : rawMessage
-            if (!event) return
-
-            const eventType = event.eventType || event.EventType
-            const debate = event.debate || event.Debate
-            const debateId = event.debateId || event.DebateId || debate?.debateId || debate?.DebateId
+            if (!debateId) return
+            const res = await debateApi.getDebateById(debateId)
+            const debate = res?.data?.data || res?.data
+            if (!debate) return
 
             queryClient.setQueryData(['debates', 'all', actorId], (oldData) => {
               const currentList = Array.isArray(oldData) ? [...oldData] : []
-
-              if (eventType === 'created' && debate) {
-                const targetId = debate.debateId || debate.DebateId
-                const idx = currentList.findIndex(
-                  (d) => (d.debateId || d.DebateId) === targetId
-                )
-                if (idx >= 0) {
-                  currentList[idx] = { ...currentList[idx], ...debate }
-                  return currentList
-                }
-                return [debate, ...currentList]
+              const targetId = debate.debateId || debate.DebateId
+              const idx = currentList.findIndex(
+                (d) => (d.debateId || d.DebateId) === targetId
+              )
+              if (idx >= 0) {
+                currentList[idx] = { ...currentList[idx], ...debate }
+                return currentList
               }
+              return [debate, ...currentList]
+            })
+          } catch (err) {
+            console.error('Error handling DebateCreated signal:', err)
+          }
+        })
 
-              if (eventType === 'ended') {
-                const targetId = debateId || debate?.debateId || debate?.DebateId
-                const idx = currentList.findIndex(
-                  (d) => (d.debateId || d.DebateId) === targetId
-                )
-                if (idx >= 0) {
-                  if (debate) {
-                    currentList[idx] = { ...currentList[idx], ...debate }
-                  } else {
-                    currentList[idx] = { ...currentList[idx], status: 'Completed' }
-                  }
-                  return currentList
-                } else if (debate) {
-                  return [debate, ...currentList]
-                }
+        // Standardized granular signal: DebateEnded
+        connection.on('DebateEnded', (debateId) => {
+          try {
+            if (!debateId) return
+            queryClient.setQueryData(['debates', 'all', actorId], (oldData) => {
+              const currentList = Array.isArray(oldData) ? [...oldData] : []
+              const idx = currentList.findIndex(
+                (d) => (d.debateId || d.DebateId) === debateId
+              )
+              if (idx >= 0) {
+                currentList[idx] = { ...currentList[idx], status: 'Completed' }
+                return currentList
               }
-
               return currentList
             })
           } catch (err) {
-            console.error('Error handling active debates update:', err)
+            console.error('Error handling DebateEnded signal:', err)
           }
         })
 
         await connection.start()
         if (isMounted) {
-          await connection.invoke('JoinActiveDebatesLobby')
+          await connection.invoke('JoinDebateLobby')
         } else {
           await connection.stop()
         }
@@ -336,9 +334,10 @@ export default function ActiveDebatesPage() {
       isMounted = false
       if (connection) {
         if (connection.state === signalR.HubConnectionState.Connected) {
-          connection.invoke('LeaveActiveDebatesLobby').catch(() => {})
+          connection.invoke('LeaveDebateLobby').catch(() => {})
         }
-        connection.off('ReceiveActiveDebatesUpdate')
+        connection.off('DebateCreated')
+        connection.off('DebateEnded')
         connection.stop().catch(() => {})
       }
     }

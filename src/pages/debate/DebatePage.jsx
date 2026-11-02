@@ -81,6 +81,7 @@ export default function DebatePage() {
   const [proposition, setProposition] = useState(initialProposition)
   const [turn, setTurn] = useState(0)
   const [totalTurns, setTotalTurns] = useState(0)
+  const [viewerCount, setViewerCount] = useState(0)
 
   const [proponent, setProponent] = useState(initialProponent)
   const [opponent, setOpponent] = useState(initialOpponent)
@@ -325,9 +326,9 @@ export default function DebatePage() {
     fetchProfile(opponent, setOpponent)
   }, [proponent.id, opponent.id, proponent.actorPoint, opponent.actorPoint])
 
-  // Spectator: load the current debate state (transcript) so mid-debate joiners see prior content
+  // Load the initial debate metadata (proposition, proponent, opponent, transcript) from Postgres
   useEffect(() => {
-    if (!isSpectator || !isValidDebateId) return
+    if (!isValidDebateId) return
     let cancelled = false
     actorApi
       .getDebateById(debateId)
@@ -343,6 +344,7 @@ export default function DebatePage() {
             name: d.proponent.profileName,
             imageUrl: d.proponent.imageUrl || prev.imageUrl,
             discriminator: d.proponent.discriminator || prev.discriminator,
+            actorPoint: d.proponent.actorPoint ?? prev.actorPoint,
           }))
         if (d.opponent?.profileName)
           setOpponent((prev) => ({
@@ -351,30 +353,33 @@ export default function DebatePage() {
             name: d.opponent.profileName,
             imageUrl: d.opponent.imageUrl || prev.imageUrl,
             discriminator: d.opponent.discriminator || prev.discriminator,
+            actorPoint: d.opponent.actorPoint ?? prev.actorPoint,
           }))
-        if (d.debateTranscript) {
+        if (d.debateTranscript && isSpectator) {
           const parsed = parseTranscriptMessages(d.debateTranscript)
           if (parsed.length > 0) {
             setMessages(parsed)
             setPhase((prev) => (prev === 'waiting_ready' ? 'proponent_speech' : prev))
           }
         }
-        // A spectator won't necessarily receive a live signal immediately; suppress the watchdog.
-        hasReceivedInitialSignalRef.current = true
-        if (initialSignalTimeoutRef.current) {
-          clearTimeout(initialSignalTimeoutRef.current)
-          initialSignalTimeoutRef.current = null
+        if (isSpectator) {
+          hasReceivedInitialSignalRef.current = true
+          if (initialSignalTimeoutRef.current) {
+            clearTimeout(initialSignalTimeoutRef.current)
+            initialSignalTimeoutRef.current = null
+          }
         }
       })
       .catch(() => {})
     return () => {
       cancelled = true
     }
-  }, [isSpectator, isValidDebateId, debateId])
+  }, [isValidDebateId, debateId, isSpectator])
 
   useEffect(() => {
     if (!isValidDebateId) {
       toast.error(t('common.content_not_found', 'Geçerli bir meydan okuma ID bulunamadı.'))
+      navigate('/', { replace: true })
       return
     }
 
@@ -417,10 +422,24 @@ export default function DebatePage() {
 
           connection.on('ReceiveDebateStream', (jsonStr) => {
             try {
-              const data = JSON.parse(jsonStr)
+              const data = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr
               handleSignalRef.current?.(data)
             } catch (e) {
               console.error('Failed to parse debate signal', e)
+            }
+          })
+
+          connection.on('ViewerCountChanged', (count) => {
+            if (typeof count === 'number') {
+              setViewerCount(count)
+            }
+          })
+
+          connection.on('DebateSignalBundle', (bundle) => {
+            try {
+              handleSignalBundleRef.current?.(bundle)
+            } catch (e) {
+              console.error('Failed to parse DebateSignalBundle', e)
             }
           })
 
@@ -442,6 +461,8 @@ export default function DebatePage() {
       if (connection) {
         connection.invoke('LeaveDebate', debateId).catch(() => {})
         connection.off('ReceiveDebateStream')
+        connection.off('ViewerCountChanged')
+        connection.off('DebateSignalBundle')
         connection.stop()
       }
     }
@@ -458,7 +479,7 @@ export default function DebatePage() {
         if (connection) {
           connection.stop()
         }
-        navigate('/')
+        navigate('/', { replace: true })
       }
     }, 30000)
 
@@ -508,8 +529,10 @@ export default function DebatePage() {
 
   const handleSignalRef = useRef(null)
 
-  const handleSignal = (data) => {
+  const handleSignal = (data, options = {}) => {
     if (!data) return
+
+    const { isReplay = false, isLast = false } = options || {}
 
     // Clear initial 10s watchdog as soon as any valid debate signal is received
     hasReceivedInitialSignalRef.current = true
@@ -519,107 +542,63 @@ export default function DebatePage() {
     }
 
     switch (data.type) {
+      case 'signal_bundle':
+      case 'debate_signals_meta':
+        if (typeof data.viewerCount === 'number') {
+          setViewerCount(data.viewerCount)
+        }
+        if (Array.isArray(data.signals)) {
+          handleSignalBundle(data.signals)
+        }
+        break
+
+      case 'viewer_count':
+        if (typeof data.viewerCount === 'number') {
+          setViewerCount(data.viewerCount)
+        }
+        break
+
       case 'waiting_ready':
-        resetTimer(data.remainingSeconds ?? data.timeLimitSeconds ?? 120)
+        if (!isReplay || isLast) {
+          resetTimer(data.remainingSeconds ?? data.timeLimitSeconds ?? 120)
+        }
         setPhase('waiting_ready')
-        if (data.proposition) setProposition(data.proposition)
-        if (data.proponentName)
-          setProponent((prev) => ({
-            ...prev,
-            id: data.proponentId || prev.id,
-            name: data.proponentName,
-            imageUrl: data.proponentImageUrl || prev.imageUrl,
-            discriminator: data.proponentDiscriminator || prev.discriminator,
-          }))
-        if (data.opponentName)
-          setOpponent((prev) => ({
-            ...prev,
-            id: data.opponentId || prev.id,
-            name: data.opponentName,
-            imageUrl: data.opponentImageUrl || prev.imageUrl,
-            discriminator: data.opponentDiscriminator || prev.discriminator,
-          }))
         if (Array.isArray(data.juries)) {
           setJuries(data.juries.map((j) => normalizeJury(j)))
         }
         break
 
-      case 'turn_switch':
-      case 'phase_start': {
-        resetTimer(data.remainingSeconds ?? data.timeLimitSeconds ?? 120)
-        const currentPhase = data.phase || (data.activeSpeakerRole === 'jury' ? 'jury_evaluation' : (data.activeSpeakerRole ? `${data.activeSpeakerRole}_speech` : 'proponent_speech'))
+      case 'turn_switch': {
+        if (!isReplay || isLast) {
+          resetTimer(data.remainingSeconds ?? data.timeLimitSeconds ?? 120)
+        }
+        const currentPhase = data.phase || (data.activeSpeakerRole === 'jury' ? 'jury_evaluation' : `${data.activeSpeakerRole}_speech`)
         setPhase(currentPhase)
-        setTurn(data.turn ?? data.round ?? 0)
-        setTotalTurns(data.totalTurns ?? data.totalRounds ?? 0)
-        if (data.proposition) setProposition(data.proposition)
-
-        if (data.proponentName) {
-          setProponent((prev) => ({
-            ...prev,
-            id: data.proponentId || prev.id,
-            name: data.proponentName,
-            imageUrl: data.proponentImageUrl !== undefined ? data.proponentImageUrl : prev.imageUrl,
-            discriminator: data.proponentDiscriminator || prev.discriminator,
-          }))
-        }
-        if (data.opponentName) {
-          setOpponent((prev) => ({
-            ...prev,
-            id: data.opponentId || prev.id,
-            name: data.opponentName,
-            imageUrl: data.opponentImageUrl !== undefined ? data.opponentImageUrl : prev.imageUrl,
-            discriminator: data.opponentDiscriminator || prev.discriminator,
-          }))
-        }
-
-        if (Array.isArray(data.juries)) {
-          setJuries((prev) =>
-            data.juries.map((j) => {
-              const jId = j.actorId || j.ActorId || j.juryId || j.JuryId || j.id
-              const existing = prev.find((p) => p.id === jId)
-              return normalizeJury(j, existing)
-            })
-          )
-        }
+        setTurn(data.turn ?? 0)
+        setTotalTurns(data.totalTurns ?? 0)
 
         if (currentPhase === 'proponent_speech') {
           setActiveSpeaker('proponent')
           setMessages((prev) => [
             ...prev,
             {
-              id: `${data.turn || 0}-prop-${Date.now()}`,
+              id: `${data.turn || 0}-prop-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
               speaker: 'proponent',
               text: '',
             },
           ])
-          setProponent((prev) => ({
-            ...prev,
-            id: data.speakerId || data.activeSpeakerId || data.proponentId || prev.id,
-            name: data.speakerName || data.proponentName || prev.name,
-            imageUrl: data.speakerImageUrl || data.proponentImageUrl || prev.imageUrl,
-            discriminator:
-              data.speakerDiscriminator || data.proponentDiscriminator || prev.discriminator,
-            text: '',
-          }))
+          setProponent((prev) => ({ ...prev, text: '' }))
         } else if (currentPhase === 'opponent_speech') {
           setActiveSpeaker('opponent')
           setMessages((prev) => [
             ...prev,
             {
-              id: `${data.turn || 0}-opp-${Date.now()}`,
+              id: `${data.turn || 0}-opp-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
               speaker: 'opponent',
               text: '',
             },
           ])
-          setOpponent((prev) => ({
-            ...prev,
-            id: data.speakerId || data.activeSpeakerId || data.opponentId || prev.id,
-            name: data.speakerName || data.opponentName || prev.name,
-            imageUrl: data.speakerImageUrl || data.opponentImageUrl || prev.imageUrl,
-            discriminator:
-              data.speakerDiscriminator || data.opponentDiscriminator || prev.discriminator,
-            text: '',
-          }))
+          setOpponent((prev) => ({ ...prev, text: '' }))
         } else if (currentPhase === 'jury_evaluation') {
           setActiveSpeaker('jury')
         }
@@ -649,13 +628,25 @@ export default function DebatePage() {
         break
 
       case 'phase_end':
-        resetTimer(120)
-        triggerCrowdExcitement(1200)
+        if (!isReplay || isLast) {
+          resetTimer(120)
+        }
+        if (!isReplay) {
+          triggerCrowdExcitement(1200)
+        }
         setMessages((prev) => {
-          if (prev.length === 0) return prev
+          if (prev.length === 0) {
+            return [
+              {
+                id: `${data.phase || 'speech'}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+                speaker: data.phase === 'proponent_speech' ? 'proponent' : 'opponent',
+                text: data.fullContent || '',
+              },
+            ]
+          }
           const newMsg = [...prev]
           const lastIdx = newMsg.length - 1
-          newMsg[lastIdx] = { ...newMsg[lastIdx], text: data.fullContent }
+          newMsg[lastIdx] = { ...newMsg[lastIdx], text: data.fullContent || '' }
           return newMsg
         })
         if (data.phase === 'proponent_speech') {
@@ -668,24 +659,6 @@ export default function DebatePage() {
       case 'verdict': {
         setPhase('verdict')
         setActiveSpeaker(null)
-        if (data.proponentName) {
-          setProponent((prev) => ({
-            ...prev,
-            id: data.proponentId || prev.id,
-            name: data.proponentName,
-            imageUrl: data.proponentImageUrl || prev.imageUrl,
-            discriminator: data.proponentDiscriminator || prev.discriminator,
-          }))
-        }
-        if (data.opponentName) {
-          setOpponent((prev) => ({
-            ...prev,
-            id: data.opponentId || prev.id,
-            name: data.opponentName,
-            imageUrl: data.opponentImageUrl || prev.imageUrl,
-            discriminator: data.opponentDiscriminator || prev.discriminator,
-          }))
-        }
         setVerdict({
           proponentScore: data.proponentScore,
           opponentScore: data.opponentScore,
@@ -705,7 +678,7 @@ export default function DebatePage() {
           connection.stop()
         }
         setTimeout(() => {
-          navigate('/')
+          navigate('/', { replace: true })
         }, 1500)
         break
       }
@@ -717,7 +690,7 @@ export default function DebatePage() {
           connection.stop()
         }
         setTimeout(() => {
-          navigate('/')
+          navigate('/', { replace: true })
         }, 1500)
         break
       }
@@ -728,7 +701,7 @@ export default function DebatePage() {
           connection.stop()
         }
         setTimeout(() => {
-          navigate('/')
+          navigate('/', { replace: true })
         }, 1500)
         break
       }
@@ -739,6 +712,37 @@ export default function DebatePage() {
   }
 
   handleSignalRef.current = handleSignal
+
+  const handleSignalBundleRef = useRef(null)
+
+  const handleSignalBundle = (bundleOrSignals) => {
+    if (!bundleOrSignals) return
+
+    const signals = Array.isArray(bundleOrSignals.signals)
+      ? bundleOrSignals.signals
+      : Array.isArray(bundleOrSignals)
+        ? bundleOrSignals
+        : []
+
+    if (typeof bundleOrSignals.viewerCount === 'number') {
+      setViewerCount(bundleOrSignals.viewerCount)
+    }
+
+    if (signals.length === 0) return
+
+    hasReceivedInitialSignalRef.current = true
+    if (initialSignalTimeoutRef.current) {
+      clearTimeout(initialSignalTimeoutRef.current)
+      initialSignalTimeoutRef.current = null
+    }
+
+    signals.forEach((sig, index) => {
+      const isLast = index === signals.length - 1
+      handleSignal(sig, { isReplay: true, isLast })
+    })
+  }
+
+  handleSignalBundleRef.current = handleSignalBundle
 
   const handleReady = () => {
     if (connection && connection.state === signalR.HubConnectionState.Connected) {
@@ -804,7 +808,7 @@ export default function DebatePage() {
     if (!isSpectator && phase !== 'verdict') {
       toast.error(t('common.session_terminated', 'Oturum sonlandırıldı.'))
     }
-    navigate(-1)
+    navigate('/', { replace: true })
   }
 
   const isMeOpponent = opponent.id === actorId
@@ -847,6 +851,26 @@ export default function DebatePage() {
             <div className="debate-status">
               {totalTurns > 0 && `Turn ${turn}/${totalTurns}`}
             </div>
+            {viewerCount > 0 && (
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: 'var(--color-primary)',
+                  background: 'color-mix(in srgb, var(--color-surface) 80%, transparent)',
+                  border: '1px solid var(--color-border)',
+                  padding: '2px 8px',
+                  borderRadius: 9999,
+                }}
+                title={t('debate.viewers', 'Canlı İzleyiciler')}
+              >
+                <Eye size={12} strokeWidth={2.5} />
+                <span>{viewerCount}</span>
+              </div>
+            )}
           </div>
         <div
           className={`debate-proposition-container ${isTopicExpanded ? 'expanded' : ''}`}
@@ -967,7 +991,7 @@ export default function DebatePage() {
           </div>
         ))}
 
-        {!isReady && phase === 'waiting_ready' ? (
+        {phase === 'waiting_ready' ? (
               <div className="debate-ready-content">
                 <div className="debate-ready-block">
                   <div className="ready-matchup-preview" ref={readyBlockRef}>
@@ -999,9 +1023,25 @@ export default function DebatePage() {
                   </div>
 
                   {!isSpectator ? (
-                    <button className="btn btn-primary btn-ready" onClick={handleReady}>
-                      Ready
-                    </button>
+                    !isReady ? (
+                      <button className="btn btn-primary btn-ready" onClick={handleReady}>
+                        Ready
+                      </button>
+                    ) : (
+                      <span
+                        style={{
+                          fontSize: 14,
+                          fontWeight: 600,
+                          color: 'var(--color-primary)',
+                          padding: '10px 20px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 8,
+                        }}
+                      >
+                        <Timer size={16} /> {t('debate.waiting_opponent_or_start', 'Hazırsınız! Karşı taraf bekleniyor...')}
+                      </span>
+                    )
                   ) : (
                     <span
                       style={{
@@ -1020,21 +1060,6 @@ export default function DebatePage() {
             <div className="debate-arena single-chat">
             {/* Unified Chat Timeline */}
             <div className="chat-messages-container" ref={chatScrollRef}>
-              {phase === 'waiting_ready' && (
-                <div
-                  style={{
-                    display: 'flex',
-                    flex: 1,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '100%',
-                    height: '100%',
-                    minHeight: '260px',
-                  }}
-                >
-                  <div className="spinner spinner-lg" />
-                </div>
-              )}
               {messages.map((msg, index) => {
                 const isProponent = msg.speaker === 'proponent'
                 const p = isProponent ? proponent : opponent
@@ -1149,7 +1174,7 @@ export default function DebatePage() {
                   </div>
                   <button
                     className="btn btn-primary btn-back-home"
-                    onClick={() => navigate('/')}
+                    onClick={() => navigate('/', { replace: true })}
                     style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                   >
                     <ArrowLeft size={16} /> {t('common.back_to_home', 'Ana Sayfaya Dön')}
@@ -1229,7 +1254,7 @@ export default function DebatePage() {
               </div>
               <button
                 className="btn btn-primary btn-back-home"
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/', { replace: true })}
                 style={{ display: 'flex', alignItems: 'center', gap: 6 }}
               >
                 <ArrowLeft size={16} /> {t('common.back_to_home', 'Ana Sayfaya Dön')}
