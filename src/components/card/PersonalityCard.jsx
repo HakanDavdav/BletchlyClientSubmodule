@@ -1118,11 +1118,13 @@ export default function PersonalityCard({
                           node.type === 'tribe' ? (
                             <TribeMinimalCard
                               key={nodeKey}
+                              tribe={node.data}
                               tribeId={node.data.tribeId}
                               tribeName={node.data.tribeName}
                               tribePoint={node.data.tribePoint}
                               imageUrl={node.data.imageUrl}
                               isDormant={node.data.isDormant ?? node.data.IsDormant}
+                              assignedCardIds={node.data.assignedCardIds || node.data.AssignedCardIds}
                               variant="compact"
                               clickable={true}
                               showMemoryMapBtn={false}
@@ -1168,11 +1170,13 @@ export default function PersonalityCard({
                           node.type === 'tribe' ? (
                             <TribeMinimalCard
                               key={nodeKey}
+                              tribe={node.data}
                               tribeId={node.data.tribeId}
                               tribeName={node.data.tribeName}
                               tribePoint={node.data.tribePoint}
                               imageUrl={node.data.imageUrl}
                               isDormant={node.data.isDormant ?? node.data.IsDormant}
+                              assignedCardIds={node.data.assignedCardIds || node.data.AssignedCardIds}
                               variant="compact"
                               clickable={true}
                               showMemoryMapBtn={false}
@@ -1218,8 +1222,10 @@ export default function PersonalityCard({
                         node.type === 'tribe' ? (
                           <TribeMinimalCard
                             key={nodeKey}
+                            tribe={node.data}
                             {...node.data}
                             isDormant={node.data.isDormant ?? node.data.IsDormant}
+                            assignedCardIds={node.data.assignedCardIds || node.data.AssignedCardIds}
                             variant="compact"
                             clickable={true}
                             showMemoryMapBtn={false}

@@ -20,6 +20,10 @@ export default function TribeMinimalCard({
   tribeId: propTribeId,
   tribeName: propTribeName,
   tribePoint: propTribePoint,
+  tribeActorPoint: propTribeActorPoint,
+  TribeActorPoint: propTribeActorPointUpper,
+  point: propPoint,
+  Point: propPointUpper,
   imageUrl: propImageUrl,
   isDormant: propIsDormant,
   IsDormant: propIsDormantUpper,
@@ -38,7 +42,18 @@ export default function TribeMinimalCard({
 }) {
   const tribeId = propTribeId || tribe?.tribeId || tribe?.TribeId
   const tribeName = propTribeName || tribe?.tribeName || tribe?.TribeName
-  const tribePoint = propTribePoint ?? tribe?.tribePoint ?? tribe?.TribePoint ?? tribe?.tribeActorPoint
+  const tribePoint =
+    propTribePoint ??
+    propTribeActorPoint ??
+    propTribeActorPointUpper ??
+    propPoint ??
+    propPointUpper ??
+    tribe?.tribePoint ??
+    tribe?.TribePoint ??
+    tribe?.tribeActorPoint ??
+    tribe?.TribeActorPoint ??
+    tribe?.point ??
+    tribe?.Point
   const imageUrl = propImageUrl || tribe?.imageUrl || tribe?.ImageUrl
   const isDormant = propIsDormant ?? tribe?.isDormant
   const IsDormant = propIsDormantUpper ?? tribe?.IsDormant
@@ -269,8 +284,9 @@ export default function TribeMinimalCard({
           <Edit2 size={12} />
         </button>
       )}
-      {!isCompact && showPoint && tribePoint != null && (
+      {showPoint && tribePoint != null && (
         <span
+          className="tribe-card-points-badge"
           style={{
             fontSize: 10,
             fontWeight: 700,
@@ -278,9 +294,11 @@ export default function TribeMinimalCard({
             backgroundColor: 'var(--color-surface-2)',
             padding: '2px 6px',
             borderRadius: 12,
+            marginLeft: isCompact ? 'auto' : undefined,
+            flexShrink: 0,
           }}
         >
-          {tribePoint.toLocaleString()} P
+          {Number(tribePoint).toLocaleString()} TP
         </span>
       )}
 

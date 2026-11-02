@@ -124,6 +124,13 @@ const queryClient = new QueryClient({
 })
 
 import { BrowserRouter } from 'react-router-dom'
+import useAuthStore from './store/authStore'
+import useMyEntitiesStore from './store/myEntitiesStore'
+
+if (typeof window !== 'undefined') {
+  window.useAuthStore = useAuthStore
+  window.useMyEntitiesStore = useMyEntitiesStore
+}
 
 // Authentication interceptor error handle (Token düştüğünde vb.)
 window.addEventListener('auth:unauthorized', () => {

@@ -19,17 +19,21 @@ import { RotateCcwClock } from '../components/common/icons'
 export function getNodeLabelText(label, isRoot = false, isTribeContext = false) {
   if (isRoot) {
     return isTribeContext
-      ? i18n.t('memoryMap.labels.tribe_root', 'Tribe (Root)')
+      ? i18n.t('memoryMap.labels.tribe_persona', 'Tribe Persona')
       : i18n.t('memoryMap.labels.persona', 'Persona')
   }
-  if (label === 'HistoricalPersona') {
-    return i18n.t('memoryMap.labels.historical_persona', 'Historical Persona')
+  if (label === 'HistoricalPersona' || label === 'HistoricalTribePersona') {
+    return isTribeContext || label === 'HistoricalTribePersona'
+      ? i18n.t('memoryMap.labels.historical_tribe_persona', 'Historical Tribe Persona')
+      : i18n.t('memoryMap.labels.historical_persona', 'Historical Persona')
   }
   if (label === 'HistoricalCore') {
     return i18n.t('memoryMap.labels.historical_core', 'Historical Core')
   }
-  if (label === 'Persona') {
-    return i18n.t('memoryMap.labels.persona', 'Persona')
+  if (label === 'Persona' || label === 'TribePersona') {
+    return isTribeContext || label === 'TribePersona'
+      ? i18n.t('memoryMap.labels.tribe_persona', 'Tribe Persona')
+      : i18n.t('memoryMap.labels.persona', 'Persona')
   }
   if (label === 'Core') {
     return i18n.t('memoryMap.labels.core', 'Core')
@@ -49,7 +53,7 @@ export function getNodeLabelText(label, isRoot = false, isTribeContext = false) 
     label === 'Concept' ||
     label === 'Thought'
   ) {
-    return i18n.t('memoryMap.labels.general_thought', 'GeneralThought')
+    return i18n.t('memoryMap.labels.general_thought', 'Thought')
   }
   return label || ''
 }
@@ -677,10 +681,14 @@ function getHistoricalNeuronColor() {
 function getNeuronColor(label, isRoot = false) {
   const { isGreenMode, customColor } = useThemeStore.getState()
   const accent = deriveAccentPalette({ isGreenMode, customColor })
-  if (label === 'HistoricalPersona' || label === 'HistoricalCore') {
+  if (
+    label === 'HistoricalPersona' ||
+    label === 'HistoricalCore' ||
+    label === 'HistoricalTribePersona'
+  ) {
     return getHistoricalNeuronColor()
   }
-  if (label === 'Persona' || label === 'Core' || isRoot) {
+  if (label === 'Persona' || label === 'TribePersona' || label === 'Core' || isRoot) {
     return { core: accent.base, glow: accent.rootGlow }
   }
   return NEURON_COLORS[label] || NEURON_COLORS.default
@@ -934,7 +942,10 @@ const _noRaycast = () => {}
 // Three.js ile parlayan nöron nesnesi oluştur (MemoryMapAmbience estetiğiyle birebir)
 function buildNeuronObject(node) {
   const isRoot =
-    Boolean(node.isRoot) || node.label === 'Persona' || (node.label === 'Tribe' && node.isRoot)
+    Boolean(node.isRoot) ||
+    node.label === 'Persona' ||
+    node.label === 'TribePersona' ||
+    (node.label === 'Tribe' && node.isRoot)
   const isPersona = isRoot
   const isActive = Boolean(node.isActive) // Active Synapse highlight
 
@@ -947,7 +958,10 @@ function buildNeuronObject(node) {
   // MemoryMapAmbience oranları: Persona hafifçe daha büyük (22 vs 13); Active node'lar %30 daha büyük
   const baseR = isPersona
     ? 22
-    : node.label === 'HistoricalPersona' || node.label === 'GeneralThought' || node.label === 'Topic'
+    : node.label === 'HistoricalPersona' ||
+      node.label === 'HistoricalTribePersona' ||
+      node.label === 'GeneralThought' ||
+      node.label === 'Topic'
       ? 15
       : node.label === 'HistoricalCore' || node.label === 'Core'
         ? 14
@@ -2020,7 +2034,11 @@ const TOPBAR_HEIGHT = 'var(--topbar-height)'
 function NodeDetailPanel({ node, onClose, isTribeContext = false, relationships = [], onNavigate }) {
   const { t } = useTranslation()
   const { isDarkMode } = useThemeStore()
-  const isRoot = node.label === 'Persona' || (node.label === 'Tribe' && node.isRoot)
+  const isRoot =
+    node.label === 'Persona' ||
+    node.label === 'TribePersona' ||
+    Boolean(node.isRoot) ||
+    (node.label === 'Tribe' && node.isRoot)
   const { core, glow } = getNeuronColor(node.label, isRoot)
 
   const relChipStyle = {
@@ -2443,7 +2461,10 @@ const GRAPH_TYPE_MATCHERS = {
   recalled: (n) => Boolean(n.isActive),
   root: (n) => Boolean(n.isRoot),
   core: (n) => n.label === 'Core',
-  historical: (n) => n.label === 'HistoricalPersona' || n.label === 'HistoricalCore',
+  historical: (n) =>
+    n.label === 'HistoricalPersona' ||
+    n.label === 'HistoricalCore' ||
+    n.label === 'HistoricalTribePersona',
   tribe: (n) => n.label === 'Tribe' && !n.isRoot,
   person: (n) => n.label === 'Actor' || n.label === 'User' || n.label === 'Bot',
   thought: (n) =>
@@ -2979,6 +3000,7 @@ export default function MemoryMapPage() {
         if (!nodesMap.has(nodeId)) {
           const isRoot =
             n.label === 'Persona' ||
+            n.label === 'TribePersona' ||
             Boolean(n.isRoot) ||
             (n.label === 'Actor' &&
               rootName &&
@@ -2990,7 +3012,10 @@ export default function MemoryMapPage() {
                 idx === 0 ||
                 (rootName && n.name && n.name.toLowerCase() === rootName.toLowerCase())))
           const isCore = n.label === 'Core'
-          const isHistorical = n.label === 'HistoricalPersona' || n.label === 'HistoricalCore'
+          const isHistorical =
+            n.label === 'HistoricalPersona' ||
+            n.label === 'HistoricalTribePersona' ||
+            n.label === 'HistoricalCore'
           const isFocusMatched =
             focusNodeParam && n.name && n.name.toLowerCase() === focusNodeParam.toLowerCase()
           const isActive =
@@ -3619,10 +3644,13 @@ export default function MemoryMapPage() {
   const MEM_TYPE_MATCHERS = useMemo(
     () => ({
       recalled: (n) => Boolean(n.isActive),
-      Persona: (n) => n.label === 'Persona',
+      Persona: (n) => n.label === 'Persona' || n.label === 'TribePersona' || Boolean(n.isRoot),
       Core: (n) => n.label === 'Core',
-      Historical: (n) => n.label === 'HistoricalPersona' || n.label === 'HistoricalCore',
-      Tribe: (n) => n.label === 'Tribe',
+      Historical: (n) =>
+        n.label === 'HistoricalPersona' ||
+        n.label === 'HistoricalCore' ||
+        n.label === 'HistoricalTribePersona',
+      Tribe: (n) => n.label === 'Tribe' && !n.isRoot,
       Person: (n) => n.label === 'Actor' || n.label === 'User' || n.label === 'Bot',
       Thought: (n) =>
         n.label === 'GeneralThought' ||
@@ -4385,7 +4413,7 @@ export default function MemoryMapPage() {
                   key: 'root',
                   color: accent.activeGlow,
                   label: tribeId
-                    ? t('memoryMap.labels.tribe_root', 'Tribe (Root)')
+                    ? t('memoryMap.labels.tribe_persona', 'Tribe Persona')
                     : t('memoryMap.labels.persona', 'Persona'),
                 },
                 { key: 'core', color: accent.activeGlow, label: t('memoryMap.labels.core', 'Core') },
@@ -5251,7 +5279,12 @@ export default function MemoryMapPage() {
                                         key: 'recalled',
                                         label: t('memoryMap.labels.recalled', 'Recalled'),
                                       },
-                                      { key: 'Persona', label: t('memoryMap.labels.persona', 'Persona') },
+                                      {
+                                        key: 'Persona',
+                                        label: tribeId
+                                          ? t('memoryMap.labels.tribe_persona', 'Tribe Persona')
+                                          : t('memoryMap.labels.persona', 'Persona'),
+                                      },
                                       { key: 'Core', label: t('memoryMap.labels.core', 'Core') },
                                       {
                                         key: 'Historical',

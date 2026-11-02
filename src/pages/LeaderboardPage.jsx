@@ -594,12 +594,14 @@ export default function LeaderboardPage() {
                       <ActorMinimalCard actor={item} clickable={true} showPoint={true} />
                     ) : (
                       <TribeMinimalCard
+                        tribe={item}
                         tribeId={item.tribeId ?? item.TribeId}
                         tribeName={item.tribeName ?? item.TribeName}
                         imageUrl={item.imageUrl ?? item.ImageUrl}
-                        tribePoint={item.tribePoint ?? item.TribePoint}
+                        tribePoint={item.tribeActorPoint ?? item.TribeActorPoint ?? item.tribePoint ?? item.TribePoint}
                         isDormant={item.isDormant ?? item.IsDormant ?? false}
                         clickable={true}
+                        showPoint={true}
                       />
                     )}
                   </div>

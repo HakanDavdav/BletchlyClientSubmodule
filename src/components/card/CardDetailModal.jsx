@@ -272,8 +272,10 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
                   node.type === 'tribe' ? (
                     <TribeMinimalCard
                       key={`assigned-tribe-${node.data.tribeId}`}
+                      tribe={node.data}
                       {...node.data}
                       isDormant={node.data.isDormant ?? node.data.IsDormant}
+                      assignedCardIds={node.data.assignedCardIds || node.data.AssignedCardIds}
                       showPoint={false}
                       showMemoryMapBtn={false}
                       showEditBtn={false}

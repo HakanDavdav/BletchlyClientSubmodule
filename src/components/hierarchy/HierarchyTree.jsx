@@ -202,12 +202,14 @@ function TreeNode({
   const [isExpanding, setIsExpanding] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [localFossilExpanded, setLocalFossilExpanded] = useState(false)
+  const [fossilVisibleLimit, setFossilVisibleLimit] = useState(5)
   const [isLoadingFossils, setIsLoadingFossils] = useState(false)
   const [fetchedFossils, setFetchedFossils] = useState(false)
 
   useEffect(() => {
     if (!showFossils && !showDeleted) {
       setLocalFossilExpanded(false)
+      setFossilVisibleLimit(5)
     }
   }, [showFossils, showDeleted])
 
@@ -276,6 +278,15 @@ function TreeNode({
 
   const effectiveFossilExpanded = Boolean(localFossilExpanded)
 
+  const allArchiveItems = [
+    ...fossilTribes.map((tribe) => ({ kind: 'tribe', key: `ftribe-${tribe.tribeId || tribe.id}`, data: tribe })),
+    ...pureFossilBots.map((child) => ({ kind: 'fossilBot', key: `fbot-${child.actorId}`, data: child })),
+    ...allDeletedBots.map((child) => ({ kind: 'deletedBot', key: `dbot-${child.actorId}`, data: child })),
+  ]
+  const visibleArchiveItems = allArchiveItems.slice(0, fossilVisibleLimit)
+  const remainingArchiveCount = Math.max(0, allArchiveItems.length - fossilVisibleLimit)
+  const nextArchiveBatch = Math.min(5, remainingArchiveCount)
+
   const isRoot = node.actorId === rootActorId
 
   const handleToggle = async () => {
@@ -317,6 +328,9 @@ function TreeNode({
   const handleToggleFossils = async () => {
     const nextExpanded = !effectiveFossilExpanded
     setLocalFossilExpanded(nextExpanded)
+    if (!nextExpanded) {
+      setFossilVisibleLimit(5)
+    }
 
     if (nextExpanded && !fetchedFossils && setTreeData && node.actorId) {
       setIsLoadingFossils(true)
@@ -633,50 +647,80 @@ function TreeNode({
                   <div className="vtree-children-container">
                     <div className="vtree-stem-down" />
                     <div className="vtree-children-row">
-                      {fossilTribes.map((tribe) => (
-                        <TribeBranch
-                          key={tribe.tribeId || tribe.id}
-                          tribe={tribe}
-                          parentActorId={`fossil-pill-${node.actorId}`}
-                          t={t}
-                        />
-                      ))}
+                      {visibleArchiveItems.map((item) => {
+                        if (item.kind === 'tribe') {
+                          return (
+                            <TribeBranch
+                              key={item.key}
+                              tribe={item.data}
+                              parentActorId={`fossil-pill-${node.actorId}`}
+                              t={t}
+                            />
+                          )
+                        }
+                        if (item.kind === 'fossilBot') {
+                          return (
+                            <div key={item.key} className="vtree-child-branch vtree-child-branch--fossil">
+                              <div className="vtree-branch-line" />
+                              <TreeNode
+                                node={item.data}
+                                parentId={`fossil-pill-${node.actorId}`}
+                                setTreeData={setTreeData}
+                                expandCounter={expandCounter}
+                                fetchDepth={fetchDepth}
+                                rootActorId={rootActorId}
+                                showFossils={showFossils}
+                                showDeleted={showDeleted}
+                                expandedAncestorIds={expandedAncestorIds}
+                                onToggleAncestor={onToggleAncestor}
+                              />
+                            </div>
+                          )
+                        }
+                        return (
+                          <div key={item.key} className="vtree-child-branch vtree-child-branch--fossil vtree-child-branch--deleted">
+                            <div className="vtree-branch-line" />
+                            <TreeNode
+                              node={item.data}
+                              parentId={`fossil-pill-${node.actorId}`}
+                              setTreeData={setTreeData}
+                              expandCounter={expandCounter}
+                              fetchDepth={fetchDepth}
+                              rootActorId={rootActorId}
+                              showFossils={showFossils}
+                              showDeleted={showDeleted}
+                              expandedAncestorIds={expandedAncestorIds}
+                              onToggleAncestor={onToggleAncestor}
+                            />
+                          </div>
+                        )
+                      })}
 
-                      {pureFossilBots.map((child) => (
-                        <div key={child.actorId} className="vtree-child-branch vtree-child-branch--fossil">
+                      {remainingArchiveCount > 0 && (
+                        <div className="vtree-child-branch vtree-child-branch--load-more">
                           <div className="vtree-branch-line" />
-                          <TreeNode
-                            node={child}
-                            parentId={`fossil-pill-${node.actorId}`}
-                            setTreeData={setTreeData}
-                            expandCounter={expandCounter}
-                            fetchDepth={fetchDepth}
-                            rootActorId={rootActorId}
-                            showFossils={showFossils}
-                            showDeleted={showDeleted}
-                            expandedAncestorIds={expandedAncestorIds}
-                            onToggleAncestor={onToggleAncestor}
-                          />
+                          <div
+                            className="vtree-card-wrapper"
+                            data-node-id={`load-more-${node.actorId}`}
+                            data-parent-id={`fossil-pill-${node.actorId}`}
+                          >
+                            <button
+                              type="button"
+                              className="vtree-fossil-pill vtree-fossil-pill--load-more"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setFossilVisibleLimit((prev) => prev + 5)
+                              }}
+                              aria-label={t('hierarchy.load_more_archive', '+{{count}} daha fazla göster ({{remaining}} kalan)', { count: nextArchiveBatch, remaining: remainingArchiveCount })}
+                              title={t('hierarchy.load_more_archive', '+{{count}} daha fazla göster ({{remaining}} kalan)', { count: nextArchiveBatch, remaining: remainingArchiveCount })}
+                            >
+                              <CirclePlus size={14} strokeWidth={2.2} />
+                              <span>+{nextArchiveBatch}</span>
+                              <span className="vtree-fossil-pill-sub">({remainingArchiveCount} {t('hierarchy.remaining', 'kalan')})</span>
+                            </button>
+                          </div>
                         </div>
-                      ))}
-
-                      {allDeletedBots.map((child) => (
-                        <div key={child.actorId} className="vtree-child-branch vtree-child-branch--fossil vtree-child-branch--deleted">
-                          <div className="vtree-branch-line" />
-                          <TreeNode
-                            node={child}
-                            parentId={`fossil-pill-${node.actorId}`}
-                            setTreeData={setTreeData}
-                            expandCounter={expandCounter}
-                            fetchDepth={fetchDepth}
-                            rootActorId={rootActorId}
-                            showFossils={showFossils}
-                            showDeleted={showDeleted}
-                            expandedAncestorIds={expandedAncestorIds}
-                            onToggleAncestor={onToggleAncestor}
-                          />
-                        </div>
-                      ))}
+                      )}
                     </div>
                   </div>
                 )}

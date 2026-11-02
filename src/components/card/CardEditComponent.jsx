@@ -34,6 +34,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
     personalityPrompt: '',
     imageUrl: '',
     isListedOnMarketplace: false,
+    price: '',
     assignedBotIds: [],
   })
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
@@ -47,7 +48,12 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
       UserCapabilities.Premium
 
   const [isConfirmed, setIsConfirmed] = useState(false)
-  const canConfirm = !isCreator || (Boolean(editFormData.cardName.trim()) && Boolean(editFormData.personalityPrompt.trim()))
+  const isPriceValid =
+    !editFormData.isListedOnMarketplace ||
+    (editFormData.price !== '' && !isNaN(parseInt(editFormData.price, 10)) && parseInt(editFormData.price, 10) >= 0)
+  const canConfirm =
+    !isCreator ||
+    (Boolean(editFormData.cardName.trim()) && Boolean(editFormData.personalityPrompt.trim()) && isPriceValid)
 
   useEffect(() => {
     if (!card) return
@@ -70,6 +76,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
         : '',
       imageUrl: innerCardData.imageUrl || card.imageUrl || '',
       isListedOnMarketplace: Boolean(innerCardData.isListedOnMarketplace),
+      price: innerCardData.price !== undefined && innerCardData.price !== null ? String(innerCardData.price) : (card.price !== undefined && card.price !== null ? String(card.price) : ''),
       assignedBotIds,
     })
     setIsConfirmed(false)
@@ -117,6 +124,12 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
       }
       payload.imageUrl = editFormData.imageUrl || ''
       payload.isListedOnMarketplace = editFormData.isListedOnMarketplace
+      if (editFormData.isListedOnMarketplace) {
+        const parsedPrice = parseInt(editFormData.price, 10)
+        payload.price = isNaN(parsedPrice) ? 0 : Math.max(0, parsedPrice)
+      } else {
+        payload.price = null
+      }
     }
 
     editMutation.mutate(payload)
@@ -459,6 +472,59 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
               size="sm"
               disabled={editMutation.isPending || deleteMutation.isPending}
               label={t('card.list_on_marketplace', 'Pazarda Satışa Çıkar')}
+            />
+          </div>
+        )}
+
+        {/* Integrated Marketplace Price Input (Creator Only, when listed) */}
+        {isCreator && editFormData.isListedOnMarketplace && (
+          <div
+            className="card-edit-price-section"
+            style={{
+              position: 'relative',
+              zIndex: 2,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 6,
+              padding: '10px 14px',
+              borderRadius: 8,
+              background: 'color-mix(in srgb, var(--color-surface-2) 72%, var(--color-surface-3) 28%)',
+              border: '1px solid color-mix(in srgb, var(--color-border) 72%, var(--color-text) 18%)',
+            }}
+          >
+            <label
+              htmlFor="card-edit-price-input"
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: 'var(--color-text-secondary)',
+              }}
+            >
+              {t('card.price_label', 'Satış Fiyatı (AP)')}
+            </label>
+            <input
+              id="card-edit-price-input"
+              type="number"
+              min="0"
+              step="1"
+              className="input"
+              value={editFormData.price}
+              onChange={(e) =>
+                setEditFormData((prev) => ({
+                  ...prev,
+                  price: e.target.value,
+                }))
+              }
+              placeholder={t('card.price_placeholder', 'Kart fiyatını belirleyin (AP)...')}
+              disabled={editMutation.isPending || deleteMutation.isPending}
+              readOnly={isConfirmed}
+              style={{
+                margin: 0,
+                width: '100%',
+                ...(isConfirmed
+                  ? { borderColor: 'transparent', background: 'transparent', boxShadow: 'none' }
+                  : null),
+              }}
             />
           </div>
         )}

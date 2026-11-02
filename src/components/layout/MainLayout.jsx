@@ -161,9 +161,9 @@ export default function MainLayout({ children, pendingInvitation = null, onOpenI
           className={isWidePage ? 'layout-hierarchy' : undefined}
           style={{
             display: 'flex',
-            width: isWidePage ? 'calc(100% - max(0px, calc((100% - 1432px) / 2)))' : '100%',
-            maxWidth: isWidePage ? 'none' : '1432px',
-            marginLeft: isWidePage ? 'max(0px, calc((100% - 1432px) / 2))' : 'auto',
+            width: isWidePage ? 'calc(100% - max(0px, calc((100% - 1520px) / 2)))' : '100%',
+            maxWidth: isWidePage ? 'none' : '1520px',
+            marginLeft: isWidePage ? 'max(0px, calc((100% - 1520px) / 2))' : 'auto',
             marginRight: isWidePage ? 0 : 'auto',
             padding: isWidePage ? '0 8px 0 16px' : '0 16px',
           }}
@@ -243,9 +243,9 @@ export default function MainLayout({ children, pendingInvitation = null, onOpenI
                 <div
                   className="layout-center-inner"
                   style={{
-                    maxWidth: isWidePage ? '100%' : 800,
+                    maxWidth: '100%',
                     width: '100%',
-                    margin: isWidePage ? 0 : '0 auto',
+                    margin: 0,
                     padding: isWidePage ? '16px 8px 16px 16px' : '16px',
                   }}
                 >

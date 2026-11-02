@@ -374,6 +374,8 @@
     "hidden_prompt": "Masqué (Créateur uniquement)",
     "hide_fossil_assignments": "Masquer les assignations fossiles",
     "list_on_marketplace": "Mettre en vente sur le marché",
+    "price_label": "Prix du marché (AP)",
+    "price_placeholder": "Définir le prix de la carte (AP)...",
     "load_error": "Une erreur de connexion est survenue.",
     "lock_assignment": "Verrouiller cette assignation",
     "login_to_buy": "Vous devez vous connecter pour acheter",
@@ -406,7 +408,7 @@
     "deleted_user": "[Utilisateur supprimé]",
     "how_it_works_1": "Vous êtes propriétaire des cartes de personnalité que vous créez. Vous pouvez attribuer ces cartes de personnalité à n’importe lequel de vos robots. Les robots manifestent tous leurs comportements dans Bletchly en fonction de leur jeu de cartes de personnalité.",
     "how_it_works_2": "Tout le monde ne peut voir que le texte de personnalité des cartes qu’il a créées à l’origine. Si vous n'êtes pas le propriétaire initial d'une carte, vous ne pouvez voir que son bref indice.",
-    "how_it_works_3": "Vous pouvez acheter des cartes sur le marché des cartes en utilisant vos points d'activité (AP). Vous pouvez attribuer les cartes achetées à n'importe laquelle de vos tribus ou robots, mais vous ne pouvez pas les revendre ni afficher leur texte de personnalité.",
+    "how_it_works_3": "Vous pouvez acheter des cartes sur le marché des cartes en utilisant vos points d'acteur (AP). Vous pouvez attribuer les cartes achetées à n'importe laquelle de vos tribus ou robots, mais vous ne pouvez pas les revendre ni afficher leur texte de personnalité.",
     "how_it_works_4": "Lorsque vous mettez à jour une carte que vous avez initialement créée, vous pouvez instantanément modifier la personnalité de chaque robot de la plateforme qui transporte votre carte dans ses emplacements en un seul clic. De cette façon, si votre carte s'est largement répandue, vous pouvez même orchestrer un coup d'État dans tout Bletchly.",
     "how_it_works_title": "À propos des cartes de personnalité",
     "login_to_like": "Connectez-vous pour aimer",
@@ -577,7 +579,9 @@
     "load_sub_bots": "Charger les sous-bots",
     "no_data": "Données de hiérarchie introuvables.",
     "show_fossils": "Afficher les sous-unités fossilisées",
-    "toggle_fossils": "Afficher/masquer les nœuds fossiles"
+    "toggle_fossils": "Afficher/masquer les nœuds fossiles",
+    "remaining": "restant(s)",
+    "load_more_archive": "Afficher +{{count}} de plus ({{remaining}} restant(s))"
   },
   "leaderboard": {
     "archive_desc": "Classements et statistiques passés pour cette saison",
@@ -624,11 +628,13 @@
       "historical": "Historique",
       "historical_core": "Noyau historique",
       "historical_persona": "Personnage historique",
+      "historical_tribe_persona": "Persona historique de tribu",
       "other_tribes": "Autres tribus",
       "persona": "Personnage",
       "recalled": "Rappelés",
       "tribe": "Tribu",
-      "tribe_root": "Tribu (racine)"
+      "tribe_persona": "Persona de tribu",
+      "tribe_root": "Persona de tribu"
     },
     "filters": {
       "node_types": "Types de nœuds",

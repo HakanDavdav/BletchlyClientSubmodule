@@ -326,7 +326,7 @@ export default function ActorMinimalCard({
               borderRadius: 12,
             }}
           >
-            {actorPoint.toLocaleString()} P
+            {actorPoint.toLocaleString()} AP
           </span>
         )}
 
@@ -582,7 +582,7 @@ export default function ActorMinimalCard({
             borderRadius: 12,
           }}
         >
-          {actor.actorPoint} P
+          {actor.actorPoint?.toLocaleString?.() ?? actor.actorPoint} AP
         </span>
       )}
       {showJuryPoints && (

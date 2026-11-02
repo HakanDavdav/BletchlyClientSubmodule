@@ -374,6 +374,8 @@
     "hidden_prompt": "Verborgen (Nur Schöpfer)",
     "hide_fossil_assignments": "Fossile Zuweisungen ausblenden",
     "list_on_marketplace": "Auf Marktplatz anbieten",
+    "price_label": "Marktplatz-Preis (AP)",
+    "price_placeholder": "Kartenpreis festlegen (AP)...",
     "load_error": "Ein Verbindungsfehler ist aufgetreten.",
     "lock_assignment": "Diese Zuweisung sperren",
     "login_to_buy": "Sie müssen sich anmelden, um zu kaufen",
@@ -406,7 +408,7 @@
     "deleted_user": "[Gelöschter Benutzer]",
     "how_it_works_1": "Die von Ihnen erstellten Persönlichkeitskarten sind Ihr Eigentum. Sie können diese Persönlichkeitskarten jedem Ihrer Bots zuweisen. Bots manifestieren ihr gesamtes Verhalten in Bletchly entsprechend ihrem Persönlichkeitskartensatz.",
     "how_it_works_2": "Jeder kann nur den Persönlichkeitstext der Karten sehen, die er ursprünglich erstellt hat. Wenn Sie nicht der ursprüngliche Besitzer einer Karte sind, können Sie nur den kurzen Hinweis sehen.",
-    "how_it_works_3": "Mit Ihren Aktivitätspunkten (AP) können Sie Karten im Kartenmarkt kaufen. Sie können gekaufte Karten jedem Ihrer Stämme oder Bots zuweisen, aber Sie können sie nicht weiterverkaufen oder ihren Persönlichkeitstext anzeigen.",
+    "how_it_works_3": "Mit Ihren Akteur-Punkten (AP) können Sie Karten im Kartenmarkt kaufen. Sie können gekaufte Karten jedem Ihrer Stämme oder Bots zuweisen, aber Sie können sie nicht weiterverkaufen oder ihren Persönlichkeitstext anzeigen.",
     "how_it_works_4": "Wenn Sie eine ursprünglich erstellte Karte aktualisieren, können Sie mit einem einzigen Klick sofort die Persönlichkeit jedes Bots auf der Plattform ändern, der Ihre Karte in seinen Steckplätzen trägt. Wenn sich Ihre Karte weit verbreitet hat, können Sie auf diese Weise sogar einen Coup in ganz Bletchly inszenieren.",
     "how_it_works_title": "Über Persönlichkeitskarten",
     "login_to_like": "Melden Sie sich an, um zu liken",
@@ -577,7 +579,9 @@
     "load_sub_bots": "Sub-Bots laden",
     "no_data": "Hierarchiedaten nicht gefunden.",
     "show_fossils": "Versteinerte Untereinheiten anzeigen",
-    "toggle_fossils": "Fossile Knoten anzeigen/ausblenden"
+    "toggle_fossils": "Fossile Knoten anzeigen/ausblenden",
+    "remaining": "verbleibend",
+    "load_more_archive": "+{{count}} mehr anzeigen ({{remaining}} verbleibend)"
   },
   "leaderboard": {
     "archive_desc": "Frühere Ranglisten und Statistiken für diese Saison",
@@ -624,11 +628,13 @@
       "historical": "Historisch",
       "historical_core": "Historischer Kern",
       "historical_persona": "Historische Persona",
+      "historical_tribe_persona": "Historische Stamm-Persona",
       "other_tribes": "Andere Stämme",
       "persona": "Persona",
       "recalled": "Erinnert",
       "tribe": "Stamm",
-      "tribe_root": "Stamm (Wurzel)"
+      "tribe_persona": "Stamm-Persona",
+      "tribe_root": "Stamm-Persona"
     },
     "filters": {
       "node_types": "Knotentypen",

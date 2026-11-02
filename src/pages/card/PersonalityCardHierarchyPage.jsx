@@ -236,6 +236,7 @@ function CardTreeNode({
   const { t } = useTranslation()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [localFossilExpanded, setLocalFossilExpanded] = useState(false)
+  const [fossilVisibleLimit, setFossilVisibleLimit] = useState(5)
   const [isLoadingFossils, setIsLoadingFossils] = useState(false)
   const [fetchedNodeFossils, setFetchedNodeFossils] = useState(false)
 
@@ -247,6 +248,7 @@ function CardTreeNode({
   useEffect(() => {
     if (!showFossils && !includeHistory) {
       setLocalFossilExpanded(false)
+      setFossilVisibleLimit(5)
     }
   }, [showFossils, includeHistory])
 
@@ -305,6 +307,14 @@ function CardTreeNode({
   const showArchiveGroup = (showFossils && hasFossil) || (includeHistory && hasDeleted) || totalPureFossils > 0 || totalDeleted > 0
   const hasChildren = totalActive > 0 || showArchiveGroup
 
+  const allArchiveChildren = [
+    ...pureFossilChildren.map((child) => ({ kind: 'fossil', key: `fossil-${child.id}`, data: child })),
+    ...allDeletedChildren.map((child) => ({ kind: 'deleted', key: `deleted-${child.id}`, data: child })),
+  ]
+  const visibleArchiveChildren = allArchiveChildren.slice(0, fossilVisibleLimit)
+  const remainingArchiveCount = Math.max(0, allArchiveChildren.length - fossilVisibleLimit)
+  const nextArchiveBatch = Math.min(5, remainingArchiveCount)
+
   const effectiveFossilExpanded = Boolean(localFossilExpanded)
   // Fosil (dormant) ve tombstone (feshedilmiş) düğümler aynı şekilde ele alınır
   const isFossilLike = isNodeFossil(node)
@@ -312,6 +322,9 @@ function CardTreeNode({
   const handleToggleFossils = async () => {
     const nextState = !effectiveFossilExpanded
     setLocalFossilExpanded(nextState)
+    if (!nextState) {
+      setFossilVisibleLimit(5)
+    }
 
     if (nextState && !fetchedNodeFossils && onLoadNodeAssignments && sourceActorId) {
       setIsLoadingFossils(true)
@@ -732,41 +745,70 @@ function CardTreeNode({
                   <div className="vtree-children-container">
                     <div className="vtree-stem-down" />
                     <div className="vtree-children-row">
-                      {pureFossilChildren.map((child) => (
-                        <div key={child.id} className="vtree-child-branch vtree-child-branch--fossil">
-                          <div className="vtree-branch-line" />
-                          <CardTreeNode
-                            node={child}
-                            parentId={`fossil-pill-${node.id}`}
-                            isAllCollapsed={isAllCollapsed}
-                            expandTrigger={expandTrigger}
-                            showFossils={showFossils}
-                            includeHistory={includeHistory}
-                            expandedAncestorIds={expandedAncestorIds}
-                            onToggleAncestor={onToggleAncestor}
-                            cardId={cardId}
-                            onLoadNodeAssignments={onLoadNodeAssignments}
-                          />
-                        </div>
-                      ))}
+                      {visibleArchiveChildren.map((item) => {
+                        if (item.kind === 'fossil') {
+                          return (
+                            <div key={item.key} className="vtree-child-branch vtree-child-branch--fossil">
+                              <div className="vtree-branch-line" />
+                              <CardTreeNode
+                                node={item.data}
+                                parentId={`fossil-pill-${node.id}`}
+                                isAllCollapsed={isAllCollapsed}
+                                expandTrigger={expandTrigger}
+                                showFossils={showFossils}
+                                includeHistory={includeHistory}
+                                expandedAncestorIds={expandedAncestorIds}
+                                onToggleAncestor={onToggleAncestor}
+                                cardId={cardId}
+                                onLoadNodeAssignments={onLoadNodeAssignments}
+                              />
+                            </div>
+                          )
+                        }
+                        return (
+                          <div key={item.key} className="vtree-child-branch vtree-child-branch--fossil vtree-child-branch--deleted">
+                            <div className="vtree-branch-line" />
+                            <CardTreeNode
+                              node={item.data}
+                              parentId={`fossil-pill-${node.id}`}
+                              isAllCollapsed={isAllCollapsed}
+                              expandTrigger={expandTrigger}
+                              showFossils={showFossils}
+                              includeHistory={includeHistory}
+                              expandedAncestorIds={expandedAncestorIds}
+                              onToggleAncestor={onToggleAncestor}
+                              cardId={cardId}
+                              onLoadNodeAssignments={onLoadNodeAssignments}
+                            />
+                          </div>
+                        )
+                      })}
 
-                      {allDeletedChildren.map((child) => (
-                        <div key={child.id} className="vtree-child-branch vtree-child-branch--fossil vtree-child-branch--deleted">
+                      {remainingArchiveCount > 0 && (
+                        <div className="vtree-child-branch vtree-child-branch--load-more">
                           <div className="vtree-branch-line" />
-                          <CardTreeNode
-                            node={child}
-                            parentId={`fossil-pill-${node.id}`}
-                            isAllCollapsed={isAllCollapsed}
-                            expandTrigger={expandTrigger}
-                            showFossils={showFossils}
-                            includeHistory={includeHistory}
-                            expandedAncestorIds={expandedAncestorIds}
-                            onToggleAncestor={onToggleAncestor}
-                            cardId={cardId}
-                            onLoadNodeAssignments={onLoadNodeAssignments}
-                          />
+                          <div
+                            className="vtree-card-wrapper"
+                            data-node-id={`load-more-${node.id}`}
+                            data-parent-id={`fossil-pill-${node.id}`}
+                          >
+                            <button
+                              type="button"
+                              className="vtree-fossil-pill vtree-fossil-pill--load-more"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setFossilVisibleLimit((prev) => prev + 5)
+                              }}
+                              aria-label={t('hierarchy.load_more_archive', '+{{count}} daha fazla göster ({{remaining}} kalan)', { count: nextArchiveBatch, remaining: remainingArchiveCount })}
+                              title={t('hierarchy.load_more_archive', '+{{count}} daha fazla göster ({{remaining}} kalan)', { count: nextArchiveBatch, remaining: remainingArchiveCount })}
+                            >
+                              <CirclePlus size={14} strokeWidth={2.2} />
+                              <span>+{nextArchiveBatch}</span>
+                              <span className="vtree-fossil-pill-sub">({remainingArchiveCount} {t('hierarchy.remaining', 'kalan')})</span>
+                            </button>
+                          </div>
                         </div>
-                      ))}
+                      )}
                     </div>
                   </div>
                 )}

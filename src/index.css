@@ -93,11 +93,11 @@
   /* Layout */
   --topbar-height: 112px;
   --footer-height: 48px;
-  --left-width: 20%;
-  --center-width: 50%;
-  --right-width: 30%;
-  --left-min-width: 220px;
-  --right-min-width: 260px;
+  --left-width: 300px;
+  --center-width: 1fr;
+  --right-width: clamp(310px, 31%, 360px);
+  --left-min-width: 250px;
+  --right-min-width: 310px;
 
   /* Transitions */
   --transition-fast: 150ms ease;
@@ -1475,7 +1475,7 @@ select {
    büyüyor ve panel hafifçe sağa doğru genişliyordu. */
 @media (min-width: 1201px) {
   .layout-hierarchy .layout-left {
-    width: calc((min(100vw, 1432px) - 32px) * 0.2);
+    width: var(--left-width);
   }
 }
 
@@ -2332,12 +2332,14 @@ html.dark .bot-capability-emblem--fossil path {
 
 .mind-rel-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  row-gap: 5px;
 }
 
 .mind-rel-type {
-  flex-shrink: 0;
+  flex: 0 0 100%;
 }
 
 .mind-rel-target {
@@ -2349,15 +2351,6 @@ html.dark .bot-capability-emblem--fossil path {
 }
 
 @media (max-width: 768px) {
-  .mind-rel-row {
-    flex-wrap: wrap;
-    row-gap: 5px;
-  }
-
-  .mind-rel-type {
-    flex: 0 0 100%;
-  }
-
   .mind-rel-target {
     margin-left: 0;
     flex: 1 1 auto;
@@ -2735,7 +2728,8 @@ html.dark .bot-capability-emblem--fossil path {
 
 /* ── Fossil Hierarchy Nodes & Pills ─────────────────────────────────────────── */
 .vtree-child-branch--fossil-pill,
-.vtree-child-branch--fossil-group {
+.vtree-child-branch--fossil-group,
+.vtree-child-branch--load-more {
   z-index: 2;
 }
 
@@ -2756,6 +2750,29 @@ html.dark .bot-capability-emblem--fossil path {
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
   white-space: nowrap;
+}
+
+.vtree-fossil-pill--load-more {
+  padding: 6px 14px;
+  border: 1.5px dashed var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+  color: var(--color-primary);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.vtree-fossil-pill--load-more:hover {
+  transform: translateY(-2px) scale(1.05);
+  background: color-mix(in srgb, var(--color-primary) 18%, var(--color-surface));
+  border-style: solid;
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 14px var(--color-primary-shadow);
+}
+
+.vtree-fossil-pill-sub {
+  opacity: 0.7;
+  font-size: 10px;
+  font-weight: 600;
 }
 
 .vtree-fossil-pill:hover {
