@@ -3,12 +3,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import * as signalR from '@microsoft/signalr'
-import { Check, Eye, Swords, Trophy } from 'lucide-react'
 import BackButton from '../components/common/BackButton'
 import AngryBotWithSwordsIcon from '../components/common/icons/AngryBotWithSwordsIcon'
-import ActorAvatar from '../components/actor/ActorAvatar'
-import ActorMinimalCard from '../components/actor/ActorMinimalCard'
-import { actorApi } from '../api/actorApi'
+import DebateCard from '../components/debate/DebateCard'
 import { debateApi } from '../api/debateApi'
 import { searchApi } from '../api/searchApi'
 import useAuthStore from '../store/authStore'
@@ -16,202 +13,6 @@ import HowItWorksHelp from '../components/common/HowItWorksHelp'
 
 const isLive = (d) => d.status === 1 || d.status === 'InProgress' || d.Status === 1 || d.Status === 'InProgress'
 const isCompleted = (d) => d.status === 2 || d.status === 'Completed' || d.Status === 2 || d.Status === 'Completed'
-
-function DebateCard({ debate, actorId, onOpen }) {
-  const { t } = useTranslation()
-  const live = isLive(debate)
-  const completed = isCompleted(debate)
-  const proponent = debate.proponent || debate.Proponent || {}
-  const opponent = debate.opponent || debate.Opponent || {}
-  const isParticipant =
-    (proponent.actorId || proponent.ActorId) === actorId ||
-    (opponent.actorId || opponent.ActorId) === actorId
-
-  const ButtonIcon = live ? (isParticipant ? Swords : Eye) : Trophy
-
-  return (
-    <div
-      className="info-card debate-card"
-      onClick={() => onOpen(debate)}
-      style={{
-        cursor: 'pointer',
-        gap: 10,
-        padding: '14px 16px 10px',
-        height: 'fit-content',
-      }}
-    >
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr auto 1fr',
-          alignItems: 'center',
-          gap: 10,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            gap: 8,
-            minWidth: 0,
-          }}
-        >
-          {live && (
-            <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: 'var(--color-primary)',
-                animation: 'debatePulse 1.6s infinite',
-                flexShrink: 0,
-                marginRight: 'auto',
-                marginLeft: 2,
-              }}
-            />
-          )}
-          {completed && (
-            <Check
-              size={15}
-              strokeWidth={2.5}
-              style={{
-                color: 'var(--color-primary)',
-                flexShrink: 0,
-                marginRight: 'auto',
-                marginLeft: 2,
-              }}
-            />
-          )}
-          <ActorMinimalCard
-            actor={proponent}
-            variant="ultra-compact"
-            showHierarchyBtn={false}
-            showMemoryMapBtn={true}
-            contextTitle={debate.proposition || debate.Proposition}
-          />
-          <span
-            className="truncate"
-            style={{
-              fontSize: 13,
-              fontWeight: 700,
-              color: 'var(--color-text-primary)',
-              minWidth: 0,
-            }}
-          >
-            {proponent.profileName || proponent.ProfileName || 'Proponent'}
-          </span>
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <AngryBotWithSwordsIcon size={26} style={{ color: 'var(--color-primary)' }} />
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-            gap: 8,
-            minWidth: 0,
-          }}
-        >
-          <span
-            className="truncate"
-            style={{
-              fontSize: 13,
-              fontWeight: 700,
-              color: 'var(--color-text-primary)',
-              minWidth: 0,
-              textAlign: 'right',
-            }}
-          >
-            {opponent.profileName || opponent.ProfileName || 'Opponent'}
-          </span>
-          <ActorMinimalCard
-            actor={opponent}
-            variant="ultra-compact"
-            showHierarchyBtn={false}
-            showMemoryMapBtn={true}
-            reverse={true}
-            contextTitle={debate.proposition || debate.Proposition}
-          />
-        </div>
-      </div>
-
-      <div
-        style={{
-          height: 1,
-          background: 'var(--color-border)',
-          width: '100%',
-        }}
-      />
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: -2 }}>
-        <p
-          style={{
-            margin: 0,
-            fontSize: 13,
-            color: 'var(--color-text-secondary)',
-            lineHeight: 1.45,
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}
-        >
-          {debate.proposition || debate.Proposition || t('debate.no_proposition', 'Önerme belirtilmedi')}
-        </p>
-
-        <div
-          style={{
-            height: 1,
-            background: 'var(--color-border)',
-            width: '100%',
-          }}
-        />
-
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            color: 'var(--color-primary)',
-            fontSize: 13,
-            fontWeight: 600,
-            paddingTop: 2,
-          }}
-        >
-          <ButtonIcon size={15} strokeWidth={2.5} />
-          {live
-            ? isParticipant
-              ? t('debate.join_debate', 'Meydan Okumaya Katıl')
-              : t('debate.watch_live', 'Canlı İzle')
-            : t('debate.view_transcript', 'Görüntüle')}
-          {completed && (
-            <span
-              style={{
-                marginLeft: 'auto',
-                fontSize: 12,
-                fontWeight: 700,
-                color: 'var(--color-text-secondary)',
-              }}
-            >
-              {debate.proponentScore ?? debate.ProponentScore ?? '-'} - {debate.opponentScore ?? debate.OpponentScore ?? '-'}
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
 
 export default function ActiveDebatesPage() {
   const { actorId } = useAuthStore()
@@ -232,7 +33,7 @@ export default function ActiveDebatesPage() {
   const { data: todayData, isLoading: isTodayLoading } = useQuery({
     queryKey: ['debates', 'today'],
     queryFn: () =>
-      actorApi.getTodayDebates().then((r) => {
+      debateApi.getTodayDebates().then((r) => {
         const list = r?.data?.data || r?.data
         return Array.isArray(list) ? list : []
       }),

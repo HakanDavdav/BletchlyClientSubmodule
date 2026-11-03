@@ -98,7 +98,6 @@ export default function DebatePage() {
 
   const [myInput, setMyInput] = useState('')
   const [isMyTurn, setIsMyTurn] = useState(false)
-  const [isTopicExpanded, setIsTopicExpanded] = useState(false)
 
   const [messages, setMessages] = useState([])
   const chatScrollRef = useRef(null)
@@ -412,6 +411,19 @@ export default function DebatePage() {
 
     setConnection(newConnection)
   }, [debateId, isValidDebateId])
+
+  useEffect(() => {
+    if (!connection || !isSpectator || !isValidDebateId) return
+
+    const sendHeartbeat = () => {
+      if (connection.state === signalR.HubConnectionState.Connected) {
+        connection.invoke('HeartbeatSpectator', debateId).catch(() => {})
+      }
+    }
+
+    const interval = setInterval(sendHeartbeat, 60000)
+    return () => clearInterval(interval)
+  }, [connection, debateId, isSpectator, isValidDebateId])
 
   useEffect(() => {
     if (connection) {
@@ -872,32 +884,30 @@ export default function DebatePage() {
               </div>
             )}
           </div>
-        <div
-          className={`debate-proposition-container ${isTopicExpanded ? 'expanded' : ''}`}
-          onClick={() => setIsTopicExpanded(!isTopicExpanded)}
-        >
-          <h2 className="debate-proposition-text">{proposition}</h2>
-        </div>
-        {isSpectator && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '8px auto 0',
-              fontSize: 11,
-              fontWeight: 700,
-              color: 'var(--color-primary)',
-              background: 'color-mix(in srgb, var(--color-surface) 80%, transparent)',
-              border: '1px solid var(--color-border)',
-              padding: '4px 10px',
-              borderRadius: 9999,
-              width: 'fit-content',
-            }}
-          >
-            <Eye size={14} />
+          <hr className="divider" style={{ margin: 0 }} />
+          <div className="debate-proposition-quote">
+            <span>"{proposition || t('debate.no_proposition', 'Önerme belirtilmedi')}"</span>
           </div>
-        )}
+          {isSpectator && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '8px auto 0',
+                fontSize: 11,
+                fontWeight: 700,
+                color: 'var(--color-primary)',
+                background: 'color-mix(in srgb, var(--color-surface) 80%, transparent)',
+                border: '1px solid var(--color-border)',
+                padding: '4px 10px',
+                borderRadius: 9999,
+                width: 'fit-content',
+              }}
+            >
+              <Eye size={14} />
+            </div>
+          )}
       </div>
 
       <div className="debate-arena-wrap" ref={arenaWrapRef}>

@@ -3,9 +3,9 @@ import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { getQueryErrorMessage } from '../../utils/errorHelper'
+import { getShortTimeAgo } from '../../utils/formatTime'
 import {
   ArrowLeft,
-  Calendar,
   Crown,
   Trophy,
   MessageSquare,
@@ -55,7 +55,6 @@ export default function DebateTranscriptPage() {
     !winner &&
     debate?.proponentScore === debate?.opponentScore
 
-  const [isTopicExpanded, setIsTopicExpanded] = useState(false)
   const arenaWrapRef = useRef(null)
   const [ellipseStyle, setEllipseStyle] = useState(null)
   const [debateBots, setDebateBots] = useState([])
@@ -167,15 +166,7 @@ export default function DebateTranscriptPage() {
     return numbers.length > 0 ? Math.max(...numbers) : parsedTurns.length
   }, [parsedTurns])
 
-  const formattedDate = debate?.completedAt || debate?.createdAt
-    ? new Date(debate.completedAt || debate.createdAt).toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : null
+  const timeAgo = getShortTimeAgo(debate?.completedAt || debate?.createdAt)
 
   if (isLoading && !debate) {
     return (
@@ -226,10 +217,18 @@ export default function DebateTranscriptPage() {
         }}
       >
         <BackButton onClick={() => navigate(-1)} style={{ marginBottom: 0 }} />
-        {formattedDate && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>
-            <Calendar size={13} />
-            {formattedDate}
+        {timeAgo && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              fontSize: 'var(--font-size-sm)',
+              color: 'var(--color-text-muted)',
+              fontWeight: 500,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {timeAgo}
           </div>
         )}
       </div>
@@ -249,37 +248,19 @@ export default function DebateTranscriptPage() {
             >
               {t('debate.transcript_title', 'Meydan Okuma')}
             </span>
-            <div
-              style={{
-                position: 'absolute',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '11px',
-                fontWeight: 700,
-                color: 'var(--color-primary)',
-                background: 'color-mix(in srgb, var(--color-surface) 80%, transparent)',
-                border: '1px solid var(--color-border)',
-                padding: '2px 12px',
-                borderRadius: '9999px',
-                letterSpacing: '0.5px',
-              }}
-            >
+            <span className="debate-header__completed debate-header__completed--center">
               <AngryBotWithSwordsIcon size={14} />
-              <span>{t('debate.completed_status', 'Tamamlandı')}</span>
-            </div>
-            <div className="debate-status">
+              {t('debate.completed_status', 'Tamamlandı')}
+            </span>
+            <span className="debate-status">
               {maxTurnNumber > 0 && `${maxTurnNumber} ${t('debate.turns_total', 'Tur')}`}
-            </div>
+            </span>
           </div>
 
-          <div
-            className={`debate-proposition-container ${isTopicExpanded ? 'expanded' : ''}`}
-            onClick={() => setIsTopicExpanded(!isTopicExpanded)}
-          >
-            <h2 className="debate-proposition-text">{debate.proposition || t('debate.no_proposition', 'Önerme belirtilmedi')}</h2>
+          <hr className="divider" style={{ margin: 0 }} />
+
+          <div className="debate-proposition-quote">
+            <span>"{debate.proposition || t('debate.no_proposition', 'Önerme belirtilmedi')}"</span>
           </div>
         </div>
 

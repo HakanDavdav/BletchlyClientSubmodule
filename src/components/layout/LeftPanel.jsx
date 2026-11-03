@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
-import { PenSquare, Flame, Clock8, ThumbsUp, Skull, PackageOpen, Swords, Eye } from 'lucide-react'
+import { PenSquare, Flame, Clock8, ThumbsUp, Skull, PackageOpen } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import { searchApi, parseCacheResponse } from '../../api/searchApi'
@@ -9,8 +9,7 @@ import { actorApi } from '../../api/actorApi'
 import PostMinimalCard from '../content/PostMinimalCard'
 import EntryMinimalCard from '../content/EntryMinimalCard'
 import ActivityItem from '../activity/ActivityItem'
-import ActorMinimalCard from '../actor/ActorMinimalCard'
-import AngryBotWithSwordsIcon from '../common/icons/AngryBotWithSwordsIcon'
+import DebateCard from '../debate/DebateCard'
 import useAuthStore from '../../store/authStore'
 import useUIStore from '../../store/uiStore'
 import useDevLog from '../../utils/useDevLog'
@@ -234,7 +233,7 @@ export default function LeftPanel() {
 
   const debates = React.useMemo(() => debatesData?.pages?.flatMap((p) => p) || [], [debatesData])
 
-  const handleDebateClick = async (debate, setLoading) => {
+  const handleDebateClick = async (debate) => {
     // 2 = Completed or has transcript -> Navigate to DebateTranscriptPage (middle panel)
     if (debate.status === 2 || debate.status === 'Completed' || debate.debateTranscript) {
       navigate(`/debate-transcript?id=${debate.debateId}`, {
@@ -552,11 +551,15 @@ export default function LeftPanel() {
                       </p>
                     )}
                     {debates?.map((d) => (
-                      <DebateItem
+                      <DebateCard
                         key={d.debateId}
                         debate={d}
                         actorId={actorId}
-                        onClick={handleDebateClick}
+                        variant="compact"
+                        onOpen={handleDebateClick}
+                        onWatch={(debate) =>
+                          navigate(`/debate?id=${debate.debateId || debate.DebateId}&spectate=1`)
+                        }
                       />
                     ))}
                     {isFetchingNextDebatePage && (
@@ -976,125 +979,4 @@ function ActivitiesScrollArea({ children, onScrollBottom }) {
   )
 }
 
-function DebateItem({ debate, actorId, onClick }) {
-  const [loading, setLoading] = useState(false)
-  const navigate = useNavigate()
-  const { t } = useTranslation()
-  const opponentAvatar = debate.opponent?.imageUrl || '/assets/default-avatar.png'
-  const proponentAvatar = debate.proponent?.imageUrl || '/assets/default-avatar.png'
-  const isLive = debate.status === 1 || debate.status === 'InProgress'
 
-  return (
-    <div
-      onClick={() => {
-        if (!loading) onClick(debate, setLoading)
-      }}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        padding: '10px 8px',
-        cursor: loading ? 'wait' : 'pointer',
-        gap: 8,
-        background: 'var(--color-surface)',
-        border: '1px solid var(--color-border)',
-        borderRadius: 8,
-        marginBottom: 6,
-        transition: 'all 0.2s',
-        opacity: loading ? 0.7 : 1,
-      }}
-      onMouseEnter={(e) => {
-        if (!loading) {
-          e.currentTarget.style.borderColor = 'var(--color-primary-light)'
-          e.currentTarget.style.transform = 'translateY(-1px)'
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!loading) {
-          e.currentTarget.style.borderColor = 'var(--color-border)'
-          e.currentTarget.style.transform = 'none'
-        }
-      }}
-    >
-      <ActorMinimalCard
-        actor={debate.proponent}
-        variant="ultra-compact"
-        showHierarchyBtn={false}
-        showMindBtn={false}
-        contextTitle={debate.proposition}
-      />
-
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        {loading ? (
-          <div className="spinner spinner-sm" style={{ width: 14, height: 14, borderWidth: 2 }} />
-        ) : (
-          <AngryBotWithSwordsIcon size={16} style={{ color: 'var(--color-primary)' }} />
-        )}
-      </div>
-
-      <ActorMinimalCard
-        actor={debate.opponent}
-        variant="ultra-compact"
-        showHierarchyBtn={false}
-        showMindBtn={false}
-        reverse={true}
-        contextTitle={debate.proposition}
-      />
-
-      <div
-        style={{
-          flex: 1,
-          marginLeft: 4,
-          fontSize: 11,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          color: 'var(--color-text)',
-        }}
-      >
-        {debate.proposition || 'No proposition'}
-      </div>
-
-      {isLive && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            navigate(`/debate?id=${debate.debateId}&spectate=1`)
-          }}
-          aria-label={t('left_panel.watch', 'İzle')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 28,
-            height: 28,
-            borderRadius: 8,
-            border: '1px solid var(--color-border)',
-            background: 'var(--color-bg)',
-            color: 'var(--color-primary)',
-            cursor: 'pointer',
-            flexShrink: 0,
-            transition: 'all 0.2s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'var(--color-primary)'
-            e.currentTarget.style.background = 'var(--color-primary-alpha)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'var(--color-border)'
-            e.currentTarget.style.background = 'var(--color-bg)'
-          }}
-        >
-          <Eye size={14} />
-        </button>
-      )}
-    </div>
-  )
-}

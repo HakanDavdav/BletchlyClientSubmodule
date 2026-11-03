@@ -1,0 +1,107 @@
+.debate-card--with-bg {
+  position: relative;
+  overflow: hidden;
+}
+
+.debate-card--with-bg > :not(.debate-card__bg) {
+  position: relative;
+  z-index: 1;
+}
+
+.debate-card__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.debate-card__bg-side {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.debate-card__bg-side--left {
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    78% 20%,
+    62% 48%,
+    48% 48%,
+    30% 74%,
+    16% 74%,
+    0 100%
+  );
+}
+
+.debate-card__bg-side--right {
+  clip-path: polygon(
+    100% 0,
+    100% 100%,
+    0 100%,
+    16% 74%,
+    30% 74%,
+    48% 48%,
+    62% 48%,
+    78% 20%
+  );
+}
+
+.debate-card__bg-image {
+  position: absolute;
+  inset: -8px;
+  background-size: cover;
+  background-position: center;
+  filter: blur(1.6px) saturate(1.15);
+  opacity: 0.7;
+  transform: scale(1.02);
+  transition:
+    filter 0.3s ease,
+    transform 0.3s ease,
+    opacity 0.3s ease;
+}
+
+.debate-card--with-bg:hover .debate-card__bg-image {
+  filter: blur(0.6px) saturate(1.22);
+  opacity: 0.88;
+  transform: scale(1.05);
+}
+
+.debate-card__bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--color-surface);
+  opacity: 0.66;
+  transition:
+    opacity 0.3s ease,
+    background-color 0.3s ease;
+}
+
+.debate-card--with-bg:hover .debate-card__bg-overlay {
+  opacity: 0.54;
+}
+
+.info-card.debate-card--with-bg:hover .debate-card__bg-overlay {
+  background: var(--color-surface-2);
+}
+
+.debate-card__crack {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.debate-card__crack path {
+  fill: none;
+  stroke: var(--color-border);
+  stroke-width: 4px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition: stroke 0.3s ease;
+}

@@ -112,10 +112,6 @@ export const actorApi = {
 
   declineDebate: (debateId) => api.post(`/actor/decline-debate/${debateId}`),
 
-  getDebates: (actorId, page = 1) => api.get('/actor/debates', { params: { actorId, page } }),
-
-  getTodayDebates: () => api.get('/actor/debates/today'),
-
   getMyDebates: (actorId, page = 1) => api.get('/actor/my-debates', { params: { actorId, page } }),
 
   getDebateById: (debateId) => api.get(`/actor/debate/${debateId}`),
