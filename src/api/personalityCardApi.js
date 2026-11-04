@@ -6,7 +6,6 @@ export const personalityCardApi = {
   editOwnership: (ownershipId, data) =>
     axiosInstance.put(`/PersonalityCard/edit-ownership/${ownershipId}`, data),
   buyCard: (cardId) => axiosInstance.post(`/PersonalityCard/buy/${cardId}`),
-  assignCards: (botId, data) => axiosInstance.post(`/PersonalityCard/assign/${botId}`, data),
   deleteCard: (cardId, confirmed = false) =>
     axiosInstance.delete(`/PersonalityCard/delete-card/${cardId}`, { params: { confirmed } }),
   getBotCards: (botId) => axiosInstance.get(`/PersonalityCard/bot-cards/${botId}`),

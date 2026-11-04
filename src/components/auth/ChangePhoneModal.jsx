@@ -40,17 +40,6 @@ export default function ChangePhoneModal({ isOpen, onClose }) {
   })
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-    
-    if (isRequired) {
-      return (!value || !value.trim()) ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
 
   const canSubmitRequest = phoneNumber.trim() !== '' && !requestMutation.isPending
 
@@ -138,7 +127,7 @@ export default function ChangePhoneModal({ isOpen, onClose }) {
                   {t('auth.phone_label')}
                 </label>
                 <input
-                  className="input"
+                  className={`input ${hasSubmitted && !phoneNumber.trim() ? 'error' : ''}`}
                   type="text"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
@@ -148,11 +137,7 @@ export default function ChangePhoneModal({ isOpen, onClose }) {
                     height: 42,
                     padding: '10px 14px',
                     borderRadius: 10,
-                    borderColor: getBorderColor('phoneNumber', phoneNumber, true),
-                    outline: 'none',
                   }}
-                  onFocus={() => setFocused('phoneNumber')}
-                  onBlur={() => setFocused(null)}
                 />
               </div>
 

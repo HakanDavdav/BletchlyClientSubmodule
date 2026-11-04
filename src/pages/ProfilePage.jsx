@@ -26,6 +26,10 @@ import { getMemoryEmblems } from '../components/common/MemoryEmblems'
 import KingIcon from '../components/common/icons/KingIcon'
 import FossilIcon from '../components/common/icons/FossilIcon'
 import AngryBotWithSwordsIcon from '../components/common/icons/AngryBotWithSwordsIcon'
+import ChatBubbleIcon from '../components/common/icons/ChatBubbleIcon'
+import useChatDeckStore from '../store/chatDeckStore'
+import useIsMobile from '../hooks/useIsMobile'
+import { isChatDeckEligible } from '../utils/chatDeck'
 import AmbientBots from '../components/common/ambiances/AmbientBots'
 import WelcomeAmbience from '../components/common/ambiances/WelcomeAmbience'
 import MemoryMapAmbience from '../components/common/ambiances/MemoryMapAmbience'
@@ -34,13 +38,14 @@ import BotFlashCardsIcon from '../components/common/icons/BotFlashCardsIcon'
 import CardContingencyIcon from '../components/common/icons/CardContingencyIcon'
 import CardContingencyModifierIcon from '../components/common/icons/CardContingencyModifierIcon'
 import toast from 'react-hot-toast'
-import { useSearchParams, useNavigate, Link } from 'react-router-dom'
+import { useSearchParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { actorApi } from '../api/actorApi'
 import { personalityCardApi } from '../api/personalityCardApi'
 import { UserCapabilities, Theme } from '../constants/enums'
 import TriggerDebateModal from '../components/profile/TriggerDebateModal'
 import { trackDebate } from '../utils/analytics'
 import BackButton from '../components/common/BackButton'
+import { PageTopDockRow } from '../components/layout/PageTopDock'
 import ActorAvatar from '../components/actor/ActorAvatar'
 import CardSlots from '../components/card/CardSlots'
 import { TopicTagList } from '../components/topic/TopicTag'
@@ -150,6 +155,9 @@ export default function ProfilePage() {
   const { actorId: currentUserId, isLoggedIn } = useAuthStore()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const location = useLocation()
+  const isMobile = useIsMobile()
+  const openChatDeck = useChatDeckStore((s) => s.openChatDeck)
   const [activeTab, setActiveTab] = useState('bots')
   // Fosil (dormant) bot/klanlar bu sayfada varsayılan olarak gizli.
   const [showFossilProfileBots, setShowFossilProfileBots] = useState(false)
@@ -909,41 +917,46 @@ export default function ProfilePage() {
 
   return (
     <div className="flex-col gap-4">
-      <div className="flex items-center gap-3 px-2" style={{ marginBottom: 8 }}>
-        <BackButton style={{ marginBottom: 0 }} />
-        <button
-          type="button"
-          className="btn-icon"
-          onClick={() => setIsHeaderCollapsed((prev) => !prev)}
-          title={isHeaderCollapsed ? t('common.expand', 'Genişlet') : t('common.collapse', 'Daralt')}
-          aria-label={isHeaderCollapsed ? t('common.expand', 'Genişlet') : t('common.collapse', 'Daralt')}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 34,
-            height: 34,
-            padding: 0,
-            cursor: 'pointer',
-          }}
-        >
-          <span
-            aria-hidden="true"
-            style={{
-              fontSize: 13,
-              lineHeight: 1,
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transform: isHeaderCollapsed ? 'none' : 'rotate(180deg)',
-              transformOrigin: '50% 50%',
-              transition: 'transform 0.2s ease',
-            }}
-          >
-            ▼
-          </span>
-        </button>
-      </div>
+      <PageTopDockRow
+        left={
+          <>
+            <BackButton style={{ marginBottom: 0 }} />
+            <button
+              type="button"
+              className="btn-icon page-back-button"
+              onClick={() => setIsHeaderCollapsed((prev) => !prev)}
+              title={isHeaderCollapsed ? t('common.expand', 'Genişlet') : t('common.collapse', 'Daralt')}
+              aria-label={isHeaderCollapsed ? t('common.expand', 'Genişlet') : t('common.collapse', 'Daralt')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 34,
+                height: 34,
+                padding: 0,
+                cursor: 'pointer',
+              }}
+            >
+              <span
+                aria-hidden="true"
+                style={{
+                  fontSize: 13,
+                  lineHeight: 1,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transform: isHeaderCollapsed ? 'none' : 'rotate(180deg)',
+                  transformOrigin: '50% 50%',
+                  transition: 'transform 0.2s ease',
+                }}
+              >
+                ▼
+              </span>
+            </button>
+          </>
+        }
+        style={{ marginBottom: 8 }}
+      />
 
       {/* ─── Collapsible Profile Header Block ─── */}
       <AnimatePresence initial={false}>
@@ -1001,21 +1014,16 @@ export default function ProfilePage() {
                 {isEditing ? (
                   <input
                     type="text"
+                    className="input"
                     style={{
                       flex: 1,
                       maxWidth: 300,
                       fontSize: 18,
                       padding: '8px 16px',
                       borderRadius: 12,
-                      border: '1.5px solid var(--color-border)',
                       background: 'var(--color-surface)',
                       color: 'var(--color-text-primary)',
-                      fontFamily: 'inherit',
-                      outline: 'none',
-                      transition: 'border-color 0.2s',
                     }}
-                    onFocus={(e) => (e.target.style.borderColor = 'var(--color-primary)')}
-                    onBlur={(e) => (e.target.style.borderColor = 'var(--color-border)')}
                     value={editForm.profileName}
                     onChange={(e) => setEditForm((f) => ({ ...f, profileName: e.target.value }))}
                   />
@@ -1032,6 +1040,7 @@ export default function ProfilePage() {
             {isEditing ? (
               <>
                 <textarea
+                  className="input textarea textarea--autogrow"
                   style={{
                     margin: '8px 0',
                     width: '100%',
@@ -1040,16 +1049,9 @@ export default function ProfilePage() {
                     fontSize: 14,
                     padding: '12px 16px',
                     borderRadius: 12,
-                    border: '1.5px solid var(--color-border)',
                     background: 'var(--color-surface)',
                     color: 'var(--color-text-primary)',
-                    fontFamily: 'inherit',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                    resize: 'vertical',
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = 'var(--color-primary)')}
-                  onBlur={(e) => (e.target.style.borderColor = 'var(--color-border)')}
                   value={editForm.bio}
                   onChange={(e) => setEditForm((f) => ({ ...f, bio: e.target.value }))}
                   placeholder={t('profile.bio_placeholder')}
@@ -1255,6 +1257,20 @@ export default function ProfilePage() {
                   title={isDormant ? t('profile.dormant_cannot_debate', 'Fosil botlar yeni meydan okumaya katılamaz.') : undefined}
                 >
                   <AngryBotWithSwordsIcon size={14} /> {t('profile.trigger_debate', 'Meydan Okuma')}
+                </button>
+              )}
+              {isLoggedIn && !isOwnProfile && profile.discriminator === 'User' && (
+                <button
+                  className="btn btn-outline btn-sm"
+                  onClick={() => {
+                    if (!isMobile && isChatDeckEligible(location.pathname)) {
+                      openChatDeck(actorId)
+                      return
+                    }
+                    navigate('/chat?actorId=' + actorId)
+                  }}
+                >
+                  <ChatBubbleIcon size={14} /> {t('profile.chat', 'Sohbet')}
                 </button>
               )}
             </div>

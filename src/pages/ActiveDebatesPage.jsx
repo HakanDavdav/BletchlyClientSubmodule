@@ -1,15 +1,17 @@
-import { useEffect } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import * as signalR from '@microsoft/signalr'
 import BackButton from '../components/common/BackButton'
+import { PageTopDockRow } from '../components/layout/PageTopDock'
 import AngryBotWithSwordsIcon from '../components/common/icons/AngryBotWithSwordsIcon'
 import DebateCard from '../components/debate/DebateCard'
 import { debateApi } from '../api/debateApi'
 import { searchApi } from '../api/searchApi'
 import useAuthStore from '../store/authStore'
 import HowItWorksHelp from '../components/common/HowItWorksHelp'
+import SearchFilterBar from '../components/common/SearchFilterBar'
 
 const isLive = (d) => d.status === 1 || d.status === 'InProgress' || d.Status === 1 || d.Status === 'InProgress'
 const isCompleted = (d) => d.status === 2 || d.status === 'Completed' || d.Status === 2 || d.Status === 'Completed'
@@ -30,14 +32,39 @@ export default function ActiveDebatesPage() {
     refetchInterval: 30000,
   })
 
-  const { data: todayData, isLoading: isTodayLoading } = useQuery({
-    queryKey: ['debates', 'today'],
-    queryFn: () =>
-      debateApi.getTodayDebates().then((r) => {
-        const list = r?.data?.data || r?.data
-        return Array.isArray(list) ? list : []
-      }),
-    refetchInterval: 30000,
+  const [browseParams, setBrowseParams] = useState({
+    query: '',
+    orderType: '',
+    startDate: null,
+    endDate: null,
+  })
+
+  const {
+    data: browseData,
+    isLoading: isBrowseLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['debates', 'browse', browseParams],
+    queryFn: ({ pageParam = 1 }) =>
+      debateApi
+        .loadBrowseDebates(
+          pageParam,
+          browseParams.query,
+          browseParams.orderType,
+          browseParams.startDate,
+          browseParams.endDate
+        )
+        .then((r) => {
+          const list = r?.data?.data || r?.data
+          return Array.isArray(list) ? list : []
+        }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      if (browseParams.query) return undefined
+      return lastPage.length === 20 ? allPages.length + 1 : undefined
+    },
   })
 
   const { data: seasonStatus } = useQuery({
@@ -147,7 +174,7 @@ export default function ActiveDebatesPage() {
   const debates = data || []
   const activeDebates = debates.filter(isLive)
   const recentDebates = debates.filter(isCompleted)
-  const todayDebates = todayData || []
+  const browseDebates = browseData?.pages?.flatMap((p) => p) || []
 
   const openDebate = (debate) => {
     const targetDebateId = debate.debateId || debate.DebateId
@@ -254,9 +281,10 @@ export default function ActiveDebatesPage() {
         className="flex-col gap-4"
         style={{ paddingBottom: 60, maxWidth: 1200, margin: '0 auto', width: '100%' }}
       >
-        <div className="flex items-center gap-3 px-2" style={{ marginBottom: 16 }}>
-          <BackButton style={{ marginBottom: 0 }} />
-        </div>
+        <PageTopDockRow
+          left={<BackButton style={{ marginBottom: 0 }} />}
+          style={{ marginBottom: 16 }}
+        />
 
         <div
           style={{
@@ -296,7 +324,7 @@ export default function ActiveDebatesPage() {
         />
       </div>
 
-      {isLoading || isTodayLoading ? (
+      {isLoading || isBrowseLoading ? (
         <div className="flex justify-center" style={{ padding: 60 }}>
           <div className="spinner spinner-lg" />
         </div>
@@ -313,11 +341,34 @@ export default function ActiveDebatesPage() {
             recentDebates,
             t('active_debates.no_recent', 'Henüz tamamlanmış meydan okuma yok.')
           )}
-          {renderSection(
-            t('active_debates.browse_title', 'Göz At'),
-            todayDebates,
-            t('active_debates.no_today', 'Bugün henüz meydan okuma yok.')
-          )}
+          <section style={{ display: 'flex', flexDirection: 'column' }}>
+            <SearchFilterBar
+              onSearch={setBrowseParams}
+              orderOptions={[
+                { value: 'Newest', labelKey: 'sort.newest', labelDefault: 'En Yeni' },
+                { value: 'Oldest', labelKey: 'topbar.oldest', labelDefault: 'En Eski' },
+              ]}
+              placeholder={t('active_debates.browse_search_placeholder', 'Meydan okumalarda ara')}
+            />
+            {renderSection(
+              t('active_debates.browse_title', 'Göz At'),
+              browseDebates,
+              t('active_debates.no_browse', 'Aramanızla eşleşen meydan okuma yok.')
+            )}
+            {hasNextPage && (
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                style={{ alignSelf: 'center', marginTop: 16 }}
+              >
+                {isFetchingNextPage
+                  ? t('common.loading', 'Yükleniyor...')
+                  : t('common.load_more', 'Daha fazla')}
+              </button>
+            )}
+          </section>
         </div>
       )}
     </div>

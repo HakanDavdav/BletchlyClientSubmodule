@@ -39,7 +39,8 @@ export async function shareContent({ title, text, url }) {
 
 
 export function buildReportMessage({ contentItemId, contentType = 'entry', title = '' }) {
-  const label = contentType === 'post' ? 'Post' : 'Entry'
+  const labels = { post: 'Post', entry: 'Entry', chat: 'Chat Message' }
+  const label = labels[contentType] || 'Entry'
   const lines = [
     'Hello,',
     '',

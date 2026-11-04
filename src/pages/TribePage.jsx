@@ -23,6 +23,7 @@ import TRexSkullIcon from '../assets/t-rex-skull-svgrepo-com.svg?react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { tribeApi } from '../api/tribeApi'
 import BackButton from '../components/common/BackButton'
+import { PageTopDockRow } from '../components/layout/PageTopDock'
 import { TopicTagList } from '../components/topic/TopicTag'
 import { TopicTypes } from '../constants/TopicTypes'
 import ImageWithLoader from '../components/common/ImageWithLoader'
@@ -240,43 +241,58 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
   ]
   const memoryEmblems = getMemoryEmblems(tribe, t)
 
+  const collapseHeaderButton = (
+    <button
+      type="button"
+      className="btn-icon page-back-button"
+      onClick={() => setIsHeaderCollapsed((prev) => !prev)}
+      title={isHeaderCollapsed ? t('common.expand', 'Genişlet') : t('common.collapse', 'Daralt')}
+      aria-label={isHeaderCollapsed ? t('common.expand', 'Genişlet') : t('common.collapse', 'Daralt')}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 34,
+        height: 34,
+        padding: 0,
+        cursor: 'pointer',
+      }}
+    >
+      <span
+        aria-hidden="true"
+        style={{
+          fontSize: 13,
+          lineHeight: 1,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transform: isHeaderCollapsed ? 'none' : 'rotate(180deg)',
+          transformOrigin: '50% 50%',
+          transition: 'transform 0.2s ease',
+        }}
+      >
+        ▼
+      </span>
+    </button>
+  )
+
   return (
     <div className={`flex-col gap-4${embedded ? ' tribe-page-embedded' : ''}`}>
-      <div className="flex items-center gap-3 px-2" style={{ marginBottom: 8 }}>
-        {!embedded && <BackButton style={{ marginBottom: 0 }} />}
-        <button
-          type="button"
-          className="btn-icon"
-          onClick={() => setIsHeaderCollapsed((prev) => !prev)}
-          title={isHeaderCollapsed ? t('common.expand', 'Genişlet') : t('common.collapse', 'Daralt')}
-          aria-label={isHeaderCollapsed ? t('common.expand', 'Genişlet') : t('common.collapse', 'Daralt')}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 34,
-            height: 34,
-            padding: 0,
-            cursor: 'pointer',
-          }}
-        >
-          <span
-            aria-hidden="true"
-            style={{
-              fontSize: 13,
-              lineHeight: 1,
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transform: isHeaderCollapsed ? 'none' : 'rotate(180deg)',
-              transformOrigin: '50% 50%',
-              transition: 'transform 0.2s ease',
-            }}
-          >
-            ▼
-          </span>
-        </button>
-      </div>
+      {embedded ? (
+        <div className="flex items-center gap-3 px-2" style={{ marginBottom: 8 }}>
+          {collapseHeaderButton}
+        </div>
+      ) : (
+        <PageTopDockRow
+          left={
+            <>
+              <BackButton style={{ marginBottom: 0 }} />
+              {collapseHeaderButton}
+            </>
+          }
+          style={{ marginBottom: 8 }}
+        />
+      )}
 
       {/* ─── Collapsible Tribe Header & Members Block ─── */}
       <AnimatePresence initial={false}>

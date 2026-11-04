@@ -46,6 +46,9 @@ import useDevLog from '../../utils/useDevLog'
 import BotFlashCardsIcon from '../common/icons/BotFlashCardsIcon'
 import IconActionButton from '../common/IconActionButton'
 import AngryBotWithSwordsIcon from '../common/icons/AngryBotWithSwordsIcon'
+import ChatBubbleIcon from '../common/icons/ChatBubbleIcon'
+import useChatDeckStore from '../../store/chatDeckStore'
+import { isChatDeckEligible } from '../../utils/chatDeck'
 import Logo from '../common/icons/Logo'
 import FossilTogglePill from '../common/FossilTogglePill'
 import { applyCustomColorVars, clearCustomColorVars, normalizeHex } from '../../utils/themeColor'
@@ -149,6 +152,16 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
 
   const { t, i18n } = useTranslation()
   const isMobile = useIsMobile()
+  const { isOpen: isChatDeckOpen, openChatDeck, closeChatDeck } = useChatDeckStore()
+  const handleChatClick = () => {
+    if (!isMobile && isChatDeckEligible(location.pathname)) {
+      if (isChatDeckOpen) closeChatDeck()
+      else openChatDeck()
+      return
+    }
+    navigate('/chat')
+  }
+
   const rawLang = (i18n.language || 'en').toLowerCase()
   const activeLangObj =
     langs.find((l) => l.code === rawLang || l.code === rawLang.split('-')[0]) || langs[0]
@@ -2303,6 +2316,17 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
           >
             <BotFlashCardsIcon size={19} />
           </IconActionButton>
+
+          {isLoggedIn && (
+            <IconActionButton
+              onClick={handleChatClick}
+              title={t('topbar.chat', 'Sohbet')}
+              aria-label={t('topbar.chat', 'Sohbet')}
+              style={{ width: 38, height: 38, boxSizing: 'border-box' }}
+            >
+              <ChatBubbleIcon size={19} />
+            </IconActionButton>
+          )}
 
           <IconActionButton
             to="/how-it-works"

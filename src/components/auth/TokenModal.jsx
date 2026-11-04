@@ -77,17 +77,6 @@ export default function TokenModal({
   }
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-    
-    if (isRequired) {
-      return (!value || !value.trim()) ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
 
   const canSubmit = token.trim() !== '' && !isPending
 
@@ -158,7 +147,7 @@ export default function TokenModal({
             <input
               ref={textareaRef}
               type="text"
-              className="input"
+              className={`input ${hasSubmitted && !token.trim() ? 'error' : ''}`}
               value={token}
               onChange={handleChange}
               placeholder={t('auth.enter_code')}
@@ -170,12 +159,8 @@ export default function TokenModal({
                 padding: '14px',
                 fontSize: 14,
                 letterSpacing: 0.5,
-                border: `1.5px solid ${getBorderColor('token', token, true)}`,
                 paddingRight: hasPasted ? '60px' : '14px',
-                outline: 'none'
               }}
-              onFocus={() => setFocused('token')}
-              onBlur={() => setFocused(null)}
             />
             {/* Yapıştırıldı onay etiketi */}
             {hasPasted && (

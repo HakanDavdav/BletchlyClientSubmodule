@@ -65,17 +65,6 @@ export default function EditProfileModal({ isOpen, onClose }) {
   }
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-    
-    if (isRequired) {
-      return (!value || !value.trim()) ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
 
   const canSubmit = formData.profileName.trim() !== '' && formData.bio.trim() !== '' && !editUserMutation.isPending
 
@@ -119,15 +108,12 @@ export default function EditProfileModal({ isOpen, onClose }) {
             <div className="form-group">
               <label className="text-muted" style={{ fontSize: 14 }}>{t('profile_modal.profile_name', 'Profil Adı')}</label>
               <input
-                className="input"
                 type="text"
                 value={formData.profileName}
                 onChange={(e) => setFormData({ ...formData, profileName: e.target.value })}
                 placeholder={t('profile_modal.profile_name_placeholder', 'Profil Adınız')}
                 maxLength={50}
-                style={{ borderColor: getBorderColor('profileName', formData.profileName, true), outline: 'none' }}
-                onFocus={() => setFocused('profileName')}
-                onBlur={() => setFocused(null)}
+                className={`input ${hasSubmitted && !formData.profileName.trim() ? 'error' : ''}`}
               />
             </div>
 
@@ -139,24 +125,18 @@ export default function EditProfileModal({ isOpen, onClose }) {
                 value={formData.imageUrl}
                 onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
                 placeholder={t('profile_modal.image_url_placeholder', 'https://...')}
-                style={{ borderColor: getBorderColor('imageUrl', formData.imageUrl, false), outline: 'none' }}
-                onFocus={() => setFocused('imageUrl')}
-                onBlur={() => setFocused(null)}
               />
             </div>
 
             <div className="form-group">
               <label className="text-muted" style={{ fontSize: 14 }}>{t('profile_modal.bio', 'Hakkında')} <span style={{ color: 'var(--color-primary)' }}>*</span></label>
               <textarea
-                className="input"
+                className={`input textarea textarea--autogrow ${hasSubmitted && !formData.bio.trim() ? 'error' : ''}`}
                 value={formData.bio}
                 onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                 placeholder={t('profile_modal.bio_placeholder', 'Kısa bir biyografi...')}
                 rows={4}
                 maxLength={300}
-                style={{ borderColor: getBorderColor('bio', formData.bio, true), outline: 'none' }}
-                onFocus={() => setFocused('bio')}
-                onBlur={() => setFocused(null)}
               />
             </div>
 

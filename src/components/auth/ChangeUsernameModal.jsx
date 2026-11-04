@@ -38,17 +38,6 @@ export default function ChangeUsernameModal({ isOpen, onClose }) {
   }
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-    
-    if (isRequired) {
-      return (!value || !value.trim()) ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
 
   const canSubmit = formData.password.trim() !== '' && formData.newUsername.trim() !== '' && !changeUsernameMutation.isPending
 
@@ -104,6 +93,7 @@ export default function ChangeUsernameModal({ isOpen, onClose }) {
                 {t('auth.current_password')}
               </label>
               <PasswordInput
+                className={`input w-full ${hasSubmitted && !formData.password.trim() ? 'error' : ''}`}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder="••••••••"
@@ -112,11 +102,7 @@ export default function ChangeUsernameModal({ isOpen, onClose }) {
                   height: 42,
                   padding: '10px 14px',
                   borderRadius: 10,
-                  borderColor: getBorderColor('password', formData.password, true),
-                  outline: 'none',
                 }}
-                onFocus={() => setFocused('password')}
-                onBlur={() => setFocused(null)}
               />
             </div>
 
@@ -126,7 +112,7 @@ export default function ChangeUsernameModal({ isOpen, onClose }) {
                 {t('auth.new_username')}
               </label>
               <input
-                className="input"
+                className={`input ${hasSubmitted && !formData.newUsername.trim() ? 'error' : ''}`}
                 type="text"
                 value={formData.newUsername}
                 onChange={(e) => setFormData({ ...formData, newUsername: e.target.value })}
@@ -135,11 +121,7 @@ export default function ChangeUsernameModal({ isOpen, onClose }) {
                   height: 42,
                   padding: '10px 14px',
                   borderRadius: 10,
-                  borderColor: getBorderColor('newUsername', formData.newUsername, true),
-                  outline: 'none',
                 }}
-                onFocus={() => setFocused('newUsername')}
-                onBlur={() => setFocused(null)}
               />
             </div>
           </div>

@@ -60,17 +60,6 @@ export default function InitProfilePage() {
   }
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-    
-    if (isRequired) {
-      return (!value || !value.trim()) ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
 
   const canSubmit = profileName.trim() !== '' && !initProfileMutation.isPending
 
@@ -149,21 +138,12 @@ export default function InitProfilePage() {
               value={profileName}
               onChange={(e) => setProfileName(e.target.value)}
               disabled={initProfileMutation.isPending || initProfileMutation.isSuccess}
+              className={`input ${hasSubmitted && !profileName.trim() ? 'error' : ''}`}
               style={{
-                width: '100%',
                 padding: '14px 16px',
                 borderRadius: 12,
-                border: `1.5px solid ${getBorderColor('profileName', profileName, true)}`,
                 background: 'var(--color-surface)',
-                color: 'var(--color-text-primary)',
-                fontSize: 14,
-                fontFamily: 'inherit',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-                boxSizing: 'border-box',
               }}
-              onFocus={() => setFocused('profileName')}
-              onBlur={() => setFocused(null)}
             />
           </div>
         </div>
@@ -199,24 +179,14 @@ export default function InitProfilePage() {
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               rows={4}
+              className="input textarea textarea--autogrow"
               style={{
-                width: '100%',
                 padding: '14px 16px',
                 borderRadius: 12,
-                border: `1.5px solid ${getBorderColor('bio', bio, false)}`,
                 background: 'var(--color-surface)',
-                color: 'var(--color-text-primary)',
-                fontSize: 14,
-                fontFamily: 'inherit',
-                outline: 'none',
-                resize: 'vertical',
                 minHeight: 120,
-                transition: 'border-color 0.2s',
-                boxSizing: 'border-box',
                 lineHeight: 1.5,
               }}
-              onFocus={() => setFocused('bio')}
-              onBlur={() => setFocused(null)}
             />
           </div>
         </div>

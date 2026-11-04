@@ -8,10 +8,12 @@ import RightPanel from './RightPanel'
 import FooterBar from './FooterBar'
 import MobileTabBar from './MobileTabBar'
 import MobileDrawerExtras from './MobileDrawerExtras'
+import CenterDeck from './CenterDeck'
 import useUIStore from '../../store/uiStore'
 import useDevLog from '../../utils/useDevLog'
 import { useQuery } from '@tanstack/react-query'
 import { searchApi } from '../../api/searchApi'
+import { isChatDeckEligible } from '../../utils/chatDeck'
 
 /**
  * MainLayout — 3 kolonlu ana iskelet.
@@ -25,6 +27,7 @@ export default function MainLayout({ children, pendingInvitation = null, onOpenI
   const location = useLocation()
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const isDeckEligible = isChatDeckEligible(location.pathname)
   const isWidePage =
     location.pathname.startsWith('/hierarchy') ||
     location.pathname.startsWith('/card-hierarchy') ||
@@ -249,7 +252,7 @@ export default function MainLayout({ children, pendingInvitation = null, onOpenI
                     padding: isWidePage ? '16px 8px 16px 16px' : '16px',
                   }}
                 >
-                  {children}
+                  <CenterDeck enabled={isDeckEligible}>{children}</CenterDeck>
                 </div>
               </main>
 

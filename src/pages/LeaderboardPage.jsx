@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import TRexSkullIcon from '../assets/t-rex-skull-svgrepo-com.svg?react'
 import BackButton from '../components/common/BackButton'
+import { PageTopDockRow } from '../components/layout/PageTopDock'
 import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 import useThemeStore from '../store/themeStore'
@@ -179,11 +180,10 @@ export default function LeaderboardPage() {
 
   return (
     <div className="flex-col gap-4">
-      <div className="px-2" style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-        <BackButton text={t('common.go_back', 'Geri Dön')} onClick={() => navigate(-1)} style={{ marginBottom: 0 }} />
-
-        {/* Controls: Season Selector & Type Toggles */}
-        <div className="leaderboard-controls" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+      <PageTopDockRow
+        left={<BackButton text={t('common.go_back', 'Geri Dön')} onClick={() => navigate(-1)} style={{ marginBottom: 0 }} />}
+        right={
+          <div className="leaderboard-controls" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           {/* Season Selector Dropdown */}
           <div ref={dropdownRef} style={{ position: 'relative' }}>
             <button
@@ -360,7 +360,9 @@ export default function LeaderboardPage() {
             </div>
           </div>
         </div>
-      </div>
+        }
+        style={{ marginBottom: 16 }}
+      />
 
       {/* Header */}
       <div

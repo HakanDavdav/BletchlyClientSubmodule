@@ -120,17 +120,6 @@ export default function LoginPage() {
   }
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-    
-    if (isRequired) {
-      return (!value || !value.trim()) ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
 
   const canSubmitLogin = identifier.trim() !== '' && password.trim() !== '' && !loginMutation.isPending
   const canSubmitTwoFactor = twoFactorToken.trim() !== '' && !twoFactorMutation.isPending
@@ -170,15 +159,13 @@ export default function LoginPage() {
             <div className="form-group">
               <label className="form-label">{t('auth.two_factor_code')}</label>
               <input 
-                className="input" 
+                className={`input ${hasSubmitted && !twoFactorToken.trim() ? 'error' : ''}`}
                 type="text" 
                 value={twoFactorToken}
                 onChange={(e) => setTwoFactorToken(e.target.value)}
                 required 
                 maxLength={6}
-                style={{ textAlign: 'center', fontSize: 24, letterSpacing: 4, borderColor: getBorderColor('twoFactorToken', twoFactorToken, true), outline: 'none' }}
-                onFocus={() => setFocused('twoFactorToken')}
-                onBlur={() => setFocused(null)}
+                style={{ textAlign: 'center', fontSize: 24, letterSpacing: 4 }}
               />
             </div>
             <button 
@@ -227,13 +214,10 @@ export default function LoginPage() {
           <div className="form-group">
             <label className="form-label">{t('auth.username_or_email')}</label>
             <input 
-              className="input" 
+              className={`input ${hasSubmitted && !identifier.trim() ? 'error' : ''}`}
               type="text" 
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              style={{ borderColor: getBorderColor('identifier', identifier, true), outline: 'none' }}
-              onFocus={() => setFocused('identifier')}
-              onBlur={() => setFocused(null)}
             />
           </div>
 
@@ -243,11 +227,9 @@ export default function LoginPage() {
               <button type="button" className="btn btn-ghost" style={{ fontSize: 12, padding: 0 }} onClick={() => setIsForgotOpen(true)}>{t('auth.forgot_password')}</button>
             </div>
             <PasswordInput
+              className={`input w-full ${hasSubmitted && !password.trim() ? 'error' : ''}`}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={{ borderColor: getBorderColor('password', password, true), outline: 'none' }}
-              onFocus={() => setFocused('password')}
-              onBlur={() => setFocused(null)}
             />
           </div>
 

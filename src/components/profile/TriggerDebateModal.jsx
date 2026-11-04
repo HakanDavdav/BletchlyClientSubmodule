@@ -50,6 +50,7 @@ export default function TriggerDebateModal({ isOpen, onClose, onSubmit, targetNa
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {/* Proposition input */}
           <textarea
+            className="input textarea textarea--autogrow"
             value={proposition}
             onChange={(e) => setProposition(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -61,16 +62,9 @@ export default function TriggerDebateModal({ isOpen, onClose, onSubmit, targetNa
               fontSize: 14,
               padding: '12px 16px',
               borderRadius: 12,
-              border: '1.5px solid var(--color-border)',
               background: 'var(--color-surface)',
               color: 'var(--color-text-primary)',
-              fontFamily: 'inherit',
-              outline: 'none',
-              transition: 'border-color 0.2s',
-              resize: 'vertical',
             }}
-            onFocus={(e) => (e.target.style.borderColor = 'var(--color-primary)')}
-            onBlur={(e) => (e.target.style.borderColor = 'var(--color-border)')}
           />
 
           {/* Footer */}

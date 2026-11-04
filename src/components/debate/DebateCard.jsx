@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, Eye, Swords, Trophy } from 'lucide-react'
+import { Check, Eye, Swords } from 'lucide-react'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
 import AngryBotWithSwordsIcon from '../common/icons/AngryBotWithSwordsIcon'
 import './DebateCard.css'
@@ -39,7 +39,7 @@ function DebateCardBackground({ proponent, opponent }) {
         preserveAspectRatio="none"
         aria-hidden="true"
       >
-        <path d="M0,100 L16,74 L30,74 L48,48 L62,48 L78,20 L100,0" />
+        <path d="M15,100 L24,74 L36,74 L48,48 L60,48 L72,20 L85,0" />
       </svg>
     </div>
   )
@@ -57,6 +57,21 @@ export default function DebateCard({ debate, actorId, onOpen, onWatch, variant =
   const isParticipant =
     (proponent.actorId || proponent.ActorId) === actorId ||
     (opponent.actorId || opponent.ActorId) === actorId
+
+  const proponentId = proponent.actorId || proponent.ActorId
+  const opponentId = opponent.actorId || opponent.ActorId
+  const winnerId =
+    debate.winnerId ||
+    debate.WinnerId ||
+    debate.winner?.actorId ||
+    debate.Winner?.actorId ||
+    null
+  const isProponentWinner = Boolean(
+    winnerId && proponentId && String(winnerId).toLowerCase() === String(proponentId).toLowerCase()
+  )
+  const isOpponentWinner = Boolean(
+    winnerId && opponentId && String(winnerId).toLowerCase() === String(opponentId).toLowerCase()
+  )
 
   const handleOpen = async () => {
     if (loading || !onOpen) return
@@ -100,13 +115,15 @@ export default function DebateCard({ debate, actorId, onOpen, onWatch, variant =
         }}
       >
         <DebateCardBackground proponent={proponent} opponent={opponent} />
-        <ActorMinimalCard
-          actor={proponent}
-          variant="ultra-compact"
-          showHierarchyBtn={false}
-          showMindBtn={false}
-          contextTitle={proposition}
-        />
+        <span className={isProponentWinner ? 'debate-winner' : ''} style={{ display: 'contents' }}>
+          <ActorMinimalCard
+            actor={proponent}
+            variant="ultra-compact"
+            showHierarchyBtn={false}
+            showMindBtn={false}
+            contextTitle={proposition}
+          />
+        </span>
 
         <div
           style={{
@@ -123,14 +140,16 @@ export default function DebateCard({ debate, actorId, onOpen, onWatch, variant =
           )}
         </div>
 
-        <ActorMinimalCard
-          actor={opponent}
-          variant="ultra-compact"
-          showHierarchyBtn={false}
-          showMindBtn={false}
-          reverse={true}
-          contextTitle={proposition}
-        />
+        <span className={isOpponentWinner ? 'debate-winner' : ''} style={{ display: 'contents' }}>
+          <ActorMinimalCard
+            actor={opponent}
+            variant="ultra-compact"
+            showHierarchyBtn={false}
+            showMindBtn={false}
+            reverse={true}
+            contextTitle={proposition}
+          />
+        </span>
 
         <div
           style={{
@@ -184,7 +203,7 @@ export default function DebateCard({ debate, actorId, onOpen, onWatch, variant =
     )
   }
 
-  const ButtonIcon = live ? (isParticipant ? Swords : Eye) : Trophy
+  const ButtonIcon = live && isParticipant ? Swords : Eye
 
   return (
     <div
@@ -241,13 +260,15 @@ export default function DebateCard({ debate, actorId, onOpen, onWatch, variant =
               }}
             />
           )}
-          <ActorMinimalCard
-            actor={proponent}
-            variant="ultra-compact"
-            showHierarchyBtn={false}
-            showMemoryMapBtn={true}
-            contextTitle={proposition}
-          />
+          <span className={isProponentWinner ? 'debate-winner' : ''} style={{ display: 'contents' }}>
+            <ActorMinimalCard
+              actor={proponent}
+              variant="ultra-compact"
+              showHierarchyBtn={false}
+              showMemoryMapBtn={true}
+              contextTitle={proposition}
+            />
+          </span>
           <span
             className="truncate"
             style={{
@@ -293,14 +314,16 @@ export default function DebateCard({ debate, actorId, onOpen, onWatch, variant =
           >
             {opponent.profileName || opponent.ProfileName || 'Opponent'}
           </span>
-          <ActorMinimalCard
-            actor={opponent}
-            variant="ultra-compact"
-            showHierarchyBtn={false}
-            showMemoryMapBtn={true}
-            reverse={true}
-            contextTitle={proposition}
-          />
+          <span className={isOpponentWinner ? 'debate-winner' : ''} style={{ display: 'contents' }}>
+            <ActorMinimalCard
+              actor={opponent}
+              variant="ultra-compact"
+              showHierarchyBtn={false}
+              showMemoryMapBtn={true}
+              reverse={true}
+              contextTitle={proposition}
+            />
+          </span>
         </div>
       </div>
 

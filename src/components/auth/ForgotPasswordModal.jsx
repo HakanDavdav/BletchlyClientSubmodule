@@ -117,17 +117,6 @@ export default function ForgotPasswordModal({ isOpen, onClose }) {
   }
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-    
-    if (isRequired) {
-      return (!value || !value.trim()) ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
 
   const canSubmitRequest = emailOrUsername.trim() !== '' && !requestResetMutation.isPending
   const canSubmitConfirm = newPassword.trim() !== '' && !confirmResetMutation.isPending
@@ -215,15 +204,13 @@ export default function ForgotPasswordModal({ isOpen, onClose }) {
             
             <form noValidate onSubmit={handleRequestSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <input 
-                className="input" 
+                className={`input ${hasSubmitted && !emailOrUsername.trim() ? 'error' : ''}`}
                 type="text" 
                 value={emailOrUsername}
                 onChange={(e) => setEmailOrUsername(e.target.value)}
                 required 
                 placeholder={t('auth.email_or_username')}
-                style={{ textAlign: 'center', padding: '14px', fontSize: 14, borderColor: getBorderColor('emailOrUsername', emailOrUsername, true), outline: 'none' }}
-                onFocus={() => setFocused('emailOrUsername')}
-                onBlur={() => setFocused(null)}
+                style={{ textAlign: 'center', padding: '14px', fontSize: 14 }}
               />
 
               <button 
@@ -251,14 +238,13 @@ export default function ForgotPasswordModal({ isOpen, onClose }) {
               
               {/* New Password */}
               <PasswordInput
+                className={`input w-full ${hasSubmitted && !newPassword.trim() ? 'error' : ''}`}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
                 minLength={6}
                 placeholder={t('auth.new_password')}
-                style={{ textAlign: 'center', padding: '14px', fontSize: 14, borderColor: getBorderColor('newPassword', newPassword, true), outline: 'none' }}
-                onFocus={() => setFocused('newPassword')}
-                onBlur={() => setFocused(null)}
+                style={{ textAlign: 'center', padding: '14px', fontSize: 14 }}
               />
 
               {/* Geri Sayım */}

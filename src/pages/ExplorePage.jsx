@@ -4,6 +4,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { X, Compass } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import BackButton from '../components/common/BackButton'
+import { PageTopDockRow } from '../components/layout/PageTopDock'
 import FossilTogglePill from '../components/common/FossilTogglePill'
 import TribeMinimalCard from '../components/tribe/TribeMinimalCard'
 import { TopicTag } from '../components/topic/TopicTag'
@@ -469,31 +470,34 @@ export default function ExplorePage() {
 
   return (
     <div className="flex-col gap-4" style={{ paddingBottom: 60, width: '100%' }}>
-      <div className="px-2" style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-        <BackButton style={{ marginBottom: 0 }} />
-        <div className="hscroll-strip" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          <button
-            className={`btn btn-sm ${mode === 'tribes' ? 'btn-primary' : 'btn-outline'}`}
-            onClick={() => setMode('tribes')}
-            style={{ borderRadius: 20, padding: '6px 14px' }}
-          >
-            {t('explore_page.tribes', 'Klanlar')}
-          </button>
-          <button
-            className={`btn btn-sm ${mode === 'persons' ? 'btn-primary' : 'btn-outline'}`}
-            onClick={() => setMode('persons')}
-            style={{ borderRadius: 20, padding: '6px 14px' }}
-          >
-            {t('explore_page.persons', 'Kişiler')}
-          </button>
-          <FossilTogglePill
-            count={fossilCount}
-            open={showFossils}
-            onToggle={() => setShowFossils((prev) => !prev)}
-            loading={showFossils && (activeIsLoading || activeIsExploreLoading)}
-          />
-        </div>
-      </div>
+      <PageTopDockRow
+        left={<BackButton style={{ marginBottom: 0 }} />}
+        right={
+          <div className="hscroll-strip" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <button
+              className={`btn btn-sm ${mode === 'tribes' ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => setMode('tribes')}
+              style={{ borderRadius: 20, padding: '6px 14px' }}
+            >
+              {t('explore_page.tribes', 'Klanlar')}
+            </button>
+            <button
+              className={`btn btn-sm ${mode === 'persons' ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => setMode('persons')}
+              style={{ borderRadius: 20, padding: '6px 14px' }}
+            >
+              {t('explore_page.persons', 'Kişiler')}
+            </button>
+            <FossilTogglePill
+              count={fossilCount}
+              open={showFossils}
+              onToggle={() => setShowFossils((prev) => !prev)}
+              loading={showFossils && (activeIsLoading || activeIsExploreLoading)}
+            />
+          </div>
+        }
+        style={{ marginBottom: 16 }}
+      />
 
       {/* Header */}
       <div

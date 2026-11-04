@@ -50,6 +50,7 @@ import TermsOfServicePage from './pages/legal/TermsOfServicePage'
 import CookiePolicyPage from './pages/legal/CookiePolicyPage'
 import DebatePage from './pages/debate/DebatePage'
 import DebateTranscriptPage from './pages/debate/DebateTranscriptPage'
+import ChatPage from './pages/chat/ChatPage'
 import InvitationModal from './components/debate/InvitationModal'
 import CookieConsentBanner from './components/common/CookieConsentBanner'
 import { useInvitationHub } from './hooks/useInvitationHub'
@@ -354,6 +355,7 @@ export default function App() {
             <Route path="/explore" element={<ExplorePage />} />
             <Route path="/tribes" element={<Navigate to="/explore" replace />} />
             <Route path="/active-debates" element={<ActiveDebatesPage />} />
+            <Route path="/chat" element={<ChatPage />} />
             <Route path="/how-it-works" element={<HowItWorksPage />} />
             <Route path="/premium" element={<PremiumPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -36,17 +36,6 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
   }
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-    
-    if (isRequired) {
-      return (!value || !value.trim()) ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
 
   const canSubmit = formData.currentPassword.trim() !== '' && formData.newPassword.trim() !== '' && !changePasswordMutation.isPending
 
@@ -101,6 +90,7 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
                 {t('auth.current_password')}
               </label>
               <PasswordInput
+                className={`input w-full ${hasSubmitted && !formData.currentPassword.trim() ? 'error' : ''}`}
                 value={formData.currentPassword}
                 onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
                 placeholder="••••••••"
@@ -109,11 +99,7 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
                   height: 42,
                   padding: '10px 14px',
                   borderRadius: 10,
-                  borderColor: getBorderColor('currentPassword', formData.currentPassword, true),
-                  outline: 'none',
                 }}
-                onFocus={() => setFocused('currentPassword')}
-                onBlur={() => setFocused(null)}
               />
             </div>
 
@@ -122,6 +108,7 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
                 {t('auth.new_password')}
               </label>
               <PasswordInput
+                className={`input w-full ${hasSubmitted && !formData.newPassword.trim() ? 'error' : ''}`}
                 value={formData.newPassword}
                 onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
                 placeholder="••••••••"
@@ -130,11 +117,7 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
                   height: 42,
                   padding: '10px 14px',
                   borderRadius: 10,
-                  borderColor: getBorderColor('newPassword', formData.newPassword, true),
-                  outline: 'none',
                 }}
-                onFocus={() => setFocused('newPassword')}
-                onBlur={() => setFocused(null)}
               />
             </div>
           </div>

@@ -59,7 +59,6 @@ export default function TribeSettingsPage() {
   const [selectedCardIds, setSelectedCardIds] = useState([])
   const [lockedCardIds, setLockedCardIds] = useState([])
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
   const [isDeleteTribeModalOpen, setIsDeleteTribeModalOpen] = useState(false)
   const [expelTargetMember, setExpelTargetMember] = useState(null)
 
@@ -304,16 +303,6 @@ export default function TribeSettingsPage() {
     })
   }
 
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-
-    if (isRequired) {
-      return !value || !value.trim() ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
-
   const canSubmit =
     formData.tribeName.trim() !== '' &&
     (formData.topicTypes || []).length >= 3 &&
@@ -357,20 +346,6 @@ export default function TribeSettingsPage() {
 
   const handleDeleteTribe = () => {
     setIsDeleteTribeModalOpen(true)
-  }
-
-  const inputStyle = {
-    width: '100%',
-    padding: '14px 16px',
-    borderRadius: 12,
-    border: '1.5px solid var(--color-border)',
-    background: 'var(--color-surface)',
-    color: 'var(--color-text-primary)',
-    fontSize: 14,
-    fontFamily: 'inherit',
-    outline: 'none',
-    transition: 'border-color 0.2s',
-    boxSizing: 'border-box',
   }
 
   const labelStyle = {
@@ -446,12 +421,7 @@ export default function TribeSettingsPage() {
               value={formData.tribeName}
               onChange={handleChange}
               disabled={editMutation.isPending}
-              style={{
-                ...inputStyle,
-                borderColor: getBorderColor('tribeName', formData.tribeName, true),
-              }}
-              onFocus={() => setFocused('tribeName')}
-              onBlur={() => setFocused(null)}
+              className={`input ${hasSubmitted && !formData.tribeName.trim() ? 'error' : ''}`}
             />
           </div>
         </div>
@@ -465,15 +435,8 @@ export default function TribeSettingsPage() {
               value={formData.mission}
               onChange={handleChange}
               disabled={editMutation.isPending}
-              style={{
-                ...inputStyle,
-                resize: 'vertical',
-                minHeight: 100,
-                lineHeight: 1.65,
-                borderColor: getBorderColor('mission', formData.mission, false),
-              }}
-              onFocus={() => setFocused('mission')}
-              onBlur={() => setFocused(null)}
+              className="input textarea textarea--autogrow"
+              style={{ minHeight: 100, lineHeight: 1.65 }}
             />
           </div>
         </div>

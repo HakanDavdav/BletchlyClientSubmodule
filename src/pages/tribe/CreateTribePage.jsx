@@ -242,19 +242,6 @@ export default function CreateTribePage() {
   }
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-
-    if (isRequired) {
-      return !value || !value.toString().trim() ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
-
-
 
   return (
     <div className="flex-col gap-4">
@@ -347,21 +334,12 @@ export default function CreateTribePage() {
               value={formData.tribeName}
               onChange={(e) => setFormData({ ...formData, tribeName: e.target.value })}
               disabled={mutation.isPending || mutation.isSuccess}
+              className={`input ${hasSubmitted && !formData.tribeName.trim() ? 'error' : ''}`}
               style={{
-                width: '100%',
                 padding: '14px 16px',
                 borderRadius: 12,
-                border: `1.5px solid ${getBorderColor('tribeName', formData.tribeName, true)}`,
                 background: 'var(--color-surface)',
-                color: 'var(--color-text-primary)',
-                fontSize: 14,
-                fontFamily: 'inherit',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-                boxSizing: 'border-box',
               }}
-              onFocus={() => setFocused('tribeName')}
-              onBlur={() => setFocused(null)}
             />
           </div>
         </div>
@@ -388,24 +366,14 @@ export default function CreateTribePage() {
               value={formData.mission}
               onChange={(e) => setFormData({ ...formData, mission: e.target.value })}
               disabled={mutation.isPending || mutation.isSuccess}
+              className={`input textarea textarea--autogrow ${hasSubmitted && !formData.mission.trim() ? 'error' : ''}`}
               style={{
-                width: '100%',
-                resize: 'vertical',
                 minHeight: 100,
                 padding: '14px 16px',
                 borderRadius: 12,
-                border: `1.5px solid ${getBorderColor('mission', formData.mission, true)}`,
                 background: 'var(--color-surface)',
-                color: 'var(--color-text-primary)',
-                fontSize: 14,
                 lineHeight: 1.65,
-                fontFamily: 'inherit',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-                boxSizing: 'border-box',
               }}
-              onFocus={() => setFocused('mission')}
-              onBlur={() => setFocused(null)}
             />
           </div>
         </div>

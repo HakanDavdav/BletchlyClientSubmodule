@@ -439,17 +439,6 @@ export default function CreateEditBotPage() {
   }
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-
-    if (isRequired) {
-      return !value || !value.toString().trim() ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
 
   const hasNewCard = Boolean(
     formData.personalityCardName.trim() !== '' || formData.personalityCardPrompt.trim() !== ''
@@ -620,21 +609,12 @@ export default function CreateEditBotPage() {
               value={formData.profileName}
               onChange={(e) => setFormData({ ...formData, profileName: e.target.value })}
               disabled={mutation.isPending || mutation.isSuccess}
+              className={`input ${hasSubmitted && !formData.profileName.trim() ? 'error' : ''}`}
               style={{
-                width: '100%',
                 padding: '14px 16px',
                 borderRadius: 12,
-                border: `1.5px solid ${getBorderColor('profileName', formData.profileName, true)}`,
                 background: 'var(--color-surface)',
-                color: 'var(--color-text-primary)',
-                fontSize: 14,
-                fontFamily: 'inherit',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-                boxSizing: 'border-box',
               }}
-              onFocus={() => setFocused('profileName')}
-              onBlur={() => setFocused(null)}
             />
           </div>
         </div>
@@ -663,24 +643,14 @@ export default function CreateEditBotPage() {
                   value={formData.bio}
                   onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                   disabled={mutation.isPending || mutation.isSuccess}
+                  className={`input textarea textarea--autogrow ${hasSubmitted && !formData.autoBio && !formData.bio.trim() ? 'error' : ''}`}
                   style={{
-                    width: '100%',
-                    resize: 'vertical',
                     minHeight: 80,
                     padding: '14px 16px',
                     borderRadius: 12,
-                    border: `1.5px solid ${getBorderColor('bio', formData.bio, !formData.autoBio)}`,
                     background: 'var(--color-surface)',
-                    color: 'var(--color-text-primary)',
-                    fontSize: 14,
                     lineHeight: 1.65,
-                    fontFamily: 'inherit',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                    boxSizing: 'border-box',
                   }}
-                  onFocus={() => setFocused('bio')}
-                  onBlur={() => setFocused(null)}
                 />
               </div>
             </div>

@@ -16,7 +16,6 @@ export default function ContactPage() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
 
   useEffect(() => {
     if (!reportMessage) return
@@ -26,16 +25,6 @@ export default function ContactPage() {
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const getBorderColor = (fieldName, isRequired = true) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-    
-    if (isRequired) {
-      return (!formData[fieldName] || !formData[fieldName].trim()) ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
   }
 
   const canSubmit = formData.name.trim() !== '' && formData.email.trim() !== '' && formData.message.trim() !== ''
@@ -98,14 +87,11 @@ export default function ContactPage() {
           <div className="form-group">
             <label className="form-label">{t('contact.name', 'İsim Soyisim')}</label>
             <input 
-              className="input" 
+              className={`input ${hasSubmitted && !formData.name.trim() ? 'error' : ''}`}
               type="text" 
               name="name"
               value={formData.name}
               onChange={handleChange}
-              style={{ borderColor: getBorderColor('name'), outline: 'none' }}
-              onFocus={() => setFocused('name')}
-              onBlur={() => setFocused(null)}
               placeholder="John Doe"
             />
           </div>
@@ -113,14 +99,11 @@ export default function ContactPage() {
           <div className="form-group">
             <label className="form-label">{t('auth.email', 'E-posta')}</label>
             <input 
-              className="input" 
+              className={`input ${hasSubmitted && !formData.email.trim() ? 'error' : ''}`}
               type="email" 
               name="email"
               value={formData.email}
               onChange={handleChange}
-              style={{ borderColor: getBorderColor('email'), outline: 'none' }}
-              onFocus={() => setFocused('email')}
-              onBlur={() => setFocused(null)}
               placeholder="john@example.com"
             />
           </div>
@@ -128,19 +111,14 @@ export default function ContactPage() {
           <div className="form-group">
             <label className="form-label">{t('contact.message', 'Mesajınız')}</label>
             <textarea 
-              className="input" 
+              className={`input textarea textarea--autogrow ${hasSubmitted && !formData.message.trim() ? 'error' : ''}`}
               name="message"
               value={formData.message}
               onChange={handleChange}
               style={{ 
-                borderColor: getBorderColor('message'), 
-                outline: 'none', 
                 minHeight: 120, 
-                resize: 'vertical',
                 paddingTop: 12 
               }}
-              onFocus={() => setFocused('message')}
-              onBlur={() => setFocused(null)}
               placeholder={t('contact.message_placeholder', 'Mesajınızı buraya yazın...')}
             />
           </div>

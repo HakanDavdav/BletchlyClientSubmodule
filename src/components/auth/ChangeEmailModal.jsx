@@ -42,17 +42,6 @@ export default function ChangeEmailModal({ isOpen, onClose }) {
   })
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-    
-    if (isRequired) {
-      return (!value || !value.trim()) ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
 
   const canSubmitRequest = newEmail.trim() !== '' && !requestMutation.isPending
 
@@ -140,7 +129,7 @@ export default function ChangeEmailModal({ isOpen, onClose }) {
                   {t('auth.new_email')}
                 </label>
                 <input
-                  className="input"
+                  className={`input ${hasSubmitted && !newEmail.trim() ? 'error' : ''}`}
                   type="email"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
@@ -150,11 +139,7 @@ export default function ChangeEmailModal({ isOpen, onClose }) {
                     height: 42,
                     padding: '10px 14px',
                     borderRadius: 10,
-                    borderColor: getBorderColor('newEmail', newEmail, true),
-                    outline: 'none',
                   }}
-                  onFocus={() => setFocused('newEmail')}
-                  onBlur={() => setFocused(null)}
                 />
               </div>
 

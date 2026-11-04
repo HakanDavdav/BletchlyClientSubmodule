@@ -34,17 +34,6 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
   }
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-error)'
-    if (!hasSubmitted) return 'var(--color-border)'
-    
-    if (isRequired) {
-      return (!value || !value.trim()) ? 'var(--color-error)' : 'var(--color-border)'
-    }
-    return 'var(--color-border)'
-  }
 
   const canSubmit = password.trim() !== '' && !deleteAccountMutation.isPending
 
@@ -114,6 +103,7 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
               {t('auth.password')}
             </label>
             <PasswordInput
+              className={`input w-full ${hasSubmitted && !password.trim() ? 'error' : ''}`}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -122,11 +112,7 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
                 height: 42,
                 padding: '10px 14px',
                 borderRadius: 10,
-                borderColor: getBorderColor('password', password, true),
-                outline: 'none',
               }}
-              onFocus={() => setFocused('password')}
-              onBlur={() => setFocused(null)}
             />
           </div>
 

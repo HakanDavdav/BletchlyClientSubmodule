@@ -41,6 +41,7 @@ const STATIC_TITLE_ROUTES = [
   [/^\/contact$/, (t) => t('footer.contact', 'İletişim')],
   [/^\/explore$/, (t) => t('explore_page.title', 'Keşfet')],
   [/^\/active-debates$/, (t) => t('active_debates.title', 'Meydan Okumalar')],
+  [/^\/chat$/, (t) => t('chat.title', 'Sohbet')],
   [/^\/how-it-works$/, (t) => t('footer.how_it_works', 'Nasıl Çalışır?')],
   [/^\/premium$/, (t) => t('premium.title', 'Pro')],
 ]

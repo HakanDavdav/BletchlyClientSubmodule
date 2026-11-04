@@ -110,17 +110,6 @@ export default function RegisterPage() {
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
   const [hasTermsError, setHasTermsError] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-    
-    if (isRequired) {
-      return (!value || !value.trim()) ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
 
   const canSubmitRegister = username.trim() !== '' && email.trim() !== '' && password.trim() !== '' && passwordConfirm.trim() !== '' && agreedToTerms && !registerMutation.isPending && !requestEmailConfirmMutation.isPending
 
@@ -185,48 +174,38 @@ export default function RegisterPage() {
         <div className="form-group">
           <label className="form-label">{t('auth.username')}</label>
           <input 
-            className="input" 
+            className={`input ${hasSubmitted && !username.trim() ? 'error' : ''}`}
             type="text" 
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            style={{ borderColor: getBorderColor('username', username, true), outline: 'none' }}
-            onFocus={() => setFocused('username')}
-            onBlur={() => setFocused(null)}
           />
         </div>
 
         <div className="form-group">
           <label className="form-label">{t('auth.email')}</label>
           <input 
-            className="input" 
+            className={`input ${hasSubmitted && !email.trim() ? 'error' : ''}`}
             type="email" 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            style={{ borderColor: getBorderColor('email', email, true), outline: 'none' }}
-            onFocus={() => setFocused('email')}
-            onBlur={() => setFocused(null)}
           />
         </div>
 
         <div className="form-group">
           <label className="form-label">{t('auth.password')}</label>
           <PasswordInput
+            className={`input w-full ${hasSubmitted && !password.trim() ? 'error' : ''}`}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            style={{ borderColor: getBorderColor('password', password, true), outline: 'none' }}
-            onFocus={() => setFocused('password')}
-            onBlur={() => setFocused(null)}
           />
         </div>
 
         <div className="form-group">
           <label className="form-label">{t('auth.password_confirm')}</label>
           <PasswordInput
+            className={`input w-full ${hasSubmitted && !passwordConfirm.trim() ? 'error' : ''}`}
             value={passwordConfirm}
             onChange={(e) => setPasswordConfirm(e.target.value)}
-            style={{ borderColor: getBorderColor('passwordConfirm', passwordConfirm, true), outline: 'none' }}
-            onFocus={() => setFocused('passwordConfirm')}
-            onBlur={() => setFocused(null)}
           />
         </div>
 

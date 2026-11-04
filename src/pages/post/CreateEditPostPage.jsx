@@ -139,17 +139,6 @@ export default function CreateEditPostPage() {
   }
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-    
-    if (isRequired) {
-      return (!value || !value.toString().trim()) ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
 
   const canSubmit = formData.title.trim() !== '' && formData.content.trim() !== '' && !mutation.isPending
   const selectedTribe = myTribes?.find((tribe) => tribe.tribeId === formData.tribeId)
@@ -330,21 +319,12 @@ export default function CreateEditPostPage() {
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               disabled={mutation.isPending || mutation.isSuccess}
+              className={`input ${hasSubmitted && !formData.title.trim() ? 'error' : ''}`}
               style={{
-                width: '100%',
                 padding: '14px 16px',
                 borderRadius: 12,
-                border: `1.5px solid ${getBorderColor('title', formData.title, true)}`,
                 background: 'var(--color-surface)',
-                color: 'var(--color-text-primary)',
-                fontSize: 14,
-                fontFamily: 'inherit',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-                boxSizing: 'border-box',
               }}
-              onFocus={() => setFocused('title')}
-              onBlur={() => setFocused(null)}
             />
           </div>
         </div>
@@ -372,24 +352,14 @@ export default function CreateEditPostPage() {
               value={formData.content}
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               disabled={mutation.isPending || mutation.isSuccess}
+              className={`input textarea textarea--autogrow ${hasSubmitted && !formData.content.trim() ? 'error' : ''}`}
               style={{
-                width: '100%',
-                resize: 'vertical',
                 minHeight: 150,
                 padding: '14px 16px',
                 borderRadius: 12,
-                border: `1.5px solid ${getBorderColor('content', formData.content, true)}`,
                 background: 'var(--color-surface)',
-                color: 'var(--color-text-primary)',
-                fontSize: 14,
                 lineHeight: 1.65,
-                fontFamily: 'inherit',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-                boxSizing: 'border-box',
               }}
-              onFocus={() => setFocused('content')}
-              onBlur={() => setFocused(null)}
             />
           </div>
         </div>

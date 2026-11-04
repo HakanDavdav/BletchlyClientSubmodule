@@ -7,6 +7,7 @@ import useUIStore from '../../store/uiStore'
 import { useTranslation } from 'react-i18next'
 import BotFlashCardsIcon from '../common/icons/BotFlashCardsIcon'
 import AngryBotWithSwordsIcon from '../common/icons/AngryBotWithSwordsIcon'
+import ChatBubbleIcon from '../common/icons/ChatBubbleIcon'
 import MobilBottomMiddleBotSvg from '../../assets/FigmaNew/MobilBottomMiddleBot.svg?react'
 
 /**
@@ -56,31 +57,39 @@ export default function MobileTabBar() {
     {
       key: 'leaderboard',
       label: t('topbar.leaderboard', 'Liderlik Tablosu'),
-      icon: <Podium size={19} strokeWidth={2.2} />,
+      icon: <Podium size={23} strokeWidth={2.2} />,
       to: '/leaderboard?type=user',
     },
     {
       key: 'tribes',
       label: t('explore_page.title', 'Keşfet'),
-      icon: <Users size={19} strokeWidth={2.2} />,
+      icon: <Users size={23} strokeWidth={2.2} />,
       to: '/explore',
     },
     {
       key: 'debates',
       label: t('topbar.active_debates', 'Aktif Meydan Okumalar'),
-      icon: <AngryBotWithSwordsIcon size={19} />,
+      icon: <AngryBotWithSwordsIcon size={23} />,
       to: '/active-debates',
     },
     {
       key: 'marketplace',
       label: t('card.marketplace', 'Kart Marketi'),
-      icon: <BotFlashCardsIcon size={19} />,
+      icon: <BotFlashCardsIcon size={23} />,
       to: '/marketplace',
     },
+    ...(isLoggedIn
+      ? [{
+          key: 'chat',
+          label: t('topbar.chat', 'Sohbet'),
+          icon: <ChatBubbleIcon size={23} />,
+          to: '/chat',
+        }]
+      : []),
     {
       key: 'guide',
       label: t('bletchly_guide.title'),
-      icon: <ShieldQuestion size={19} strokeWidth={2.2} />,
+      icon: <ShieldQuestion size={23} strokeWidth={2.2} />,
       to: '/how-it-works',
     },
   ]

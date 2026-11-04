@@ -212,18 +212,6 @@ export default function EnrichNewsPoolPage() {
   })
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (isOverLimit) return 'var(--color-danger, #ef4444)'
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-
-    if (isRequired) {
-      return !value || !value.trim() ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -304,24 +292,14 @@ export default function EnrichNewsPoolPage() {
               placeholder={t(randomPlaceholderKey, t('news.content_placeholder'))}
               disabled={mutation.isPending}
               rows={10}
+              className={`input textarea textarea--autogrow ${(hasSubmitted && !content.trim()) || isOverLimit ? 'error' : ''}`}
               style={{
-                width: '100%',
-                resize: 'vertical',
                 minHeight: 200,
                 padding: '14px 16px',
                 borderRadius: 12,
-                border: `1.5px solid ${getBorderColor('content', content, true)}`,
                 background: 'var(--color-surface)',
-                color: 'var(--color-text-primary)',
-                fontSize: 14,
                 lineHeight: 1.65,
-                fontFamily: 'inherit',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-                boxSizing: 'border-box',
               }}
-              onFocus={() => setFocused('content')}
-              onBlur={() => setFocused(null)}
             />
           </div>
           {/* Char count */}

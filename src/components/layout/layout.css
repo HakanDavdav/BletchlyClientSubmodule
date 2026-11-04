@@ -747,9 +747,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 44px;
+    min-height: 54px;
     padding: 0;
-    border-radius: 10px;
+    border-radius: 12px;
     border: 1px solid var(--color-border);
     background: var(--color-surface);
     color: var(--color-text-secondary);
@@ -848,12 +848,13 @@
     left: 50%;
     bottom: calc(64px + env(safe-area-inset-bottom, 0px));
     z-index: 200;
-    width: 300px;
-    max-width: calc(100vw - 16px);
-    padding: 8px;
+    width: 360px;
+    max-width: calc(100vw - 24px);
+    padding: 10px;
+    gap: 8px;
     background: var(--color-bg);
     border: 1px solid var(--color-border);
-    border-radius: 12px;
+    border-radius: 14px;
     box-shadow: var(--shadow-lg);
     /* Öğe sayısı değişse de satırı eşit dağıt (boş hücre kalmasın) */
     grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
@@ -1019,6 +1020,54 @@
 
   /* Taşan arka plan katmanı yatay kaydırma yaratmasın diye viewport
      genişliğinde kırpılır (yalnızca auth sayfalarında) */
+  .layout-center-inner:has(.auth-welcome-bg) {
+    overflow-x: clip;
+  }
+}
+
+/* ─── Login/Register mobil tam-ekran form yüzeyi ─────────────────────────── */
+@media (max-width: 900px) {
+  .layout-center-inner:has(.auth-welcome-bg) {
+    padding: 0 !important;
+  }
+
+  .auth-welcome-bg {
+    min-height: calc(100vh - var(--topbar-height) - 56px);
+  }
+
+  .auth-welcome-bg .card-surface {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: calc(100vh - var(--topbar-height) - 56px);
+    margin: 0 !important;
+    padding: 28px max(20px, env(safe-area-inset-left)) calc(28px + env(safe-area-inset-bottom, 0px)) !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: color-mix(in srgb, var(--color-surface) 42%, transparent) !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .auth-welcome-bg .card-surface > * {
+    width: 100%;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .auth-welcome-bg__layer {
+    left: 50% !important;
+    right: auto !important;
+    top: calc(var(--topbar-height) - 10px) !important;
+    bottom: auto !important;
+    width: min(800px, 160vw) !important;
+    height: 570px !important;
+    margin-left: 0 !important;
+    transform: translateX(-50%) !important;
+  }
+
   .layout-center-inner:has(.auth-welcome-bg) {
     overflow-x: clip;
   }
