@@ -99,6 +99,22 @@
   transform: translateX(-50%);
 }
 
+.debate-header__completed-stack {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.debate-header__completed-date {
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
 .debate-status {
   font-size: 11px;
   color: var(--color-text-muted);
@@ -667,11 +683,9 @@
   }
   35% {
     transform: scale(1.08);
-    box-shadow: 0 0 24px rgba(245, 158, 11, 0.7);
   }
   100% {
     transform: scale(1);
-    box-shadow: none;
   }
 }
 

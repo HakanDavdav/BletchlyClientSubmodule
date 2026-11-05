@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next'
 import BackButton from '../components/common/BackButton'
 import TribeMinimalCard from '../components/tribe/TribeMinimalCard'
 import { TopicTag } from '../components/topic/TopicTag'
+import InfiniteScrollStatus from '../components/common/InfiniteScrollStatus'
+import useInfiniteScroll from '../hooks/useInfiniteScroll'
 import { tribeApi } from '../api/tribeApi'
 import { TopicTypes } from '../constants/TopicTypes'
 import { TopicColors } from '../constants/enums'
@@ -232,32 +234,22 @@ export default function TribesPage() {
   }, [activeAreas])
 
   const visibleTribes = allFetchedTribes.slice(0, visibleCount)
+  const canLoadMore = hasNextPage || visibleCount < allFetchedTribes.length
 
-  const loadMoreRef = useRef(null)
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          if (visibleCount < allFetchedTribes.length) {
-            setVisibleCount((prev) => prev + 20)
-          } else if (hasNextPage && !isFetchingNextPage) {
-            fetchNextPage().then(() => {
-              setVisibleCount((prev) => prev + 20)
-            })
-          }
-        }
-      },
-      { threshold: 0.1 }
-    )
-
-    const currentRef = loadMoreRef.current
-    if (currentRef) observer.observe(currentRef)
-
-    return () => {
-      if (currentRef) observer.unobserve(currentRef)
-    }
-  }, [visibleCount, allFetchedTribes.length, hasNextPage, isFetchingNextPage, fetchNextPage])
+  const { sentinelRef: loadMoreRef, isWaiting } = useInfiniteScroll({
+    hasNextPage: canLoadMore,
+    isFetchingNextPage,
+    onIntersect: () => {
+      if (visibleCount < allFetchedTribes.length) {
+        setVisibleCount((prev) => prev + 20)
+      } else if (hasNextPage && !isFetchingNextPage) {
+        fetchNextPage().then(() => {
+          setVisibleCount((prev) => prev + 20)
+        })
+      }
+    },
+    depsKey: `${visibleCount}:${allFetchedTribes.length}`,
+  })
 
   const updateUrlWithAreas = (nextAreas) => {
     const nextParams = new URLSearchParams(searchParams)
@@ -337,12 +329,11 @@ export default function TribesPage() {
           <h1
             style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
           >
-            {t('tribes_page.explore_title', 'Keşfet')}
+            {t('tribes_page.explore_title')}
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
             {t(
-              'tribes_page.explore_desc',
-              'Klanları keşfet, ilgini çeken topluluklara katıl.'
+              'tribes_page.explore_desc'
             )}
           </p>
         </div>
@@ -384,7 +375,7 @@ export default function TribesPage() {
             transition: 'all 0.2s',
           }}
         >
-          {t('tribes_page.all_areas', 'Tümü')}
+          {t('tribes_page.all_areas')}
         </button>
         {TopicTypes.map((topic) => {
           const color = TopicColors[topic.value] || 'var(--color-primary)'
@@ -420,7 +411,7 @@ export default function TribesPage() {
                 type="button"
                 className="tribes-areas-nav tribes-areas-nav--left"
                 onClick={() => scrollAreas(-1)}
-                aria-label={t('common.previous', 'Önceki')}
+                aria-label={t('common.previous')}
               >
                 <svg
                   width="10"
@@ -441,7 +432,7 @@ export default function TribesPage() {
                 type="button"
                 className="tribes-areas-nav tribes-areas-nav--right"
                 onClick={() => scrollAreas(1)}
-                aria-label={t('common.next', 'Sonraki')}
+                aria-label={t('common.next')}
               >
                 <svg
                   width="10"
@@ -472,7 +463,7 @@ export default function TribesPage() {
                 onClick={clearAreas}
               >
                 <X size={14} />
-                {t('tribes_page.clear_area', 'Temizle')}
+                {t('tribes_page.clear_area')}
               </button>
             </div>
           )}
@@ -482,7 +473,7 @@ export default function TribesPage() {
               <div className="spinner spinner-lg" />
             </div>
           ) : visibleTribes.length === 0 ? (
-            <p className="empty-state">{t('common.nothing_here_yet')}</p>
+            <p className="empty-state">{t('search.no_results')}</p>
           ) : (
             <div
               style={{
@@ -496,13 +487,12 @@ export default function TribesPage() {
             </div>
           )}
 
-          {/* Sentinel for infinite scroll */}
-          <div ref={loadMoreRef} style={{ height: 20 }} />
-          {isFetchingNextPage && (
-            <div className="flex justify-center" style={{ padding: 20 }}>
-              <div className="spinner spinner-md" />
-            </div>
-          )}
+          <div ref={loadMoreRef} style={{ height: 1 }} />
+          <InfiniteScrollStatus
+            isFetching={isFetchingNextPage || isWaiting}
+            hasNextPage={canLoadMore}
+            hasItems={visibleTribes.length > 0}
+          />
         </>
       ) : isExploreLoading ? (
         <div className="flex justify-center" style={{ padding: 60 }}>
@@ -517,7 +507,7 @@ export default function TribesPage() {
             <section className="tribes-explore-section">
               <div className="tribes-explore-section-header">
                 <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                  {t('tribes_page.featured', 'Öne Çıkanlar')}
+                  {t('tribes_page.featured')}
                 </h2>
               </div>
               <div
@@ -536,7 +526,7 @@ export default function TribesPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                   <TopicTag topicType={section.value} size="md" />
                   <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
-                    {t('tribes_page.tribes_count', '{{count}} klan', {
+                    {t('tribes_page.tribes_count', {
                       count: section.tribes.length,
                     })}
                   </span>
@@ -546,7 +536,7 @@ export default function TribesPage() {
                   className="btn btn-ghost btn-sm"
                   onClick={() => selectSingleArea(section.value)}
                 >
-                  {t('tribes_page.see_all', 'Tümünü Gör')}
+                  {t('tribes_page.see_all')}
                 </button>
               </div>
               <div

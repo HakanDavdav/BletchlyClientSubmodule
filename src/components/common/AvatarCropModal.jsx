@@ -181,7 +181,7 @@ export default function AvatarCropModal({
               height: 4,
               cursor: 'pointer',
             }}
-            aria-label={t('upload.zoom', 'Yakınlaştırma')}
+            aria-label={t('upload.zoom')}
           />
           <ZoomIn size={18} style={{ color: 'var(--color-text-faint)', flexShrink: 0 }} />
         </div>
@@ -213,7 +213,7 @@ export default function AvatarCropModal({
               transition: 'all 0.2s ease',
             }}
           >
-            {t('common.cancel', 'İptal')}
+            {t('common.cancel')}
           </button>
           <button
             type="button"
@@ -222,8 +222,8 @@ export default function AvatarCropModal({
             disabled={isProcessing}
           >
             {isProcessing
-              ? t('upload.processing', 'İşleniyor...')
-              : t('upload.crop_confirm', 'Onayla')}
+              ? t('upload.processing')
+              : t('upload.crop_confirm')}
           </button>
         </div>
       </div>

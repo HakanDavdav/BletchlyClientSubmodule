@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { actorApi } from '../../api/actorApi'
 import ActivityItem from '../activity/ActivityItem'
+import InfiniteScrollStatus from '../common/InfiniteScrollStatus'
+import useInfiniteScroll from '../../hooks/useInfiniteScroll'
 import useDevLog from '../../utils/useDevLog'
 import useAuthStore from '../../store/authStore'
 import { useTranslation } from 'react-i18next'
@@ -39,12 +41,15 @@ export default function ProfileActivitiesPanel({ actorId, profileName }) {
     }
   }, [data])
 
-  const handleScroll = (e) => {
-    const bottom = e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10
-    if (bottom && !isFetching && hasMore) {
-      setPage((p) => p + 1)
-    }
-  }
+  const scrollRef = useRef(null)
+  const { sentinelRef: loadMoreRef, isWaiting } = useInfiniteScroll({
+    hasNextPage: hasMore,
+    isFetchingNextPage: isFetching,
+    onIntersect: () => setPage((p) => p + 1),
+    rootRef: scrollRef,
+    rootMargin: '150px',
+    enabled: !!actorId,
+  })
 
   const { actorId: currentUserId } = useAuthStore()
   const forceRead = actorId !== currentUserId
@@ -52,7 +57,7 @@ export default function ProfileActivitiesPanel({ actorId, profileName }) {
   return (
     <div className="profile-activities-panel">
       <div className="profile-activities-header">{t('profile.activity_history')}</div>
-      <div className="profile-activities-list" onScroll={handleScroll}>
+      <div ref={scrollRef} className="profile-activities-list">
         {activities.map((a) => (
           <ActivityItem
             key={a.activityId}
@@ -62,21 +67,17 @@ export default function ProfileActivitiesPanel({ actorId, profileName }) {
             variant="profile"
           />
         ))}
-        {isFetching && (
-          <div style={{ textAlign: 'center', padding: 8 }}>
-            <div className="spinner spinner-sm" style={{ display: 'inline-block' }} />
-          </div>
-        )}
         {!isFetching && activities.length === 0 && (
           <p className="empty-state">
             {t('common.nothing_here_yet')}
           </p>
         )}
-        {!isFetching && !hasMore && activities.length > 0 && (
-          <p className="text-muted" style={{ padding: 16, textAlign: 'center', fontSize: 13 }}>
-            {t('common.no_more_results')}
-          </p>
-        )}
+        <div ref={loadMoreRef} style={{ height: 1 }} />
+        <InfiniteScrollStatus
+          isFetching={isFetching || isWaiting}
+          hasNextPage={hasMore}
+          hasItems={activities.length > 0}
+        />
       </div>
     </div>
   )

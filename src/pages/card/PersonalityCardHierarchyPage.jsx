@@ -375,7 +375,7 @@ function CardTreeNode({
                 onToggleAncestor(node.id)
               }
             }}
-            aria-label={t('hierarchy.collapse_fossil_ancestor_tooltip', 'Fosil atayı daralt ve alt birimleri doğrudan üste bağla')}
+            aria-label={t('hierarchy.collapse_fossil_ancestor_tooltip')}
           >
             <TRexSkullIcon className="badge-fossil-icon" />
             <CircleMinus size={12} strokeWidth={2.4} />
@@ -431,8 +431,8 @@ function CardTreeNode({
             <div
               title={
                 node.isDeleted
-                  ? t('hierarchy.carrier_deleted', 'Silinmiş Atama (Eski Taşıyıcı)')
-                  : t('hierarchy.carrier_active', 'Aktif Taşıyıcı')
+                  ? t('hierarchy.carrier_deleted')
+                  : t('hierarchy.carrier_active')
               }
               style={{
                 display: 'flex',
@@ -471,7 +471,7 @@ function CardTreeNode({
         {/* Render Node Content */}
         {node.nodeType === 'card' ? (
           <div style={{ width: 350, maxWidth: 380, textAlign: 'left' }}>
-            <PersonalityCard card={node.card} showMark={false} />
+            <PersonalityCard card={node.card} showMark={false} showRelations={false} />
           </div>
         ) : node.nodeType === 'tribe' ? (
           <div style={{ position: 'relative', width: '100%', minWidth: 180 }}>
@@ -619,8 +619,8 @@ function CardTreeNode({
             }}
             aria-label={
               isCollapsed
-                ? t('hierarchy.expand', 'Genişlet')
-                : t('hierarchy.collapse', 'Daralt')
+                ? t('hierarchy.expand')
+                : t('hierarchy.collapse')
             }
           >
             {isCollapsed ? <CirclePlus size={28} strokeWidth={2.2} /> : <CircleMinus size={28} strokeWidth={2.2} />}
@@ -690,17 +690,17 @@ function CardTreeNode({
                     disabled={isLoadingFossils}
                     aria-label={
                       hasFossil && hasDeleted
-                        ? (effectiveFossilExpanded ? t('hierarchy.hide_archive', 'Fosil ve silinmiş alt birimleri daralt') : t('hierarchy.show_archive', 'Fosil ve silinmiş alt birimleri göster'))
+                        ? (effectiveFossilExpanded ? t('hierarchy.hide_archive') : t('hierarchy.show_archive'))
                         : hasFossil
-                          ? (effectiveFossilExpanded ? t('hierarchy.hide_fossils', 'Fosilleşmiş alt birimleri daralt') : t('hierarchy.show_fossils', 'Fosilleşmiş alt birimleri göster'))
-                          : (effectiveFossilExpanded ? t('hierarchy.hide_deleted', 'Silinmiş alt birimleri daralt') : t('hierarchy.show_deleted', 'Silinmiş alt birimleri göster'))
+                          ? (effectiveFossilExpanded ? t('hierarchy.hide_fossils') : t('hierarchy.show_fossils'))
+                          : (effectiveFossilExpanded ? t('hierarchy.hide_deleted') : t('hierarchy.show_deleted'))
                     }
                     title={
                       hasFossil && hasDeleted
-                        ? (effectiveFossilExpanded ? t('hierarchy.hide_archive', 'Fosil ve silinmiş alt birimleri daralt') : t('hierarchy.show_archive', 'Fosil ve silinmiş alt birimleri göster'))
+                        ? (effectiveFossilExpanded ? t('hierarchy.hide_archive') : t('hierarchy.show_archive'))
                         : hasFossil
-                          ? (effectiveFossilExpanded ? t('hierarchy.hide_fossils', 'Fosilleşmiş alt birimleri daralt') : t('hierarchy.show_fossils', 'Fosilleşmiş alt birimleri göster'))
-                          : (effectiveFossilExpanded ? t('hierarchy.hide_deleted', 'Silinmiş alt birimleri daralt') : t('hierarchy.show_deleted', 'Silinmiş alt birimleri göster'))
+                          ? (effectiveFossilExpanded ? t('hierarchy.hide_fossils') : t('hierarchy.show_fossils'))
+                          : (effectiveFossilExpanded ? t('hierarchy.hide_deleted') : t('hierarchy.show_deleted'))
                     }
                   >
                     {hasFossil && hasDeleted ? (
@@ -799,12 +799,12 @@ function CardTreeNode({
                                 e.stopPropagation()
                                 setFossilVisibleLimit((prev) => prev + 5)
                               }}
-                              aria-label={t('hierarchy.load_more_archive', '+{{count}} daha fazla göster ({{remaining}} kalan)', { count: nextArchiveBatch, remaining: remainingArchiveCount })}
-                              title={t('hierarchy.load_more_archive', '+{{count}} daha fazla göster ({{remaining}} kalan)', { count: nextArchiveBatch, remaining: remainingArchiveCount })}
+                              aria-label={t('hierarchy.load_more_archive', { count: nextArchiveBatch, remaining: remainingArchiveCount })}
+                              title={t('hierarchy.load_more_archive', { count: nextArchiveBatch, remaining: remainingArchiveCount })}
                             >
                               <CirclePlus size={14} strokeWidth={2.2} />
                               <span>+{nextArchiveBatch}</span>
-                              <span className="vtree-fossil-pill-sub">({remainingArchiveCount} {t('hierarchy.remaining', 'kalan')})</span>
+                              <span className="vtree-fossil-pill-sub">({remainingArchiveCount} {t('hierarchy.remaining')})</span>
                             </button>
                           </div>
                         </div>
@@ -842,15 +842,15 @@ export default function PersonalityCardHierarchyPage() {
       if (payload && (payload.personalityCardId || payload.cardId || res.data?.success)) {
         return payload
       }
-      throw new Error(res.data?.message || t('card.load_failed', 'Hiyerarşi verisi yüklenemedi.'))
+      throw new Error(res.data?.message || t('card.load_failed'))
     },
     enabled: Boolean(cardId),
   })
 
   const error = !cardId
-    ? t('card.no_card_id', 'Kart ID bilgisi bulunamadı.')
+    ? t('card.no_card_id')
     : queryError
-    ? queryError.response?.data?.message || queryError.message || t('card.load_error', 'Bağlantı hatası oluştu.')
+    ? queryError.response?.data?.message || queryError.message || t('card.load_error')
     : null
 
   const [showFossils, setShowFossils] = useState(false)
@@ -1271,7 +1271,7 @@ export default function PersonalityCardHierarchyPage() {
             flexShrink: 1,
           }}
         >
-          <BackButton style={{ marginBottom: 0, width: 30, height: 30, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', flexShrink: 0 }} />
+          <BackButton plain style={{ marginBottom: 0, width: 30, height: 30, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', flexShrink: 0 }} />
           <div style={{ width: 1, height: 24, background: 'var(--color-border)', flexShrink: 0 }} />
 
           <div
@@ -1299,10 +1299,10 @@ export default function PersonalityCardHierarchyPage() {
               }}
             >
               <span className="hierarchy-header-label-full">
-                {t('hierarchy.card_hierarchy_title', 'Card Hierarchy')}
+                {t('hierarchy.card_hierarchy_title')}
               </span>
               <span className="hierarchy-header-label-short">
-                {t('hierarchy.card_hierarchy_title_short', 'Kart')}
+                {t('hierarchy.card_hierarchy_title_short')}
               </span>
             </span>
             <span className="hierarchy-header-bullet" style={{ color: 'var(--color-primary)', flexShrink: 0, transform: 'translateY(-1px)' }}>•</span>
@@ -1324,7 +1324,7 @@ export default function PersonalityCardHierarchyPage() {
                 flex: '0 1 auto',
               }}
             >
-              {card?.cardName ? `${card.cardName}` : t('hierarchy.no_name', 'isim')}
+              {card?.cardName ? `${card.cardName}` : t('hierarchy.no_name')}
             </span>
           </div>
         </div>
@@ -1362,7 +1362,7 @@ export default function PersonalityCardHierarchyPage() {
             >
               <Crown size={14} color="var(--color-warning)" />
               <span>{ownersCount}</span>
-              <span className="hierarchy-count-badge__text" style={{ fontSize: 11, opacity: 0.7 }}>{t('card.owners', 'Sahip')}</span>
+              <span className="hierarchy-count-badge__text" style={{ fontSize: 11, opacity: 0.7 }}>{t('card.owners')}</span>
             </div>
 
             <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
@@ -1382,7 +1382,7 @@ export default function PersonalityCardHierarchyPage() {
             >
               <BotIconLucide size={14} color="var(--color-primary)" />
               <span>{assignmentsCount}</span>
-              <span className="hierarchy-count-badge__text" style={{ fontSize: 11, opacity: 0.7 }}>{t('card.assignees', 'Atama')}</span>
+              <span className="hierarchy-count-badge__text" style={{ fontSize: 11, opacity: 0.7 }}>{t('card.assignees')}</span>
             </div>
 
             <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
@@ -1406,7 +1406,7 @@ export default function PersonalityCardHierarchyPage() {
               type="button"
               className="btn btn-ghost btn-sm hierarchy-zoom-btn"
               onClick={() => handleZoom((z) => z + 0.1)}
-              aria-label={t('hierarchy.zoom_in', 'Büyüt (+)')}
+              aria-label={t('hierarchy.zoom_in')}
               style={{ flexShrink: 0, width: 26, height: 26, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <Plus size={12} />
@@ -1415,7 +1415,7 @@ export default function PersonalityCardHierarchyPage() {
               type="button"
               className="btn btn-ghost btn-sm hierarchy-zoom-btn"
               onClick={() => handleZoom((z) => z - 0.1)}
-              aria-label={t('hierarchy.zoom_out', 'Küçült (-)')}
+              aria-label={t('hierarchy.zoom_out')}
               style={{ flexShrink: 0, width: 26, height: 26, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <Minus size={12} />
@@ -1437,8 +1437,8 @@ export default function PersonalityCardHierarchyPage() {
               type="button"
               className={`vtree-fossil-pill ${includeHistory ? 'vtree-fossil-pill--expanded' : ''}`}
               onClick={() => setIncludeHistory((prev) => !prev)}
-              aria-label={includeHistory ? t('hierarchy.history_mode_on', 'Tarihsel Sirkülasyon') : t('hierarchy.history_mode_off', 'Aktif Sirkülasyon')}
-              title={t('hierarchy.history_mode_tooltip', 'Tüm geçmiş aktarım sirkülasyonunu göster')}
+              aria-label={includeHistory ? t('hierarchy.history_mode_on') : t('hierarchy.history_mode_off')}
+              title={t('hierarchy.history_mode_tooltip')}
               style={{ flexShrink: 0 }}
             >
               <Trash2
@@ -1463,11 +1463,11 @@ export default function PersonalityCardHierarchyPage() {
               className={`btn btn-sm hierarchy-toggle-btn ${!isAllCollapsed ? 'hierarchy-toggle-btn--active' : ''}`}
               onClick={handleToggleAll}
               disabled={!treeRoot}
-              aria-label={isAllCollapsed ? t('hierarchy.expand_all', 'Tümünü Genişlet') : t('hierarchy.collapse_all', 'Tümünü Daralt')}
+              aria-label={isAllCollapsed ? t('hierarchy.expand_all') : t('hierarchy.collapse_all')}
               style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '0 12px', height: 26 }}
             >
               {isAllCollapsed ? <Maximize2 size={12} /> : <Minimize2 size={12} />}
-              <span>{isAllCollapsed ? t('hierarchy.expand_all', 'Tümünü Genişlet') : t('hierarchy.collapse_all', 'Tümünü Daralt')}</span>
+              <span>{isAllCollapsed ? t('hierarchy.expand_all') : t('hierarchy.collapse_all')}</span>
             </button>
 
             <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
@@ -1478,11 +1478,11 @@ export default function PersonalityCardHierarchyPage() {
               className="btn btn-primary btn-sm"
               onClick={handleDefaultView}
               disabled={!treeRoot}
-              aria-label={t('hierarchy.default_view', 'Varsayılan')}
+              aria-label={t('hierarchy.default_view')}
               style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '0 12px', height: 26 }}
             >
               <Focus size={12} />
-              <span>{t('hierarchy.default_view', 'Varsayılan')}</span>
+              <span>{t('hierarchy.default_view')}</span>
             </button>
           </div>
         </div>
@@ -1551,7 +1551,7 @@ export default function PersonalityCardHierarchyPage() {
               className="btn btn-primary btn-sm"
               onClick={loadHierarchy}
             >
-              {t('action.retry', 'Tekrar Dene')}
+              {t('action.retry')}
             </button>
           </div>
         ) : treeRoot ? (

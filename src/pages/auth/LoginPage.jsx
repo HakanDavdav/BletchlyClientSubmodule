@@ -235,15 +235,15 @@ export default function LoginPage() {
 
           <div style={{ marginTop: 8, padding: '12px 16px', backgroundColor: 'var(--color-surface)', borderRadius: 8, border: '1px solid var(--color-border)', transition: 'border-color 0.2s ease-in-out, background-color 0.2s ease-in-out' }}>
             <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: '1.4', display: 'block', textAlign: 'center' }}>
-              {t('auth.agree_prefix', 'Giriş yaparak')}{' '}
+              {t('auth.agree_prefix')}{' '}
               <Link to="/terms" style={{ color: 'var(--color-primary)', fontWeight: 700, textDecoration: 'none' }}>
                 Terms of Service
               </Link>{' '}
-              {t('auth.and', 've')}{' '}
+              {t('auth.and')}{' '}
               <Link to="/privacy" style={{ color: 'var(--color-primary)', fontWeight: 700, textDecoration: 'none' }}>
                 Privacy Policy
               </Link>
-              {t('auth.agree_suffix', '\'nı kabul etmiş olursunuz.')}
+              {t('auth.agree_suffix')}
             </span>
           </div>
 

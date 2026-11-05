@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, Eye, Swords } from 'lucide-react'
+import { Check, Eye, Swords, X } from 'lucide-react'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
 import AngryBotWithSwordsIcon from '../common/icons/AngryBotWithSwordsIcon'
+import { getShortTimeAgo } from '../../utils/formatTime'
 import './DebateCard.css'
 
 const isLive = (d) => d.status === 1 || d.status === 'InProgress' || d.Status === 1 || d.Status === 'InProgress'
 const isCompleted = (d) => d.status === 2 || d.status === 'Completed' || d.Status === 2 || d.Status === 'Completed'
+const isCancelled = (d) => d.status === 3 || d.status === 'Cancelled' || d.Status === 3 || d.Status === 'Cancelled'
 
 function DebateCardBackground({ proponent, opponent }) {
   const leftImage = proponent.imageUrl || proponent.ImageUrl
@@ -39,7 +41,7 @@ function DebateCardBackground({ proponent, opponent }) {
         preserveAspectRatio="none"
         aria-hidden="true"
       >
-        <path d="M15,100 L24,74 L36,74 L48,48 L60,48 L72,20 L85,0" />
+        <path d="M35,100 L37,74 L42,74 L47,48 L53,48 L59,20 L65,0" />
       </svg>
     </div>
   )
@@ -51,6 +53,7 @@ export default function DebateCard({ debate, actorId, onOpen, onWatch, variant =
   const compact = variant === 'compact'
   const live = isLive(debate)
   const completed = isCompleted(debate)
+  const cancelled = isCancelled(debate)
   const proponent = debate.proponent || debate.Proponent || {}
   const opponent = debate.opponent || debate.Opponent || {}
   const proposition = debate.proposition || debate.Proposition || ''
@@ -72,6 +75,12 @@ export default function DebateCard({ debate, actorId, onOpen, onWatch, variant =
   const isOpponentWinner = Boolean(
     winnerId && opponentId && String(winnerId).toLowerCase() === String(opponentId).toLowerCase()
   )
+  const displayDate =
+    debate.completedAt ||
+    debate.CompletedAt ||
+    debate.createdAt ||
+    debate.CreatedAt ||
+    null
 
   const handleOpen = async () => {
     if (loading || !onOpen) return
@@ -90,10 +99,10 @@ export default function DebateCard({ debate, actorId, onOpen, onWatch, variant =
         onClick={handleOpen}
         style={{
           display: 'flex',
-          alignItems: 'center',
-          padding: '10px 8px',
+          flexDirection: 'column',
+          padding: '8px 8px 6px',
           cursor: loading ? 'wait' : 'pointer',
-          gap: 8,
+          gap: 2,
           background: 'var(--color-surface)',
           border: '1px solid var(--color-border)',
           borderRadius: 8,
@@ -115,6 +124,7 @@ export default function DebateCard({ debate, actorId, onOpen, onWatch, variant =
         }}
       >
         <DebateCardBackground proponent={proponent} opponent={opponent} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
         <span className={isProponentWinner ? 'debate-winner' : ''} style={{ display: 'contents' }}>
           <ActorMinimalCard
             actor={proponent}
@@ -162,7 +172,7 @@ export default function DebateCard({ debate, actorId, onOpen, onWatch, variant =
             color: 'var(--color-text)',
           }}
         >
-          {proposition || t('debate.no_proposition', 'Önerme belirtilmedi')}
+          {proposition || t('debate.no_proposition')}
         </div>
 
         {live && onWatch && (
@@ -172,7 +182,7 @@ export default function DebateCard({ debate, actorId, onOpen, onWatch, variant =
               e.stopPropagation()
               onWatch(debate)
             }}
-            aria-label={t('left_panel.watch', 'İzle')}
+            aria-label={t('left_panel.watch')}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -198,6 +208,12 @@ export default function DebateCard({ debate, actorId, onOpen, onWatch, variant =
           >
             <Eye size={14} />
           </button>
+        )}
+        </div>
+        {displayDate && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+            <span className="date-text">{getShortTimeAgo(displayDate)}</span>
+          </div>
         )}
       </div>
     )
@@ -254,6 +270,18 @@ export default function DebateCard({ debate, actorId, onOpen, onWatch, variant =
               strokeWidth={2.5}
               style={{
                 color: 'var(--color-primary)',
+                flexShrink: 0,
+                marginRight: 'auto',
+                marginLeft: 2,
+              }}
+            />
+          )}
+          {cancelled && (
+            <X
+              size={15}
+              strokeWidth={3}
+              style={{
+                color: 'var(--color-error)',
                 flexShrink: 0,
                 marginRight: 'auto',
                 marginLeft: 2,
@@ -348,7 +376,7 @@ export default function DebateCard({ debate, actorId, onOpen, onWatch, variant =
             overflow: 'hidden',
           }}
         >
-          {proposition || t('debate.no_proposition', 'Önerme belirtilmedi')}
+          {proposition || t('debate.no_proposition')}
         </p>
 
         <div
@@ -361,33 +389,51 @@ export default function DebateCard({ debate, actorId, onOpen, onWatch, variant =
 
         <div
           style={{
-            display: 'flex',
+            display: 'grid',
+            gridTemplateColumns: '1fr auto 1fr',
             alignItems: 'center',
             gap: 6,
-            color: 'var(--color-primary)',
-            fontSize: 13,
-            fontWeight: 600,
             paddingTop: 2,
           }}
         >
-          <ButtonIcon size={15} strokeWidth={2.5} />
-          {live
-            ? isParticipant
-              ? t('debate.join_debate', 'Meydan Okumaya Katıl')
-              : t('debate.watch_live', 'Canlı İzle')
-            : t('debate.view_transcript', 'Görüntüle')}
-          {completed && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              minWidth: 0,
+              color: 'var(--color-primary)',
+              fontSize: 13,
+              fontWeight: 600,
+            }}
+          >
+            <ButtonIcon size={15} strokeWidth={2.5} />
+            <span className="truncate">
+              {live
+                ? isParticipant
+                  ? t('debate.join_debate')
+                  : t('debate.watch_live')
+                : t('debate.view_transcript')}
+            </span>
+          </div>
+          {completed ? (
             <span
               style={{
-                marginLeft: 'auto',
-                fontSize: 12,
-                fontWeight: 700,
-                color: 'var(--color-text-secondary)',
+                fontSize: 16,
+                fontWeight: 800,
+                letterSpacing: '0.02em',
+                color: 'var(--color-text-primary)',
+                whiteSpace: 'nowrap',
               }}
             >
               {debate.proponentScore ?? debate.ProponentScore ?? '-'} - {debate.opponentScore ?? debate.OpponentScore ?? '-'}
             </span>
-          )}
+          ) : <span />}
+          {displayDate ? (
+            <span className="date-text" style={{ justifySelf: 'end', whiteSpace: 'nowrap' }}>
+              {getShortTimeAgo(displayDate)}
+            </span>
+          ) : <span aria-hidden="true" />}
         </div>
       </div>
     </div>

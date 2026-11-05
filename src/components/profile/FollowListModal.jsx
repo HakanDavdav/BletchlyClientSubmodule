@@ -1,9 +1,12 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { actorApi } from '../../api/actorApi'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
 import ModalHeader from '../common/ModalHeader'
 import FossilTogglePill from '../common/FossilTogglePill'
+import InfiniteScrollStatus from '../common/InfiniteScrollStatus'
+import ModalPortal from '../common/ModalPortal'
+import useInfiniteScroll from '../../hooks/useInfiniteScroll'
 import useDevLog from '../../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 
@@ -50,20 +53,21 @@ export default function FollowListModal({ actorId, type, isOpen, onClose }) {
     return [...items].sort((a, b) => (isDormantItem(a) ? 1 : 0) - (isDormantItem(b) ? 1 : 0))
   }, [items, showFossils])
 
-  // Infinite scroll için onScroll handler
-  const handleScroll = (e) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.target
-    if (scrollHeight - scrollTop <= clientHeight + 50) {
-      if (hasNextPage && !isFetchingNextPage) {
-        fetchNextPage()
-      }
-    }
-  }
+  const scrollRef = useRef(null)
+  const { sentinelRef: loadMoreRef, isWaiting } = useInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    rootRef: scrollRef,
+    rootMargin: '150px',
+    enabled: isOpen,
+  })
 
   if (!isOpen) return null
 
   return (
-    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 100 }}>
+    <ModalPortal>
+      <div className="modal-overlay" onClick={onClose} style={{ zIndex: 100 }}>
       <div 
         className="modal-box" 
         onClick={(e) => e.stopPropagation()} 
@@ -79,7 +83,7 @@ export default function FollowListModal({ actorId, type, isOpen, onClose }) {
         }}
       >
         <ModalHeader
-          title={type === 'followers' ? t('profile.followers', 'Takipçiler') : t('profile.following', 'Takip Edilenler')}
+          title={type === 'followers' ? t('profile.followers') : t('profile.following')}
           onClose={onClose}
           actions={
             <FossilTogglePill
@@ -92,16 +96,16 @@ export default function FollowListModal({ actorId, type, isOpen, onClose }) {
           style={{ padding: '0 0 12px 0', marginBottom: 14 }}
         />
 
-        <div 
+        <div
+          ref={scrollRef}
           style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}
-          onScroll={handleScroll}
         >
           {isLoading ? (
             <div style={{ textAlign: 'center', padding: 24 }}>
               <div className="spinner spinner-md" />
             </div>
           ) : visibleItems.length === 0 ? (
-            <p className="empty-state">{t('common.nothing_here_yet', 'Henüz burada hiçbir şey yok')}</p>
+            <p className="empty-state">{t('common.nothing_here_yet')}</p>
           ) : (
             <div className="minimal-card-list" style={{ padding: '4px 4px 8px 4px' }}>
               {visibleItems.map((actor) => (
@@ -111,21 +115,17 @@ export default function FollowListModal({ actorId, type, isOpen, onClose }) {
                   </div>
                 </div>
               ))}
-              
-              {isFetchingNextPage && (
-                <div style={{ textAlign: 'center', padding: 16 }}>
-                  <div className="spinner spinner-sm" />
-                </div>
-              )}
-              {!isFetchingNextPage && !hasNextPage && visibleItems.length > 0 && (
-                <p className="text-muted" style={{ padding: 16, textAlign: 'center', fontSize: 13 }}>
-                  {t('common.no_more_results')}
-                </p>
-              )}
             </div>
           )}
+          <div ref={loadMoreRef} style={{ height: 1 }} />
+          <InfiniteScrollStatus
+            isFetching={isFetchingNextPage || isWaiting}
+            hasNextPage={hasNextPage}
+            hasItems={visibleItems.length > 0}
+          />
         </div>
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   )
 }

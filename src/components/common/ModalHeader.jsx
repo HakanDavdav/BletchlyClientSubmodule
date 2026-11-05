@@ -36,7 +36,7 @@ export default function ModalHeader({
             type="button"
             className="btn-icon"
             onClick={onClose}
-            aria-label={t('common.close', 'Kapat')}
+            aria-label={t('common.close')}
           >
             <X size={18} />
           </button>

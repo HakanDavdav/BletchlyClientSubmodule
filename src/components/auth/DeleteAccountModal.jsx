@@ -8,6 +8,7 @@ import { X, AlertTriangle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import PasswordInput from '../common/PasswordInput'
+import ModalPortal from '../common/ModalPortal'
 
 export default function DeleteAccountModal({ isOpen, onClose }) {
   useDevLog('DeleteAccountModal', arguments[0] || {})
@@ -20,7 +21,7 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
     mutationFn: (data) => identityApi.deleteAccount(data),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      toast.success(t('common.success', 'Başarılı'), { duration: 3000 })
+      toast.success(t('common.success'), { duration: 3000 })
       clearAuth()
       navigate('/login')
       onClose()
@@ -49,7 +50,8 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
   if (!isOpen) return null
 
   return (
-    <div className="modal-overlay" onClick={handleOverlayClick} style={{ zIndex: 100 }}>
+    <ModalPortal>
+      <div className="modal-overlay" onClick={handleOverlayClick} style={{ zIndex: 100 }}>
       <div className="modal-box" style={{ maxWidth: 440, padding: '36px 32px', textAlign: 'left', position: 'relative', border: '1px solid var(--color-error-border, rgba(239, 68, 68, 0.4))' }}>
         <button
           type="button"
@@ -134,7 +136,7 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
               disabled={deleteAccountMutation.isPending}
               style={{ minWidth: 90 }}
             >
-              {t('common.close', 'Kapat')}
+              {t('common.close')}
             </button>
             <button
               type="submit"
@@ -147,6 +149,7 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
           </div>
         </form>
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   )
 }

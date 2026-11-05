@@ -86,7 +86,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
     mutationFn: (data) => personalityCardApi.editCard(cardId, data),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      toast.success(t('common.success', 'Başarılı'), { duration: 3000 })
+      toast.success(t('common.success'), { duration: 3000 })
       queryClient.invalidateQueries({ queryKey: ['myPersonalityCards'] })
       queryClient.invalidateQueries({ queryKey: ['actorProfile'] })
       useMyEntitiesStore.getState().fetchMyBots()
@@ -99,7 +99,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
     mutationFn: () => personalityCardApi.deleteCard(cardId),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      toast.success(t('common.success', 'Başarılı'), { duration: 3000 })
+      toast.success(t('common.success'), { duration: 3000 })
       queryClient.invalidateQueries({ queryKey: ['myPersonalityCards'] })
       queryClient.invalidateQueries({ queryKey: ['actorProfile'] })
       useMyEntitiesStore.getState().fetchMyBots()
@@ -173,7 +173,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
             textTransform: 'uppercase',
           }}
         >
-          {t('card.edit_personality_card', 'Kişilik Kartını Düzenle')}
+          {t('card.edit_personality_card')}
         </label>
         <button
           type="button"
@@ -181,7 +181,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
           onClick={onClose}
           style={{ borderRadius: 20, padding: '4px 10px', height: 'auto', fontSize: 12 }}
         >
-          <X size={14} /> {t('common.cancel', 'İptal')}
+          <X size={14} /> {t('common.cancel')}
         </button>
       </div>
 
@@ -232,8 +232,8 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
         {isCreator ? (
           <span
             className="personality-card__corner-badge"
-            title={t('card.tooltip_creator', 'Yaratıcı')}
-            aria-label={t('card.tooltip_creator', 'Yaratıcı')}
+            title={t('card.tooltip_creator')}
+            aria-label={t('card.tooltip_creator')}
             style={{
               position: 'absolute',
               top: -14,
@@ -256,8 +256,8 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
         ) : (
           <span
             className="personality-card__corner-badge"
-            title={t('card.tooltip_purchased', 'Satın Alındı')}
-            aria-label={t('card.tooltip_purchased', 'Satın Alındı')}
+            title={t('card.tooltip_purchased')}
+            aria-label={t('card.tooltip_purchased')}
             style={{
               position: 'absolute',
               top: -14,
@@ -322,11 +322,11 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
                 isCreator &&
                 setEditFormData((prev) => ({ ...prev, cardName: event.target.value }))
               }
-              placeholder={t('card.card_name_placeholder', 'Kişilik kart adı')}
+              placeholder={t('card.card_name_placeholder')}
               disabled={!isCreator || editMutation.isPending || deleteMutation.isPending}
               readOnly={isConfirmed || !isCreator}
               maxLength={100}
-              aria-label={t('card.card_name', 'Kart adı')}
+              aria-label={t('card.card_name')}
               style={{
                 flex: 1,
                 minWidth: 0,
@@ -351,8 +351,8 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
                 size="box"
                 label={
                   isConfirmed
-                    ? t('card.personality_confirmed', 'Kişilik kartı onaylandı')
-                    : t('card.personality_pending', 'Kişilik kartı bekliyor')
+                    ? t('card.personality_confirmed')
+                    : t('card.personality_pending')
                 }
               />
             </div>
@@ -365,11 +365,11 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
               onChange={(event) =>
                 setEditFormData((prev) => ({ ...prev, personalityPrompt: event.target.value }))
               }
-              placeholder={t('card.personality_prompt_placeholder', 'Bu kişiliği tanımlayın...')}
+              placeholder={t('card.personality_prompt_placeholder')}
               disabled={editMutation.isPending || deleteMutation.isPending}
               readOnly={isConfirmed}
               maxLength={2000}
-              aria-label={t('card.personality_prompt', 'Kişilik tanımı')}
+              aria-label={t('card.personality_prompt')}
               style={
                 isConfirmed
                   ? {
@@ -406,7 +406,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
                 }}
               >
                 <Crown size={14} />{' '}
-                {t('card.prompt_creator_only', 'Orijinal prompt gizlidir (Yalnızca Yaratıcı)')}
+                {t('card.prompt_creator_only')}
               </div>
               <p
                 style={{
@@ -419,7 +419,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
                 "
                 {cardData?.cardHint ||
                   card?.cardHint ||
-                  t('card.hint_placeholder', 'Bu kart için özel oluşturulmuş kişilik kuralları.')}
+                  t('card.hint_placeholder')}
                 "
               </p>
             </div>
@@ -464,14 +464,14 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
                   color: 'var(--color-text-primary)',
                 }}
               >
-                {t('card.list_on_marketplace', 'Pazarda Satışa Çıkar')}
+                {t('card.list_on_marketplace')}
               </span>
             </div>
             <SelectionMarker
               checked={editFormData.isListedOnMarketplace}
               size="sm"
               disabled={editMutation.isPending || deleteMutation.isPending}
-              label={t('card.list_on_marketplace', 'Pazarda Satışa Çıkar')}
+              label={t('card.list_on_marketplace')}
             />
           </div>
         )}
@@ -500,7 +500,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
                 color: 'var(--color-text-secondary)',
               }}
             >
-              {t('card.price_label', 'Satış Fiyatı (AP)')}
+              {t('card.price_label')}
             </label>
             <input
               id="card-edit-price-input"
@@ -515,7 +515,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
                   price: e.target.value,
                 }))
               }
-              placeholder={t('card.price_placeholder', 'Kart fiyatını belirleyin (AP)...')}
+              placeholder={t('card.price_placeholder')}
               disabled={editMutation.isPending || deleteMutation.isPending}
               readOnly={isConfirmed}
               style={{
@@ -565,7 +565,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
               }}
             >
               <Bot size={15} color="var(--color-primary)" />
-              {t('card.assign_to_bots', 'Atanan Botlar')}
+              {t('card.assign_to_bots')}
             </label>
           </div>
 
@@ -578,7 +578,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
                 fontSize: 12,
               }}
             >
-              {t('card.no_bots_to_assign', 'Henüz atanabilecek bir botunuz bulunmuyor.')}
+              {t('common.nothing_here_yet')}
             </div>
           ) : (
             <div
@@ -643,7 +643,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
               }}
             >
               <Trash2 size={15} />
-              {t('tribe_settings.danger_zone', 'Tehlikeli Bölge')}
+              {t('tribe_settings.danger_zone')}
             </h4>
           </div>
           <p
@@ -656,12 +656,10 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
           >
             {isCreator
               ? t(
-                  'card.danger_zone_creator_desc',
-                  'Kişilik kartını silmek kartın tüm sahipliğini ve tanımlarını kalıcı olarak sonlandırır. Varsa bot atamaları otomatik olarak temizlenir.'
+                  'card.danger_zone_creator_desc'
                 )
               : t(
-                  'card.danger_zone_purchaser_desc',
-                  'Bu kartı envanterinizden sildiğinizde kart sahipliğiniz sona erer. Varsa bot atamaları otomatik olarak temizlenir.'
+                  'card.danger_zone_purchaser_desc'
                 )}
           </p>
           <button
@@ -687,14 +685,14 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
             {deleteMutation.isPending ? (
               <>
                 <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
-                {t('common.deleting', 'Siliniyor...')}
+                {t('common.deleting')}
               </>
             ) : (
               <>
                 <Trash2 size={14} />
                 {isCreator
-                  ? t('card.delete_card', 'Kişilik Kartını Sil')
-                  : t('card.delete_ownership', 'Kartı Envanterden Sil')}
+                  ? t('card.delete_card')
+                  : t('card.delete_ownership')}
               </>
             )}
           </button>
@@ -731,7 +729,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
               disabled={editMutation.isPending || deleteMutation.isPending}
               style={{ borderRadius: 16, fontSize: 12 }}
             >
-              {t('common.cancel', 'İptal')}
+              {t('common.cancel')}
             </button>
             <button
               type="button"
@@ -755,12 +753,12 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
               {editMutation.isPending ? (
                 <>
                   <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />
-                  {t('common.saving', 'Kaydediliyor...')}
+                  {t('common.saving')}
                 </>
               ) : (
                 <>
                   <Check size={13} />
-                  {t('action.save', 'Kaydet')}
+                  {t('action.save')}
                 </>
               )}
             </button>
@@ -776,21 +774,19 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
         }}
         title={
           isCreator
-            ? t('card.delete_card', 'Kişilik Kartını Sil')
-            : t('card.delete_ownership', 'Kartı Envanterden Sil')
+            ? t('card.delete_card')
+            : t('card.delete_ownership')
         }
         description={
           isCreator
             ? t(
-                'card.confirm_delete_creator',
-                'Bu kişilik kartını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.'
+                'card.confirm_delete_creator'
               )
             : t(
-                'card.confirm_delete_purchaser',
-                'Bu kartın sahipliğini bırakıp envanterinizden silmek istediğinize emin misiniz?'
+                'card.confirm_delete_purchaser'
               )
         }
-        confirmText={t('action.delete', 'Sil')}
+        confirmText={t('action.delete')}
         confirmVariant="danger"
         isLoading={deleteMutation.isPending}
       />

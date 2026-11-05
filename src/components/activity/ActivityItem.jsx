@@ -111,11 +111,8 @@ export default function ActivityItem({ activity, onMarkRead, currentProfileName,
             )}
           </div>
           <span
-            className="activity-time"
+            className="activity-time date-text"
             style={{
-              fontSize: 10,
-              lineHeight: 1.1,
-              color: 'var(--color-text-muted)',
               whiteSpace: 'nowrap',
               marginTop: 'auto',
               textAlign: 'center',
@@ -183,12 +180,9 @@ export default function ActivityItem({ activity, onMarkRead, currentProfileName,
           )}
         </div>
         <span
-          className="activity-time"
+          className="activity-time date-text"
           style={{
             alignSelf: 'flex-end',
-            fontSize: 10,
-            lineHeight: 1.1,
-            color: 'var(--color-text-muted)',
             whiteSpace: 'nowrap',
           }}
         >

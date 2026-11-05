@@ -28,7 +28,7 @@ export default function ChatEmojiPicker({ onSelect }) {
   const { t } = useTranslation()
 
   return (
-    <div className="chat-emoji-picker" role="dialog" aria-label={t('chat.emoji_picker', 'Emoji seç')}>
+    <div className="chat-emoji-picker" role="dialog" aria-label={t('chat.emoji_picker')}>
       <div className="chat-emoji-picker__grid">
         {EMOJIS.map((emoji) => (
           <button

@@ -65,7 +65,7 @@ export default function RegisterPage() {
 
   const handleProviderLogin = async (provider, providerName = 'google') => {
     if (!agreedToTerms) {
-      toast.error(t('auth.must_agree_terms', 'Kayıt olmak için Hizmet Şartları\'nı kabul etmelisiniz.'))
+      toast.error(t('auth.must_agree_terms'))
       setHasTermsError(true)
       return
     }
@@ -96,7 +96,7 @@ export default function RegisterPage() {
     meta: { showErrorToast: true },
     onSuccess: () => {
       trackSignUp('email')
-      toast.success(t('common.success', 'Başarılı'), { duration: 3000 })
+      toast.success(t('common.success'), { duration: 3000 })
       setIsConfirming(false)
       triggerConfetti()
       navigate('/login')
@@ -105,7 +105,7 @@ export default function RegisterPage() {
 
   const handleTimeout = () => {
     setIsConfirming(false)
-    toast.error(t('auth.timeout', 'Zaman aşımı'))
+    toast.error(t('auth.timeout'))
   }
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
@@ -117,7 +117,7 @@ export default function RegisterPage() {
     e.preventDefault()
     
     if (!agreedToTerms) {
-      toast.error(t('auth.must_agree_terms', 'Kayıt olmak için Hizmet Şartları\'nı kabul etmelisiniz.'))
+      toast.error(t('auth.must_agree_terms'))
       setHasSubmitted(true)
       setHasTermsError(true)
       return
@@ -134,7 +134,7 @@ export default function RegisterPage() {
       // "doluluk boş olma durumları dışında textbox boyama frontend ön kontrolü yapma"
       // If we don't check it here, backend might not check if passwordConfirm matches (usually only frontend checks confirmPassword, backend only receives `password`!)
       // Wait, register endpoint only takes { username, email, password }. `passwordConfirm` is purely frontend! So we MUST check it here.
-      toast.error(t('auth.passwords_do_not_match', 'Şifreler eşleşmiyor'))
+      toast.error(t('auth.passwords_do_not_match'))
       return
     }
 
@@ -225,15 +225,15 @@ export default function RegisterPage() {
             }}
           >
             <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: '1.4', userSelect: 'none', display: 'block', paddingLeft: 4 }}>
-              {t('auth.register_agree_prefix', 'Kayıt olarak 18 yaşından büyük olduğumu ve')}{' '}
+              {t('auth.register_agree_prefix')}{' '}
               <Link to="/terms" style={{ color: 'var(--color-primary)', fontWeight: 700, textDecoration: 'none' }}>
                 Terms of Service
               </Link>{' '}
-              {t('auth.and', 've')}{' '}
+              {t('auth.and')}{' '}
               <Link to="/privacy" style={{ color: 'var(--color-primary)', fontWeight: 700, textDecoration: 'none' }}>
                 Privacy Policy
               </Link>
-              {t('auth.register_agree_suffix', '\'nı okuduğumu ve kabul ettiğimi beyan ederim.')}
+              {t('auth.register_agree_suffix')}
             </span>
           </SelectionMarker>
         </div>

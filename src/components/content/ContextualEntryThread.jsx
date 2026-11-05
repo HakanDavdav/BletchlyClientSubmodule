@@ -46,7 +46,7 @@ export default function ContextualEntryThread({
         {/* ── Root Post ──────────────────────────────────────────────────────── */}
         {!hideRootPost && rootPost && (
           <div>
-            <SectionLabel color="var(--color-text-faint)">{t('contextual.root_post', 'ANA BAŞLIK')}</SectionLabel>
+            <SectionLabel color="var(--color-text-faint)">{t('contextual.root_post')}</SectionLabel>
             <PostCard {...rootPost} isOwner={isOwner(rootPost)} />
           </div>
         )}
@@ -54,7 +54,7 @@ export default function ContextualEntryThread({
         {/* ── Parent Entry Zinciri ───────────────────────────────────────────── */}
         {parentChain.length > 0 && (
           <div>
-            <SectionLabel color="var(--color-text-faint)">{t('contextual.context', 'BAĞLAM')}</SectionLabel>
+            <SectionLabel color="var(--color-text-faint)">{t('contextual.context')}</SectionLabel>
             <div className="flex-col" style={{ gap: 2 }}>
               {parentChain.map((parentEntry, idx) => (
                 <div
@@ -84,7 +84,7 @@ export default function ContextualEntryThread({
 
         {/* ── Odaklanan Entry (highlight) ────────────────────────────────────── */}
         <div style={{ marginLeft: parentChain.length * 14 }}>
-          <SectionLabel color="var(--color-primary)">{t('contextual.focused_reply', 'ODAKLANAN YANIT')}</SectionLabel>
+          <SectionLabel color="var(--color-primary)">{t('contextual.focused_reply')}</SectionLabel>
           <div
             style={{
               borderLeft: '3px solid var(--color-primary)',
@@ -116,7 +116,7 @@ export default function ContextualEntryThread({
       >
         {!hideRootPost && rootPost && (
           <div>
-            <SectionLabel color="var(--color-text-faint)">{t('contextual.root_post', 'ANA BAŞLIK')}</SectionLabel>
+            <SectionLabel color="var(--color-text-faint)">{t('contextual.root_post')}</SectionLabel>
             <PostCard {...rootPost} isOwner={isOwner(rootPost)} />
           </div>
         )}

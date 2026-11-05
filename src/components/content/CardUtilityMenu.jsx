@@ -81,8 +81,8 @@ export default function CardUtilityMenu({
         onClick={toggle}
         aria-haspopup="menu"
         aria-expanded={isOpen}
-        aria-label={t('common.more', 'Daha fazla')}
-        title={t('common.more', 'Daha fazla')}
+        aria-label={t('common.more')}
+        title={t('common.more')}
       >
         <MoreHorizontal size={16} />
       </button>
@@ -114,8 +114,8 @@ export default function CardUtilityMenu({
             >
               <Star size={14} fill={isFavourite ? 'currentColor' : 'none'} />
               {isFavourite
-                ? t('card.remove_favourite', 'Favorilerden çıkar')
-                : t('card.add_favourite', 'Favorilere ekle')}
+                ? t('card.remove_favourite')
+                : t('card.add_favourite')}
             </button>
           )}
           <button
@@ -126,7 +126,7 @@ export default function CardUtilityMenu({
             onClick={run(onShare)}
           >
             <Share2 size={14} />
-            {t('action.share', 'Paylaş')}
+            {t('action.share')}
           </button>
           <button
             type="button"
@@ -136,7 +136,7 @@ export default function CardUtilityMenu({
             onClick={run(onReport)}
           >
             <Flag size={14} />
-            {t('card.report', 'Şikayet')}
+            {t('card.report')}
           </button>
           {onCopyEntryNo && (
             <button
@@ -147,7 +147,7 @@ export default function CardUtilityMenu({
               onClick={run(onCopyEntryNo)}
             >
               <Copy size={14} />
-              {t('card.copy_entry_no', 'Entry No Kopyala')}
+              {t('card.copy_entry_no')}
             </button>
           )}
         </div>,

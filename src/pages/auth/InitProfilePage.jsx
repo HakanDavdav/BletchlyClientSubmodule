@@ -41,7 +41,7 @@ export default function InitProfilePage() {
     mutationFn: (data) => actorApi.editUser(data),
     meta: { showErrorToast: true },
     onSuccess: async () => {
-      toast.success(t('common.success', 'Başarılı'), { duration: 3000 })
+      toast.success(t('common.success'), { duration: 3000 })
       try {
         await identityApi.refreshClaims()
       } catch (err) {
@@ -249,17 +249,16 @@ export default function InitProfilePage() {
             checked={socialEmailPreference}
             disabled={initProfileMutation.isPending || switchNotificationMutation.isPending}
             onChange={(e) => handleToggleEmailPreference(e.target.checked)}
-            label={t('auth.email_notifications', 'E-posta Bildirimleri')}
+            label={t('auth.email_notifications')}
             style={{ alignItems: 'center', width: '100%' }}
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginLeft: 12 }}>
               <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                {t('auth.email_notifications', 'E-posta Bildirimleri')}
+                {t('auth.email_notifications')}
               </span>
               <span style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>
                 {t(
-                  'auth.email_notifications_desc',
-                  'Sosyal etkileşimler, takipler ve güncellemeler hakkında e-posta bildirimleri alın'
+                  'auth.email_notifications_desc'
                 )}
               </span>
             </div>

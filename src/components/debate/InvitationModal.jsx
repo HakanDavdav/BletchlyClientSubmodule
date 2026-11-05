@@ -6,6 +6,7 @@ import { Swords, Check, X, User } from 'lucide-react'
 import { actorApi } from '../../api/actorApi'
 import { trackDebate } from '../../utils/analytics'
 import ImageWithLoader from '../common/ImageWithLoader'
+import ModalPortal from '../common/ModalPortal'
 
 export default function InvitationModal({ invitation, onClose }) {
   const { t } = useTranslation()
@@ -35,7 +36,7 @@ export default function InvitationModal({ invitation, onClose }) {
       setTimeLeft(remaining)
       if (remaining <= 0 && !hasExpiredRef.current) {
         hasExpiredRef.current = true
-        toast.error(t('debate.invitation_expired', 'Meydan okuma davetinin süresi doldu.'))
+        toast.error(t('debate.invitation_expired'))
         onClose()
       }
     }
@@ -63,7 +64,7 @@ export default function InvitationModal({ invitation, onClose }) {
       setLoading(true)
       await actorApi.acceptDebate(invitation.debateId)
       trackDebate('accept_challenge', { debate_id: invitation.debateId })
-      toast.success(t('debate.invitation_accepted', 'Meydan okuma kabul edildi!'))
+      toast.success(t('debate.invitation_accepted'))
       onClose()
       navigate(`/debate?id=${invitation.debateId}`, {
         state: {
@@ -77,7 +78,7 @@ export default function InvitationModal({ invitation, onClose }) {
         },
       })
     } catch (err) {
-      toast.error(err.message || err.response?.data?.errors?.[0]?.description || t('debate.accept_error', 'Davet kabul edilemedi.'))
+      toast.error(err.message || err.response?.data?.errors?.[0]?.description || t('debate.accept_error'))
     } finally {
       setLoading(false)
     }
@@ -87,10 +88,10 @@ export default function InvitationModal({ invitation, onClose }) {
     try {
       setLoading(true)
       await actorApi.declineDebate(invitation.debateId)
-      toast(t('debate.invitation_declined', 'Meydan okuma daveti reddedildi.'), { icon: '🚫' })
+      toast(t('debate.invitation_declined'), { icon: '🚫' })
       onClose()
     } catch (err) {
-      toast.error(err.message || err.response?.data?.errors?.[0]?.description || t('debate.decline_error', 'Davet reddedilemedi.'))
+      toast.error(err.message || err.response?.data?.errors?.[0]?.description || t('debate.decline_error'))
     } finally {
       setLoading(false)
     }
@@ -103,7 +104,8 @@ export default function InvitationModal({ invitation, onClose }) {
   const isLowTime = timeLeft <= 20
 
   return (
-    <div className="modal-overlay" style={{ zIndex: 1000 }}>
+    <ModalPortal>
+      <div className="modal-overlay" style={{ zIndex: 1000 }}>
       <div
         className="modal-box"
         style={{ maxWidth: 460, padding: '40px 36px', textAlign: 'center', position: 'relative' }}
@@ -119,11 +121,11 @@ export default function InvitationModal({ invitation, onClose }) {
         </div>
 
         <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)', margin: '0 0 8px' }}>
-          {t('debate.incoming_challenge', 'Meydan Okuma!')}
+          {t('debate.incoming_challenge')}
         </h2>
 
         <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: '0 0 24px', lineHeight: 1.6 }}>
-          {t('debate.challenge_subtitle', 'Bir kullanıcı seni canlı meydan okumaya davet etti.')}
+          {t('debate.challenge_subtitle')}
         </p>
 
         {/* Challenger Card */}
@@ -181,10 +183,10 @@ export default function InvitationModal({ invitation, onClose }) {
           )}
           <div style={{ minWidth: 0 }}>
             <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-text)' }}>
-              {invitation.proponentName || t('actor.anonymous', 'Kullanıcı')}
+              {invitation.proponentName || t('actor.anonymous')}
             </div>
             <div style={{ fontSize: 12, color: 'var(--color-primary)', fontWeight: 500 }}>
-              {t('debate.role_proponent', 'Meydan Okuyan')}
+              {t('debate.role_proponent')}
             </div>
           </div>
         </div>
@@ -202,7 +204,7 @@ export default function InvitationModal({ invitation, onClose }) {
               marginBottom: 8,
             }}
           >
-            {t('debate.proposition', 'Önerme')}
+            {t('debate.proposition')}
           </label>
           <div
             style={{
@@ -241,7 +243,7 @@ export default function InvitationModal({ invitation, onClose }) {
             fontWeight: isLowTime ? 600 : 400,
             transition: 'color 0.3s',
           }}>
-            {t('debate.time_left', 'Kalan süre')}: <strong>{formatTime(timeLeft)}</strong>
+            {t('debate.time_left')}: <strong>{formatTime(timeLeft)}</strong>
           </p>
         </div>
 
@@ -255,7 +257,7 @@ export default function InvitationModal({ invitation, onClose }) {
             style={{ flex: 1 }}
           >
             <X size={16} />
-            {t('common.decline', 'Reddet')}
+            {t('common.decline')}
           </button>
           <button
             type="button"
@@ -265,10 +267,11 @@ export default function InvitationModal({ invitation, onClose }) {
             style={{ flex: 1 }}
           >
             <Check size={16} />
-            {loading ? t('common.loading', 'Yükleniyor...') : t('debate.accept_and_fight', 'Kabul Et & Arenaya Gir')}
+            {loading ? t('common.loading') : t('debate.accept_and_fight')}
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   )
 }

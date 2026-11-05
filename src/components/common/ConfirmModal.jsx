@@ -87,7 +87,7 @@ export default function ConfirmModal({
                   }}
                 >
                   <AlertTriangle size={16} />
-                  <span>{t('common.warning', 'Uyarı')}</span>
+                  <span>{t('common.warning')}</span>
                 </div>
                 <div>{warning}</div>
               </div>
@@ -100,7 +100,7 @@ export default function ConfirmModal({
                 onClick={onClose}
                 disabled={isLoading}
               >
-                {cancelText || t('common.cancel', 'İptal')}
+                {cancelText || t('common.cancel')}
               </button>
               <button
                 type="button"
@@ -120,7 +120,7 @@ export default function ConfirmModal({
                 {isLoading ? (
                   <span className="spinner spinner-sm" />
                 ) : (
-                  confirmText || t('common.confirm', 'Onayla')
+                  confirmText || t('common.confirm')
                 )}
               </button>
             </div>

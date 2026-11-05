@@ -84,7 +84,7 @@ export default function RightPanel() {
       {/* ─── User Leaderboard Cache Widget ────── */}
       <div style={{ padding: '0 12px' }}>
         <CacheWidget
-          title={t('leaderboard.user_leaderboard', 'Kullanıcı Sıralaması')}
+          title={t('leaderboard.user_leaderboard')}
           items={userLeaderboard}
           type="user"
           viewAllTo="/leaderboard?type=user"
@@ -96,7 +96,7 @@ export default function RightPanel() {
       {/* ─── Bot Leaderboard Cache Widget ────── */}
       <div style={{ padding: '0 12px' }}>
         <CacheWidget
-          title={t('leaderboard.bot_leaderboard', 'Bot Sıralaması')}
+          title={t('leaderboard.bot_leaderboard')}
           items={botLeaderboard}
           type="bot"
           viewAllTo="/leaderboard?type=bot"
@@ -108,7 +108,7 @@ export default function RightPanel() {
       {/* ─── Tribe Leaderboard Cache Widget ────── */}
       <div style={{ padding: '0 12px' }}>
         <CacheWidget
-          title={t('leaderboard.tribe_leaderboard', 'Klan Sıralaması')}
+          title={t('leaderboard.tribe_leaderboard')}
           items={tribeLeaderboard}
           type="tribe"
           viewAllTo="/leaderboard?type=tribe"
@@ -119,7 +119,7 @@ export default function RightPanel() {
 
       {/* ─── Reklam Alanı ────── */}
       <div className="ad-card" style={{ marginTop: 16, margin: '0 12px' }}>
-        <div className="ad-label">{t('common.ad', 'Reklam')}</div>
+        <div className="ad-label">{t('common.ad')}</div>
         {/* Örnek placeholder */}
         <div
           style={{
@@ -131,7 +131,7 @@ export default function RightPanel() {
             color: 'var(--color-text-faint)',
           }}
         >
-          {t('common.ad_space', '300x250 Reklam Alanı')}
+          {t('common.ad_space')}
         </div>
       </div>
 
@@ -281,7 +281,7 @@ function CacheWidget({ title, items, type, viewAllTo }) {
                   style={{ marginTop: 4, textDecoration: 'none' }}
                   to={viewAllTo}
                 >
-                  {t('common.view_all', 'Tümünü Gör')}
+                  {t('common.view_all')}
                 </Link>
               )}
             </div>

@@ -13,6 +13,7 @@ import BackButton from '../components/common/BackButton'
 import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 import { getQueryErrorMessage } from '../utils/errorHelper'
+import { formatDate } from '../utils/formatDate'
 
 export default function SearchPage() {
   const navigate = useNavigate()
@@ -122,7 +123,7 @@ export default function SearchPage() {
       const g = data || { posts: [], actors: [], tribes: [] }
       const total = (g.posts?.length || 0) + (g.actors?.length || 0) + (g.tribes?.length || 0)
 
-      if (total === 0) return <div className="empty-state">{t('search.no_results_for', { query })}</div>
+      if (total === 0) return <div className="empty-state">{t('search.no_results')}</div>
 
       return (
         <div className="flex flex-col">
@@ -183,7 +184,7 @@ export default function SearchPage() {
     if (!data || data.length === 0)
       return (
         <div className="empty-state">
-          {query ? t('search.no_results_for', { query }) : t('search.no_results')}
+          {t('search.no_results')}
         </div>
       )
 
@@ -246,7 +247,7 @@ export default function SearchPage() {
                 border: '1px solid var(--color-border)',
               }}
             >
-              {t('search.search_label', 'Arama: ')}{query || t('search.none', 'Yok')}
+              {t('search.search_label')}{query || t('search.none')}
             </span>
           
           {mode !== 'general' && (
@@ -270,7 +271,7 @@ export default function SearchPage() {
                       : orderType === 'MostLiked'
                         ? t('search.most_liked')
                         : orderType
-                  : t('search.none', 'Yok')}
+                  : t('search.none')}
               </span>
               <span
                 style={{
@@ -283,7 +284,7 @@ export default function SearchPage() {
                 }}
               >
                 {t('search.start_date')}
-                {startDate ? new Date(startDate).toLocaleDateString(undefined) : t('search.none', 'Yok')}
+                {startDate ? <span className="date-text">{formatDate(startDate)}</span> : t('search.none')}
               </span>
               <span
                 style={{
@@ -296,7 +297,7 @@ export default function SearchPage() {
                 }}
               >
                 {t('search.end_date')}
-                {endDate ? new Date(endDate).toLocaleDateString(undefined) : t('search.none', 'Yok')}
+                {endDate ? <span className="date-text">{formatDate(endDate)}</span> : t('search.none')}
               </span>
             </>
           )}
@@ -325,21 +326,22 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
   }, [])
 
   const modes = [
-    { key: 'general', label: t('search.mode.general', 'Genel') },
-    { key: 'posts', label: t('search.mode.posts', 'Başlıklar') },
-    { key: 'actors', label: t('search.mode.actors', 'Kişiler') },
-    { key: 'tribes', label: t('search.mode.tribes', 'Klanlar') },
+    { key: 'general', label: t('search.mode.general') },
+    { key: 'posts', label: t('search.mode.posts') },
+    { key: 'actors', label: t('search.mode.actors') },
+    { key: 'tribes', label: t('search.mode.tribes') },
   ]
 
   // Debounced search suggestions (identical to PC topbar)
   useEffect(() => {
     if (!query || query.trim().length === 0) {
       setSuggestions(null)
+      setIsLoadingSuggestions(false)
       return
     }
 
+    setIsLoadingSuggestions(true)
     const timer = setTimeout(async () => {
-      setIsLoadingSuggestions(true)
       try {
         let result
         switch (mode) {
@@ -444,7 +446,7 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
           <Search size={17} className="mobile-search-form__icon" />
           <input
             className="input"
-            placeholder={t('topbar.search', 'Ara')}
+            placeholder={t('topbar.search')}
             value={query}
             onChange={(e) => {
               onQueryChange(e.target.value)
@@ -459,15 +461,13 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
           />
         </div>
         <button type="submit" className="btn btn-primary btn-sm">
-          {t('topbar.search_button', 'Ara')}
+          {t('topbar.search_button')}
         </button>
 
         {/* Search Suggestions & Recent Searches Dropdown */}
         <AnimatePresence>
           {showSuggestions && (
-            query?.trim()?.length > 0
-              ? (suggestions || isLoadingSuggestions)
-              : (recentSearches && recentSearches.length > 0)
+            query?.trim()?.length > 0 || (recentSearches && recentSearches.length > 0)
           ) && (
             <motion.div
               initial={{ opacity: 0, y: -8 }}
@@ -508,7 +508,7 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
                     }}
                   >
                     <span style={{ display: 'flex', alignItems: 'center' }}>
-                      {t('search.recent', 'RECENT')}
+                      {t('search.recent')}
                     </span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -548,8 +548,8 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
                         </div>
                         <button
                           type="button"
-                          aria-label={t('common.delete', 'Sil')}
-                          title={t('common.delete', 'Sil')}
+                          aria-label={t('common.delete')}
+                          title={t('common.delete')}
                           onClick={(e) => {
                             e.stopPropagation()
                             removeRecentSearch(item)
@@ -599,7 +599,7 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
                               textTransform: 'uppercase',
                             }}
                           >
-                            {t('common.actors', 'Kişiler')}
+                            {t('common.actors')}
                           </div>
                           <div className="minimal-card-list">
                             {suggestions.actors.slice(0, 3).map((actor) => (
@@ -629,7 +629,7 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
                               textTransform: 'uppercase',
                             }}
                           >
-                            {t('common.tribes', 'Klanlar')}
+                            {t('common.tribes')}
                           </div>
                           <div className="minimal-card-list">
                             {suggestions.tribes.slice(0, 3).map((tribe) => (
@@ -655,7 +655,7 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
                               textTransform: 'uppercase',
                             }}
                           >
-                            {t('common.posts', 'Başlıklar')}
+                            {t('common.posts')}
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                             {suggestions.posts.slice(0, 4).map((post) => (
@@ -681,7 +681,7 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
                               fontSize: 13,
                             }}
                           >
-                            {t('search.no_results', 'Sonuç bulunamadı')}
+                            {t('search.no_results')}
                           </div>
                         )}
                     </>
@@ -741,13 +741,24 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
                             fontSize: 13,
                           }}
                         >
-                          {t('search.no_results', 'Sonuç bulunamadı')}
+                          {t('search.no_results')}
                         </div>
                       )}
                     </>
                   )}
                 </div>
-              ) : null}
+              ) : (
+                <div
+                  style={{
+                    padding: 16,
+                    textAlign: 'center',
+                    color: 'var(--color-text-faint)',
+                    fontSize: 13,
+                  }}
+                >
+                  {t('search.no_results')}
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

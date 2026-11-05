@@ -28,22 +28,22 @@ export default function ChatConversationList({
 
   const renderPreview = (conversation) => {
     if (conversation.lastMessageIsDeleted) {
-      return t('chat.message_deleted', 'Mesaj silindi')
+      return t('chat.message_deleted')
     }
     if (conversation.lastMessageContent) return conversation.lastMessageContent
-    return t('chat.no_messages_yet', 'Henüz mesaj yok')
+    return t('chat.no_messages_yet')
   }
 
   return (
     <aside className="chat-list">
       <div className="chat-list__header">
         <div>
-          <h2 className="chat-list__title">{t('chat.conversations', 'Sohbetler')}</h2>
-          <p className="chat-list__subtitle">{t('chat.private_chat', 'Özel mesajlar')}</p>
+          <h2 className="chat-list__title">{t('chat.conversations')}</h2>
+          <p className="chat-list__subtitle">{t('chat.private_chat')}</p>
         </div>
         <button type="button" className="btn btn-primary btn-sm chat-list__new-btn" onClick={onNewChat}>
           <Plus size={14} />
-          {t('chat.new_chat', 'Yeni')}
+          {t('chat.new_chat')}
         </button>
       </div>
 
@@ -52,8 +52,8 @@ export default function ChatConversationList({
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           onClear={() => setSearch('')}
-          clearLabel={t('common.clear', 'Temizle')}
-          placeholder={t('chat.search_conversations', 'Sohbetlerde ara')}
+          clearLabel={t('common.clear')}
+          placeholder={t('chat.search_conversations')}
         />
       </form>
 
@@ -65,8 +65,8 @@ export default function ChatConversationList({
         ) : filtered.length === 0 ? (
           <p className="empty-state" style={{ margin: 0 }}>
             {conversations.length === 0
-              ? t('chat.no_conversations', 'Henüz sohbet yok. Yeni bir sohbet başlat.')
-              : t('chat.no_conversation_match', 'Aramanla eşleşen sohbet yok.')}
+              ? t('common.nothing_here_yet')
+              : t('search.no_results')}
           </p>
         ) : (
           filtered.map((conversation) => {
@@ -98,7 +98,7 @@ export default function ChatConversationList({
                     <span className="chat-list__item-preview">
                       <TwemojiText text={renderPreview(conversation)} />
                     </span>
-                    <span className="chat-list__item-time">
+                    <span className="chat-list__item-time date-text">
                       {getShortTimeAgo(conversation.lastMessageAt)}
                     </span>
                     {conversation.unreadCount > 0 && (

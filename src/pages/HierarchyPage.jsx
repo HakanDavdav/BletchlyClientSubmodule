@@ -428,7 +428,7 @@ export default function HierarchyPage() {
             flexShrink: 1,
           }}
         >
-          <BackButton style={{ marginBottom: 0, width: 30, height: 30, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', flexShrink: 0 }} />
+          <BackButton plain style={{ marginBottom: 0, width: 30, height: 30, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', flexShrink: 0 }} />
           <div style={{ width: 1, height: 24, background: 'var(--color-border)', flexShrink: 0 }} />
 
           <div
@@ -456,10 +456,10 @@ export default function HierarchyPage() {
               }}
             >
               <span className="hierarchy-header-label-full">
-                {t('hierarchy.profile_hierarchy_title', 'Profile Hierarchy')}
+                {t('hierarchy.profile_hierarchy_title')}
               </span>
               <span className="hierarchy-header-label-short">
-                {t('hierarchy.profile_hierarchy_title_short', 'Profil')}
+                {t('hierarchy.profile_hierarchy_title_short')}
               </span>
             </span>
             <span className="hierarchy-header-bullet" style={{ color: 'var(--color-primary)', flexShrink: 0, transform: 'translateY(-1px)' }}>•</span>
@@ -481,7 +481,7 @@ export default function HierarchyPage() {
                 flex: '0 1 auto',
               }}
             >
-              {actorName || t('hierarchy.no_name', 'isim')}
+              {actorName || t('hierarchy.no_name')}
             </span>
           </div>
         </div>
@@ -520,7 +520,7 @@ export default function HierarchyPage() {
               <span
                 style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)' }}
               >
-                {t('hierarchy.depth', 'Derinlik:')}
+                {t('hierarchy.depth')}
               </span>
               <input
                 type="text"
@@ -576,7 +576,7 @@ export default function HierarchyPage() {
               type="button"
               className="btn btn-ghost btn-sm hierarchy-zoom-btn"
               onClick={() => handleZoom((z) => z + 0.05)}
-              aria-label={t('hierarchy.zoom_in', 'Büyüt (+)')}
+              aria-label={t('hierarchy.zoom_in')}
               style={{ flexShrink: 0, width: 26, height: 26, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <Plus size={12} />
@@ -585,7 +585,7 @@ export default function HierarchyPage() {
               type="button"
               className="btn btn-ghost btn-sm hierarchy-zoom-btn"
               onClick={() => handleZoom((z) => z - 0.05)}
-              aria-label={t('hierarchy.zoom_out', 'Küçült (-)')}
+              aria-label={t('hierarchy.zoom_out')}
               style={{ flexShrink: 0, width: 26, height: 26, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <Minus size={12} />
@@ -607,8 +607,8 @@ export default function HierarchyPage() {
               type="button"
               className={`vtree-fossil-pill ${showDeleted ? 'vtree-fossil-pill--expanded' : ''}`}
               onClick={() => setShowDeleted((prev) => !prev)}
-              aria-label={showDeleted ? t('hierarchy.hide_deleted', 'Silinmişleri Gizle') : t('hierarchy.show_deleted', 'Silinmişleri Göster')}
-              title={t('hierarchy.show_deleted_tooltip', 'Silinmiş düğümleri göster')}
+              aria-label={showDeleted ? t('hierarchy.hide_deleted') : t('hierarchy.show_deleted')}
+              title={t('hierarchy.show_deleted_tooltip')}
               style={{ flexShrink: 0 }}
             >
               <Trash2 size={14} style={{ flexShrink: 0 }} />
@@ -628,7 +628,7 @@ export default function HierarchyPage() {
               className={`btn btn-sm hierarchy-toggle-btn ${isAllExpanded ? 'hierarchy-toggle-btn--active' : ''}`}
               onClick={handleExpandAll}
               disabled={isExpandingAll || !treeData}
-              aria-label={t('hierarchy.expand_all', 'Tümünü Genişlet')}
+              aria-label={t('hierarchy.expand_all')}
               style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '0 12px', height: 26 }}
             >
               {isExpandingAll ? (
@@ -639,7 +639,7 @@ export default function HierarchyPage() {
               ) : (
                 <Maximize2 size={12} />
               )}
-              <span>{t('hierarchy.expand_all', 'Tümünü Genişlet')}</span>
+              <span>{t('hierarchy.expand_all')}</span>
             </button>
 
             <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
@@ -650,11 +650,11 @@ export default function HierarchyPage() {
               className="btn btn-primary btn-sm"
               onClick={handleDefaultView}
               disabled={!treeData}
-              aria-label={t('hierarchy.default_view', 'Varsayılan')}
+              aria-label={t('hierarchy.default_view')}
               style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '0 12px', height: 26 }}
             >
               <Focus size={12} />
-              <span>{t('hierarchy.default_view', 'Varsayılan')}</span>
+              <span>{t('hierarchy.default_view')}</span>
             </button>
             </div>
           </div>
@@ -668,7 +668,7 @@ export default function HierarchyPage() {
               alignItems: 'center',
               justifyContent: 'center',
             }}
-            title={t('hierarchy_info.section_heartbeat_title', 'Heartbeat')}
+            title={t('hierarchy_info.section_heartbeat_title')}
           >
             <div
               key={pulseCount}
@@ -744,7 +744,7 @@ export default function HierarchyPage() {
           </div>
         ) : (
           <div className="empty-state">
-            {t('hierarchy.no_data', 'Hiyerarşi verisi bulunamadı.')}
+            {t('common.nothing_here_yet')}
           </div>
         )}
       </div>

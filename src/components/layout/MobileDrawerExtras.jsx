@@ -75,8 +75,8 @@ export default function MobileDrawerExtras() {
         </a>
       </div>
       <div className="mobile-drawer-extras__links">
-        <Link to="/about">{t('footer.about', 'Hakkımızda')}</Link>
-        <Link to="/contact">{t('footer.contact', 'İletişim')}</Link>
+        <Link to="/about">{t('footer.about')}</Link>
+        <Link to="/contact">{t('footer.contact')}</Link>
         <Link to="/privacy">Privacy Policy</Link>
         <Link to="/terms">Terms of Service</Link>
         <Link to="/cookie-policy">Cookie Policy</Link>

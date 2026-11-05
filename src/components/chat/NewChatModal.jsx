@@ -2,6 +2,7 @@ import { X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
 import SearchInput from '../common/SearchInput'
+import ModalPortal from '../common/ModalPortal'
 
 export default function NewChatModal({
   open,
@@ -17,16 +18,17 @@ export default function NewChatModal({
   if (!open) return null
 
   return (
-    <div className="modal-overlay" onClick={onClose} role="presentation">
+    <ModalPortal>
+      <div className="modal-overlay" onClick={onClose} role="presentation">
       <div className="modal-box chat-new-modal" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true">
         <div className="modal-header">
           <div>
-            <h2 className="modal-title">{t('chat.new_chat', 'Yeni sohbet')}</h2>
+            <h2 className="modal-title">{t('chat.new_chat')}</h2>
             <p className="text-muted" style={{ margin: '4px 0 0', fontSize: 12 }}>
-              {t('chat.new_chat_desc', 'Mesajlaşmak istediğin kullanıcıyı seç.')}
+              {t('chat.new_chat_desc')}
             </p>
           </div>
-          <button type="button" className="btn-icon" onClick={onClose} aria-label={t('common.close', 'Kapat')}>
+          <button type="button" className="btn-icon" onClick={onClose} aria-label={t('common.close')}>
             <X size={18} />
           </button>
         </div>
@@ -36,8 +38,8 @@ export default function NewChatModal({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             onClear={() => setQuery('')}
-            clearLabel={t('common.clear', 'Temizle')}
-            placeholder={t('chat.search_users', 'Kullanıcı ara')}
+            clearLabel={t('common.clear')}
+            placeholder={t('chat.search_users')}
             autoFocus
           />
         </form>
@@ -49,7 +51,7 @@ export default function NewChatModal({
             </div>
           ) : users.length === 0 ? (
             <p className="empty-state" style={{ margin: 0 }}>
-              {t('chat.no_users', 'Kullanıcı bulunamadı.')}
+              {query?.trim() ? t('search.no_results') : t('common.nothing_here_yet')}
             </p>
           ) : (
             users.map((user) => (
@@ -80,6 +82,7 @@ export default function NewChatModal({
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   )
 }

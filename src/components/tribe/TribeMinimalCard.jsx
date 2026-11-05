@@ -211,10 +211,10 @@ export default function TribeMinimalCard({
               style={{ color: 'inherit', textDecoration: 'none' }}
               onClick={(e) => e.stopPropagation()}
             >
-              {tribeName || t('tribe.unnamed_tribe', 'İsimsiz Klan')}
+              {tribeName || t('tribe.unnamed_tribe')}
             </Link>
           ) : (
-            tribeName || t('tribe.unnamed_tribe', 'İsimsiz Klan')
+            tribeName || t('tribe.unnamed_tribe')
           )}
         </div>
       </div>
@@ -267,7 +267,7 @@ export default function TribeMinimalCard({
           type="button"
           className="actor-chip-hier-btn"
           onClick={handleMemoryMapClick}
-          aria-label={t('memoryMap.show', 'Memory Map')}
+          aria-label={t('memoryMap.show')}
           style={{ color: 'var(--color-text-muted)' }}
         >
           <Brain size={12} />
@@ -278,13 +278,13 @@ export default function TribeMinimalCard({
           type="button"
           className="actor-chip-hier-btn"
           onClick={handleEditClick}
-          aria-label={t('action.edit', 'Düzenle')}
+          aria-label={t('action.edit')}
           style={{ color: 'var(--color-text-muted)' }}
         >
           <Edit2 size={12} />
         </button>
       )}
-      {showPoint && tribePoint != null && (
+      {showPoint && !isCompact && tribePoint != null && (
         <span
           className="tribe-card-points-badge"
           style={{

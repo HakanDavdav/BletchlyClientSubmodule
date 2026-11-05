@@ -58,7 +58,7 @@
 }
 
 .center-deck__card--page > .center-deck__content {
-  padding-top: 34px;
+  padding-top: 36px;
 }
 
 .center-deck__card--chat .center-deck__content {
@@ -70,18 +70,14 @@
 .center-deck__handle {
   position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
-  height: 34px;
+  left: -2px;
+  right: -2px;
+  height: 36px;
   z-index: 2;
   padding: 0;
-  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--color-border));
+  border: 1px solid color-mix(in srgb, var(--color-primary) 15%, var(--color-border));
   border-radius: 10px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--color-primary) 6%, var(--color-surface)),
-    color-mix(in srgb, var(--color-surface) 94%, transparent)
-  );
+  background-color: color-mix(in srgb, var(--color-primary) 10%, var(--color-bg));
   box-shadow: var(--shadow-xs);
   cursor: pointer;
   transition:
@@ -92,8 +88,8 @@
 }
 
 .page-top-dock:hover:not(:has(.page-top-dock__item:hover)) .center-deck__handle {
-  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
-  background: var(--color-surface);
+  border-color: color-mix(in srgb, var(--color-primary) 30%, var(--color-border));
+  background-color: color-mix(in srgb, var(--color-primary) 14%, var(--color-bg));
   box-shadow: var(--shadow-sm);
 }
 
@@ -122,7 +118,7 @@
 }
 
 .center-deck__card--chat .chat-page__header-row {
-  min-height: 34px;
+  min-height: 36px;
 }
 
 .center-deck__card--chat .chat-page__header-row .page-back-button {

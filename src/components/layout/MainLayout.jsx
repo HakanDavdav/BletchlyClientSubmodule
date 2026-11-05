@@ -85,6 +85,8 @@ export default function MainLayout({ children, pendingInvitation = null, onOpenI
     isOpen: isLeftDrawerOpen,
     onOpen: openLeftDrawer,
     onClose: closeDrawers,
+    edgeWidth: 72,
+    openThreshold: 40,
   })
 
   // Tutamaç, drawer'ın sağ kenarını (dış sınır) ve boyunu gerçek zamanlı takip
@@ -182,9 +184,9 @@ export default function MainLayout({ children, pendingInvitation = null, onOpenI
             className={`mobile-drawer-handle${isLeftDrawerOpen ? ' is-open' : ''}`}
             onClick={isLeftDrawerOpen ? animateClose : openLeftDrawer}
             aria-label={
-              isLeftDrawerOpen ? t('common.close', 'Kapat') : t('common.open_menu', 'Menüyü aç')
+              isLeftDrawerOpen ? t('common.close') : t('common.open_menu')
             }
-            title={isLeftDrawerOpen ? t('common.close', 'Kapat') : t('common.open_menu', 'Menüyü aç')}
+            title={isLeftDrawerOpen ? t('common.close') : t('common.open_menu')}
           >
             <span className="mobile-drawer-handle__caret" aria-hidden="true">▼</span>
           </button>

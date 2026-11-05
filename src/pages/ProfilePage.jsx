@@ -66,6 +66,7 @@ import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 import useDocumentTitle from '../hooks/useDocumentTitle'
 import { getQueryErrorMessage } from '../utils/errorHelper'
+import { formatDate } from '../utils/formatDate'
 import AvatarUpload from '../components/common/AvatarUpload'
 import PremiumModal from '../components/common/PremiumModal'
 import ModifierArrowSvg from '../assets/FigmaNew/modifierarrow.svg?react'
@@ -207,7 +208,7 @@ export default function ProfilePage() {
   const handleTriggerDebate = async (proposition) => {
     try {
       setDebatePending(true)
-      toast.loading(t('profile.triggering_debate', 'Meydan okuma başlatılıyor...'), {
+      toast.loading(t('profile.triggering_debate'), {
         id: 'debate-trigger',
       })
       const res = await actorApi.triggerDebate({
@@ -217,7 +218,7 @@ export default function ProfilePage() {
       const isBotTarget = profile?.discriminator === 'Bot'
       if (isBotTarget) {
         toast.success(
-          t('profile.debate_triggered', 'Meydan okuma kabul edildi!'),
+          t('profile.debate_triggered'),
           {
             id: 'debate-trigger',
           }
@@ -225,8 +226,7 @@ export default function ProfilePage() {
       } else {
         toast.success(
           t(
-            'profile.debate_invitation_sent',
-            'Meydan okuma kullanıcıya iletildi. Rakibin kabul etmesi bekleniyor...'
+            'profile.debate_invitation_sent'
           ),
           {
             id: 'debate-trigger',
@@ -250,7 +250,7 @@ export default function ProfilePage() {
           state: {
             proponent: {
               id: currentUserId,
-              name: t('actor.you', 'Sen'),
+              name: t('actor.you'),
               imageUrl: null,
               discriminator: 'User',
             },
@@ -280,7 +280,7 @@ export default function ProfilePage() {
         errorMessages = [
           err.response?.data?.message ||
             err.message ||
-            t('profile.debate_error', 'Meydan okuma başlatılamadı.'),
+            t('profile.debate_error'),
         ]
       }
 
@@ -307,6 +307,8 @@ export default function ProfilePage() {
     imageUrl: '',
     topicTypes: [],
   })
+  const editNameRef = useRef(null)
+  const editBioRef = useRef(null)
 
   const toggleTopic = (value) => {
     setEditForm((prev) => ({
@@ -425,7 +427,7 @@ export default function ProfilePage() {
     },
     onError: (err) => {
       const errMsgs = err.response?.data?.errors || [
-        err.response?.data?.message || t('profile.error_occurred', 'Bir hata oluştu.'),
+        err.response?.data?.message || t('profile.error_occurred'),
       ]
       if (Array.isArray(errMsgs)) {
         errMsgs.forEach((m) =>
@@ -480,7 +482,7 @@ export default function ProfilePage() {
         ) : (
           <ModifierArrowSvg width={10} height={14} style={{ display: 'block' }} />
         )}
-        {t('premium.button', 'Pro')}
+        {t('premium.button')}
       </Link>
       <div
         style={{
@@ -495,7 +497,7 @@ export default function ProfilePage() {
           className={`btn btn-sm ${activeProfileTheme === Theme.MemoryMap ? 'btn-primary' : 'btn-outline'}`}
           onClick={() => handleSelectTheme(Theme.MemoryMap)}
           disabled={themeMutation.isPending}
-          aria-label={t('topbar.memory_map_ambience', 'Memory Map Ambience')}
+          aria-label={t('topbar.memory_map_ambience')}
           style={{
             flex: 1,
             minWidth: 0,
@@ -525,7 +527,7 @@ export default function ProfilePage() {
           className={`btn btn-sm ${activeProfileTheme === Theme.Welcome ? 'btn-primary' : 'btn-outline'}`}
           onClick={() => handleSelectTheme(Theme.Welcome)}
           disabled={themeMutation.isPending}
-          aria-label={t('topbar.welcome_ambience', 'Welcome Arka Planı')}
+          aria-label={t('topbar.welcome_ambience')}
           style={{
             flex: 1,
             minWidth: 0,
@@ -554,7 +556,7 @@ export default function ProfilePage() {
           className={`btn btn-sm ${activeProfileTheme === Theme.Rainbow ? 'btn-primary' : 'btn-outline'}`}
           onClick={() => handleSelectTheme(Theme.Rainbow)}
           disabled={themeMutation.isPending}
-          aria-label={t('topbar.rainbow_ambience', 'Gökkuşağı Arka Planı')}
+          aria-label={t('topbar.rainbow_ambience')}
           style={{
             flex: 1,
             minWidth: 0,
@@ -583,7 +585,7 @@ export default function ProfilePage() {
           className={`btn btn-sm ${activeProfileTheme === Theme.Bots ? 'btn-primary' : 'btn-outline'}`}
           onClick={() => handleSelectTheme(Theme.Bots)}
           disabled={themeMutation.isPending}
-          aria-label={t('topbar.ambient_bots', 'Bot Arka Planı')}
+          aria-label={t('topbar.ambient_bots')}
           style={{
             flex: 1,
             minWidth: 0,
@@ -702,15 +704,17 @@ export default function ProfilePage() {
   }
 
   const handleEditSave = () => {
-    if (!editForm.bio.trim()) {
+    const profileName = editNameRef.current?.value ?? editForm.profileName
+    const bio = editBioRef.current?.value ?? editForm.bio
+    if (!bio.trim()) {
       toast.error(t('profile.bio_empty_error'))
       return
     }
     const payload = {
       userId: actorId,
-      profileName: editForm.profileName,
+      profileName,
       imageUrl: editForm.imageUrl || '',
-      bio: editForm.bio,
+      bio,
       topicTypes: editForm.topicTypes,
 
       postPerPage: profile?.postPerPage || 20,
@@ -852,7 +856,7 @@ export default function ProfilePage() {
     {
       key: 'model',
       label: activeModelItem.title,
-      description: `${t('bot.model_label', 'Yapay Zeka Modeli')}: ${activeModelItem.title}`,
+      description: `${t('bot.model_label')}: ${activeModelItem.title}`,
       Icon: activeModelItem.Icon,
       tone: 'model',
       size: 24,
@@ -862,8 +866,8 @@ export default function ProfilePage() {
   const capabilityEmblems = [
     {
       key: 'default',
-      label: t('bot.capability_default', 'Varsayılan'),
-      description: `${t('bot.capability_default', 'Varsayılan')}: ${t('bot.capability_default_desc', 'Temel bot özellikleri ve standart kapasite')}`,
+      label: t('bot.capability_default'),
+      description: `${t('bot.capability_default')}: ${t('bot.capability_default_desc')}`,
       Icon: ShieldCheck,
       tone: 'default',
       size: 25,
@@ -874,12 +878,10 @@ export default function ProfilePage() {
           {
             key: 'fossil',
             label: t(
-              'common.fossil_bot_desc',
-              'Fosil Bot: Aktif döngüden çekilmiş, soy ağacında köprü görevi görür.'
+              'common.fossil_bot_desc'
             ),
             description: t(
-              'common.fossil_bot_desc',
-              'Fosil Bot: Aktif döngüden çekilmiş, soy ağacında köprü görevi görür.'
+              'common.fossil_bot_desc'
             ),
             Icon: FossilIcon,
             tone: 'fossil',
@@ -895,8 +897,8 @@ export default function ProfilePage() {
   const userCapabilityEmblems = [
     {
       key: 'default',
-      label: t('user.capability_default', 'Varsayılan'),
-      description: `${t('user.capability_default', 'Varsayılan')}: ${t('user.capability_default_desc', 'Standart kullanıcı özellikleri ve temel limitler')}`,
+      label: t('user.capability_default'),
+      description: `${t('user.capability_default')}: ${t('user.capability_default_desc')}`,
       Icon: ShieldCheck,
       tone: 'default',
       size: 25,
@@ -905,8 +907,8 @@ export default function ProfilePage() {
       ? [
           {
             key: 'premium',
-            label: t('user.capability_premium', 'Pro'),
-            description: `${t('user.capability_premium', 'Pro')}: ${t('user.capability_premium_desc', 'Yükseltilmiş limitler ve ayrıcalıklı Pro özellikleri')}`,
+            label: t('user.capability_premium'),
+            description: `${t('user.capability_premium')}: ${t('user.capability_premium_desc')}`,
             Icon: KingIcon,
             tone: 'premium',
             size: 25,
@@ -925,14 +927,14 @@ export default function ProfilePage() {
               type="button"
               className="btn-icon page-back-button"
               onClick={() => setIsHeaderCollapsed((prev) => !prev)}
-              title={isHeaderCollapsed ? t('common.expand', 'Genişlet') : t('common.collapse', 'Daralt')}
-              aria-label={isHeaderCollapsed ? t('common.expand', 'Genişlet') : t('common.collapse', 'Daralt')}
+              title={isHeaderCollapsed ? t('common.expand') : t('common.collapse')}
+              aria-label={isHeaderCollapsed ? t('common.expand') : t('common.collapse')}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 34,
-                height: 34,
+                width: 32,
+                height: 32,
                 padding: 0,
                 cursor: 'pointer',
               }}
@@ -1013,6 +1015,7 @@ export default function ProfilePage() {
               >
                 {isEditing ? (
                   <input
+                    ref={editNameRef}
                     type="text"
                     className="input"
                     style={{
@@ -1024,8 +1027,7 @@ export default function ProfilePage() {
                       background: 'var(--color-surface)',
                       color: 'var(--color-text-primary)',
                     }}
-                    value={editForm.profileName}
-                    onChange={(e) => setEditForm((f) => ({ ...f, profileName: e.target.value }))}
+                    defaultValue={editForm.profileName}
                   />
                 ) : (
                   <span
@@ -1040,6 +1042,7 @@ export default function ProfilePage() {
             {isEditing ? (
               <>
                 <textarea
+                  ref={editBioRef}
                   className="input textarea textarea--autogrow"
                   style={{
                     margin: '8px 0',
@@ -1052,8 +1055,7 @@ export default function ProfilePage() {
                     background: 'var(--color-surface)',
                     color: 'var(--color-text-primary)',
                   }}
-                  value={editForm.bio}
-                  onChange={(e) => setEditForm((f) => ({ ...f, bio: e.target.value }))}
+                  defaultValue={editForm.bio}
                   placeholder={t('profile.bio_placeholder')}
                 />
                 <div style={{ margin: '4px 0 12px 0', maxWidth: 600 }}>
@@ -1131,9 +1133,7 @@ export default function ProfilePage() {
                 <CalendarFold size={14} />
                 <span>
                   {t('profile.joined')}{' '}
-                  {new Date(profile.createdAt).toLocaleDateString(
-                    currentUserId === actorId ? undefined : 'tr-TR'
-                  )}
+                  <span className="date-text">{formatDate(profile.createdAt)}</span>
                 </span>
               </p>
             )}
@@ -1246,7 +1246,7 @@ export default function ProfilePage() {
                 className="btn btn-outline btn-sm"
                 onClick={() => navigate('/hierarchy?actorId=' + actorId)}
               >
-                <Network size={14} /> {t('profile.hierarchy', 'Hierarchy')}
+                <Network size={14} /> {t('profile.hierarchy')}
               </button>
               {isLoggedIn && !isOwnProfile && (
                 <button
@@ -1254,9 +1254,9 @@ export default function ProfilePage() {
                   onClick={isDormant ? undefined : () => setDebateModalOpen(true)}
                   disabled={isDormant}
                   style={isDormant ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
-                  title={isDormant ? t('profile.dormant_cannot_debate', 'Fosil botlar yeni meydan okumaya katılamaz.') : undefined}
+                  title={isDormant ? t('profile.dormant_cannot_debate') : undefined}
                 >
-                  <AngryBotWithSwordsIcon size={14} /> {t('profile.trigger_debate', 'Meydan Okuma')}
+                  <AngryBotWithSwordsIcon size={14} /> {t('profile.trigger_debate')}
                 </button>
               )}
               {isLoggedIn && !isOwnProfile && profile.discriminator === 'User' && (
@@ -1270,7 +1270,7 @@ export default function ProfilePage() {
                     navigate('/chat?actorId=' + actorId)
                   }}
                 >
-                  <ChatBubbleIcon size={14} /> {t('profile.chat', 'Sohbet')}
+                  <ChatBubbleIcon size={14} /> {t('profile.chat')}
                 </button>
               )}
             </div>
@@ -1490,7 +1490,7 @@ export default function ProfilePage() {
                 }}
               >
                 <Sliders size={14} style={{ color: 'var(--color-primary)' }} />
-                <span>{t('profile.grade', 'Derece')}</span>
+                <span>{t('profile.grade')}</span>
                 {(() => {
                   const rawG =
                     profile.discriminator === 'Bot'
@@ -1541,7 +1541,7 @@ export default function ProfilePage() {
                   )
                 })()}
               </span>
-              <span className="profile-stat-label">{t('profile.modifiers', 'Modifikatörler')}</span>
+              <span className="profile-stat-label">{t('profile.modifiers')}</span>
             </div>
           </div>
 
@@ -1553,7 +1553,7 @@ export default function ProfilePage() {
               className="profile-limits-toggle"
               onClick={toggleLimits}
               aria-expanded={isLimitsExpanded}
-              aria-label={isLimitsExpanded ? t('profile.hide_limits', 'Limitleri Gizle') : t('profile.show_limits', 'Limitleri Göster')}
+              aria-label={isLimitsExpanded ? t('profile.hide_limits') : t('profile.show_limits')}
             >
             <span
               aria-hidden="true"
@@ -1575,7 +1575,7 @@ export default function ProfilePage() {
                 className="profile-limit-chip"
               >
                 <Bot size={25} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
-                <span>{t('profile.bot_ownership_limit', 'Bot Sahiplik Limiti')}:</span>
+                <span>{t('profile.bot_ownership_limit')}:</span>
                 <span className="profile-limit-chip__val">
                   {profile.botsCount ?? (profile.bots?.filter(b => !b.isDormant)?.length || 0)} /{' '}
                   {profile.userSettings.botCountLimit || 5}
@@ -1586,7 +1586,7 @@ export default function ProfilePage() {
                 className="profile-limit-chip"
               >
                 <Users size={25} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
-                <span>{t('profile.tribe_limit', 'Klan Limiti')}:</span>
+                <span>{t('profile.tribe_limit')}:</span>
                 <span className="profile-limit-chip__val">
                   {profile.tribes?.filter(t => !t.isDormant)?.length || 0} / {profile.userSettings.tribeCountLimit || 3}
                 </span>
@@ -1599,7 +1599,7 @@ export default function ProfilePage() {
                   size={25}
                   style={{ color: 'var(--color-primary)', flexShrink: 0 }}
                 />
-                <span>{t('profile.daily_debate_limit', 'Günlük Tartışma Limiti')}:</span>
+                <span>{t('profile.daily_debate_limit')}:</span>
                 <span className="profile-limit-chip__val">
                   {profile.userSettings.debateLimit || 3}
                 </span>
@@ -1616,7 +1616,7 @@ export default function ProfilePage() {
                 className="profile-limit-chip"
               >
                 <Bot size={25} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
-                <span>{t('profile.bot_ownership_limit', 'Bot Sahiplik Limiti')}:</span>
+                <span>{t('profile.bot_ownership_limit')}:</span>
                 <span className="profile-limit-chip__val">
                   {profile.botsCount ?? (profile.bots?.filter(b => !b.isDormant)?.length || 0)} /{' '}
                   {profile.botSettings.botCountLimit || 4}
@@ -1627,7 +1627,7 @@ export default function ProfilePage() {
                 className="profile-limit-chip"
               >
                 <Users size={25} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
-                <span>{t('profile.tribe_limit', 'Klan Limiti')}:</span>
+                <span>{t('profile.tribe_limit')}:</span>
                 <span className="profile-limit-chip__val">
                   {profile.tribes?.filter(t => !t.isDormant)?.length || 0} / {profile.botSettings.tribeCountLimit || 3}
                 </span>
@@ -1640,7 +1640,7 @@ export default function ProfilePage() {
                   size={25}
                   style={{ color: 'var(--color-primary)', flexShrink: 0 }}
                 />
-                <span>{t('profile.daily_debate_limit', 'Günlük Tartışma Limiti')}:</span>
+                <span>{t('profile.daily_debate_limit')}:</span>
                 <span className="profile-limit-chip__val">
                   {profile.botSettings.debateLimit || 1}
                 </span>
@@ -1671,7 +1671,7 @@ export default function ProfilePage() {
                   size={25}
                   style={{ color: 'var(--color-primary)', flexShrink: 0 }}
                 />
-                <span>{t('profile.card_ownership_limit', 'Kart Sahiplik Limiti')}:</span>
+                <span>{t('profile.card_ownership_limit')}:</span>
                 <span className="profile-limit-chip__val">
                   {profile.ownedCards?.length || 0} /{' '}
                   {(profile.discriminator === 'Bot'
@@ -1689,7 +1689,7 @@ export default function ProfilePage() {
                       size={25}
                       style={{ color: 'var(--color-primary)', flexShrink: 0 }}
                     />
-                    <span>{t('profile.bot_assignment_limit', 'Kart Atanma Limiti')}:</span>
+                    <span>{t('profile.bot_assignment_limit')}:</span>
                     <span className="profile-limit-chip__val">
                       {profile.assignedCards?.length || 0} /{' '}
                       {profile.botSettings.botAssignmentLimit || 4}
@@ -1705,7 +1705,7 @@ export default function ProfilePage() {
                   size={25}
                   style={{ color: 'var(--color-primary)', flexShrink: 0 }}
                 />
-                <span>{t('profile.card_inheritance_chance', 'Kart Miras Şansı')}:</span>
+                <span>{t('profile.card_inheritance_chance')}:</span>
                 <span className="profile-limit-chip__val">
                   %
                   {Math.round(
@@ -1726,7 +1726,7 @@ export default function ProfilePage() {
                         size={42}
                         style={{ color: 'var(--color-primary)', flexShrink: 0 }}
                       />
-                      <span>{t('profile.card_inheritance_modifier', 'Kart Miras Çarpanı')}:</span>
+                      <span>{t('profile.card_inheritance_modifier')}:</span>
                       <span className="profile-limit-chip__val">
                         +%{Math.round((profile.botSettings.cardInheritanceModifier || 0) * 100)}
                       </span>
@@ -1759,9 +1759,9 @@ export default function ProfilePage() {
                     letterSpacing: '0.04em',
                   }}
                 >
-                  {t('card.personality_slots', 'Atanmış Kişilik Kartları')} (
+                  {t('card.personality_slots')} (
                   {profile.assignedCards?.length || 0} /{' '}
-                  {profile.botSettings?.botAssignmentLimit || 4} {t('card.slots_label', 'Slot')})
+                  {profile.botSettings?.botAssignmentLimit || 4} {t('card.slots_label')})
                 </span>
               </div>
 
@@ -1795,12 +1795,12 @@ export default function ProfilePage() {
                     letterSpacing: '0.04em',
                   }}
                 >
-                  {t('card.owned_cards', 'Sahip Olunan Kartlar')} ({profile.ownedCards?.length || 0}{' '}
+                  {t('card.owned_cards')} ({profile.ownedCards?.length || 0}{' '}
                   /{' '}
                   {(profile.discriminator === 'Bot'
                     ? profile.botSettings?.cardOwnershipLimit
                     : profile.userSettings?.cardOwnershipLimit) || 10}{' '}
-                  {t('card.slots_label', 'Slot')})
+                  {t('card.slots_label')})
                 </span>
               </div>
 
@@ -1844,7 +1844,7 @@ export default function ProfilePage() {
               >
                 {tab === 'posts' && `${t('profile.posts')} (${profile.postCount ?? 0})`}
                 {tab === 'entries' && `${t('profile.entries')} (${profile.entryCount ?? 0})`}
-                {tab === 'favourites' && `${t('profile.favourites', 'Favoriler')} (${profile.favouriteCount ?? 0})`}
+                {tab === 'favourites' && `${t('profile.favourites')} (${profile.favouriteCount ?? 0})`}
                 {tab === 'bots' && `${t('profile.bots')} (${visibleProfileBots.length})`}
                 {tab === 'tribes' && `${t('profile.tribes')} (${visibleProfileTribes.length})`}
               </button>

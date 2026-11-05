@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { actorApi } from '../../api/actorApi'
 import useAuthStore from '../../store/authStore'
 import useDevLog from '../../utils/useDevLog'
+import ModalPortal from '../common/ModalPortal'
 import { X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { TopicTypes } from '../../constants/TopicTypes'
@@ -90,7 +91,8 @@ export default function EditProfileModal({ isOpen, onClose }) {
   if (!isOpen) return null
 
   return (
-    <div className="modal-overlay" onClick={(e) => e.target.classList.contains('modal-overlay') && onClose()} style={{ zIndex: 100 }}>
+    <ModalPortal>
+      <div className="modal-overlay" onClick={(e) => e.target.classList.contains('modal-overlay') && onClose()} style={{ zIndex: 100 }}>
       <div className="modal-box" style={{ maxWidth: 460, padding: 32 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <h2 style={{ fontSize: 24, fontWeight: 800 }}>{t('settings.edit_profile')}</h2>
@@ -106,42 +108,42 @@ export default function EditProfileModal({ isOpen, onClose }) {
         ) : (
           <form noValidate onSubmit={handleSubmit} className="flex-col gap-4">
             <div className="form-group">
-              <label className="text-muted" style={{ fontSize: 14 }}>{t('profile_modal.profile_name', 'Profil Adı')}</label>
+              <label className="text-muted" style={{ fontSize: 14 }}>{t('profile_modal.profile_name')}</label>
               <input
                 type="text"
                 value={formData.profileName}
                 onChange={(e) => setFormData({ ...formData, profileName: e.target.value })}
-                placeholder={t('profile_modal.profile_name_placeholder', 'Profil Adınız')}
+                placeholder={t('profile_modal.profile_name_placeholder')}
                 maxLength={50}
                 className={`input ${hasSubmitted && !formData.profileName.trim() ? 'error' : ''}`}
               />
             </div>
 
             <div className="form-group">
-              <label className="text-muted" style={{ fontSize: 14 }}>{t('profile_modal.image_url', "Profil Resmi URL'si")}</label>
+              <label className="text-muted" style={{ fontSize: 14 }}>{t('profile_modal.image_url')}</label>
               <input
                 className="input"
                 type="text"
                 value={formData.imageUrl}
                 onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                placeholder={t('profile_modal.image_url_placeholder', 'https://...')}
+                placeholder={t('profile_modal.image_url_placeholder')}
               />
             </div>
 
             <div className="form-group">
-              <label className="text-muted" style={{ fontSize: 14 }}>{t('profile_modal.bio', 'Hakkında')} <span style={{ color: 'var(--color-primary)' }}>*</span></label>
+              <label className="text-muted" style={{ fontSize: 14 }}>{t('profile_modal.bio')} <span style={{ color: 'var(--color-primary)' }}>*</span></label>
               <textarea
                 className={`input textarea textarea--autogrow ${hasSubmitted && !formData.bio.trim() ? 'error' : ''}`}
                 value={formData.bio}
                 onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                placeholder={t('profile_modal.bio_placeholder', 'Kısa bir biyografi...')}
+                placeholder={t('profile_modal.bio_placeholder')}
                 rows={4}
                 maxLength={300}
               />
             </div>
 
             <div className="form-group">
-              <label className="text-muted" style={{ fontSize: 14 }}>{t('profile_modal.interests', 'İlgi Alanları')}</label>
+              <label className="text-muted" style={{ fontSize: 14 }}>{t('profile_modal.interests')}</label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
                 {TopicTypes.map(topic => {
                   const translationKey = (topic.key || topic.enumName).toLowerCase();
@@ -174,12 +176,13 @@ export default function EditProfileModal({ isOpen, onClose }) {
                 disabled={editUserMutation.isPending}
                 style={{ marginTop: 24 }}
               >
-                {editUserMutation.isPending ? t('common.saving', 'Kaydediliyor...') : t('common.save', 'Kaydet')}
+                {editUserMutation.isPending ? t('common.saving') : t('common.save')}
               </button>
             </div>
           </form>
         )}
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   )
 }

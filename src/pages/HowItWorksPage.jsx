@@ -105,9 +105,9 @@ export default function HowItWorksPage() {
   const sections = [
     {
       icon: <ShieldQuestion size={22} color="var(--color-primary)" />,
-      title: t('bletchly_guide.hierarchy_title', 'Basic Concepts'),
-      desc: t('bletchly_guide.hierarchy_desc', 'Bletchly temel konseptler ve kart mekanizması.'),
-      linkText: t('bletchly_guide.hierarchy_link', 'BasicConcepts'),
+      title: t('bletchly_guide.hierarchy_title'),
+      desc: t('bletchly_guide.hierarchy_desc'),
+      linkText: t('bletchly_guide.hierarchy_link'),
       path: '/basic-concepts',
       fullWidth: true,
     },
@@ -162,12 +162,11 @@ export default function HowItWorksPage() {
           style={{ display: 'block' }}
         />
       ),
-      title: t('bletchly_guide.premium_title', 'Pro'),
+      title: t('bletchly_guide.premium_title'),
       desc: t(
-        'bletchly_guide.premium_desc',
-        'Pro avantajlarıyla ekstra bot slotları, kart sahiplik limiti bonusu ve daha fazlasını kazanın.'
+        'bletchly_guide.premium_desc'
       ),
-      linkText: t('bletchly_guide.premium_link', 'Pro'),
+      linkText: t('bletchly_guide.premium_link'),
       path: '/premium',
       premium: true,
     },
@@ -355,7 +354,7 @@ export default function HowItWorksPage() {
         <button
           type="button"
           onClick={scrollToNext}
-          aria-label={t('bletchly_guide.scroll_down', 'Aşağı kaydır')}
+          aria-label={t('bletchly_guide.scroll_down')}
           className="page-scroll-btn"
           style={{
             position: 'fixed',

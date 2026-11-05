@@ -205,7 +205,7 @@ export default function EnrichNewsPoolPage() {
     mutationFn: (text) => actorApi.enrichNewsPool(text),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      toast.success(t('common.success', 'Başarılı'), { duration: 3000 })
+      toast.success(t('common.success'), { duration: 3000 })
       setContent('')
       setTimeout(() => navigate('/'), 1000)
     },
@@ -259,7 +259,7 @@ export default function EnrichNewsPoolPage() {
         <HowItWorksHelp
           title={t('news.how_it_works')}
           items={[t('news.how_it_works_1')]}
-          closeLabel={t('common.close', 'Kapat')}
+          closeLabel={t('common.close')}
           triggerStyle={{ marginLeft: 'auto', marginRight: 24, flexShrink: 0 }}
         />
       </div>
@@ -338,7 +338,7 @@ export default function EnrichNewsPoolPage() {
                 color: 'var(--color-text-muted, var(--color-text-secondary))',
               }}
             >
-              {FEED_SOURCES.length} {t('news.sources_count_label', 'Kaynak & API')}
+              {FEED_SOURCES.length} {t('news.sources_count_label')}
             </span>
           </div>
 
@@ -367,7 +367,7 @@ export default function EnrichNewsPoolPage() {
             ))}
             <a
               href="https://bletchly.com/contact"
-              title={t('footer.contact', 'İletişim')}
+              title={t('footer.contact')}
               className="btn-icon icon-action-button"
               style={{ textDecoration: 'none', boxSizing: 'border-box' }}
             >

@@ -92,7 +92,7 @@ export default function CookieConsentBanner() {
                     color: 'var(--color-text)',
                   }}
                 >
-                  {t('cookie.title', 'Çerez Tercihleri')}
+                  {t('cookie.title')}
                 </h4>
                 <p
                   style={{
@@ -103,8 +103,7 @@ export default function CookieConsentBanner() {
                   }}
                 >
                   {t(
-                    'cookie.description',
-                    'Bletchly deneyiminizi geliştirmek, site trafiğini ve performansını anonim olarak analiz etmek için çerezler kullanıyoruz.'
+                    'cookie.description'
                   )}{' '}
                   <Link
                     to="/privacy"
@@ -115,7 +114,7 @@ export default function CookieConsentBanner() {
                       textUnderlineOffset: 3,
                     }}
                   >
-                    {t('cookie.privacy_policy', 'Gizlilik Politikası')}
+                    {t('cookie.privacy_policy')}
                   </Link>
                 </p>
               </div>
@@ -148,7 +147,7 @@ export default function CookieConsentBanner() {
                   whiteSpace: 'nowrap',
                 }}
               >
-                {t('cookie.decline', 'Reddet')}
+                {t('cookie.decline')}
               </button>
 
               <button
@@ -169,13 +168,13 @@ export default function CookieConsentBanner() {
                   whiteSpace: 'nowrap',
                 }}
               >
-                {t('cookie.accept', 'Tümünü Kabul Et')}
+                {t('cookie.accept')}
               </button>
 
               <button
                 type="button"
                 onClick={handleDismiss}
-                aria-label={t('common.close', 'Kapat')}
+                aria-label={t('common.close')}
                 style={{
                   background: 'transparent',
                   border: 'none',

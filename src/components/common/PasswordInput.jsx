@@ -95,8 +95,8 @@ const PasswordInput = forwardRef(function PasswordInput(
 
       {capsLock && (
         <span
-          title={t('auth.caps_lock', 'Caps Lock')}
-          aria-label={t('auth.caps_lock', 'Caps Lock')}
+          title={t('auth.caps_lock')}
+          aria-label={t('auth.caps_lock')}
           style={{
             position: 'absolute',
             right: 36,

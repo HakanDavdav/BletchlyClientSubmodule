@@ -27,28 +27,28 @@
 .debate-card__bg-side--left {
   clip-path: polygon(
     0 0,
-    85% 0,
-    72% 20%,
-    60% 48%,
-    48% 48%,
-    36% 74%,
-    24% 74%,
-    15% 100%,
+    65% 0,
+    59% 20%,
+    53% 48%,
+    47% 48%,
+    42% 74%,
+    37% 74%,
+    35% 100%,
     0 100%
   );
 }
 
 .debate-card__bg-side--right {
   clip-path: polygon(
-    85% 0,
+    65% 0,
     100% 0,
     100% 100%,
-    15% 100%,
-    24% 74%,
-    36% 74%,
-    48% 48%,
-    60% 48%,
-    72% 20%
+    35% 100%,
+    37% 74%,
+    42% 74%,
+    47% 48%,
+    53% 48%,
+    59% 20%
   );
 }
 
@@ -57,7 +57,8 @@
   inset: -8px;
   background-size: cover;
   background-position: center;
-  filter: blur(1.6px) saturate(1.15);
+  background-repeat: no-repeat;
+  filter: blur(1.2px) saturate(1.15);
   opacity: 0.60;
   transform: scale(1.02);
   transition:
@@ -69,29 +70,29 @@
 /* Yarığın solundaki görselin odağı sol yarıya, sağındakinin odağı sağ
    yarıya kaydırılsın; böylece yüz/avatar merkezi yarıkta kesilmez. */
 .debate-card__bg-side--left .debate-card__bg-image {
-  background-size: 150% auto;
-  background-position: 85% 50%;
+  background-size: auto 141%;
+  background-position: 8% 33%;
 }
 
 .debate-card__bg-side--right .debate-card__bg-image {
-  background-size: 150% auto;
-  background-position: 15% 50%;
+  background-size: auto 141%;
+  background-position: 92% 33%;
 }
 
 /* Sol paneldeki kompakt kart daha kısa olduğu için daha az zoom ve
    biraz daha yukarı odak kullanılır. */
 .debate-card--with-bg:not(.debate-card) .debate-card__bg-side--left .debate-card__bg-image {
-  background-size: 130% auto;
-  background-position: 100% 45%;
+  background-size: auto 141%;
+  background-position: 8% 33%;
 }
 
 .debate-card--with-bg:not(.debate-card) .debate-card__bg-side--right .debate-card__bg-image {
-  background-size: 130% auto;
-  background-position: 0% 45%;
+  background-size: auto 141%;
+  background-position: 92% 33%;
 }
 
 .debate-card--with-bg:hover .debate-card__bg-image {
-  filter: blur(0.6px) saturate(1.22);
+  filter: blur(0.45px) saturate(1.22);
   opacity: 0.78;
   transform: scale(1.05);
 }
@@ -138,11 +139,29 @@
   width: 100%;
   height: 100%;
   overflow: visible;
+  opacity: 0.6;
+  filter: blur(1.2px) saturate(1.15);
+  transition:
+    opacity 0.3s ease,
+    filter 0.3s ease;
+}
+
+.debate-card--with-bg:hover .debate-card__crack {
+  opacity: 0.78;
+  filter: blur(0.45px) saturate(1.22);
+}
+
+:root.dark .debate-card__crack {
+  opacity: 0.45;
+}
+
+:root.dark .debate-card--with-bg:hover .debate-card__crack {
+  opacity: 0.63;
 }
 
 .debate-card__crack path {
   fill: none;
-  stroke: var(--color-border);
+  stroke: var(--color-primary);
   stroke-width: 4px;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -158,4 +177,11 @@
     0 0 0 8px color-mix(in srgb, var(--color-primary) 45%, transparent),
     0 0 6px 2px color-mix(in srgb, var(--color-primary) 55%, transparent),
     0 0 22px 4px color-mix(in srgb, var(--color-primary) 55%, transparent);
+}
+
+/* Büyük (default) debate kartı: yatayda biraz daha dar ve ortalanmış */
+.debate-card {
+  width: 100%;
+  max-width: 350px;
+  margin-inline: auto;
 }

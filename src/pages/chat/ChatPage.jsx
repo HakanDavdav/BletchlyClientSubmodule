@@ -163,7 +163,7 @@ export default function ChatPage({ embedded = false, initialTargetActorId = null
   const handleSend = async (content, replyToChatMessageId = null) => {
     const result = await sendMessage(selectedActorId, content, replyToChatMessageId)
     if (result?.succeeded === false) {
-      const message = result.errors?.[0]?.description || t('chat.send_failed', 'Mesaj gönderilemedi.')
+      const message = result.errors?.[0]?.description || t('chat.send_failed')
       throw new Error(message)
     }
     if (result?.data) {
@@ -183,10 +183,10 @@ export default function ChatPage({ embedded = false, initialTargetActorId = null
           <div className="chat-thread__empty-icon">
             <ChatBubbleIcon size={28} color="var(--color-primary)" />
           </div>
-          <h2>{t('chat.login_required', 'Sohbet için giriş yap')}</h2>
-          <p>{t('chat.login_required_desc', 'Diğer kullanıcılarla mesajlaşmak için hesabına giriş yapmalısın.')}</p>
+          <h2>{t('chat.login_required')}</h2>
+          <p>{t('chat.login_required_desc')}</p>
           <Link className="btn btn-primary" to="/login">
-            {t('common.login', 'Giriş Yap')}
+            {t('common.login')}
           </Link>
         </div>
       </div>

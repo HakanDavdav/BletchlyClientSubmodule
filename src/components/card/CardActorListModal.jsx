@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { createPortal } from 'react-dom'
 import { Crown } from 'lucide-react'
@@ -6,19 +6,11 @@ import { personalityCardApi } from '../../api/personalityCardApi'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
 import ModalHeader from '../common/ModalHeader'
 import FossilTogglePill from '../common/FossilTogglePill'
+import InfiniteScrollStatus from '../common/InfiniteScrollStatus'
+import useInfiniteScroll from '../../hooks/useInfiniteScroll'
 import useDevLog from '../../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
-import i18n from '../../i18n'
-
-function formatDate(value) {
-  if (!value) return null
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return String(value)
-  const locale = (i18n.language && i18n.language.startsWith('en')) ? 'en-US' : 'tr-TR'
-  const datePart = date.toLocaleDateString(locale)
-  const timePart = date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
-  return `${datePart} ${timePart}`
-}
+import { formatDateTime } from '../../utils/formatDate'
 
 export default function CardActorListModal({ cardId, type, isOpen, onClose }) {
   useDevLog('CardActorListModal', arguments[0] || {})
@@ -65,14 +57,15 @@ export default function CardActorListModal({ cardId, type, isOpen, onClose }) {
     })
   }, [items, showFossils, type])
 
-  const handleScroll = (e) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.target
-    if (scrollHeight - scrollTop <= clientHeight + 50) {
-      if (hasNextPage && !isFetchingNextPage) {
-        fetchNextPage()
-      }
-    }
-  }
+  const scrollRef = useRef(null)
+  const { sentinelRef: loadMoreRef, isWaiting } = useInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    rootRef: scrollRef,
+    rootMargin: '150px',
+    enabled: isOpen,
+  })
 
   if (!isOpen) return null
 
@@ -100,7 +93,7 @@ export default function CardActorListModal({ cardId, type, isOpen, onClose }) {
         }}
       >
         <ModalHeader
-          title={type === 'owners' ? t('card.owners', 'Sahipler') : t('card.assignees', 'Atanmış Botlar')}
+          title={type === 'owners' ? t('card.owners') : t('card.assignees')}
           onClose={onClose}
           actions={
             <FossilTogglePill
@@ -113,13 +106,13 @@ export default function CardActorListModal({ cardId, type, isOpen, onClose }) {
           style={{ padding: '0 0 12px 0', marginBottom: 14 }}
         />
 
-        <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }} onScroll={handleScroll}>
+        <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}>
           {isLoading ? (
             <div style={{ textAlign: 'center', padding: 24 }}>
               <div className="spinner spinner-md" />
             </div>
           ) : visibleItems.length === 0 ? (
-            <p className="empty-state">{t('common.nothing_here_yet', 'Henüz burada hiçbir şey yok')}</p>
+            <p className="empty-state">{t('common.nothing_here_yet')}</p>
           ) : (
             <div className="minimal-card-list" style={{ padding: '4px 4px 8px 4px' }}>
               {visibleItems.map((item, idx) => {
@@ -193,14 +186,8 @@ export default function CardActorListModal({ cardId, type, isOpen, onClose }) {
                           </span>
                         )}
                         {acquiredAt && (
-                          <span
-                            style={{
-                              fontSize: 11,
-                              color: 'var(--color-text-muted)',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {formatDate(acquiredAt)}
+                          <span className="date-text" style={{ whiteSpace: 'nowrap' }}>
+                            {formatDateTime(acquiredAt)}
                           </span>
                         )}
                       </div>
@@ -209,21 +196,14 @@ export default function CardActorListModal({ cardId, type, isOpen, onClose }) {
                 )
               })}
 
-              {isFetchingNextPage && (
-                <div style={{ textAlign: 'center', padding: 16 }}>
-                  <div className="spinner spinner-sm" />
-                </div>
-              )}
-              {!isFetchingNextPage && !hasNextPage && visibleItems.length > 0 && (
-                <p
-                  className="text-muted"
-                  style={{ padding: 16, textAlign: 'center', fontSize: 13 }}
-                >
-                  {t('common.no_more_results')}
-                </p>
-              )}
             </div>
           )}
+          <div ref={loadMoreRef} style={{ height: 1 }} />
+          <InfiniteScrollStatus
+            isFetching={isFetchingNextPage || isWaiting}
+            hasNextPage={hasNextPage}
+            hasItems={visibleItems.length > 0}
+          />
         </div>
       </div>
     </div>,

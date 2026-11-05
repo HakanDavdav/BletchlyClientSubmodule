@@ -70,7 +70,7 @@ export default function TribeSettingsPage() {
   })
 
   useDocumentTitle(
-    tribe ? `${tribe.tribeName} - ${t('tribe_settings.title', 'Klan Yönetimi')}` : null
+    tribe ? `${tribe.tribeName} - ${t('tribe_settings.title')}` : null
   )
 
   const { data: userSettings } = useQuery({
@@ -156,7 +156,7 @@ export default function TribeSettingsPage() {
     mutationFn: (dto) => tribeApi.editTribe(tribeId, dto),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      toast.success(t('tribe_settings.success_update', 'Değişiklikler kaydedildi'))
+      toast.success(t('tribe_settings.success_update'))
       queryClient.invalidateQueries({ queryKey: ['tribe', tribeId] })
       queryClient.invalidateQueries({ queryKey: ['myPersonalityCards'] })
       setTimeout(() => {
@@ -182,7 +182,7 @@ export default function TribeSettingsPage() {
     mutationFn: () => tribeApi.deleteTribe(tribeId),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      toast.success(t('common.success', 'Başarılı'))
+      toast.success(t('common.success'))
       queryClient.invalidateQueries({ queryKey: ['tribe'] })
       queryClient.invalidateQueries({ queryKey: ['myTribes'] })
       useMyEntitiesStore.getState().fetchMyTribes()
@@ -203,12 +203,11 @@ export default function TribeSettingsPage() {
     return (
       <div className="empty-state">
         <h2 style={{ color: 'var(--color-error)' }}>
-          {t('tribe_settings.dormant_unauthorized', 'Fosil klanlar düzenlenemez.')}
+          {t('tribe_settings.dormant_unauthorized')}
         </h2>
         <p>
           {t(
-            'tribe_settings.dormant_unauthorized_desc',
-            'Aktif döngüden çekilmiş klanların ayarları değiştirilemez.'
+            'tribe_settings.dormant_unauthorized_desc'
           )}
         </p>
         <button
@@ -314,9 +313,9 @@ export default function TribeSettingsPage() {
     if (!canSubmit) {
       setHasSubmitted(true)
       if (!formData.tribeName.trim()) {
-        toast.error(t('tribe_settings.name_required', 'Klan adı gereklidir.'))
+        toast.error(t('tribe_settings.name_required'))
       } else if ((formData.topicTypes || []).length < 3) {
-        toast.error(t('tribe.interests_min', 'En az 3 ilgi alanı seçilmelidir.'))
+        toast.error(t('tribe.interests_min'))
       }
       return
     }
@@ -389,8 +388,7 @@ export default function TribeSettingsPage() {
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
             {t(
-              'tribe_settings.title_desc',
-              'Klanınızın genel ayarlarını ve üyelerini buradan yönetebilirsiniz.'
+              'tribe_settings.title_desc'
             )}
           </p>
         </div>
@@ -443,7 +441,7 @@ export default function TribeSettingsPage() {
 
         <div>
           <label style={labelStyle}>
-            {t('card.create_personality_optional', 'Kişilik kartı oluştur (Opsiyonel)')}
+            {t('card.create_personality_optional')}
           </label>
           <PersonalityCard
             variant="editor"
@@ -471,7 +469,7 @@ export default function TribeSettingsPage() {
 
         <div>
           <label style={labelStyle}>
-            {t('card.personality_cards', 'KLANA ATANMIŞ KOLEKTİF KİŞİLİK KARTLARI')}
+            {t('card.personality_cards')}
           </label>
           {tribe.personalityCards?.length > 0 ? (
             <CardSelectionSlots
@@ -490,7 +488,7 @@ export default function TribeSettingsPage() {
             />
           ) : (
             <p className="text-muted" style={{ fontSize: 13 }}>
-              {t('card.no_assigned_cards', 'Henüz klana kart atanmamış.')}
+              {t('common.nothing_here_yet')}
             </p>
           )}
         </div>
@@ -507,13 +505,12 @@ export default function TribeSettingsPage() {
           >
             <label style={{ ...labelStyle, marginBottom: 0 }}>
               {t(
-                'bot.select_unassigned_cards',
-                'Sahip olduğun kartlarından ekle (Opsiyonel)'
+                'bot.select_unassigned_cards'
               )}
             </label>
             {cardLockLimit != null && (
               <span
-                title={t('profile.card_assignment_lock_limit', 'Kart Kilit Limiti')}
+                title={t('profile.card_assignment_lock_limit')}
                 style={{
                   fontSize: 12,
                   padding: '2px 8px',
@@ -528,7 +525,7 @@ export default function TribeSettingsPage() {
                 }}
               >
                 <Lock size={12} style={{ opacity: 0.8 }} />
-                {t('card.total_lock_allowance', 'Toplam Kilit Hakkı')}: {cardLockLimit}
+                {t('card.total_lock_allowance')}: {cardLockLimit}
               </span>
             )}
           </div>
@@ -548,7 +545,7 @@ export default function TribeSettingsPage() {
           </p>
         </div>
         <div>
-          <label style={labelStyle}>{t('bot.model_selection', 'Model')}</label>
+          <label style={labelStyle}>{t('bot.model_selection')}</label>
           <ModelGlassToggle
             value={formData.preferredModel}
             disabled={editMutation.isPending}
@@ -556,10 +553,10 @@ export default function TribeSettingsPage() {
             onChange={(nextModel) => setFormData((current) => ({ ...current, preferredModel: nextModel }))}
           />
           <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
-            {t('tribe_settings.model_selection_desc', 'Klan hafızası ve kişilik işlemlerinde kullanılır.')}
+            {t('tribe_settings.model_selection_desc')}
           </p>
           <div style={{ marginTop: 18 }}>
-            <label style={labelStyle}>{t('tribe.memory_tuning', 'Memory Tuning')}</label>
+            <label style={labelStyle}>{t('tribe.memory_tuning')}</label>
             <div
               style={{
                 marginTop: 12,
@@ -570,13 +567,12 @@ export default function TribeSettingsPage() {
               }}
             >
               <MemoryTuningSlider
-                title={t('tribe.incubation_title', 'Kişilik Değişim Süresi')}
+                title={t('tribe.incubation_title')}
                 description={t(
-                  'tribe.incubation_desc',
-                  'Yeni eklenen Kişilik Kartlarının klanın ortak karakterini değiştirmeden önce ne kadar süre bekleyeceğini belirler. Süre dolduğunda bekleyen kartlar etkinleşerek mevcut kart setinden doğrudan yeni bir ortak kişilik oluşturulur ve Hafıza Haritası bu yeni karaktere uyum sağlayacak şekilde güncellenir. Süreyi kısa tutmak yeni kartları hızla devreye sokar; ancak sık değişim anıların daha dengesiz ve çelişkili bir yapıya bürünmesine neden olarak ortak karakterin oturmasını zorlaştırır.'
+                  'tribe.incubation_desc'
                 )}
-                leftLabel={t('tribe.incubation_left', 'Fast Personality Change')}
-                rightLabel={t('tribe.incubation_right', 'Slow Personality Change')}
+                leftLabel={t('tribe.incubation_left')}
+                rightLabel={t('tribe.incubation_right')}
                 emblemField="incubationPeriodMultiplier"
                 value={formData.incubationPeriodMultiplier}
                 min={0}
@@ -597,13 +593,12 @@ export default function TribeSettingsPage() {
               }}
             >
               <MemoryTuningSlider
-                title={t('tribe.affinity_bias_title', 'Emotionality')}
+                title={t('tribe.affinity_bias_title')}
                 description={t(
-                  'tribe.affinity_bias_desc',
-                  'Determines how the tribe links its past Memories to its Core character. Closer to Logical, it follows the shortest and most direct connections between memories. Closer to Emotional, even if the path is longer, it travels through the memories that left the strongest impression and reinforces them further.'
+                  'tribe.affinity_bias_desc'
                 )}
-                leftLabel={t('tribe.affinity_bias_left', 'Logical')}
-                rightLabel={t('tribe.affinity_bias_right', 'Emotional')}
+                leftLabel={t('tribe.affinity_bias_left')}
+                rightLabel={t('tribe.affinity_bias_right')}
                 emblemField="affinityBiasMultiplier"
                 value={formData.affinityBiasMultiplier}
                 min={0}
@@ -614,13 +609,12 @@ export default function TribeSettingsPage() {
                 style={sliderRowStyle}
               />
               <MemoryTuningSlider
-                title={t('tribe.forgetfulness_title', 'Forgetting Speed')}
+                title={t('tribe.forgetfulness_title')}
                 description={t(
-                  'tribe.forgetfulness_desc',
-                  'Determines how quickly unvisited Memories fade over time and how frequently they are cleared from the Memory Map. Towards Elephant Memory, the tribe retains even its oldest experiences for a long time; towards Alzheimer, it quickly forgets unused old memories and focuses only on recent events.'
+                  'tribe.forgetfulness_desc'
                 )}
-                leftLabel={t('tribe.forgetfulness_left', 'Elephant Memory')}
-                rightLabel={t('tribe.forgetfulness_right', 'Alzheimer')}
+                leftLabel={t('tribe.forgetfulness_left')}
+                rightLabel={t('tribe.forgetfulness_right')}
                 emblemField="ebbinghausHalfLifePeriodMultiplier"
                 value={formData.ebbinghausHalfLifePeriodMultiplier}
                 min={0}
@@ -641,13 +635,12 @@ export default function TribeSettingsPage() {
               }}
             >
               <MemoryTuningSlider
-                title={t('tribe.associative_scope_title', 'Recall Scope')}
+                title={t('tribe.associative_scope_title')}
                 description={t(
-                  'tribe.associative_scope_desc',
-                  'Determines how many related side memories and relationships are recalled together when a Memory is triggered. At the Autism-like end, the tribe focuses solely on the immediate topic and leaves out side details. At the Big Picture end, it brings many surrounding connections into focus at once, forming broad links across different topics.'
+                  'tribe.associative_scope_desc'
                 )}
-                leftLabel={t('tribe.associative_scope_left', 'Autism-like')}
-                rightLabel={t('tribe.associative_scope_right', 'Big Picture')}
+                leftLabel={t('tribe.associative_scope_left')}
+                rightLabel={t('tribe.associative_scope_right')}
                 emblemField="recallPathLimitMultiplier"
                 value={formData.recallPathLimitMultiplier}
                 min={0}
@@ -659,13 +652,12 @@ export default function TribeSettingsPage() {
                 style={sliderRowStyle}
               />
               <MemoryTuningSlider
-                title={t('tribe.fixation_title', 'Idea Fixation')}
+                title={t('tribe.fixation_title')}
                 description={t(
-                  'tribe.fixation_desc',
-                  'Determines how strongly repeated ideas can solidify in the Memory Map and how easily fading memories are cleared. At the Open-Minded end, no idea becomes overly rigid and fading memories are easily cleared, allowing the tribe to adapt quickly to new ideas. At the Resilient end, repeated thoughts take deep root and even the faintest memories resist being forgotten.'
+                  'tribe.fixation_desc'
                 )}
-                leftLabel={t('tribe.fixation_left', 'Open-Minded')}
-                rightLabel={t('tribe.fixation_right', 'Resilient')}
+                leftLabel={t('tribe.fixation_left')}
+                rightLabel={t('tribe.fixation_right')}
                 emblemField="maxStrengthMultiplier"
                 value={formData.maxStrengthMultiplier}
                 min={0.5}
@@ -687,7 +679,7 @@ export default function TribeSettingsPage() {
         </div>
 
         <div>
-          <label style={labelStyle}>{t('tribe.interests', 'Alanlar')}</label>
+          <label style={labelStyle}>{t('tribe.interests')}</label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {TopicTypes.map((topic) => {
               const isSelected = formData.topicTypes.includes(topic.value)
@@ -723,14 +715,13 @@ export default function TribeSettingsPage() {
           </div>
           <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--color-text-faint)' }}>
             {t(
-              'tribe.interests_desc',
-              'Klanın odaklanacağı alanları seçebilirsiniz.'
+              'tribe.interests_desc'
             )}
           </p>
         </div>
 
         <div
-          aria-label={`${selectedCardIds.length + (formData.personalityCardConfirmed ? 1 : 0)} ${t('card.selected_count', 'kart seçildi')}`}
+          aria-label={`${selectedCardIds.length + (formData.personalityCardConfirmed ? 1 : 0)} ${t('card.selected_count')}`}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -769,7 +760,7 @@ export default function TribeSettingsPage() {
                 {t('auth.processing')}
               </>
             ) : (
-              <>{t('action.save', 'Kaydet')}</>
+              <>{t('action.save')}</>
             )}
           </button>
         </div>
@@ -832,11 +823,11 @@ export default function TribeSettingsPage() {
                     {member.roleName === 'TribeLeader'
                       ? t('tribe_settings.leader')
                       : member.roleName === 'TribeAssistantLeader'
-                        ? t('tribe_settings.assistant_leader', 'Yardımcı Lider')
+                        ? t('tribe_settings.assistant_leader')
                         : member.roleName === 'TribeCoLeader'
-                          ? t('tribe_settings.co_leader', 'Eş Lider')
+                          ? t('tribe_settings.co_leader')
                           : member.roleName === 'TribeSenior'
-                            ? t('tribe_settings.senior', 'Kıdemli')
+                            ? t('tribe_settings.senior')
                             : member.roleName || t('tribe_settings.member')}
                   </span>
 
@@ -940,12 +931,11 @@ export default function TribeSettingsPage() {
             setExpelTargetMember(null)
           }
         }}
-        title={t('tribe_settings.expel', 'Üyeyi Çıkar')}
+        title={t('tribe_settings.expel')}
         description={t(
-          'tribe_settings.confirm_expel',
-          'Bu üyeyi klandan çıkarmak istediğinize emin misiniz?'
+          'tribe_settings.confirm_expel'
         )}
-        confirmText={t('action.delete', 'Çıkar')}
+        confirmText={t('action.delete')}
         confirmVariant="danger"
         isLoading={expelMutation.isPending}
       />
@@ -956,12 +946,11 @@ export default function TribeSettingsPage() {
           setIsDeleteTribeModalOpen(false)
           deleteMutation.mutate()
         }}
-        title={t('tribe_settings.delete_tribe', 'Klanı Sil')}
+        title={t('tribe_settings.delete_tribe')}
         description={t(
-          'tribe_settings.confirm_delete',
-          'Bu klanı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.'
+          'tribe_settings.confirm_delete'
         )}
-        confirmText={t('action.delete', 'Sil')}
+        confirmText={t('action.delete')}
         confirmVariant="danger"
         isLoading={deleteMutation.isPending}
       />

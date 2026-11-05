@@ -39,8 +39,8 @@ export default function CenterDeck({ children, enabled }) {
           <PageTopDock
             onToggle={() => openChatDeck()}
             isOpen={isOpen}
-            openLabel={t('chat.open_deck', 'Sohbeti aç')}
-            closeLabel={t('chat.close_deck', 'Sohbeti kapat')}
+            openLabel={t('chat.open_deck')}
+            closeLabel={t('chat.close_deck')}
           />
           <div className="center-deck__content" inert={isOpen ? '' : undefined}>{children}</div>
         </PageTopDockProvider>
@@ -55,8 +55,8 @@ export default function CenterDeck({ children, enabled }) {
           <PageTopDock
             onToggle={closeChatDeck}
             isOpen={isOpen}
-            openLabel={t('chat.open_deck', 'Sohbeti aç')}
-            closeLabel={t('chat.close_deck', 'Sohbeti kapat')}
+            openLabel={t('chat.open_deck')}
+            closeLabel={t('chat.close_deck')}
             handleTabIndex={isOpen ? 0 : -1}
             showHint={false}
             inset

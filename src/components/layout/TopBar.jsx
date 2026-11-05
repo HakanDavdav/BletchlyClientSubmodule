@@ -465,9 +465,10 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
       return
     }
 
+    setIsLoadingSuggestions(true)
+
     // 500ms bekle, sonra API çağrısı yap
     debounceTimerRef.current = setTimeout(async () => {
-      setIsLoadingSuggestions(true)
       try {
         let result
         switch (searchMode) {
@@ -564,10 +565,10 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
   }
 
   const searchModeOptions = [
-    { key: 'general', label: t('search.mode.general', 'Genel') },
-    { key: 'posts', label: t('search.mode.posts', 'Başlıklar') },
-    { key: 'actors', label: t('search.mode.actors', 'Kişiler') },
-    { key: 'tribes', label: t('search.mode.tribes', 'Klanlar') },
+    { key: 'general', label: t('search.mode.general') },
+    { key: 'posts', label: t('search.mode.posts') },
+    { key: 'actors', label: t('search.mode.actors') },
+    { key: 'tribes', label: t('search.mode.tribes') },
   ]
 
   return (
@@ -633,8 +634,8 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
             >
               <span>
                 {seasonStatus.daysRemaining > 0
-                  ? t('common.days_remaining_short', { count: seasonStatus.daysRemaining, defaultValue: `${seasonStatus.daysRemaining} GÜN!` })
-                  : t('common.hours_remaining_short', { count: seasonStatus.hoursRemaining ?? 0, defaultValue: `${seasonStatus.hoursRemaining ?? 0} SAAT!` })}
+                  ? t('common.days_remaining_short', { count: seasonStatus.daysRemaining })
+                  : t('common.hours_remaining_short', { count: seasonStatus.hoursRemaining ?? 0 })}
               </span>
             </Link>
           )}
@@ -734,7 +735,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
             <input
               className="input"
               style={{ paddingLeft: 32 }}
-              placeholder={t('topbar.search', 'Ara')}
+              placeholder={t('topbar.search')}
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value)
@@ -751,9 +752,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
             {/* Search Suggestions & Recent Searches Dropdown */}
             <AnimatePresence>
               {showSuggestions && !isFilterOpen && (
-                searchQuery?.trim()?.length > 0
-                  ? (suggestions || isLoadingSuggestions)
-                  : (recentSearches && recentSearches.length > 0)
+                searchQuery?.trim()?.length > 0 || (recentSearches && recentSearches.length > 0)
               ) && (
                 <motion.div
                   initial={{ opacity: 0, y: -8 }}
@@ -793,7 +792,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                           letterSpacing: '0.5px',
                         }}
                       >
-                        <span>{t('search.recent', 'RECENT')}</span>
+                        <span>{t('search.recent')}</span>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                         {recentSearches.slice(0, 5).map((item) => (
@@ -849,8 +848,8 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                             </div>
                             <button
                               type="button"
-                              aria-label={t('common.delete', 'Sil')}
-                              title={t('common.delete', 'Sil')}
+                              aria-label={t('common.delete')}
+                              title={t('common.delete')}
                               onClick={(e) => {
                                 e.stopPropagation()
                                 removeRecentSearch(item)
@@ -900,7 +899,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                                   textTransform: 'uppercase',
                                 }}
                               >
-                                {t('common.actors', 'Kişiler')}
+                                {t('common.actors')}
                               </div>
                               <div className="minimal-card-list">
                                 {suggestions.actors.slice(0, 3).map((actor) => (
@@ -933,7 +932,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                                   textTransform: 'uppercase',
                                 }}
                               >
-                                {t('common.tribes', 'Klanlar')}
+                                {t('common.tribes')}
                               </div>
                               <div className="minimal-card-list">
                                 {suggestions.tribes.slice(0, 3).map((tribe) => (
@@ -962,7 +961,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                                   textTransform: 'uppercase',
                                 }}
                               >
-                                {t('common.posts', 'Başlıklar')}
+                                {t('common.posts')}
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                                 {suggestions.posts.slice(0, 4).map((post) => (
@@ -991,7 +990,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                                   fontSize: 13,
                                 }}
                               >
-                                {t('search.no_results', 'Sonuç bulunamadı')}
+                                {t('search.no_results')}
                               </div>
                             )}
                         </>
@@ -1064,13 +1063,24 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                                 fontSize: 13,
                               }}
                             >
-                              {t('search.no_results', 'Sonuç bulunamadı')}
+                              {t('search.no_results')}
                             </div>
                           )}
                         </>
                       )}
                     </div>
-                  ) : null}
+                  ) : (
+                    <div
+                      style={{
+                        padding: 16,
+                        textAlign: 'center',
+                        color: 'var(--color-text-faint)',
+                        fontSize: 13,
+                      }}
+                    >
+                      {t('search.no_results')}
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1127,7 +1137,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                   setFilterEndDate('')
                   setShowSuggestions(false)
                 }}
-                aria-label={t('common.clear_all', 'Tümünü Temizle')}
+                aria-label={t('common.clear_all')}
                 style={{
                   position: 'absolute',
                   top: -4,
@@ -1187,7 +1197,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                       paddingBottom: 6,
                     }}
                   >
-                    <span>{t('search.filters_title', 'Arama Filtreleri')}</span>
+                    <span>{t('search.filters_title')}</span>
                     <X
                       size={14}
                       color="var(--color-text-secondary)"
@@ -1198,7 +1208,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
-                      {t('search.sort_by', 'Sıralama')}
+                      {t('search.sort_by')}
                     </label>
                     <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                       <select
@@ -1207,14 +1217,14 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                         value={filterOrderType}
                         onChange={handleOrderTypeChange}
                       >
-                        <option value="">{t('search.none', 'Yok')}</option>
+                        <option value="">{t('search.none')}</option>
                         {searchMode === 'posts' && (
                           <option value="MostLiked">
-                            {t('topbar.most_liked', 'En Çok Beğenilen')}
+                            {t('topbar.most_liked')}
                           </option>
                         )}
                         <option value="Newest">{t('sort.newest')}</option>
-                        <option value="Oldest">{t('topbar.oldest', 'En Eski')}</option>
+                        <option value="Oldest">{t('topbar.oldest')}</option>
                       </select>
                       {filterOrderType && (
                         <button
@@ -1227,7 +1237,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                             // or just do handleOrderTypeChange({ target: { value: '' } })
                             handleOrderTypeChange({ target: { value: '' } })
                           }}
-                          aria-label={t('common.clear', 'Temizle')}
+                          aria-label={t('common.clear')}
                         >
                           <X size={16} />
                         </button>
@@ -1237,7 +1247,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
-                      {t('search.start_date', 'Başlangıç Tarihi')}
+                      {t('search.start_date')}
                     </label>
                     <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                       <input
@@ -1253,7 +1263,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                           className="btn btn-ghost btn-sm"
                           style={{ padding: 0, width: 32, height: 32, flexShrink: 0 }}
                           onClick={() => setFilterStartDate('')}
-                          aria-label={t('common.clear', 'Temizle')}
+                          aria-label={t('common.clear')}
                         >
                           <X size={16} />
                         </button>
@@ -1263,7 +1273,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
-                      {t('search.end_date', 'Bitiş Tarihi')}
+                      {t('search.end_date')}
                     </label>
                     <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                       <input
@@ -1279,7 +1289,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                           className="btn btn-ghost btn-sm"
                           style={{ padding: 0, width: 32, height: 32, flexShrink: 0 }}
                           onClick={() => setFilterEndDate('')}
-                          aria-label={t('common.clear', 'Temizle')}
+                          aria-label={t('common.clear')}
                         >
                           <X size={16} />
                         </button>
@@ -1293,7 +1303,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                     className="btn btn-primary btn-sm"
                     style={{ width: '100%', marginTop: 4, paddingTop: 7, paddingBottom: 7 }}
                   >
-                    {t('topbar.search_button', 'Ara')}
+                    {t('topbar.search_button')}
                   </button>
                 </motion.div>
               )}
@@ -1301,7 +1311,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
           </div>
 
           <button type="submit" className="btn btn-primary btn-sm">
-            {t('topbar.search_button', 'Ara')}
+            {t('topbar.search_button')}
           </button>
         </form>
 
@@ -1435,8 +1445,8 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
               <button
                 className={`btn-icon ${isBotShaking ? 'theme-toggle-shake' : ''}`}
                 onClick={handleBotClick}
-                aria-label={t('topbar.premium_palette_title', 'Özel Renk Paleti')}
-                title={t('topbar.premium_palette_title', 'Özel Renk Paleti')}
+                aria-label={t('topbar.premium_palette_title')}
+                title={t('topbar.premium_palette_title')}
                 style={{ color: 'var(--color-primary)', height: 30, padding: '0 2px' }}
               >
                 <span style={{ display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
@@ -1515,8 +1525,8 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                         <button
                           type="button"
                           aria-disabled={!isPremium || undefined}
-                          aria-label={t('topbar.premium_palette_saved', 'Kayıtlı renk')}
-                          title={!isPremium ? `${t('topbar.premium_palette_saved', 'Kayıtlı renk')} (Pro)` : t('topbar.premium_palette_saved', 'Kayıtlı renk')}
+                          aria-label={t('topbar.premium_palette_saved')}
+                          title={!isPremium ? `${t('topbar.premium_palette_saved')} (Pro)` : t('topbar.premium_palette_saved')}
                           onClick={() => {
                             if (!isPremium) {
                               setIsPaletteOpen(false)
@@ -1550,8 +1560,8 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                       <button
                         type="button"
                         aria-disabled={!isPremium || undefined}
-                        aria-label={t('topbar.premium_palette_custom', 'Custom')}
-                        title={!isPremium ? `${t('topbar.premium_palette_custom', 'Custom')} (Pro)` : t('topbar.premium_palette_custom', 'Custom')}
+                        aria-label={t('topbar.premium_palette_custom')}
+                        title={!isPremium ? `${t('topbar.premium_palette_custom')} (Pro)` : t('topbar.premium_palette_custom')}
                         onClick={() => {
                           if (!isPremium) {
                             setIsPaletteOpen(false)
@@ -1601,8 +1611,8 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
             <button
               className="btn-icon"
               onClick={toggleTheme}
-              aria-label={isDarkMode ? t('topbar.light_mode', 'Açık Tema') : t('topbar.dark_mode', 'Koyu Tema')}
-              title={isDarkMode ? t('topbar.light_mode', 'Açık Tema') : t('topbar.dark_mode', 'Koyu Tema')}
+              aria-label={isDarkMode ? t('topbar.light_mode') : t('topbar.dark_mode')}
+              title={isDarkMode ? t('topbar.light_mode') : t('topbar.dark_mode')}
               style={{
                 color: customColor || (isGreenMode ? '#10b981' : '#3b82f6'),
                 width: 30,
@@ -1814,7 +1824,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
             setActiveLeftCacheType('trending')
           }}
         >
-          {t('sort.popular', 'Popüler')}
+          {t('sort.popular')}
         </button>
         <button
           className={`btn hide-under-900 ${activeLeftCacheType === 'recent' ? 'btn-primary' : 'btn-ghost'}`}
@@ -1834,7 +1844,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
             setActiveLeftCacheType('mostLiked')
           }}
         >
-          {t('sort.best', 'En İyiler')}
+          {t('sort.best')}
         </button>
         <button
           className={`btn hide-under-900 ${activeLeftCacheType === 'mostDisliked' ? 'btn-primary' : 'btn-ghost'}`}
@@ -1844,7 +1854,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
             setActiveLeftCacheType('mostDisliked')
           }}
         >
-          {t('sort.worst', 'En Kötüler')}
+          {t('sort.worst')}
         </button>
 
         <div className="hide-under-900" ref={topicRef} style={{ position: 'relative' }}>
@@ -1860,8 +1870,8 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
               })
               setIsTopicOpen((value) => !value)
             }}
-            aria-label={t('sort.topic', 'Konu')}
-            title={t('sort.topic', 'Konu')}
+            aria-label={t('sort.topic')}
+            title={t('sort.topic')}
           >
             ...
           </button>
@@ -1906,7 +1916,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                       transition: 'all 0.2s',
                     }}
                   >
-                    {t('sort.all_topics', 'Tüm konular')}
+                    {t('sort.all_topics')}
                   </button>
                   {TopicTypes.map((topic) => {
                     const color = TopicColors[topic.value] || 'var(--color-primary)'
@@ -1978,7 +1988,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                     setBotsDropdownPos(null)
                   }}
                 >
-                  {t('common.tribes', 'Tribes')}{' '}
+                  {t('common.tribes')}{' '}
                   <span
                     style={{
                       fontSize: 9,
@@ -2105,7 +2115,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                     setTribesDropdownPos(null)
                   }}
                 >
-                  {t('common.bots', 'Bots')}{' '}
+                  {t('common.bots')}{' '}
                   <span
                     style={{
                       fontSize: 9,
@@ -2236,7 +2246,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                     justifyContent: 'center',
                   }}
                 >
-                  {t('card.cards', 'Cards')}
+                  {t('card.cards')}
                 </Link>
               </div>
 
@@ -2283,8 +2293,8 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
         >
           <IconActionButton
             to="/leaderboard?type=user"
-            title={t('topbar.leaderboard', 'Liderlik Tablosu')}
-            aria-label={t('topbar.leaderboard', 'Liderlik Tablosu')}
+            title={t('topbar.leaderboard')}
+            aria-label={t('topbar.leaderboard')}
             style={{ width: 38, height: 38, boxSizing: 'border-box' }}
           >
             <Podium size={19} strokeWidth={2.2} />
@@ -2292,8 +2302,8 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
 
           <IconActionButton
             to="/explore"
-            title={t('explore_page.title', 'Keşfet')}
-            aria-label={t('explore_page.title', 'Keşfet')}
+            title={t('explore_page.title')}
+            aria-label={t('explore_page.title')}
             style={{ width: 38, height: 38, boxSizing: 'border-box' }}
           >
             <Compass size={19} strokeWidth={2.2} />
@@ -2301,8 +2311,8 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
 
           <IconActionButton
             to="/active-debates"
-            title={t('topbar.active_debates', 'Aktif Meydan Okumalar')}
-            aria-label={t('topbar.active_debates', 'Aktif Meydan Okumalar')}
+            title={t('topbar.active_debates')}
+            aria-label={t('topbar.active_debates')}
             style={{ width: 38, height: 38, boxSizing: 'border-box' }}
           >
             <AngryBotWithSwordsIcon size={19} />
@@ -2310,8 +2320,8 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
 
           <IconActionButton
             to="/marketplace"
-            title={t('card.marketplace', 'Kart Marketi')}
-            aria-label={t('card.marketplace', 'Kart Marketi')}
+            title={t('card.marketplace')}
+            aria-label={t('card.marketplace')}
             style={{ width: 36, height: 36, boxSizing: 'border-box' }}
           >
             <BotFlashCardsIcon size={19} />
@@ -2320,8 +2330,8 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
           {isLoggedIn && (
             <IconActionButton
               onClick={handleChatClick}
-              title={t('topbar.chat', 'Sohbet')}
-              aria-label={t('topbar.chat', 'Sohbet')}
+              title={t('topbar.chat')}
+              aria-label={t('topbar.chat')}
               style={{ width: 38, height: 38, boxSizing: 'border-box' }}
             >
               <ChatBubbleIcon size={19} />
@@ -2437,8 +2447,8 @@ function MobileTopbarControls() {
   }
 
   const themeLabel = isDarkMode
-    ? t('topbar.light_mode', 'Açık Tema')
-    : t('topbar.dark_mode', 'Koyu Tema')
+    ? t('topbar.light_mode')
+    : t('topbar.dark_mode')
 
   return (
     <div className="topbar-mobile-controls">
@@ -2462,8 +2472,8 @@ function MobileTopbarControls() {
           onClick={handleBotClick}
           aria-haspopup="dialog"
           aria-expanded={isPaletteOpen}
-          aria-label={t('topbar.premium_palette_title', 'Özel Renk Paleti')}
-          title={t('topbar.premium_palette_title', 'Özel Renk Paleti')}
+          aria-label={t('topbar.premium_palette_title')}
+          title={t('topbar.premium_palette_title')}
         >
           <span
             className="mobile-drawer-paint-bot"
@@ -2478,7 +2488,7 @@ function MobileTopbarControls() {
           <div
             className="topbar-mobile-controls__palette-menu"
             role="dialog"
-            aria-label={t('topbar.premium_palette_title', 'Özel Renk Paleti')}
+            aria-label={t('topbar.premium_palette_title')}
           >
             <div className="topbar-mobile-controls__palette-grid">
               {COLOR_PRESETS.map((preset) => {
@@ -2516,8 +2526,8 @@ function MobileTopbarControls() {
                 <button
                   type="button"
                   aria-disabled={!isPremium || undefined}
-                  aria-label={t('topbar.premium_palette_saved', 'Kayıtlı renk')}
-                  title={!isPremium ? `${t('topbar.premium_palette_saved', 'Kayıtlı renk')} (Pro)` : t('topbar.premium_palette_saved', 'Kayıtlı renk')}
+                  aria-label={t('topbar.premium_palette_saved')}
+                  title={!isPremium ? `${t('topbar.premium_palette_saved')} (Pro)` : t('topbar.premium_palette_saved')}
                   onClick={() => {
                     if (!isPremium) {
                       setIsPaletteOpen(false)
@@ -2540,8 +2550,8 @@ function MobileTopbarControls() {
                 type="button"
                 aria-disabled={!isPremium || undefined}
                 className={`topbar-mobile-controls__palette-custom${!isPremium ? ' is-locked' : ''}`}
-                aria-label={t('topbar.premium_palette_custom', 'Custom')}
-                title={!isPremium ? `${t('topbar.premium_palette_custom', 'Custom')} (Pro)` : t('topbar.premium_palette_custom', 'Custom')}
+                aria-label={t('topbar.premium_palette_custom')}
+                title={!isPremium ? `${t('topbar.premium_palette_custom')} (Pro)` : t('topbar.premium_palette_custom')}
                 onClick={() => {
                   if (!isPremium) {
                     setIsPaletteOpen(false)
@@ -2566,7 +2576,7 @@ function MobileTopbarControls() {
                   commitCustomColor(e.target.value)
                 }}
                 className="topbar-mobile-controls__color-input"
-                aria-label={t('topbar.premium_palette_custom', 'Custom')}
+                aria-label={t('topbar.premium_palette_custom')}
               />
             </div>
           </div>

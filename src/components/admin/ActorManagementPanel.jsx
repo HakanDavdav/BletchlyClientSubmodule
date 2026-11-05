@@ -22,7 +22,7 @@ export default function ActorManagementPanel() {
     mutationFn: ({ actorId, points }) => adminApi.setActorPoint(actorId, points),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      toast.success(t('admin.actor_point_updated', 'Kişi puanı güncellendi'))
+      toast.success(t('admin.actor_point_updated'))
     },
   })
 
@@ -33,8 +33,8 @@ export default function ActorManagementPanel() {
     onSuccess: (_, { isPremium }) => {
       toast.success(
         isPremium
-          ? t('admin.actor_premium_granted', 'Kişi Pro yapıldı')
-          : t('admin.actor_premium_revoked', "Kişinin Pro statüsü kaldırıldı")
+          ? t('admin.actor_premium_granted')
+          : t('admin.actor_premium_revoked')
       )
       queryClient.invalidateQueries({ queryKey: ['actorProfile'] })
     },
@@ -42,14 +42,14 @@ export default function ActorManagementPanel() {
 
   const handleSetPoints = () => {
     if (!pointActorId.trim() || !points.toString().trim()) {
-      return toast.error(t('admin.actor_id_placeholder', 'Kişi ID girin (GUID)'))
+      return toast.error(t('admin.actor_id_placeholder'))
     }
     setPointsMutation.mutate({ actorId: pointActorId.trim(), points: parseInt(points, 10) })
   }
 
   const handleSetPremium = (isPremium) => {
     if (!premiumActorId.trim()) {
-      return toast.error(t('admin.actor_id_placeholder', 'Kişi ID girin (GUID)'))
+      return toast.error(t('admin.actor_id_placeholder'))
     }
     setPremiumMutation.mutate({ actorId: premiumActorId.trim(), isPremium })
   }
@@ -63,7 +63,7 @@ export default function ActorManagementPanel() {
     meta: { showErrorToast: true },
     onSuccess: (response) => {
       const data = response?.data?.data || response?.data
-      const message = data?.message || t('admin.season_reset_success', 'Sezon başarıyla sıfırlandı ve arşivlendi!')
+      const message = data?.message || t('admin.season_reset_success')
       toast.success(message)
       queryClient.invalidateQueries({ queryKey: ['seasonStatus'] })
       queryClient.invalidateQueries({ queryKey: ['leaderboard'] })
@@ -94,10 +94,10 @@ export default function ActorManagementPanel() {
         style={{ borderColor: 'var(--color-border)', marginBottom: '12px', paddingBottom: '8px' }}
       >
         <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: 'var(--color-text)' }}>
-          {t('admin.actor_management_title', 'Kişi Yönetimi')}
+          {t('admin.actor_management_title')}
         </h2>
         <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: '2px 0 0' }}>
-          {t('admin.actor_management_desc', 'Kişi puanlarını ve seviyelerini yönetin')}
+          {t('admin.actor_management_desc')}
         </p>
       </div>
 
@@ -114,7 +114,7 @@ export default function ActorManagementPanel() {
           <div
             style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: 'var(--color-text)' }}
           >
-            {t('admin.actor_point_title', 'Kişi Puanı')}
+            {t('admin.actor_point_title')}
           </div>
 
           <div className="form-group" style={{ marginBottom: '8px' }}>
@@ -128,7 +128,7 @@ export default function ActorManagementPanel() {
                 color: 'var(--color-text-secondary)',
               }}
             >
-              {t('admin.actor_id', 'Kişi ID')}
+              {t('admin.actor_id')}
             </label>
             <input
               className="input w-full"
@@ -158,7 +158,7 @@ export default function ActorManagementPanel() {
                 color: 'var(--color-text-secondary)',
               }}
             >
-              {t('admin.new_point', 'Yeni Puan')}
+              {t('admin.new_point')}
             </label>
             <input
               type="number"
@@ -189,7 +189,7 @@ export default function ActorManagementPanel() {
                 borderRadius: 'var(--radius-md)',
               }}
             >
-              {isPointsLoading ? t('admin.updating', 'Güncelleniyor...') : t('admin.update_point', 'Puanı Güncelle')}
+              {isPointsLoading ? t('admin.updating') : t('admin.update_point')}
             </button>
           </div>
         </div>
@@ -206,7 +206,7 @@ export default function ActorManagementPanel() {
           <div
             style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: 'var(--color-text)' }}
           >
-            {t('admin.actor_premium_title', 'Kişi Pro Durumu')}
+            {t('admin.actor_premium_title')}
           </div>
 
           <div className="form-group" style={{ marginBottom: '10px' }}>
@@ -220,7 +220,7 @@ export default function ActorManagementPanel() {
                 color: 'var(--color-text-secondary)',
               }}
             >
-              {t('admin.actor_id', 'Kişi ID')}
+              {t('admin.actor_id')}
             </label>
             <input
               className="input w-full"
@@ -251,7 +251,7 @@ export default function ActorManagementPanel() {
                 borderRadius: 'var(--radius-md)',
               }}
             >
-              {isPremiumLoading ? t('admin.updating', 'Güncelleniyor...') : t('admin.make_premium', 'Pro Yap')}
+              {isPremiumLoading ? t('admin.updating') : t('admin.make_premium')}
             </button>
 
             <button
@@ -265,7 +265,7 @@ export default function ActorManagementPanel() {
                 borderRadius: 'var(--radius-md)',
               }}
             >
-              {t('admin.revoke_premium', 'Pro Kaldır')}
+              {t('admin.revoke_premium')}
             </button>
           </div>
         </div>
@@ -282,7 +282,7 @@ export default function ActorManagementPanel() {
           <div
             style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: 'var(--color-text)' }}
           >
-            {t('admin.season_reset_title', 'Sezon Sıfırlama')}
+            {t('admin.season_reset_title')}
           </div>
 
           <div className="form-group" style={{ marginBottom: '10px' }}>
@@ -295,8 +295,7 @@ export default function ActorManagementPanel() {
               }}
             >
               {t(
-                'admin.season_reset_desc',
-                'Tüm kişi ve klanların sezonluk puanlarını sıfırlar, liderlik tablosunu yeni sezon numarasıyla arşivler ve inaktif botları fosilleştirir.'
+                'admin.season_reset_desc'
               )}
             </p>
           </div>
@@ -314,8 +313,8 @@ export default function ActorManagementPanel() {
               }}
             >
               {isResetLoading
-                ? t('admin.season_reset_in_progress', 'Sıfırlanıyor...')
-                : t('admin.trigger_season_reset_btn', 'Sezonu Sıfırla')}
+                ? t('admin.season_reset_in_progress')
+                : t('admin.trigger_season_reset_btn')}
             </button>
           </div>
         </div>
@@ -327,12 +326,11 @@ export default function ActorManagementPanel() {
           setIsSeasonResetModalOpen(false)
           triggerSeasonResetMutation.mutate()
         }}
-        title={t('admin.trigger_season_reset_btn', 'Sezonu Sıfırla')}
+        title={t('admin.trigger_season_reset_btn')}
         description={t(
-          'admin.season_reset_confirm_desc',
-          'Tüm sezonluk puanlar sıfırlanacak ve liderlik tablosu arşivlenecektir. Onaylıyor musunuz?'
+          'admin.season_reset_confirm_desc'
         )}
-        confirmText={t('common.confirm', 'Onayla')}
+        confirmText={t('common.confirm')}
         confirmVariant="danger"
         isLoading={isResetLoading}
       />

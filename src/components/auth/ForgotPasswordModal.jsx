@@ -9,6 +9,7 @@ import { triggerConfetti } from '../../utils/confetti'
 import { useNavigate } from 'react-router-dom'
 import TokenModal from './TokenModal'
 import PasswordInput from '../common/PasswordInput'
+import ModalPortal from '../common/ModalPortal'
 
 const PASSWORD_SECONDS = 180
 
@@ -80,7 +81,7 @@ export default function ForgotPasswordModal({ isOpen, onClose }) {
       setCountdown(remaining)
       if (remaining === 0 && !hasPasswordTimedOutRef.current) {
         hasPasswordTimedOutRef.current = true
-        toast.error(t('common.session_timeout', 'Oturum zaman aşımına uğradı.'))
+        toast.error(t('common.session_timeout'))
         handleClose()
         navigate('/register')
       }
@@ -169,7 +170,8 @@ export default function ForgotPasswordModal({ isOpen, onClose }) {
   }
 
   return (
-    <div className="modal-overlay" style={{ zIndex: 1000 }} onClick={handleClose}>
+    <ModalPortal>
+      <div className="modal-overlay" style={{ zIndex: 1000 }} onClick={handleClose}>
       <div 
         className="modal-box" 
         style={{ maxWidth: 460, padding: '40px 36px', textAlign: 'center', position: 'relative' }} 
@@ -231,7 +233,7 @@ export default function ForgotPasswordModal({ isOpen, onClose }) {
               {t('settings.change_password')}
             </h2>
             <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: '12px 0 28px', lineHeight: 1.6 }}>
-              {t('auth.set_new_password', 'Lütfen yeni şifrenizi belirleyin.')}
+              {t('auth.set_new_password')}
             </p>
             
             <form noValidate onSubmit={handleConfirmSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -284,6 +286,7 @@ export default function ForgotPasswordModal({ isOpen, onClose }) {
           </>
         )}
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   )
 }

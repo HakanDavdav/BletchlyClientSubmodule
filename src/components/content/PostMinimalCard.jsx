@@ -11,7 +11,7 @@ export default function PostMinimalCard({ contentItemId, title, entryCount }) {
       to={'/post?postId=' + contentItemId}
       className="post-minimal-card"
     >
-      <span className="post-minimal-title">{title || t('card.untitled', 'Başlıksız')}</span>
+      <span className="post-minimal-title">{title || t('card.untitled')}</span>
       <span className="post-minimal-count">{entryCount ?? 0}</span>
     </Link>
   )

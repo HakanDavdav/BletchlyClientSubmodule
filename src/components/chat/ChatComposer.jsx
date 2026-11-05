@@ -54,7 +54,7 @@ export default function ChatComposer({ targetActorId, onSend, disabled, replyTo,
       setValue('')
       setEmojiOpen(false)
     } catch (err) {
-      toast.error(err?.message || t('chat.send_failed', 'Mesaj gönderilemedi.'))
+      toast.error(err?.message || t('chat.send_failed'))
     } finally {
       setSending(false)
     }
@@ -93,18 +93,18 @@ export default function ChatComposer({ targetActorId, onSend, disabled, replyTo,
           <div className="chat-composer__reply-body">
             <strong>
               {replyTo.senderActorId
-                ? t('chat.replying_to', 'Yanıtlanıyor: {{name}}', {
-                    name: replyTo.senderProfileName || t('chat.user', 'Kullanıcı'),
+                ? t('chat.replying_to', {
+                    name: replyTo.senderProfileName || t('chat.user'),
                   })
-                : t('chat.reply', 'Yanıtla')}
+                : t('chat.reply')}
             </strong>
-            <span>{replyTo.content || t('chat.message_deleted', 'Mesaj silindi')}</span>
+            <span>{replyTo.content || t('chat.message_deleted')}</span>
           </div>
           <button
             type="button"
             className="chat-composer__reply-cancel"
             onClick={onCancelReply}
-            aria-label={t('chat.cancel_reply', 'Yanıtı iptal et')}
+            aria-label={t('chat.cancel_reply')}
           >
             <X size={14} />
           </button>
@@ -116,15 +116,15 @@ export default function ChatComposer({ targetActorId, onSend, disabled, replyTo,
           type="button"
           className="chat-composer__emoji-btn"
           onClick={() => setEmojiOpen((open) => !open)}
-          aria-label={t('chat.emoji_picker', 'Emoji seç')}
-          title={t('chat.emoji_picker', 'Emoji seç')}
+          aria-label={t('chat.emoji_picker')}
+          title={t('chat.emoji_picker')}
           aria-expanded={emojiOpen}
         >
           <Smile size={20} />
         </button>
         <div className="chat-composer__field">
-          <div className={`chat-composer__ghost${!value ? ' is-placeholder' : ''}`}>
-            {value ? <TwemojiText text={value} /> : t('chat.message_placeholder', 'Mesaj yaz...')}
+          <div className={`chat-composer__ghost${!value && !focused ? ' is-placeholder' : ''}`}>
+            {value ? <TwemojiText text={value} /> : (!focused ? t('chat.message_placeholder') : null)}
             {focused && <span className="chat-composer__caret" />}
           </div>
           <textarea
@@ -136,7 +136,7 @@ export default function ChatComposer({ targetActorId, onSend, disabled, replyTo,
             onBlur={() => setFocused(false)}
             onKeyDown={handleKeyDown}
             rows={1}
-            aria-label={t('chat.message_placeholder', 'Mesaj yaz...')}
+            aria-label={t('chat.message_placeholder')}
           />
         </div>
         <button
@@ -144,7 +144,7 @@ export default function ChatComposer({ targetActorId, onSend, disabled, replyTo,
           className="chat-composer__send"
           onClick={submit}
           disabled={isDisabled}
-          aria-label={t('chat.send', 'Gönder')}
+          aria-label={t('chat.send')}
         >
           {sending ? <div className="spinner spinner-sm" /> : <Send size={18} />}
         </button>

@@ -110,19 +110,19 @@ export default function EntryCard({
   const resolvedDepth = Number(entryDepth ?? depth ?? 0)
   const canReply = resolvedDepth < 5
 
-  const effectiveTitle = title || localContent?.slice(0, 60) || t('entry.comment', 'Yorum')
+  const effectiveTitle = title || localContent?.slice(0, 60) || t('entry.comment')
   const entryUrl = getEntryUrl(contentItemId)
 
   const handleCopyEntryNo = async (e) => {
     e.stopPropagation()
     await copyText(contentItemId)
-    toast.success(t('card.entry_no_copied', 'Entry no kopyalandı.'))
+    toast.success(t('card.entry_no_copied'))
   }
 
   const handleShare = async (e) => {
     e.stopPropagation()
     const result = await shareContent({ title: effectiveTitle, text: effectiveTitle, url: entryUrl })
-    if (result === 'copied') toast.success(t('card.link_copied', 'Bağlantı kopyalandı.'))
+    if (result === 'copied') toast.success(t('card.link_copied'))
   }
 
   const handleReport = (e) => {
@@ -160,7 +160,7 @@ export default function EntryCard({
             )}
           </div>
           <span
-            className="text-muted entry-card-header-date"
+            className="text-muted entry-card-header-date date-text"
             style={{
               whiteSpace: 'nowrap',
               flexShrink: 0,
@@ -221,8 +221,8 @@ export default function EntryCard({
                 {!isExpanded && (entryCount ?? 0) > 0 && (
                   <span className="entry-replies-count">
                     {(entryCount ?? 0) === 1
-                      ? t('entry.one_more_reply', '1 more')
-                      : t('entry.more_replies', '{{count}} more', { count: entryCount ?? 0 })}
+                      ? t('entry.one_more_reply')
+                      : t('entry.more_replies', { count: entryCount ?? 0 })}
                   </span>
                 )}
                 {isLoadingChildren && (
@@ -253,8 +253,8 @@ export default function EntryCard({
               return (
                 <button
                   className="btn btn-ghost btn-sm card-recalled-btn"
-                  title={t('memoryMap.recalled_badge', 'Recalled')}
-                  aria-label={t('memoryMap.recalled_badge', 'Recalled')}
+                  title={t('memoryMap.recalled_badge')}
+                  aria-label={t('memoryMap.recalled_badge')}
                   onClick={(e) => {
                     e.stopPropagation()
                     const highlightParam = hasTriggered
@@ -273,7 +273,7 @@ export default function EntryCard({
                     brainColor="currentColor"
                     zapColor={hasTriggered ? 'var(--color-synapse-zap, var(--color-primary))' : 'currentColor'}
                   />
-                  <span>{t('memoryMap.recalled_badge', 'Recalled')}</span>
+                  <span>{t('memoryMap.recalled_badge')}</span>
                   {hasTriggered && (
                     <span
                       style={{
@@ -334,11 +334,11 @@ export default function EntryCard({
                 toggleFavourite()
               }}
               disabled={!isLoggedIn || isFavouritePending}
-              aria-label={isFavourite ? t('card.remove_favourite', 'Favorilerden çıkar') : t('card.add_favourite', 'Favorilere ekle')}
-              title={isFavourite ? t('card.remove_favourite', 'Favorilerden çıkar') : t('card.add_favourite', 'Favorilere ekle')}
+              aria-label={isFavourite ? t('card.remove_favourite') : t('card.add_favourite')}
+              title={isFavourite ? t('card.remove_favourite') : t('card.add_favourite')}
             >
               <Star size={13} fill={isFavourite ? 'currentColor' : 'none'} />
-              <span className="card-utility-label">{t('card.favourite', 'Favori')}</span>
+              <span className="card-utility-label">{t('card.favourite')}</span>
             </button>
             <CardUtilityMenu
               onShare={() => handleShare({ stopPropagation: () => {} })}

@@ -35,13 +35,13 @@ export default function FossilTogglePill({
       }}
       aria-label={
         open
-          ? titleOpen || t('hierarchy.hide_fossils', 'Fosilleşmiş alt birimleri daralt')
-          : title || t('hierarchy.show_fossils', 'Fosilleşmiş alt birimleri göster')
+          ? titleOpen || t('hierarchy.hide_fossils')
+          : title || t('hierarchy.show_fossils')
       }
       title={
         open
-          ? titleOpen || t('hierarchy.hide_fossils', 'Fosilleşmiş alt birimleri daralt')
-          : title || t('hierarchy.show_fossils', 'Fosilleşmiş alt birimleri göster')
+          ? titleOpen || t('hierarchy.hide_fossils')
+          : title || t('hierarchy.show_fossils')
       }
       style={style}
     >

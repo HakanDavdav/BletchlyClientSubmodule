@@ -97,7 +97,7 @@ export default function FeedPage({ cacheType = 'recent' }) {
   }
 
   if (!minimalData || minimalData.length === 0) {
-    return <div className="empty-state">{t('common.no_content')}</div>
+    return <div className="empty-state">{t('common.nothing_here_yet')}</div>
   }
 
   return (

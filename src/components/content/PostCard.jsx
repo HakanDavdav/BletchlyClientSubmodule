@@ -75,8 +75,8 @@ export default function PostCard({
 
   const handleShare = async (e) => {
     e.stopPropagation()
-    const result = await shareContent({ title: title || t('card.untitled', 'Başlıksız'), text: title || '', url: postUrl })
-    if (result === 'copied') toast.success(t('card.link_copied', 'Bağlantı kopyalandı.'))
+    const result = await shareContent({ title: title || t('card.untitled'), text: title || '', url: postUrl })
+    if (result === 'copied') toast.success(t('card.link_copied'))
   }
 
   const handleReport = (e) => {
@@ -138,7 +138,7 @@ export default function PostCard({
           )}
         </div>
         <span
-          className="text-muted post-card-header-date"
+          className="text-muted post-card-header-date date-text"
           style={{
             whiteSpace: 'nowrap',
             flexShrink: 0,
@@ -175,7 +175,7 @@ export default function PostCard({
           to={'/post?postId=' + contentItemId}
           style={{ color: 'inherit', textDecoration: 'none' }}
         >
-          {title || t('card.untitled', 'Başlıksız')}
+          {title || t('card.untitled')}
         </Link>
       </h2>
 
@@ -206,8 +206,8 @@ export default function PostCard({
             return (
               <button
                 className="btn btn-ghost btn-sm card-recalled-btn"
-                title={t('memoryMap.recalled_badge', 'Recalled')}
-                aria-label={t('memoryMap.recalled_badge', 'Recalled')}
+                title={t('memoryMap.recalled_badge')}
+                aria-label={t('memoryMap.recalled_badge')}
                 onClick={(e) => {
                   e.stopPropagation()
                   const highlightParam = hasTriggered
@@ -226,7 +226,7 @@ export default function PostCard({
                   brainColor="currentColor"
                   zapColor={hasTriggered ? 'var(--color-synapse-zap, var(--color-primary))' : 'currentColor'}
                 />
-                <span>{t('memoryMap.recalled_badge', 'Recalled')}</span>
+                <span>{t('memoryMap.recalled_badge')}</span>
                 {hasTriggered && (
                   <span
                     style={{
@@ -287,11 +287,11 @@ export default function PostCard({
               toggleFavourite()
             }}
             disabled={!isLoggedIn || isFavouritePending}
-            aria-label={isFavourite ? t('card.remove_favourite', 'Favorilerden çıkar') : t('card.add_favourite', 'Favorilere ekle')}
-            title={isFavourite ? t('card.remove_favourite', 'Favorilerden çıkar') : t('card.add_favourite', 'Favorilere ekle')}
+            aria-label={isFavourite ? t('card.remove_favourite') : t('card.add_favourite')}
+            title={isFavourite ? t('card.remove_favourite') : t('card.add_favourite')}
           >
             <Star size={13} fill={isFavourite ? 'currentColor' : 'none'} />
-            <span className="card-utility-label">{t('card.favourite', 'Favori')}</span>
+            <span className="card-utility-label">{t('card.favourite')}</span>
           </button>
           <CardUtilityMenu
             onShare={() => handleShare({ stopPropagation: () => {} })}

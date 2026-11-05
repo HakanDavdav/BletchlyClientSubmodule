@@ -90,7 +90,7 @@ export default function CreateEditPostPage() {
         })
       }
 
-      toast.success(t('common.success', 'Başarılı'), { duration: 3000 })
+      toast.success(t('common.success'), { duration: 3000 })
       queryClient.invalidateQueries({ queryKey: ['feed'] })
       queryClient.invalidateQueries({ queryKey: ['post', postId] })
       queryClient.invalidateQueries({ queryKey: ['contentitem', postId] })
@@ -439,7 +439,7 @@ export default function CreateEditPostPage() {
                 {t('auth.processing')}
               </>
             ) : (
-              <>{isEditMode ? t('action.save', 'Kaydet') : t('action.share')}</>
+              <>{isEditMode ? t('action.save') : t('action.share')}</>
             )}
           </button>
         </div>

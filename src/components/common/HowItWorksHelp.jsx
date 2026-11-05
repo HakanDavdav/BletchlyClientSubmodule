@@ -3,6 +3,7 @@ import { ShieldQuestion, X, Info } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import IconActionButton from './IconActionButton'
 import ModalHeader from './ModalHeader'
+import ModalPortal from './ModalPortal'
 import { useTranslation } from 'react-i18next'
 
 export default function HowItWorksHelp({
@@ -42,8 +43,9 @@ export default function HowItWorksHelp({
       </IconActionButton>
 
       {isOpen && (
-        <div
-          className="modal-overlay"
+        <ModalPortal>
+          <div
+            className="modal-overlay"
           onClick={() => setIsOpen(false)}
           style={{ zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           role="presentation"
@@ -129,8 +131,8 @@ export default function HowItWorksHelp({
                     setIsOpen(false)
                     navigate('/basic-concepts')
                   }}
-                  aria-label={t('bletchly_guide.hierarchy_link', 'Go to Hierarchy')}
-                  title={t('bletchly_guide.hierarchy_link', 'Go to Hierarchy')}
+                  aria-label={t('bletchly_guide.hierarchy_link')}
+                  title={t('bletchly_guide.hierarchy_link')}
                   style={{
                     flex: 1,
                     width: '100%',
@@ -158,7 +160,8 @@ export default function HowItWorksHelp({
               </div>
             </div>
           </section>
-        </div>
+          </div>
+        </ModalPortal>
       )}
     </>
   )

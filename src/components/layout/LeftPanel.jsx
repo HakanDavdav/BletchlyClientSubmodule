@@ -10,6 +10,8 @@ import PostMinimalCard from '../content/PostMinimalCard'
 import EntryMinimalCard from '../content/EntryMinimalCard'
 import ActivityItem from '../activity/ActivityItem'
 import DebateCard from '../debate/DebateCard'
+import InfiniteScrollStatus from '../common/InfiniteScrollStatus'
+import useInfiniteScroll from '../../hooks/useInfiniteScroll'
 import useAuthStore from '../../store/authStore'
 import useUIStore from '../../store/uiStore'
 import useDevLog from '../../utils/useDevLog'
@@ -423,12 +425,12 @@ export default function LeftPanel() {
                 disabled={markAllReadMutation.isPending || (unreadCount ?? 0) === 0}
                 style={{ flexShrink: 0, whiteSpace: 'nowrap' }}
               >
-                {t('left_panel.mark_all_read', 'Tümünü oku')}
+                {t('left_panel.mark_all_read')}
               </button>
             )}
             <button
               onClick={handleToggleActivities}
-              aria-label={isActivitiesExpanded ? t('common.collapse', 'Daralt') : t('common.expand', 'Genişlet')}
+              aria-label={isActivitiesExpanded ? t('common.collapse') : t('common.expand')}
               style={{
                 background: 'none',
                 border: 'none',
@@ -456,11 +458,10 @@ export default function LeftPanel() {
                 style={{ overflow: 'hidden' }}
               >
                 <ActivitiesScrollArea
-                  onScrollBottom={() => {
-                    if (hasNextPage && !isFetchingNextPage) {
-                      fetchNextPage()
-                    }
-                  }}
+                  hasNextPage={hasNextPage}
+                  isFetchingNextPage={isFetchingNextPage}
+                  onLoadMore={fetchNextPage}
+                  hasItems={activities.length > 0}
                 >
                   <div style={{ padding: '0 8px' }}>
                     {activities?.length === 0 && (
@@ -475,16 +476,6 @@ export default function LeftPanel() {
                         onMarkRead={(id) => markReadMutation.mutate([id])}
                       />
                     ))}
-                    {isFetchingNextPage && (
-                      <div
-                        style={{
-                          textAlign: 'center',
-                          padding: 8,
-                        }}
-                      >
-                        <div className="spinner spinner-sm" />
-                      </div>
-                    )}
                   </div>
                 </ActivitiesScrollArea>
               </motion.div>
@@ -513,7 +504,7 @@ export default function LeftPanel() {
             }}
           >
             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              {t('left_panel.debates', 'Meydan Okumalar')}
+              {t('left_panel.debates')}
             </span>
             <span
               style={{
@@ -538,11 +529,10 @@ export default function LeftPanel() {
                 style={{ overflow: 'hidden' }}
               >
                 <ActivitiesScrollArea
-                  onScrollBottom={() => {
-                    if (hasNextDebatePage && !isFetchingNextDebatePage) {
-                      fetchNextDebatePage()
-                    }
-                  }}
+                  hasNextPage={hasNextDebatePage}
+                  isFetchingNextPage={isFetchingNextDebatePage}
+                  onLoadMore={fetchNextDebatePage}
+                  hasItems={debates.length > 0}
                 >
                   <div style={{ padding: '0 8px' }}>
                     {debates?.length === 0 && (
@@ -562,16 +552,6 @@ export default function LeftPanel() {
                         }
                       />
                     ))}
-                    {isFetchingNextDebatePage && (
-                      <div
-                        style={{
-                          textAlign: 'center',
-                          padding: 8,
-                        }}
-                      >
-                        <div className="spinner spinner-sm" />
-                      </div>
-                    )}
                   </div>
                 </ActivitiesScrollArea>
               </motion.div>
@@ -596,10 +576,10 @@ export default function LeftPanel() {
           )}
           <div className="left-cache-tabs hscroll-strip" ref={cacheTabsRef} data-no-drawer-swipe="true">
             {[
-              { key: 'trending', label: t('sort.popular', 'Popüler') },
-              { key: 'recent', label: t('sort.new', 'Yeni') },
-              { key: 'mostLiked', label: t('sort.best', 'En İyiler') },
-              { key: 'mostDisliked', label: t('sort.worst', 'En Kötüler') },
+              { key: 'trending', label: t('sort.popular') },
+              { key: 'recent', label: t('sort.new') },
+              { key: 'mostLiked', label: t('sort.best') },
+              { key: 'mostDisliked', label: t('sort.worst') },
             ].map((tab) => (
               <button
                 key={tab.key}
@@ -624,8 +604,8 @@ export default function LeftPanel() {
           onClick={toggleMobileTopics}
           aria-haspopup="menu"
           aria-expanded={isMobileTopicOpen}
-          aria-label={t('sort.topic', 'Konu')}
-          title={t('sort.topic', 'Konu')}
+          aria-label={t('sort.topic')}
+          title={t('sort.topic')}
         >
           ...
         </button>
@@ -672,7 +652,7 @@ export default function LeftPanel() {
               border: `1px solid ${activeLeftTopicType == null ? 'var(--color-primary)' : 'var(--color-border)'}`,
             }}
           >
-            {t('sort.all_topics', 'Tüm konular')}
+            {t('sort.all_topics')}
           </button>
           {TopicTypes.map((topic) => {
             const color = TopicColors[topic.value] || 'var(--color-primary)'
@@ -708,17 +688,17 @@ export default function LeftPanel() {
 
       {/* ─── Cache Widgets ────── */}
       {activeLeftCacheType === 'recent' && (
-        <CacheWidget title={t('sort.new', 'Yeni')} items={recentPosts} type="post" />
+        <CacheWidget title={t('sort.new')} items={recentPosts} type="post" />
       )}
       {activeLeftCacheType === 'trending' && (
-        <CacheWidget title={t('sort.popular', 'Popüler')} items={trendingPosts} type="post" />
+        <CacheWidget title={t('sort.popular')} items={trendingPosts} type="post" />
       )}
       {activeLeftCacheType === 'mostLiked' && (
-        <CacheWidget title={t('sort.best', 'En İyiler')} items={mostLikedEntries} type="entry" />
+        <CacheWidget title={t('sort.best')} items={mostLikedEntries} type="entry" />
       )}
       {activeLeftCacheType === 'mostDisliked' && (
         <CacheWidget
-          title={t('sort.worst', 'En Kötüler')}
+          title={t('sort.worst')}
           items={mostDislikedEntries}
           type="entry"
         />
@@ -726,7 +706,7 @@ export default function LeftPanel() {
 
       {activeLeftCacheType === 'topicPopular' && (
         <CacheWidget
-          title={`${t('sort.popular', 'Popüler')}${activeTopicLabel ? ` • ${activeTopicLabel}` : ''}`}
+          title={`${t('sort.popular')}${activeTopicLabel ? ` • ${activeTopicLabel}` : ''}`}
           items={topicPopularPosts}
           type="post"
         />
@@ -950,21 +930,25 @@ function LimitDropdown({ limit, onChange, maxItems, t }) {
 
 // ─── ActivitiesScrollArea sub-component ──────────────────────────────────────────
 
-function ActivitiesScrollArea({ children, onScrollBottom }) {
+function ActivitiesScrollArea({
+  children,
+  hasNextPage,
+  isFetchingNextPage,
+  onLoadMore,
+  hasItems,
+}) {
   const scrollRef = useRef(null)
-
-  const handleScroll = (e) => {
-    const el = e.currentTarget
-    // Alt sınıra yaklaşıldığında (örneğin 50px kala) onScrollBottom tetikle
-    if (el.scrollHeight - el.scrollTop - el.clientHeight < 50) {
-      if (onScrollBottom) onScrollBottom()
-    }
-  }
+  const { sentinelRef, isWaiting } = useInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage: onLoadMore,
+    rootRef: scrollRef,
+    rootMargin: '120px',
+  })
 
   return (
     <div
       ref={scrollRef}
-      onScroll={handleScroll}
       style={{
         maxHeight: 350,
         overflowY: 'auto',
@@ -974,7 +958,15 @@ function ActivitiesScrollArea({ children, onScrollBottom }) {
       }}
       className="activities-scrollbar"
     >
-      <div style={{ direction: 'ltr' }}>{children}</div>
+      <div style={{ direction: 'ltr' }}>
+        {children}
+        <div ref={sentinelRef} style={{ height: 1 }} />
+        <InfiniteScrollStatus
+          isFetching={isFetchingNextPage || isWaiting}
+          hasNextPage={hasNextPage}
+          hasItems={hasItems}
+        />
+      </div>
     </div>
   )
 }

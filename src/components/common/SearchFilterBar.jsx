@@ -63,8 +63,8 @@ export default function SearchFilterBar({
         value={searchInput}
         onChange={(e) => setSearchInput(e.target.value)}
         onClear={() => setSearchInput('')}
-        clearLabel={t('common.clear', 'Temizle')}
-        placeholder={placeholder || t('topbar.search', 'Ara')}
+        clearLabel={t('common.clear')}
+        placeholder={placeholder || t('topbar.search')}
       />
 
       <div style={{ position: 'relative' }} ref={filterRef}>
@@ -72,7 +72,7 @@ export default function SearchFilterBar({
           type="button"
           className="btn btn-outline btn-sm btn-icon"
           onClick={() => setIsFilterOpen(!isFilterOpen)}
-          aria-label={t('topbar.search_filters', 'Arama Filtreleri')}
+          aria-label={t('topbar.search_filters')}
           style={{ borderColor: hasFilters ? 'var(--color-primary)' : undefined }}
         >
           <Filter
@@ -92,7 +92,7 @@ export default function SearchFilterBar({
               setFilterEndDate('')
               setIsFilterOpen(false)
             }}
-            aria-label={t('common.clear_all', 'Tümünü Temizle')}
+            aria-label={t('common.clear_all')}
             style={{
               position: 'absolute',
               top: -4,
@@ -150,7 +150,7 @@ export default function SearchFilterBar({
                   paddingBottom: 6,
                 }}
               >
-                <span>{t('search.filters_title', 'Arama Filtreleri')}</span>
+                <span>{t('search.filters_title')}</span>
                 <X
                   size={14}
                   color="var(--color-text-secondary)"
@@ -161,7 +161,7 @@ export default function SearchFilterBar({
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
-                  {t('search.sort_by', 'Sıralama')}
+                  {t('search.sort_by')}
                 </label>
                 <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                   <select
@@ -170,7 +170,7 @@ export default function SearchFilterBar({
                     value={filterOrderType}
                     onChange={(e) => setFilterOrderType(e.target.value)}
                   >
-                    <option value="">{t('search.none', 'Yok')}</option>
+                    <option value="">{t('search.none')}</option>
                     {orderOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.labelKey ? t(option.labelKey, option.labelDefault) : option.label}
@@ -183,7 +183,7 @@ export default function SearchFilterBar({
                       className="btn btn-ghost btn-sm"
                       style={{ padding: 0, width: 32, height: 32, flexShrink: 0 }}
                       onClick={() => setFilterOrderType('')}
-                      aria-label={t('common.clear', 'Temizle')}
+                      aria-label={t('common.clear')}
                     >
                       <X size={16} />
                     </button>
@@ -193,7 +193,7 @@ export default function SearchFilterBar({
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
-                  {t('search.start_date', 'Başlangıç Tarihi')}
+                  {t('search.start_date')}
                 </label>
                 <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                   <input
@@ -209,7 +209,7 @@ export default function SearchFilterBar({
                       className="btn btn-ghost btn-sm"
                       style={{ padding: 0, width: 32, height: 32, flexShrink: 0 }}
                       onClick={() => setFilterStartDate('')}
-                      aria-label={t('common.clear', 'Temizle')}
+                      aria-label={t('common.clear')}
                     >
                       <X size={16} />
                     </button>
@@ -219,7 +219,7 @@ export default function SearchFilterBar({
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
-                  {t('search.end_date', 'Bitiş Tarihi')}
+                  {t('search.end_date')}
                 </label>
                 <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                   <input
@@ -235,7 +235,7 @@ export default function SearchFilterBar({
                       className="btn btn-ghost btn-sm"
                       style={{ padding: 0, width: 32, height: 32, flexShrink: 0 }}
                       onClick={() => setFilterEndDate('')}
-                      aria-label={t('common.clear', 'Temizle')}
+                      aria-label={t('common.clear')}
                     >
                       <X size={16} />
                     </button>
@@ -248,7 +248,7 @@ export default function SearchFilterBar({
                 className="btn btn-primary btn-sm"
                 style={{ width: '100%', marginTop: 4, paddingTop: 7, paddingBottom: 7 }}
               >
-                {t('topbar.search_button', 'Ara')}
+                {t('topbar.search_button')}
               </button>
             </motion.div>
           )}
@@ -256,7 +256,7 @@ export default function SearchFilterBar({
       </div>
 
       <button type="submit" className="btn btn-primary btn-sm">
-        {t('topbar.search_button', 'Ara')}
+        {t('topbar.search_button')}
       </button>
     </form>
   )

@@ -1787,6 +1787,20 @@ select {
   color: var(--color-error);
 }
 
+/* ─── Standart tarih/saat tipografisi ───────────────────────────────────── */
+.date-text {
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  color: var(--color-text-muted) !important;
+  line-height: 1.3;
+}
+
+@media (max-width: 900px) {
+  .date-text {
+    font-size: 9px !important;
+  }
+}
+
 /* â”€â”€â”€ Avatar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .actor-avatar-wrap {
   position: relative;
@@ -2215,6 +2229,7 @@ html.dark .bot-capability-emblem--fossil path {
 /* `.spinner`, `.spinner-sm/md/lg` ve `.spin` ortak: 1s, border-top primary */
 .spinner,
 .spin {
+  position: relative;
   display: inline-block;
   border-radius: var(--radius-full);
   border: 2px solid var(--color-border);
@@ -2222,19 +2237,46 @@ html.dark .bot-capability-emblem--fossil path {
   animation: spin 1s linear infinite;
 }
 
+.spinner::after,
+.spin::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-primary);
+  -webkit-mask-image: url('./assets/FigmaNew/BotSpinner.svg');
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: 50%;
+  mask-image: url('./assets/FigmaNew/BotSpinner.svg');
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: 50%;
+  animation: spin-reverse 1s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes spin-reverse {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
 .spinner-sm {
-  width: 16px;
-  height: 16px;
+  width: 28px;
+  height: 28px;
+  border-width: 3px;
 }
 
 .spinner-md {
-  width: 24px;
-  height: 24px;
+  width: 42px;
+  height: 42px;
+  border-width: 4px;
 }
 
 .spinner-lg {
-  width: 36px;
-  height: 36px;
+  width: 64px;
+  height: 64px;
+  border-width: 5px;
 }
 
 /* â”€â”€â”€ Modal Overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -2245,9 +2287,15 @@ html.dark .bot-capability-emblem--fossil path {
   backdrop-filter: blur(4px);
   z-index: 100000;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: var(--space-4);
+  padding: calc(var(--topbar-height) + var(--space-4)) var(--space-4) var(--space-4);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+body:has(.modal-overlay) {
+  overflow: hidden;
 }
 
 .modal-box {
@@ -2261,6 +2309,7 @@ html.dark .bot-capability-emblem--fossil path {
   overflow-y: auto;
   padding: var(--space-6);
   position: relative;
+  margin-block: auto;
 }
 
 /* ─── Standard Modal Header ────────────────────────────────────────────── */
@@ -2412,6 +2461,37 @@ html.dark .bot-capability-emblem--fossil path {
 .text-muted {
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
+}
+
+.infinite-scroll-status {
+  margin: 0;
+  padding: 16px;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.infinite-scroll-status--loading {
+  display: flex;
+  justify-content: center;
+  animation: infinite-scroll-bounce 1s ease-in-out infinite;
+}
+
+.infinite-scroll-status--loading .spinner {
+  width: 48px;
+  height: 48px;
+  border-width: 5px;
+}
+
+@keyframes infinite-scroll-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
 .text-sm {
@@ -3893,6 +3973,12 @@ html.dark .fossil-stamp-icon path {
   overflow: hidden !important;
 }
 
+/* Hover'da actor chip hafifçe yükselirken üst kenarı/çizgisi kırpılmasın */
+.post-card-header-main:has(> .actor-chip:hover),
+.entry-card-header-main:has(> .actor-chip:hover) {
+  overflow: visible !important;
+}
+
 .post-card-header-date,
 .entry-card-header-date {
   font-size: 12px;
@@ -3901,6 +3987,17 @@ html.dark .fossil-stamp-icon path {
   margin-left: auto !important;
   align-self: flex-start !important;
   line-height: 1.2;
+}
+
+/* PostCard header: actor minimal card genişlik sınırı (PC %60, mobil %45) */
+.post-card .post-card-header-main > .actor-chip {
+  max-width: 60% !important;
+}
+
+@media (max-width: 900px) {
+  .post-card .post-card-header-main > .actor-chip {
+    max-width: 45% !important;
+  }
 }
 
 .card-comments-btn,
@@ -7641,6 +7738,13 @@ textarea {
     height: 13px;
   }
 
+  /* PC: hover'daki scale(1.05) kaldırıldı; tıklayıp renklenince buton komşularına
+     göre büyüyüp "kayıyor" gibi görünüyordu. */
+  .post-card-footer .reaction-btn:hover:not(:disabled),
+  .entry-card-footer .reaction-btn:hover:not(:disabled) {
+    transform: none;
+  }
+
   .post-card-footer .reaction-btn > span + span,
   .entry-card-footer .reaction-btn > span + span {
     font-size: 10.5px !important;
@@ -8042,20 +8146,27 @@ textarea {
 
 /* Sayfa üstü geri/aksiyon butonları: deck dikdörtgeni içinde sınırları belirgin olsun */
 .page-back-button {
-  border: 1px solid color-mix(in srgb, var(--color-primary) 26%, var(--color-border));
-  background: var(--color-surface);
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: transparent;
   color: var(--color-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
   transition:
-    border-color var(--transition-fast),
-    background var(--transition-fast),
-    color var(--transition-fast),
-    transform var(--transition-fast);
+    background-color 0.2s,
+    border-color 0.2s,
+    transform 0.2s;
 }
 
 .page-back-button:hover {
+  background: var(--color-surface-2);
   border-color: var(--color-primary);
-  background: var(--color-primary-lighter);
-  color: var(--color-primary-dark);
+  color: var(--color-primary);
   transform: translateY(-1px);
 }
 
@@ -8063,8 +8174,108 @@ textarea {
 @media (min-width: 901px) {
   .post-card-footer .reaction-btn,
   .entry-card-footer .reaction-btn {
-    padding-left: 5px;
-    padding-right: 5px;
+    /* Buton kutusu ikon+sayı içeriğine sıkı otursun (mobildeki gibi);
+       böylece + butonu içeriğin tam sağ altında durur, boş alanda kalmaz. */
+    min-width: 0 !important;
+    padding: 5px 10px;
+    gap: 4px;
+    min-height: 34px;
+  }
+
+  /* PC: tüm reaksiyon bloğunu (ikon, sayı, +) birlikte büyüt */
+  .post-card-footer .reaction-btn > span > svg,
+  .entry-card-footer .reaction-btn > span > svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* PC: hover'daki scale(1.05) kaldırıldı; tıklayıp renklenince buton komşularına
+     göre büyüyüp "kayıyor" gibi görünüyordu. */
+  .post-card-footer .reaction-btn:hover:not(:disabled),
+  .entry-card-footer .reaction-btn:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .post-card-footer .reaction-btn > span + span,
+  .entry-card-footer .reaction-btn > span + span {
+    font-size: 14px !important;
+  }
+
+  .post-card-footer .reaction-group,
+  .entry-card-footer .reaction-group {
+    position: relative;
+    z-index: 0;
+    gap: 2px;
+  }
+
+  /* Hover bloğu butonun kendi kutusu yerine grubun tam 1/3'ünü kaplar:
+     üç blok kenar kenara birleşir, aralarında boşluk kalmaz. */
+  .post-card-footer .reaction-group::before,
+  .entry-card-footer .reaction-group::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: -1;
+    background: var(--color-surface-2);
+    pointer-events: none;
+    display: none;
+  }
+
+  .post-card-footer
+    .reaction-group:has(> div:nth-child(1) .reaction-btn:hover:not(:disabled))::before,
+  .entry-card-footer
+    .reaction-group:has(> div:nth-child(1) .reaction-btn:hover:not(:disabled))::before {
+    display: block;
+    left: 0;
+    right: 66.6667%;
+    border-radius: var(--radius-full) 0 0 var(--radius-full);
+  }
+
+  .post-card-footer
+    .reaction-group:has(> div:nth-child(2) .reaction-btn:hover:not(:disabled))::before,
+  .entry-card-footer
+    .reaction-group:has(> div:nth-child(2) .reaction-btn:hover:not(:disabled))::before {
+    display: block;
+    left: 33.3333%;
+    right: 33.3333%;
+    border-radius: 0;
+  }
+
+  .post-card-footer
+    .reaction-group:has(> div:nth-child(3) .reaction-btn:hover:not(:disabled))::before,
+  .entry-card-footer
+    .reaction-group:has(> div:nth-child(3) .reaction-btn:hover:not(:disabled))::before {
+    display: block;
+    left: 66.6667%;
+    right: 0;
+    border-radius: 0 var(--radius-full) var(--radius-full) 0;
+  }
+
+  .post-card-footer
+    .reaction-btn:hover:not(:disabled):not(.active-like):not(.active-dislike):not(.active-brutal),
+  .entry-card-footer
+    .reaction-btn:hover:not(:disabled):not(.active-like):not(.active-dislike):not(.active-brutal) {
+    background: transparent !important;
+  }
+
+  /* Mobildeki + butonlarıyla aynı boyut/konum: her reaksiyonun sağ altı */
+  .post-card-footer .tiny-reaction-list-btn,
+  .entry-card-footer .tiny-reaction-list-btn {
+    width: 19px;
+    height: 19px;
+    position: absolute !important;
+    right: -4px !important;
+    bottom: -4px !important;
+    top: auto !important;
+    left: auto !important;
+    margin: 0 !important;
+  }
+
+  .post-card-footer .tiny-reaction-list-btn > svg,
+  .entry-card-footer .tiny-reaction-list-btn > svg {
+    width: 13px;
+    height: 13px;
   }
 }
 

@@ -101,7 +101,7 @@ export default function ActorAvatar({
       {showImage ? (
         <ImageWithLoader
           src={imageUrl}
-          alt={profileName || t('actor.avatar_alt', 'Kişi')}
+          alt={profileName || t('actor.avatar_alt')}
           className={`avatar ${sizeClass}`}
           onError={() => setFailedUrl(imageUrl)}
           spinnerSize="sm"

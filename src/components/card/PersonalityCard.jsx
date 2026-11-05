@@ -44,6 +44,7 @@ export default function PersonalityCard({
   onSelect,
   showMark = true,
   showStats = true,
+  showRelations = true,
   locked = false,
   tribeAssigned = false,
   tribeBadgeLabel = null,
@@ -103,14 +104,14 @@ export default function PersonalityCard({
   const oldestCardName =
     oldestOwnedCard?.card?.cardName ||
     oldestOwnedCard?.cardName ||
-    t('card.oldest_card', 'En eski kartınız')
+    t('card.oldest_card')
 
   const isCardLimitReached = (myOwnedCards || []).length >= cardOwnershipLimit
 
   if (variant === 'distribute') {
     const actorData = actor || card?.actor || card?.winnerActor || {}
     const actorName =
-      actorData.name || actorData.profileName || card?.cardName || t('card.card', 'Kart')
+      actorData.name || actorData.profileName || card?.cardName || t('card.card')
 
     return (
       <div
@@ -155,7 +156,7 @@ export default function PersonalityCard({
             lineHeight: 1.2,
           }}
         >
-          {card?.cardName || t('card.personality_card', 'Kişilik Kartı')}
+          {card?.cardName || t('card.personality_card')}
         </span>
 
         {/* Center Avatar */}
@@ -281,11 +282,11 @@ export default function PersonalityCard({
                 type="text"
                 value={editorCardName}
                 onChange={(event) => onEditorChange?.('cardName', event.target.value)}
-                placeholder={t('card.card_name_placeholder', 'Kişilik kart adı')}
+                placeholder={t('card.card_name_placeholder')}
                 disabled={disabled}
                 readOnly={editorConfirmed}
                 maxLength={100}
-                aria-label={t('card.card_name', 'Kart adı')}
+                aria-label={t('card.card_name')}
                 style={{
                   flex: 1,
                   minWidth: 0,
@@ -304,8 +305,8 @@ export default function PersonalityCard({
                   }}
                   aria-label={
                     editorLocked
-                      ? t('card.locked_assignment', 'Bu atama kilitli')
-                      : t('card.lock_assignment', 'Bu atamayı kilitle')
+                      ? t('card.locked_assignment')
+                      : t('card.lock_assignment')
                   }
                   style={{
                     width: 44,
@@ -349,8 +350,8 @@ export default function PersonalityCard({
                   size="box"
                   label={
                     editorConfirmed
-                      ? t('card.personality_confirmed', 'Kişilik kartı onaylandı')
-                      : t('card.personality_pending', 'Kişilik kartı bekliyor')
+                      ? t('card.personality_confirmed')
+                      : t('card.personality_pending')
                   }
                 />
               </div>
@@ -360,11 +361,11 @@ export default function PersonalityCard({
             className={`input textarea personality-card-editor__prompt${showValidation && !editorPrompt.trim() ? ' error' : ''}`}
             value={editorPrompt}
             onChange={(event) => onEditorChange?.('prompt', event.target.value)}
-            placeholder={t('card.personality_prompt_placeholder', 'Bu kişiliği tanımlayın...')}
+            placeholder={t('card.personality_prompt_placeholder')}
             disabled={disabled}
             readOnly={editorConfirmed}
             maxLength={2000}
-            aria-label={t('card.personality_prompt', 'Kişilik tanımı')}
+            aria-label={t('card.personality_prompt')}
             style={
               editorConfirmed
                 ? {
@@ -390,11 +391,11 @@ export default function PersonalityCard({
           >
             {editorConfirmed ? (
               <>
-                <Pencil size={14} /> {t('action.edit', 'Düzenle')}
+                <Pencil size={14} /> {t('action.edit')}
               </>
             ) : (
               <>
-                <Check size={14} /> {t('card.confirm_personality', 'Kişilik kartını onayla')}
+                <Check size={14} /> {t('card.confirm_personality')}
               </>
             )}
           </button>
@@ -407,18 +408,16 @@ export default function PersonalityCard({
             setIsEditorConfirmModalOpen(false)
             onEditorConfirm?.()
           }}
-          title={t('card.create_confirm_title', 'Kart Oluşturma Onayı')}
+          title={t('card.create_confirm_title')}
           description={t('card.create_confirm_desc', {
             cardName: editorCardName,
-            defaultValue: `"${editorCardName}" adlı yeni bir kişilik kartı oluşturmak istediğinize emin misiniz?`,
           })}
           warning={t('card.create_limit_reached_warning', {
             limit: cardOwnershipLimit,
             oldestCard: oldestCardName,
-            defaultValue: `Kart limitinize (${cardOwnershipLimit}) ulaştınız! Bu kartı oluşturduğunuzda, en eski sahip olduğunuz kart olan "${oldestCardName}" otomatik ve kalıcı olarak silinecektir.`,
           })}
-          confirmText={t('card.confirm_create_btn', 'Evet, Oluştur')}
-          cancelText={t('common.cancel', 'İptal')}
+          confirmText={t('card.confirm_create_btn')}
+          cancelText={t('common.cancel')}
           confirmVariant="danger"
           isLoading={disabled}
         />
@@ -437,7 +436,7 @@ export default function PersonalityCard({
       : card?.card?.cardName ||
         card?.ownership?.cardName ||
         card?.ownership?.originalCard?.cardName ||
-        t('card.card', 'Kart')
+        t('card.card')
   const hint =
     card?.cardHint ||
     card?.personalityPrompt ||
@@ -674,8 +673,8 @@ export default function PersonalityCard({
         open={showFossils}
         onToggle={onToggleFossils}
         small
-        title={t('card.show_fossil_assignments', 'Fosilleşmiş atamaları göster')}
-        titleOpen={t('card.hide_fossil_assignments', 'Fosilleşmiş atamaları gizle')}
+        title={t('card.show_fossil_assignments')}
+        titleOpen={t('card.hide_fossil_assignments')}
       />
     )
     return (
@@ -832,8 +831,8 @@ export default function PersonalityCard({
           {currentAcqType === 0 && (
             <span
               className="personality-card__corner-badge"
-              title={t('card.tooltip_creator', 'Yaratıcı')}
-              aria-label={t('card.tooltip_creator', 'Yaratıcı')}
+              title={t('card.tooltip_creator')}
+              aria-label={t('card.tooltip_creator')}
             >
               <span
                 style={{
@@ -851,8 +850,8 @@ export default function PersonalityCard({
           {currentAcqType === 1 && (
             <span
               className="personality-card__corner-badge"
-              title={t('card.tooltip_purchased', 'Satın Alındı')}
-              aria-label={t('card.tooltip_purchased', 'Satın Alındı')}
+              title={t('card.tooltip_purchased')}
+              aria-label={t('card.tooltip_purchased')}
             >
               <span
                 style={{
@@ -885,8 +884,8 @@ export default function PersonalityCard({
           {isAssignmentLocked && (
             <span
               className="personality-card__corner-badge"
-              title={t('card.tooltip_locked', 'Kilitli')}
-              aria-label={t('card.locked_assignment', 'Bu atama kilitli')}
+              title={t('card.tooltip_locked')}
+              aria-label={t('card.locked_assignment')}
               onClick={
                 showLockToggle
                   ? (e) => {
@@ -918,13 +917,13 @@ export default function PersonalityCard({
               className="personality-card__corner-badge"
               title={
                 isIneffectiveAssignment
-                  ? t('card.tooltip_incubating', 'Beklemede')
-                  : t('card.tooltip_effective', 'Etkin')
+                  ? t('card.tooltip_incubating')
+                  : t('card.tooltip_effective')
               }
               aria-label={
                 isIneffectiveAssignment
-                  ? t('card.incubating_not_effective', 'Beklemede (Etkin Değil)')
-                  : t('card.tooltip_effective', 'Etkin')
+                  ? t('card.incubating_not_effective')
+                  : t('card.tooltip_effective')
               }
             >
               <span
@@ -960,8 +959,8 @@ export default function PersonalityCard({
             }}
             aria-label={
               lockToggleActive
-                ? t('card.locked_assignment', 'Bu atama kilitli')
-                : t('card.lock_assignment', 'Bu atamayı kilitle')
+                ? t('card.locked_assignment')
+                : t('card.lock_assignment')
             }
             style={{
               width: 26,
@@ -1002,7 +1001,7 @@ export default function PersonalityCard({
                 navigate('/cards', { state: { editCardId: targetId, editCard: card } })
               }
             }}
-            aria-label={t('action.edit', 'Düzenle')}
+            aria-label={t('action.edit')}
             style={{
               width: 44,
               height: 44,
@@ -1029,11 +1028,11 @@ export default function PersonalityCard({
               label={
                 selectable
                   ? selected
-                    ? t('card.selected', 'Seçili kart')
-                    : t('card.select', 'Kartı seç')
+                    ? t('card.selected')
+                    : t('card.select')
                   : filled
-                    ? t('card.selected', 'Seçili kart')
-                    : t('card.empty', 'Boş kart yuvası')
+                    ? t('card.selected')
+                    : t('card.empty')
               }
             />
           </span>
@@ -1072,13 +1071,14 @@ export default function PersonalityCard({
             gap: 10,
           }}
         >
-          {(isAssignedCard ? ownerActor || hasAssignmentFlow : ownerActor || hasAssigned) && (
+          {showRelations &&
+            (isAssignedCard ? ownerActor || hasAssignmentFlow : ownerActor || hasAssigned) && (
             <div className="personality-card__assignment-sources" style={{ margin: 0 }}>
               {/* 1. Top Row: Owner */}
               {ownerActor && (
                 <div className="personality-card__assignment-row personality-card__assignment-row--owner">
                   <span className="personality-card__assignment-label personality-card__assignment-label--owner">
-                    {t('card.owner_label', 'Sahip')}:
+                    {t('card.owner_label')}:
                   </span>
                   <ActorMinimalCard
                     actor={ownerActor}
@@ -1106,7 +1106,7 @@ export default function PersonalityCard({
                         className="personality-card__assignment-label personality-card__assignment-label--assigned"
                         style={{ marginTop: '5px' }}
                       >
-                        {t('card.assigned_label', 'Assigned')}:
+                        {t('card.assigned_label')}:
                       </span>
                       {renderAssignedNodeColumn(
                         visibleAssignmentSources,
@@ -1158,7 +1158,7 @@ export default function PersonalityCard({
                         className="personality-card__assignment-label personality-card__assignment-label--assigned"
                         style={{ marginTop: '5px' }}
                       >
-                        {t('card.assigned_label', 'Assigned')}:
+                        {t('card.assigned_label')}:
                       </span>
                       {renderAssignedNodeColumn(
                         visibleAssignmentTargets,
@@ -1210,7 +1210,7 @@ export default function PersonalityCard({
                       className="personality-card__assignment-label personality-card__assignment-label--assigned"
                       style={{ marginTop: '5px' }}
                     >
-                      {t('card.assigned_label', 'Assigned')}:
+                      {t('card.assigned_label')}:
                     </span>
                     {renderAssignedNodeColumn(
                       visibleAssignedNodes,
@@ -1267,7 +1267,7 @@ export default function PersonalityCard({
                 setIsDetailOpen(true)
               }}
               className="personality-card__stat"
-              aria-label={t('card.details', 'Kart Detayları')}
+              aria-label={t('card.details')}
             >
               <Info size={12} />
             </button>
@@ -1278,7 +1278,7 @@ export default function PersonalityCard({
                 if (personalityCardId) setModalType('owners')
               }}
               className="personality-card__stat"
-              aria-label={t('card.owners', 'Sahipler')}
+              aria-label={t('card.owners')}
             >
               <Crown size={12} />
               {ownershipCount}
@@ -1290,7 +1290,7 @@ export default function PersonalityCard({
                 if (personalityCardId) setModalType('assignees')
               }}
               className="personality-card__stat"
-              aria-label={t('card.assignees', 'Atanmış Botlar')}
+              aria-label={t('card.assignees')}
             >
               <Bot size={12} />
               {assignmentCount}
@@ -1305,7 +1305,7 @@ export default function PersonalityCard({
                 e.stopPropagation()
                 navigate(`/card-hierarchy?cardId=${personalityCardId}`)
               }}
-              aria-label={t('card.view_hierarchy', 'Kart Hiyerarşisi')}
+              aria-label={t('card.view_hierarchy')}
             >
               <Network size={18} strokeWidth={2} />
             </button>

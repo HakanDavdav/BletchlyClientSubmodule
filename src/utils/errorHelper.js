@@ -6,8 +6,8 @@
 export function getQueryErrorMessage(error, t, defaultIs404 = false) {
   if (!error) {
     return defaultIs404
-      ? t('common.content_not_found', 'Content not found.')
-      : t('common.error', 'An error occurred.')
+      ? t('common.content_not_found')
+      : t('common.error')
   }
 
   const is404 =
@@ -16,6 +16,6 @@ export function getQueryErrorMessage(error, t, defaultIs404 = false) {
     error.errors?.some((e) => (e.code || e.Code) === 'NotFound')
 
   return is404
-    ? t('common.content_not_found', 'Content not found.')
-    : t('common.error', 'An error occurred.')
+    ? t('common.content_not_found')
+    : t('common.error')
 }

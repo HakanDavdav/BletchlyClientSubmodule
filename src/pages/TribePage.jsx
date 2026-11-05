@@ -13,6 +13,7 @@ import {
   Crown,
   Sliders,
   ShieldCheck,
+  CirclePlus,
 } from 'lucide-react'
 import BotFlashCardsIcon from '../components/common/icons/BotFlashCardsIcon'
 import PaginationSelect, { PaginationTotal } from '../components/common/PaginationSelect'
@@ -28,6 +29,7 @@ import { TopicTagList } from '../components/topic/TopicTag'
 import { TopicTypes } from '../constants/TopicTypes'
 import ImageWithLoader from '../components/common/ImageWithLoader'
 import ActorMinimalCard from '../components/actor/ActorMinimalCard'
+import InfiniteScrollStatus from '../components/common/InfiniteScrollStatus'
 import FossilTogglePill from '../components/common/FossilTogglePill'
 import PostCard from '../components/content/PostCard'
 import CardSlots from '../components/card/CardSlots'
@@ -39,7 +41,7 @@ import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 import useDocumentTitle from '../hooks/useDocumentTitle'
 import { getQueryErrorMessage } from '../utils/errorHelper'
-import i18n from '../i18n'
+import { formatDate } from '../utils/formatDate'
 import { buildOwnedCardIdSet, sortCardsOwnedFirst } from '../utils/cardOwnership'
 import { getMemoryEmblems } from '../components/common/MemoryEmblems'
 
@@ -51,6 +53,7 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
   useDevLog('TribePage', arguments[0] || {})
   const { actorId: currentUserId, isLoggedIn } = useAuthStore()
   const myCards = useMyEntitiesStore((state) => state.myCards)
+  const myTribes = useMyEntitiesStore((state) => state.myTribes)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { t } = useTranslation()
@@ -131,6 +134,8 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
     }
   }
 
+  const canLoadMoreMembers = hasMoreMembers && (tribe?.memberCount ?? 0) > allMembers.length
+
   const { data: postsData, isLoading: isPostsLoading } = useQuery({
     queryKey: ['tribe-posts', tribeId, postsPage],
     queryFn: () => tribeApi.getTribePosts(tribeId, postsPage).then((res) => res.data?.data),
@@ -166,7 +171,9 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
   const totalPages = Math.max(1, Math.ceil((tribe.postCount || 0) / inferredPerPage))
 
   const isDormant = Boolean(tribe.isDormant ?? tribe.IsDormant ?? false)
-  const isMember = tribe.tribeMemberships?.some((m) => m.actor?.actorId === currentUserId)
+  const isMember =
+    tribe.tribeMemberships?.some((m) => m.actor?.actorId === currentUserId) ||
+    myTribes?.some((t) => t.tribeId === tribeId)
   const isLeader = tribe.tribeMemberships?.some(
     (m) => m.actor?.actorId === currentUserId && m.roleName === 'TribeLeader'
   )
@@ -183,7 +190,7 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
     (m) => m.actor?.actorId === currentUserId
   )?.roleName
   const canManageTribe = (TRIBE_ROLE_HIERARCHY[myTribeRoleName] || 0) >= 3
-  const isMyTribe = useMyEntitiesStore.getState().myTribes?.some((t) => t.tribeId === tribeId)
+  const isMyTribe = myTribes?.some((t) => t.tribeId === tribeId)
 
   const rawGrade = tribe.tribeGrade
   const gradeMap = {
@@ -214,8 +221,8 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
   const capabilityEmblems = [
     {
       key: 'default',
-      label: t('tribe.capability_default', 'Varsayılan'),
-      description: `${t('tribe.capability_default', 'Varsayılan')}: ${t('tribe.capability_default_desc', 'Standart klan kapasitesi ve temel özellikler')}`,
+      label: t('tribe.capability_default'),
+      description: `${t('tribe.capability_default')}: ${t('tribe.capability_default_desc')}`,
       Icon: ShieldCheck,
       tone: 'default',
       size: 25,
@@ -225,12 +232,10 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
           {
             key: 'fossil',
             label: t(
-              'common.fossil_tribe_desc',
-              'Fosil Klan: Aktif döngüden çekilmiş inaktif klan.'
+              'common.fossil_tribe_desc'
             ),
             description: t(
-              'common.fossil_tribe_desc',
-              'Fosil Klan: Aktif döngüden çekilmiş inaktif klan.'
+              'common.fossil_tribe_desc'
             ),
             Icon: FossilIcon,
             tone: 'fossil',
@@ -246,14 +251,14 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
       type="button"
       className="btn-icon page-back-button"
       onClick={() => setIsHeaderCollapsed((prev) => !prev)}
-      title={isHeaderCollapsed ? t('common.expand', 'Genişlet') : t('common.collapse', 'Daralt')}
-      aria-label={isHeaderCollapsed ? t('common.expand', 'Genişlet') : t('common.collapse', 'Daralt')}
+      title={isHeaderCollapsed ? t('common.expand') : t('common.collapse')}
+      aria-label={isHeaderCollapsed ? t('common.expand') : t('common.collapse')}
       style={{
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        width: 34,
-        height: 34,
+        width: 32,
+        height: 32,
         padding: 0,
         cursor: 'pointer',
       }}
@@ -351,9 +356,7 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
                   <CalendarFold size={14} />
                   <span>
                     {t('tribe.founded')}
-                    {new Date(tribe.createdAt).toLocaleDateString(
-                      i18n.language && i18n.language.startsWith('en') ? 'en-US' : 'tr-TR'
-                    )}
+                    <span className="date-text">{formatDate(tribe.createdAt)}</span>
                   </span>
                 </p>
               )}
@@ -418,7 +421,7 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
                   navigate('/memory-map?tribeId=' + tribeId, { state: { profileName: tribe?.tribeName } })
                 }
               >
-                <Brain size={14} /> {t('tribe.collective_memories', 'Kollektif Anılar')}
+                <Brain size={14} /> {t('tribe.collective_memories')}
               </button>
             </div>
           </div>
@@ -575,7 +578,7 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
                     opacity: isDormant ? 0.5 : 1,
                     cursor: isDormant ? 'not-allowed' : 'pointer',
                   }}
-                  title={isDormant ? t('tribe.dormant_cannot_join', 'Fosil klanlara yeni üye katılamaz.') : undefined}
+                  title={isDormant ? t('tribe.dormant_cannot_join') : undefined}
                 >
                   <UserPlus size={14} /> {t('tribe.join')}
                 </button>
@@ -606,7 +609,7 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
                   onClick={() => navigate('/tribe/settings?tribeId=' + tribeId)}
                   style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                 >
-                  <Edit2 size={14} /> {t('action.edit', 'Düzenle')}
+                  <Edit2 size={14} /> {t('action.edit')}
                 </button>
               )}
             </div>
@@ -656,7 +659,7 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
                 }}
               >
                 <Sliders size={14} style={{ color: 'var(--color-primary)' }} />
-                <span>{t('profile.grade', 'Derece')}</span>
+                <span>{t('profile.grade')}</span>
                 <span
                   style={{
                     width: 19,
@@ -678,7 +681,7 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
                   {tribeGradeLabel}
                 </span>
               </span>
-              <span className="profile-stat-label">{t('profile.modifiers', 'Modifikatörler')}</span>
+              <span className="profile-stat-label">{t('profile.modifiers')}</span>
             </div>
           </div>
 
@@ -688,7 +691,7 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
             className="profile-limits-toggle"
             onClick={toggleLimits}
             aria-expanded={isLimitsExpanded}
-            aria-label={isLimitsExpanded ? t('profile.hide_limits', 'Limitleri Gizle') : t('profile.show_limits', 'Limitleri Göster')}
+            aria-label={isLimitsExpanded ? t('profile.hide_limits') : t('profile.show_limits')}
           >
             <span
               aria-hidden="true"
@@ -707,7 +710,7 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
           >
             <div className="profile-limit-chip">
               <Users size={25} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
-              <span>{t('tribe.member_capacity', 'Üye Kapasitesi')}:</span>
+              <span>{t('tribe.member_capacity')}:</span>
               <span className="profile-limit-chip__val">
                 {tribe.memberCount ?? 0} / 50
               </span>
@@ -733,7 +736,7 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
                 size={25}
                 style={{ color: 'var(--color-primary)', flexShrink: 0 }}
               />
-              <span>{t('profile.bot_assignment_limit', 'Kart Atanma Limiti')}:</span>
+              <span>{t('profile.bot_assignment_limit')}:</span>
               <span className="profile-limit-chip__val">
                 {tribe.personalityCards?.length || 0} / {tribe.tribeAssignmentLimit || 4}
               </span>
@@ -744,7 +747,7 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
                 size={25}
                 style={{ color: 'var(--color-primary)', flexShrink: 0 }}
               />
-              <span>{t('profile.card_inheritance_chance', 'Kart Miras Şansı')}:</span>
+              <span>{t('profile.card_inheritance_chance')}:</span>
               <span className="profile-limit-chip__val">
                 %{Math.round((tribe.cardInheritanceChance || 0.25) * 100)}
               </span>
@@ -758,7 +761,7 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
                       size={42}
                       style={{ color: 'var(--color-primary)', flexShrink: 0 }}
                     />
-                    <span>{t('profile.card_inheritance_modifier', 'Kart Miras Çarpanı')}:</span>
+                    <span>{t('profile.card_inheritance_modifier')}:</span>
                     <span className="profile-limit-chip__val">
                       +%{Math.round((tribe.cardInheritanceModifier || 0) * 100)}
                     </span>
@@ -800,16 +803,16 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
                       letterSpacing: '0.04em',
                     }}
                   >
-                    {t('card.personality_slots', 'Atanmış Kişilik Kartları')} (
+                    {t('card.personality_slots')} (
                     {tribe.personalityCards?.length || 0} / {tribe.tribeAssignmentLimit || 4}{' '}
-                    {t('card.slots_label', 'Slot')})
+                    {t('card.slots_label')})
                   </span>
                 </div>
                 <CardSlots
                   cards={sortedTribeCards}
                   slotCount={tribe.tribeAssignmentLimit || 4}
                   showMark={false}
-                  tribeBadgeLabel={t('tribe.badge_tribe', 'KLAN')}
+                  tribeBadgeLabel={t('tribe.badge_tribe')}
                 />
               </div>
             </>
@@ -824,7 +827,7 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
             display: 'flex',
             alignItems: 'center',
             gap: 12,
-            marginBottom: 24,
+            marginBottom: 6,
           }}
         >
           <div
@@ -859,6 +862,14 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
             style={{ marginLeft: 'auto' }}
           />
         </div>
+        <div
+          style={{
+            width: '100%',
+            height: 0,
+            borderTop: '1px solid var(--color-border)',
+            margin: '0 0 16px 0',
+          }}
+        />
       </div>
 
       <div className="minimal-card-list">
@@ -890,37 +901,34 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
           )
         )}
 
-        {/* ─── Daha Fazla Üye Yükleme Butonu (Site genelindeki standart ▼ icon butonu) ─── */}
-        {hasMoreMembers && (tribe.memberCount ?? 0) > visibleMembers.length && (
+        {canLoadMoreMembers && !isLoadingMoreMembers && (
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10, width: '100%' }}>
             <button
               type="button"
-              className="profile-limits-toggle"
+              className="entry-expand-btn"
               onClick={handleLoadMoreMembers}
-              disabled={isLoadingMoreMembers}
-              aria-label={t('common.load_more', 'Daha Fazla Göster')}
+              aria-label={t('common.more')}
+              title={t('common.more')}
               style={{
-                width: '100%',
-                padding: '10px 0',
-                marginTop: 6,
-                marginBottom: 0,
-                opacity: isLoadingMoreMembers ? 0.6 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--color-text-muted)',
               }}
             >
-              <span
-                aria-hidden="true"
-                className="profile-limits-toggle__chevron"
-                style={{
-                  fontSize: 13,
-                  display: 'inline-block',
-                  animation: isLoadingMoreMembers ? 'pulse 1s infinite' : 'none',
-                }}
-              >
-                ▼
-              </span>
+              <CirclePlus size={19} strokeWidth={2.4} />
             </button>
           </div>
         )}
+        <InfiniteScrollStatus
+          isFetching={isLoadingMoreMembers}
+          hasNextPage={canLoadMoreMembers}
+          hasItems={visibleMembers.length > 0}
+        />
       </div>
           </motion.div>
         )}

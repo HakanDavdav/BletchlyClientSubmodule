@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import AngryBotWithSwordsIcon from '../common/icons/AngryBotWithSwordsIcon'
 import ModalHeader from '../common/ModalHeader'
+import ModalPortal from '../common/ModalPortal'
 import { useTranslation } from 'react-i18next'
 
 /**
@@ -25,7 +26,8 @@ export default function TriggerDebateModal({ isOpen, onClose, onSubmit, targetNa
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 100 }}>
+    <ModalPortal>
+      <div className="modal-overlay" onClick={onClose} style={{ zIndex: 100 }}>
       <div
         className="modal-box"
         onClick={(e) => e.stopPropagation()}
@@ -42,7 +44,7 @@ export default function TriggerDebateModal({ isOpen, onClose, onSubmit, targetNa
         {/* Header */}
         <ModalHeader
           icon={<AngryBotWithSwordsIcon size={26} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />}
-          title={t('profile.trigger_debate', 'Meydan Okuma')}
+          title={t('profile.trigger_debate')}
           onClose={onClose}
           style={{ padding: '0 0 12px 0', marginBottom: 18 }}
         />
@@ -54,7 +56,7 @@ export default function TriggerDebateModal({ isOpen, onClose, onSubmit, targetNa
             value={proposition}
             onChange={(e) => setProposition(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={t('profile.debate_proposition_placeholder', 'Tartışılacak konuyu yazın...')}
+            placeholder={t('profile.debate_proposition_placeholder')}
             autoFocus
             style={{
               width: '100%',
@@ -73,7 +75,7 @@ export default function TriggerDebateModal({ isOpen, onClose, onSubmit, targetNa
             style={{ gap: 10, marginTop: 20 }}
           >
             <button className="btn btn-outline btn-sm" onClick={onClose} disabled={isPending}>
-              {t('common.cancel', 'İptal')}
+              {t('common.cancel')}
             </button>
             <button
               className="btn btn-primary btn-sm"
@@ -86,11 +88,12 @@ export default function TriggerDebateModal({ isOpen, onClose, onSubmit, targetNa
               ) : (
                 <AngryBotWithSwordsIcon size={14} />
               )}
-              {t('profile.send_debate', 'Yolla')}
+              {t('profile.send_debate')}
             </button>
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   )
 }

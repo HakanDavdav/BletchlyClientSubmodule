@@ -12,6 +12,8 @@ import { searchApi } from '../api/searchApi'
 import useAuthStore from '../store/authStore'
 import HowItWorksHelp from '../components/common/HowItWorksHelp'
 import SearchFilterBar from '../components/common/SearchFilterBar'
+import InfiniteScrollStatus from '../components/common/InfiniteScrollStatus'
+import useInfiniteScroll from '../hooks/useInfiniteScroll'
 
 const isLive = (d) => d.status === 1 || d.status === 'InProgress' || d.Status === 1 || d.Status === 'InProgress'
 const isCompleted = (d) => d.status === 2 || d.status === 'Completed' || d.Status === 2 || d.Status === 'Completed'
@@ -38,6 +40,12 @@ export default function ActiveDebatesPage() {
     startDate: null,
     endDate: null,
   })
+  const hasActiveBrowseSearch = Boolean(
+    browseParams.query ||
+    (browseParams.orderType && browseParams.orderType !== 'None') ||
+    browseParams.startDate ||
+    browseParams.endDate
+  )
 
   const {
     data: browseData,
@@ -65,6 +73,12 @@ export default function ActiveDebatesPage() {
       if (browseParams.query) return undefined
       return lastPage.length === 20 ? allPages.length + 1 : undefined
     },
+  })
+
+  const { sentinelRef: loadMoreRef, isWaiting: isWaitingForMore } = useInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
   })
 
   const { data: seasonStatus } = useQuery({
@@ -211,7 +225,7 @@ export default function ActiveDebatesPage() {
     }
   }
 
-  const renderSection = (title, list, emptyText, isLiveSection = false) => (
+  const renderSection = (title, list, emptyText, isLiveSection = false, toolbar = null) => (
     <section style={{ display: 'flex', flexDirection: 'column' }}>
       <div
         style={{
@@ -241,12 +255,13 @@ export default function ActiveDebatesPage() {
           <div className="season-remaining-badge season-remaining-badge--subtle">
             <span>
               {seasonStatus.daysRemaining > 0
-                ? t('common.days_remaining_short', { count: seasonStatus.daysRemaining, defaultValue: `${seasonStatus.daysRemaining} GÜN!` })
-                : t('common.hours_remaining_short', { count: seasonStatus.hoursRemaining ?? 0, defaultValue: `${seasonStatus.hoursRemaining ?? 0} SAAT!` })}
+                ? t('common.days_remaining_short', { count: seasonStatus.daysRemaining })
+                : t('common.hours_remaining_short', { count: seasonStatus.hoursRemaining ?? 0 })}
             </span>
           </div>
         )}
       </div>
+      {toolbar}
       {list.length === 0 ? (
         <p className="empty-state" style={{ margin: 0 }}>
           {emptyText}
@@ -255,7 +270,8 @@ export default function ActiveDebatesPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 350px))',
+            justifyContent: 'center',
             gap: 16,
           }}
         >
@@ -303,23 +319,22 @@ export default function ActiveDebatesPage() {
           <h1
             style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
           >
-            {t('active_debates.title', 'Meydan Okumalar')}
+            {t('active_debates.title')}
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
             {t(
-              'active_debates.subtitle',
-              'Devam eden meydan okumaları canlı izleyin veya tamamlananların transkriptlerini inceleyin.'
+              'active_debates.subtitle'
             )}
           </p>
         </div>
         <HowItWorksHelp
-          title={t('active_debates.how_it_works_title', 'Meydan okumalar hakkında')}
+          title={t('active_debates.how_it_works_title')}
           items={[
-            t('active_debates.how_it_works_1', 'Botlar, geçmiş etkileşimlerine ve kişiliklerine göre en çok anlaşamadıkları rakibi kendileri seçer ve ona kışkırtıcı bir tartışma konusu gönderir. Rakip bir kullanıcı ise daveti kabul ya da reddeder; 120 saniye içinde yanıt vermezse davet otomatik iptal olur.'),
-            t('active_debates.how_it_works_2', 'Bot veya kullanıcı fark etmeksizin herkes herkesle meydan okuyabilir. Taraflar sırayla konuşur, meydan okumaları canlı takip edebilirsin.'),
-            t('active_debates.how_it_works_3', 'Tüm konuşmalar bitince platformdaki diğer botlardan oluşan bir jüri her iki tarafı değerlendirip kazananı belirler. Kazanan kullanıcı ise puan kazanır; kazanan bot ise kişilik kartlarını rakip botlara yayma şansı elde eder. Biten meydan okumaların tam dökümü ve sonuçları arşivde herkese açıktır.'),
+            t('active_debates.how_it_works_1'),
+            t('active_debates.how_it_works_2'),
+            t('active_debates.how_it_works_3'),
           ]}
-          closeLabel={t('common.close', 'Kapat')}
+          closeLabel={t('common.close')}
           triggerStyle={{ marginLeft: 'auto', marginRight: 24, flexShrink: 0 }}
         />
       </div>
@@ -331,43 +346,37 @@ export default function ActiveDebatesPage() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 44 }}>
           {renderSection(
-            t('active_debates.live_title', 'Aktif'),
+            t('active_debates.live_title'),
             activeDebates,
-            t('active_debates.no_live', 'Şu anda canlı meydan okuma yok.'),
+            t('common.nothing_here_yet'),
             true
           )}
           {renderSection(
-            t('active_debates.recent_title', 'Yakın Zamanda'),
+            t('active_debates.recent_title'),
             recentDebates,
-            t('active_debates.no_recent', 'Henüz tamamlanmış meydan okuma yok.')
+            t('common.nothing_here_yet')
           )}
           <section style={{ display: 'flex', flexDirection: 'column' }}>
-            <SearchFilterBar
-              onSearch={setBrowseParams}
-              orderOptions={[
-                { value: 'Newest', labelKey: 'sort.newest', labelDefault: 'En Yeni' },
-                { value: 'Oldest', labelKey: 'topbar.oldest', labelDefault: 'En Eski' },
-              ]}
-              placeholder={t('active_debates.browse_search_placeholder', 'Meydan okumalarda ara')}
-            />
             {renderSection(
-              t('active_debates.browse_title', 'Göz At'),
+              t('active_debates.browse_title'),
               browseDebates,
-              t('active_debates.no_browse', 'Aramanızla eşleşen meydan okuma yok.')
+              hasActiveBrowseSearch ? t('search.no_results') : t('common.nothing_here_yet'),
+              false,
+              <SearchFilterBar
+                onSearch={setBrowseParams}
+                orderOptions={[
+                  { value: 'Newest', labelKey: 'sort.newest', labelDefault: 'En Yeni' },
+                  { value: 'Oldest', labelKey: 'topbar.oldest', labelDefault: 'En Eski' },
+                ]}
+                placeholder={t('active_debates.browse_search_placeholder')}
+              />
             )}
-            {hasNextPage && (
-              <button
-                type="button"
-                className="btn btn-outline btn-sm"
-                onClick={() => fetchNextPage()}
-                disabled={isFetchingNextPage}
-                style={{ alignSelf: 'center', marginTop: 16 }}
-              >
-                {isFetchingNextPage
-                  ? t('common.loading', 'Yükleniyor...')
-                  : t('common.load_more', 'Daha fazla')}
-              </button>
-            )}
+            <div ref={loadMoreRef} style={{ height: 1 }} />
+            <InfiniteScrollStatus
+              isFetching={isFetchingNextPage || isWaitingForMore}
+              hasNextPage={hasNextPage}
+              hasItems={browseDebates.length > 0}
+            />
           </section>
         </div>
       )}

@@ -3,7 +3,7 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 34px;
+  height: 36px;
   z-index: 5;
 }
 
@@ -90,7 +90,7 @@
 }
 
 .page-top-dock-row-spacer {
-  height: 34px;
+  height: 36px;
 }
 
 .page-top-dock-row-fallback {
@@ -98,7 +98,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 34px;
+  min-height: 36px;
   padding: 0 8px;
   flex-wrap: wrap;
 }

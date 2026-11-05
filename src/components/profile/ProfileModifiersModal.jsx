@@ -10,6 +10,7 @@ import {
   Lock,
 } from 'lucide-react'
 import KingIcon from '../common/icons/KingIcon'
+import ModalPortal from '../common/ModalPortal'
 import AngryBotWithSwordsIcon from '../common/icons/AngryBotWithSwordsIcon'
 import BotFlashCardsIcon from '../common/icons/BotFlashCardsIcon'
 import CardContingencyIcon from '../common/icons/CardContingencyIcon'
@@ -200,7 +201,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
         {/* Base value - Sadece 'Base:' ve sağında sayı */}
         {baseValue !== undefined && (
           <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary)' }}>
-            <span style={{ fontWeight: 600 }}>{t('profile.mod_base', 'Base')}:</span>
+            <span style={{ fontWeight: 600 }}>{t('profile.mod_base')}:</span>
             <span style={{ fontWeight: 700, color: 'var(--color-text-primary)' }}>{baseValue}</span>
           </div>
         )}
@@ -225,7 +226,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
             <div style={{ height: 1, background: 'var(--color-border)', margin: '3px 0' }} />
 
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-              <span style={{ fontWeight: 700 }}>{t('profile.mod_total', 'Total')}:</span>
+              <span style={{ fontWeight: 700 }}>{t('profile.mod_total')}:</span>
               <span style={{ color: 'var(--color-primary)', fontSize: 13, fontWeight: 800 }}>{totalValue}</span>
             </div>
           </>
@@ -235,13 +236,14 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
   )
 
   return (
-    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 100 }}>
+    <ModalPortal>
+      <div className="modal-overlay" onClick={onClose} style={{ zIndex: 100 }}>
       <div
         className="modal-box"
         onClick={(e) => e.stopPropagation()}
         style={{
           maxWidth: 540,
-          maxHeight: '85vh',
+          maxHeight: '78vh',
           display: 'flex',
           flexDirection: 'column',
           padding: '24px 20px',
@@ -253,8 +255,8 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
         {/* Modal Header */}
         <ModalHeader
           icon={<Sliders size={28} color="var(--color-primary)" />}
-          title={t('profile.modifiers', 'Modifikatörler')}
-          subtitle={isTribe ? t('common.tribe', 'Klan') : isBot ? t('common.bot', 'Bot') : t('common.user', 'Kullanıcı')}
+          title={t('profile.modifiers')}
+          subtitle={isTribe ? t('common.tribe') : isBot ? t('common.bot') : t('common.user')}
           onClose={onClose}
           style={{ padding: '0 0 14px 0', marginBottom: 20 }}
         />
@@ -302,14 +304,14 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                     {gradeLabel}
                   </div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                    {t('profile.grade', 'Derece')} {gradeLabel}
+                    {t('profile.grade')} {gradeLabel}
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>
-                      {t('profile.points', 'Puan')}
+                      {t('profile.points')}
                     </div>
                     <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--color-text-primary)' }}>
                       {currentPoints.toLocaleString(i18n?.language || 'tr-TR')}
@@ -324,10 +326,10 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   topContent: renderGradeCheckpoints(),
                   baseValue: '0',
                   modifiers: [
-                    { label: t('profile.mod_slot_card', 'Slot/Kart'), value: `+${stepBonus}`, color: gradeColor },
-                    ...(!isTribe ? [{ label: t('profile.mod_debate', 'Meydan Okuma'), value: `+${stepBonus}`, color: 'var(--color-primary)' }] : []),
-                    { label: t('profile.mod_contingency', 'Miras'), value: `+%${stepBonus}`, color: 'var(--color-primary)' },
-                    ...(isBot || isTribe ? [{ label: t('profile.mod_contingency_mult', 'Miras Çarpanı'), value: `+%${gradeContingencyMod}`, color: '#f59e0b' }] : []),
+                    { label: t('profile.mod_slot_card'), value: `+${stepBonus}`, color: gradeColor },
+                    ...(!isTribe ? [{ label: t('profile.mod_debate'), value: `+${stepBonus}`, color: 'var(--color-primary)' }] : []),
+                    { label: t('profile.mod_contingency'), value: `+%${stepBonus}`, color: 'var(--color-primary)' },
+                    ...(isBot || isTribe ? [{ label: t('profile.mod_contingency_mult'), value: `+%${gradeContingencyMod}`, color: '#f59e0b' }] : []),
                   ],
                   totalValue: `+${stepBonus}`,
                 })}
@@ -369,7 +371,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                       {isPremiumUser ? <KingIcon size={20} /> : <ShieldCheck size={20} />}
                     </div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                      {isPremiumUser ? t('premium.title', 'Pro') : t('common.default', 'Standart')}
+                      {isPremiumUser ? t('premium.title') : t('common.default')}
                     </div>
                   </div>
 
@@ -382,10 +384,10 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   renderModifierBubble({
                     baseValue: '0',
                     modifiers: [
-                      { label: t('profile.mod_bot_quota', 'Bot Kotası'), value: isPremiumUser ? '+4' : '+0', color: 'var(--color-primary)' },
-                      { label: t('profile.mod_card_area', 'Kart Alanı'), value: isPremiumUser ? '+4' : '+0', color: 'var(--color-primary)' },
-                      { label: t('profile.mod_debate', 'Meydan Okuma'), value: isPremiumUser ? '+4' : '+0', color: 'var(--color-primary)' },
-                      { label: t('profile.mod_contingency_chance', 'Miras Şansı'), value: isPremiumUser ? '+%4' : '+%0', color: 'var(--color-primary)' },
+                      { label: t('profile.mod_bot_quota'), value: isPremiumUser ? '+4' : '+0', color: 'var(--color-primary)' },
+                      { label: t('profile.mod_card_area'), value: isPremiumUser ? '+4' : '+0', color: 'var(--color-primary)' },
+                      { label: t('profile.mod_debate'), value: isPremiumUser ? '+4' : '+0', color: 'var(--color-primary)' },
+                      { label: t('profile.mod_contingency_chance'), value: isPremiumUser ? '+%4' : '+%0', color: 'var(--color-primary)' },
                     ],
                     totalValue: isPremiumUser ? '+4' : '+0',
                   })}
@@ -431,7 +433,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                       <Brain size={20} />
                     </div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                      {t('bot.capability_memory', 'Hafıza')}
+                      {t('bot.capability_memory')}
                     </div>
                   </div>
 
@@ -507,12 +509,12 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   <BotIcon size={22} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                      {t('profile.bot_ownership_limit', 'Bot Sahiplik Limiti')}
+                      {t('profile.bot_ownership_limit')}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
                       {isBot
-                        ? t('profile.bot_creation_limit_desc', 'Maksimum sahip olunabilir alt bot sayısı')
-                        : t('profile.bot_ownership_limit_desc', 'Maksimum sahip olunabilir bot sayısı')}
+                        ? t('profile.bot_creation_limit_desc')
+                        : t('profile.bot_ownership_limit_desc')}
                     </div>
                   </div>
                 </div>
@@ -531,11 +533,11 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 renderModifierBubble({
                   baseValue: '4',
                   modifiers: [
-                    { label: `${t('profile.grade', 'Derece')} ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
+                    { label: `${t('profile.grade')} ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
                     ...(isUser
                       ? [
                           {
-                            label: t('premium.title', 'Pro'),
+                            label: t('premium.title'),
                             value: isPremiumUser ? '+4' : '+0',
                             color: isPremiumUser ? 'var(--color-primary)' : 'var(--color-text-muted)',
                           },
@@ -573,10 +575,10 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   <Users size={22} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                      {t('profile.tribe_limit', 'Klan Limiti')}
+                      {t('profile.tribe_limit')}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                      {t('profile.tribe_limit_desc', 'Dahil olunabilecek maksimum klan sayısı')}
+                      {t('profile.tribe_limit_desc')}
                     </div>
                   </div>
                 </div>
@@ -595,11 +597,11 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 renderModifierBubble({
                   baseValue: '3',
                   modifiers: [
-                    { label: `${t('profile.grade', 'Derece')} ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
+                    { label: `${t('profile.grade')} ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
                     ...(isUser
                       ? [
                           {
-                            label: t('premium.title', 'Pro'),
+                            label: t('premium.title'),
                             value: isPremiumUser ? '+4' : '+0',
                             color: isPremiumUser ? 'var(--color-primary)' : 'var(--color-text-muted)',
                           },
@@ -637,10 +639,10 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   <BotFlashCardsIcon size={22} color="var(--color-primary)" />
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                      {t('profile.card_ownership_limit', 'Kart Sahiplik Limiti')}
+                      {t('profile.card_ownership_limit')}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                      {t('profile.card_ownership_limit_desc', 'Envanterde tutulabilecek maksimum kişilik kartı')}
+                      {t('profile.card_ownership_limit_desc')}
                     </div>
                   </div>
                 </div>
@@ -659,11 +661,11 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 renderModifierBubble({
                   baseValue: '10',
                   modifiers: [
-                    { label: `${t('profile.grade', 'Derece')} ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
+                    { label: `${t('profile.grade')} ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
                     ...(isUser
                       ? [
                           {
-                            label: t('premium.title', 'Pro'),
+                            label: t('premium.title'),
                             value: isPremiumUser ? '+4' : '+0',
                             color: isPremiumUser ? 'var(--color-primary)' : 'var(--color-text-muted)',
                           },
@@ -701,12 +703,12 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   <BotFlashCardsIcon size={22} color="var(--color-primary)" />
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                      {t('profile.bot_assignment_limit', 'Kart Atanma Limiti')}
+                      {t('profile.bot_assignment_limit')}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
                       {isTribe
-                        ? t('profile.tribe_assignment_limit_desc', 'Klanın aktif kuşanabileceği kişilik kartı slotu')
-                        : t('profile.bot_assignment_limit_desc', 'Botun aktif kuşanabileceği kişilik kartı slotu')}
+                        ? t('profile.tribe_assignment_limit_desc')
+                        : t('profile.bot_assignment_limit_desc')}
                     </div>
                   </div>
                 </div>
@@ -724,7 +726,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 renderModifierBubble({
                   baseValue: '4',
                   modifiers: [
-                    { label: `${t('profile.grade', 'Derece')} ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
+                    { label: `${t('profile.grade')} ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
                   ],
                   totalValue: `${isTribe ? (profile.tribeAssignmentLimit || (4 + stepBonus)) : (profile.botSettings?.botAssignmentLimit || (4 + stepBonus))}`,
                 })}
@@ -753,10 +755,10 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   <Lock size={22} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                      {t('profile.card_assignment_lock_limit', 'Kart Kilitleme Limiti')}
+                      {t('profile.card_assignment_lock_limit')}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                      {t('profile.card_assignment_lock_limit_desc', 'Sahip olunan atamalarda kilitlenebilecek maksimum kişilik kartı')}
+                      {t('profile.card_assignment_lock_limit_desc')}
                     </div>
                   </div>
                 </div>
@@ -775,11 +777,11 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 renderModifierBubble({
                   baseValue: '2',
                   modifiers: [
-                    { label: `${t('profile.grade', 'Derece')} ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
+                    { label: `${t('profile.grade')} ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
                     ...(isUser
                       ? [
                           {
-                            label: t('premium.title', 'Pro'),
+                            label: t('premium.title'),
                             value: isPremiumUser ? '+4' : '+0',
                             color: isPremiumUser ? 'var(--color-primary)' : 'var(--color-text-muted)',
                           },
@@ -817,10 +819,10 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   <AngryBotWithSwordsIcon size={22} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                      {t('profile.daily_debate_limit', 'Günlük Tartışma Limiti')}
+                      {t('profile.daily_debate_limit')}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                      {t('profile.daily_debate_limit_desc', 'Eşzamanlı aktif meydan okuma ve tartışma hakkı')}
+                      {t('profile.daily_debate_limit_desc')}
                     </div>
                   </div>
                 </div>
@@ -836,11 +838,11 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 renderModifierBubble({
                   baseValue: '1',
                   modifiers: [
-                    { label: `${t('profile.grade', 'Derece')} ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
+                    { label: `${t('profile.grade')} ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
                     ...(isUser
                       ? [
                           {
-                            label: t('premium.title', 'Pro'),
+                            label: t('premium.title'),
                             value: isPremiumUser ? '+4' : '+0',
                             color: isPremiumUser ? 'var(--color-primary)' : 'var(--color-text-muted)',
                           },
@@ -873,10 +875,10 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 <CardContingencyIcon size={22} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                    {t('profile.card_inheritance_chance', 'Kart Miras Şansı')}
+                    {t('profile.card_inheritance_chance')}
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                    {t('profile.card_inheritance_chance_desc', 'Kişilik kartı kalıtım ve miras alma olasılığı')}
+                    {t('profile.card_inheritance_chance_desc')}
                   </div>
                 </div>
               </div>
@@ -893,10 +895,10 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 baseValue: '%25',
                 modifiers: [
                   ...(isBot || isTribe
-                    ? [{ label: `${t('profile.grade', 'Derece')} ${gradeLabel}`, value: `+%${stepBonus}`, color: gradeColor }]
+                    ? [{ label: `${t('profile.grade')} ${gradeLabel}`, value: `+%${stepBonus}`, color: gradeColor }]
                     : [
                         {
-                          label: t('premium.title', 'Pro'),
+                          label: t('premium.title'),
                           value: isPremiumUser ? '+%4' : '+%0',
                           color: isPremiumUser ? 'var(--color-primary)' : 'var(--color-text-muted)',
                         },
@@ -928,10 +930,10 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   <CardContingencyModifierIcon size={34} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                      {t('profile.card_inheritance_modifier', 'Kart Miras Çarpanı')}
+                      {t('profile.card_inheritance_modifier')}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                      {t('profile.card_inheritance_modifier_desc', 'Dereceye bağlı ek kişilik kartı miras çarpanı')}
+                      {t('profile.card_inheritance_modifier_desc')}
                     </div>
                   </div>
                 </div>
@@ -947,7 +949,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 renderModifierBubble({
                   baseValue: '%0',
                   modifiers: [
-                    { label: `${t('profile.grade', 'Derece')} ${gradeLabel}`, value: `+%${gradeContingencyMod}`, color: '#10b981' },
+                    { label: `${t('profile.grade')} ${gradeLabel}`, value: `+%${gradeContingencyMod}`, color: '#10b981' },
                   ],
                   totalValue: `+%${Math.round(((isTribe ? profile.cardInheritanceModifier : profile.botSettings?.cardInheritanceModifier) || 0) * 100)}`,
                 })}
@@ -972,10 +974,10 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 <Activity size={22} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                    {t('profile.daily_bot_operations', 'Günlük Bot Operasyonu')}
+                    {t('profile.daily_bot_operations')}
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                    {t('profile.daily_bot_operations_desc', 'Botun gerçekleştirdiği günlük aktivite sayısı')}
+                    {t('profile.daily_bot_operations_desc')}
                   </div>
                 </div>
               </div>
@@ -1007,10 +1009,10 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   <Users size={22} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                      {t('tribe.member_capacity', 'Üye Kapasitesi')}
+                      {t('tribe.member_capacity')}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                      {t('tribe.member_capacity_desc', 'Klanın alabileceği maksimum üye sayısı')}
+                      {t('tribe.member_capacity_desc')}
                     </div>
                   </div>
                 </div>
@@ -1032,6 +1034,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   )
 }

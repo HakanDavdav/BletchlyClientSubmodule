@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { createPortal } from 'react-dom'
 import { ThumbsUp, ThumbsDown, Skull } from 'lucide-react'
@@ -6,6 +6,8 @@ import { contentItemApi } from '../../api/contentItemApi'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
 import ModalHeader from '../common/ModalHeader'
 import FossilTogglePill from '../common/FossilTogglePill'
+import InfiniteScrollStatus from '../common/InfiniteScrollStatus'
+import useInfiniteScroll from '../../hooks/useInfiniteScroll'
 import { ReactionType } from '../../constants/enums'
 import useDevLog from '../../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
@@ -29,15 +31,15 @@ export default function LikeListModal({ contentItemId, isOpen, onClose, initialT
 
   const getTitle = () => {
     if (activeTab === ReactionType.Like) {
-      return t('reaction.likes', 'Beğenenler')
+      return t('reaction.likes')
     }
     if (activeTab === ReactionType.Dislike) {
-      return t('reaction.dislikes', 'Beğenmeyenler')
+      return t('reaction.dislikes')
     }
     if (activeTab === ReactionType.BrutallyDislike) {
-      return t('reaction.brutal_dislikes', 'Şiddetle Beğenmeyenler')
+      return t('reaction.brutal_dislikes')
     }
-    return t('reaction.reactions', 'Reaksiyonlar')
+    return t('reaction.reactions')
   }
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
@@ -72,15 +74,15 @@ export default function LikeListModal({ contentItemId, isOpen, onClose, initialT
     return [...items].sort((a, b) => (isDormantLike(a) ? 1 : 0) - (isDormantLike(b) ? 1 : 0))
   }, [items, showFossils])
 
-  // Infinite scroll için onScroll handler
-  const handleScroll = (e) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.target
-    if (scrollHeight - scrollTop <= clientHeight + 50) {
-      if (hasNextPage && !isFetchingNextPage) {
-        fetchNextPage()
-      }
-    }
-  }
+  const scrollRef = useRef(null)
+  const { sentinelRef: loadMoreRef, isWaiting } = useInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    rootRef: scrollRef,
+    rootMargin: '150px',
+    enabled: isOpen,
+  })
 
   if (!isOpen) return null
 
@@ -114,13 +116,13 @@ export default function LikeListModal({ contentItemId, isOpen, onClose, initialT
           style={{ padding: '0 0 12px 0', marginBottom: 14 }}
         />
 
-        <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }} onScroll={handleScroll}>
+        <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}>
           {isLoading ? (
             <div style={{ textAlign: 'center', padding: 24 }}>
               <div className="spinner spinner-md" />
             </div>
           ) : visibleItems.length === 0 ? (
-            <p className="empty-state">{t('common.nothing_here_yet', 'Henüz burada hiçbir şey yok')}</p>
+            <p className="empty-state">{t('common.nothing_here_yet')}</p>
           ) : (
             <div className="minimal-card-list" style={{ padding: '4px 4px 8px 4px' }}>
               {visibleItems.map((like) => (
@@ -149,22 +151,14 @@ export default function LikeListModal({ contentItemId, isOpen, onClose, initialT
                   </span>
                 </div>
               ))}
-
-              {isFetchingNextPage && (
-                <div style={{ textAlign: 'center', padding: 16 }}>
-                  <div className="spinner spinner-sm" />
-                </div>
-              )}
-              {!isFetchingNextPage && !hasNextPage && visibleItems.length > 0 && (
-                <p
-                  className="text-muted"
-                  style={{ padding: 16, textAlign: 'center', fontSize: 13 }}
-                >
-                  {t('common.no_more_results')}
-                </p>
-              )}
             </div>
           )}
+          <div ref={loadMoreRef} style={{ height: 1 }} />
+          <InfiniteScrollStatus
+            isFetching={isFetchingNextPage || isWaiting}
+            hasNextPage={hasNextPage}
+            hasItems={visibleItems.length > 0}
+          />
         </div>
       </div>
     </div>,

@@ -86,7 +86,7 @@ export default function DebatePage() {
   const [proponent, setProponent] = useState(initialProponent)
   const [opponent, setOpponent] = useState(initialOpponent)
 
-  useDocumentTitle(proposition || t('active_debates.title', 'Meydan Okumalar'))
+  useDocumentTitle(proposition || t('active_debates.title'))
 
   const [activeSpeaker, setActiveSpeaker] = useState(null)
   const [verdict, setVerdict] = useState(null)
@@ -185,8 +185,11 @@ export default function DebatePage() {
       const originX = wrapRect.width / 2
       const originY = Math.min(220, wrapRect.height * 0.3)
 
-      const cards = juries.map((jury, idx) => {
-        const juryEl = juryRefs.current[jury.id || idx]
+      const flyerCount = Math.min(3, juries.length)
+      const cards = Array.from({ length: flyerCount }, (_, idx) => {
+        const juryIndex = Math.floor((idx * juries.length) / flyerCount)
+        const jury = juries[juryIndex]
+        const juryEl = juryRefs.current[jury.id || juryIndex]
         let targetX = originX
         let targetY = originY + 280
         if (juryEl) {
@@ -196,7 +199,7 @@ export default function DebatePage() {
         }
 
         return {
-          id: jury.id || idx,
+          id: jury.id || juryIndex,
           startX: originX,
           startY: originY,
           targetX,
@@ -209,7 +212,7 @@ export default function DebatePage() {
 
       setFlyingCards(cards)
 
-      const totalTime = (0.15 + juries.length * 0.1 + 0.85 + 0.35) * 1000
+      const totalTime = (0.15 + flyerCount * 0.1 + 0.85 + 0.35) * 1000
       const endTimer = setTimeout(() => {
         setCardsDistributed(true)
         setFlyingCards([])
@@ -377,7 +380,7 @@ export default function DebatePage() {
 
   useEffect(() => {
     if (!isValidDebateId) {
-      toast.error(t('common.content_not_found', 'Geçerli bir meydan okuma ID bulunamadı.'))
+      toast.error(t('common.content_not_found'))
       navigate('/', { replace: true })
       return
     }
@@ -391,21 +394,21 @@ export default function DebatePage() {
       .build()
 
     newConnection.onreconnecting(() => {
-      toast.loading(t('common.reconnecting', 'Yeniden bağlanılıyor...'), {
+      toast.loading(t('common.reconnecting'), {
         id: 'signalr-reconnecting',
       })
     })
 
     newConnection.onreconnected(() => {
       toast.dismiss('signalr-reconnecting')
-      toast.success(t('common.reconnected', 'Yeniden bağlandı.'), { duration: 3000 })
+      toast.success(t('common.reconnected'), { duration: 3000 })
       newConnection.invoke('JoinDebate', debateId, isSpectator).catch(console.error)
     })
 
     newConnection.onclose((error) => {
       toast.dismiss('signalr-reconnecting')
       if (error) {
-        toast.error(t('common.session_timeout', 'Oturum zaman aşımına uğradı.'))
+        toast.error(t('common.session_timeout'))
       }
     })
 
@@ -465,7 +468,7 @@ export default function DebatePage() {
         })
         .catch((e) => {
           console.error('Connection failed: ', e)
-          toast.error(t('common.session_timeout', 'Oturum zaman aşımına uğradı.'))
+          toast.error(t('common.session_timeout'))
         })
     }
 
@@ -487,7 +490,7 @@ export default function DebatePage() {
     hasReceivedInitialSignalRef.current = false
     initialSignalTimeoutRef.current = setTimeout(() => {
       if (!hasReceivedInitialSignalRef.current) {
-        toast.error(t('common.session_timeout', 'Meydan okuma oturumu zaman aşımına uğradı veya başlatılamadı.'))
+        toast.error(t('common.session_timeout'))
         if (connection) {
           connection.stop()
         }
@@ -685,7 +688,7 @@ export default function DebatePage() {
       }
 
       case 'session_timeout': {
-        toast.error(t('common.session_timeout', 'Oturum zaman aşımına uğradı.'))
+        toast.error(t('common.session_timeout'))
         if (connection) {
           connection.stop()
         }
@@ -697,7 +700,7 @@ export default function DebatePage() {
 
       case 'user_disconnected':
       case 'user_left': {
-        toast.warning(t('common.user_disconnected', 'Katılımcı ayrıldığı veya bağlantı koptuğu için oturum sonlandırıldı.'))
+        toast.warning(t('common.user_disconnected'))
         if (connection) {
           connection.stop()
         }
@@ -708,7 +711,7 @@ export default function DebatePage() {
       }
 
       case 'session_end': {
-        toast.error(t('common.session_ended', 'Oturum sonlandırıldı.'))
+        toast.error(t('common.session_ended'))
         if (connection) {
           connection.stop()
         }
@@ -761,7 +764,7 @@ export default function DebatePage() {
       connection
         .invoke('Ready', debateId)
         .then(() => setIsReady(true))
-        .catch((err) => toast.error(t('debate.ready_signal_failed', 'Hazır sinyali gönderilemedi: ') + (err?.message || err?.toString() || '')))
+        .catch((err) => toast.error(t('debate.ready_signal_failed') + (err?.message || err?.toString() || '')))
     }
   }
 
@@ -781,7 +784,7 @@ export default function DebatePage() {
               errMsgs = Object.values(rawErrors).flat()
             }
             if (errMsgs.length === 0) {
-              errMsgs = [t('debate.speech_failed', 'Meydan okuma konuşması geçersiz.')]
+              errMsgs = [t('debate.speech_failed')]
             }
             errMsgs.forEach((msg) => toast.error(msg))
             return
@@ -791,7 +794,7 @@ export default function DebatePage() {
           setMyInput('')
           setIsMyTurn(false)
         })
-        .catch((err) => toast.error(err?.message || (t('debate.speech_submit_failed', 'Konuşma gönderilemedi: ') + (err?.toString() || ''))))
+        .catch((err) => toast.error(err?.message || (t('debate.speech_submit_failed') + (err?.toString() || ''))))
     }
   }
 
@@ -803,7 +806,7 @@ export default function DebatePage() {
   }, [messages, phase])
 
   if (!isValidDebateId) {
-    return <div className="p-8 text-center text-red-500">{t('debate.invalid_id', 'Geçerli bir tartışma kimliği belirtilmedi.')}</div>
+    return <div className="p-8 text-center text-red-500">{t('debate.invalid_id')}</div>
   }
 
   const isProponentWinner =
@@ -818,7 +821,7 @@ export default function DebatePage() {
       connection.stop()
     }
     if (!isSpectator && phase !== 'verdict') {
-      toast.error(t('common.session_terminated', 'Oturum sonlandırıldı.'))
+      toast.error(t('common.session_terminated'))
     }
     navigate('/', { replace: true })
   }
@@ -877,7 +880,7 @@ export default function DebatePage() {
                   padding: '2px 8px',
                   borderRadius: 9999,
                 }}
-                title={t('debate.viewers', 'Canlı İzleyiciler')}
+                title={t('debate.viewers')}
               >
                 <Eye size={12} strokeWidth={2.5} />
                 <span>{viewerCount}</span>
@@ -886,7 +889,7 @@ export default function DebatePage() {
           </div>
           <hr className="divider" style={{ margin: 0 }} />
           <div className="debate-proposition-quote">
-            <span>"{proposition || t('debate.no_proposition', 'Önerme belirtilmedi')}"</span>
+            <span>"{proposition || t('debate.no_proposition')}"</span>
           </div>
           {isSpectator && (
             <div
@@ -1049,7 +1052,7 @@ export default function DebatePage() {
                           gap: 8,
                         }}
                       >
-                        <Timer size={16} /> {t('debate.waiting_opponent_or_start', 'Hazırsınız! Karşı taraf bekleniyor...')}
+                        <Timer size={16} /> {t('debate.waiting_opponent_or_start')}
                       </span>
                     )
                   ) : (
@@ -1061,7 +1064,7 @@ export default function DebatePage() {
                         padding: '10px 20px',
                       }}
                     >
-                      {t('debate.spectating_wait', 'Waiting...')}
+                      {t('debate.spectating_wait')}
                     </span>
                   )}
                 </div>
@@ -1162,7 +1165,7 @@ export default function DebatePage() {
                 <div className="chat-waiting-indicator" style={{ opacity: 1 }}>
                   <div className="spinner spinner-sm" />
                   <span style={{ fontSize: 13, color: 'var(--color-text-muted)', fontWeight: 500 }}>
-                    {t('debate.jury_deliberating', 'Jüri değerlendiriyor...')}
+                    {t('debate.jury_deliberating')}
                   </span>
                 </div>
               )}
@@ -1178,7 +1181,7 @@ export default function DebatePage() {
                       <AngryBotWithSwordsIcon size={22} color="#fff" />
                     </div>
                     <div className="verdict-banner__text">
-                      <span className="verdict-banner__title">{t('debate.winner_title', 'Meydan Okuma Kazananı')}</span>
+                      <span className="verdict-banner__title">{t('debate.winner_title')}</span>
                       <span className="verdict-banner__winner">{verdict?.winnerName}</span>
                     </div>
                   </div>
@@ -1187,7 +1190,7 @@ export default function DebatePage() {
                     onClick={() => navigate('/', { replace: true })}
                     style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                   >
-                    <ArrowLeft size={16} /> {t('common.back_to_home', 'Ana Sayfaya Dön')}
+                    <ArrowLeft size={16} /> {t('common.back_to_home')}
                   </button>
                 </div>
               )}
@@ -1201,7 +1204,7 @@ export default function DebatePage() {
           {juries.length > 0 && (
             <div className="jury-panel">
               <div className="jury-panel__title">
-                <span>{t('debate.juries_title', 'Jüri Heyeti')}</span>
+                <span>{t('debate.juries_title')}</span>
               </div>
               <div className="jury-grid">
                 {juries.map((jury, idx) => {
@@ -1255,9 +1258,9 @@ export default function DebatePage() {
                   <AngryBotWithSwordsIcon size={26} color="#fff" />
                 </div>
                 <div className="verdict-banner__text">
-                  <span className="verdict-banner__title">{t('debate.concluded_title', 'Meydan Okuma Tamamlandı')}</span>
+                  <span className="verdict-banner__title">{t('debate.concluded_title')}</span>
                   <span className="verdict-banner__winner">
-                    {t('debate.winner_label', 'Kazanan')}: <strong>{verdict.winnerName || t('debate.draw', 'Berabere')}</strong> (
+                    {t('debate.winner_label')}: <strong>{verdict.winnerName || t('debate.draw')}</strong> (
                     {verdict.proponentScore} - {verdict.opponentScore})
                   </span>
                 </div>
@@ -1267,7 +1270,7 @@ export default function DebatePage() {
                 onClick={() => navigate('/', { replace: true })}
                 style={{ display: 'flex', alignItems: 'center', gap: 6 }}
               >
-                <ArrowLeft size={16} /> {t('common.back_to_home', 'Ana Sayfaya Dön')}
+                <ArrowLeft size={16} /> {t('common.back_to_home')}
               </button>
             </div>
           )}

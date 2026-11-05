@@ -5,6 +5,7 @@ import useDevLog from '../../utils/useDevLog'
 import { X, ShieldCheck } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
+import ModalPortal from '../common/ModalPortal'
 
 export default function TwoFactorModal({ isOpen, onClose }) {
   useDevLog('TwoFactorModal', arguments[0] || {})
@@ -15,7 +16,7 @@ export default function TwoFactorModal({ isOpen, onClose }) {
     mutationFn: () => identityApi.enableTwoFactor(),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      toast.success(t('common.success', 'Başarılı'), { duration: 3000 })
+      toast.success(t('common.success'), { duration: 3000 })
       setSuccessMsg(t('auth.two_factor_enabled'))
       setTimeout(() => {
         onClose()
@@ -28,7 +29,7 @@ export default function TwoFactorModal({ isOpen, onClose }) {
     mutationFn: () => identityApi.disableTwoFactor(),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      toast.success(t('common.success', 'Başarılı'), { duration: 3000 })
+      toast.success(t('common.success'), { duration: 3000 })
       setSuccessMsg(t('auth.two_factor_disabled'))
       setTimeout(() => {
         onClose()
@@ -46,7 +47,8 @@ export default function TwoFactorModal({ isOpen, onClose }) {
   if (!isOpen) return null
 
   return (
-    <div className="modal-overlay" onClick={handleOverlayClick} style={{ zIndex: 100 }}>
+    <ModalPortal>
+      <div className="modal-overlay" onClick={handleOverlayClick} style={{ zIndex: 100 }}>
       <div className="modal-box" style={{ maxWidth: 440, padding: '36px 32px', textAlign: 'left', position: 'relative' }}>
         <button
           type="button"
@@ -132,12 +134,13 @@ export default function TwoFactorModal({ isOpen, onClose }) {
                 onClick={onClose}
                 style={{ minWidth: 90 }}
               >
-                {t('common.close', 'Kapat')}
+                {t('common.close')}
               </button>
             </div>
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   )
 }

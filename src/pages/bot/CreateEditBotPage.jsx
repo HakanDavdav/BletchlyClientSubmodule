@@ -243,7 +243,7 @@ export default function CreateEditBotPage() {
         })
       }
 
-      toast.success(t('common.success', 'Başarılı'), { duration: 3000 })
+      toast.success(t('common.success'), { duration: 3000 })
       queryClient.invalidateQueries({ queryKey: ['myBots'] })
       queryClient.invalidateQueries({ queryKey: ['actorProfile'] })
       queryClient.invalidateQueries({ queryKey: ['myPersonalityCards'] })
@@ -263,7 +263,7 @@ export default function CreateEditBotPage() {
     mutationFn: () => actorApi.deleteBot(botId),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      toast.success(t('common.success', 'Başarılı'), { duration: 3000 })
+      toast.success(t('common.success'), { duration: 3000 })
       queryClient.invalidateQueries({ queryKey: ['myBots'] })
       queryClient.invalidateQueries({ queryKey: ['actorProfile'] })
       queryClient.invalidateQueries({ queryKey: ['myPersonalityCards'] })
@@ -296,8 +296,7 @@ export default function CreateEditBotPage() {
       setHasCreatorAckError(true)
       toast.error(
         t(
-          'bot.creator_ack_required',
-          'Bot oluşturmadan önce yaratıcı sorumluluğunu kabul etmelisiniz.'
+          'bot.creator_ack_required'
         )
       )
       return
@@ -307,7 +306,6 @@ export default function CreateEditBotPage() {
       toast.error(
         t('bot.limit_reached', {
           limit: botCountLimit,
-          defaultValue: `Maksimum bot limitine (${botCountLimit}) ulaştınız.`,
         })
       )
       return
@@ -315,7 +313,7 @@ export default function CreateEditBotPage() {
 
     if (!formData.profileName.trim()) {
       setHasSubmitted(true)
-      toast.error(t('bot.name_required', 'Bot ismi gereklidir.'))
+      toast.error(t('bot.name_required'))
       const firstInvalid = Array.from(e.currentTarget.querySelectorAll('[data-field]')).find(
         (el) => !(el.value || '').trim()
       )
@@ -325,20 +323,20 @@ export default function CreateEditBotPage() {
 
     if (!formData.autoBio && !formData.bio.trim()) {
       setHasSubmitted(true)
-      toast.error(t('bot.bio_required', 'Biyografi girilmeli veya otomatik biyografi seçilmelidir.'))
+      toast.error(t('bot.bio_required'))
       return
     }
 
     if (!formData.autoInterests && (formData.topicTypes || []).length < 3) {
       setHasSubmitted(true)
-      toast.error(t('bot.interests_min', 'En az 3 ilgi alanı seçilmeli veya otomatik ilgi alanları işaretlenmelidir.'))
+      toast.error(t('bot.interests_min'))
       return
     }
 
     const ownedSelectedCardIds = (formData.selectedCardIds || []).filter((id) => isOwnedCardId(id))
     if (!isEditMode && !formData.personalityCardConfirmed && ownedSelectedCardIds.length === 0) {
       setHasSubmitted(true)
-      toast.error(t('bot.card_required', 'Bota en az bir kişilik kartı atanmalı veya yeni bir kişilik kartı oluşturulup onaylanmalıdır.'))
+      toast.error(t('bot.card_required'))
       return
     }
 
@@ -496,12 +494,11 @@ export default function CreateEditBotPage() {
     return (
       <div className="empty-state">
         <h2 style={{ color: 'var(--color-error)' }}>
-          {t('bot.dormant_unauthorized', 'Fosil botlar düzenlenemez.')}
+          {t('bot.dormant_unauthorized')}
         </h2>
         <p>
           {t(
-            'bot.dormant_unauthorized_desc',
-            'Aktif döngüden çekilmiş botların ayarları ve kart atamaları değiştirilemez.'
+            'bot.dormant_unauthorized_desc'
           )}
         </p>
         <button
@@ -509,7 +506,7 @@ export default function CreateEditBotPage() {
           onClick={() => navigate('/profile?actorId=' + botId)}
           style={{ marginTop: 16 }}
         >
-          {t('bot.return_to_profile', 'Profile Dön')}
+          {t('bot.return_to_profile')}
         </button>
       </div>
     )
@@ -571,7 +568,7 @@ export default function CreateEditBotPage() {
             t('bot.how_it_works_4'),
             t('bot.how_it_works_5'),
           ]}
-          closeLabel={t('common.close', 'Kapat')}
+          closeLabel={t('common.close')}
           triggerStyle={{ marginLeft: 'auto', marginRight: 24, flexShrink: 0 }}
         />
       </div>
@@ -604,7 +601,6 @@ export default function CreateEditBotPage() {
               data-field="profileName"
               placeholder={t('bot.bot_name_placeholder', {
                 name: randomBotName,
-                defaultValue: `Örn: ${randomBotName}`,
               })}
               value={formData.profileName}
               onChange={(e) => setFormData({ ...formData, profileName: e.target.value })}
@@ -688,7 +684,7 @@ export default function CreateEditBotPage() {
               textTransform: 'uppercase',
             }}
           >
-            {t('card.create_personality_optional', 'Kişilik kartı oluştur (Opsiyonel)')}
+            {t('card.create_personality_optional')}
           </label>
           <PersonalityCard
             variant="editor"
@@ -727,7 +723,7 @@ export default function CreateEditBotPage() {
                 textTransform: 'uppercase',
               }}
             >
-              {t('bot.current_assigned_cards', 'Bota Atanmış Kartlar')}
+              {t('bot.current_assigned_cards')}
             </label>
             <div
               className="personality-card-slots"
@@ -795,11 +791,11 @@ export default function CreateEditBotPage() {
                 textTransform: 'uppercase',
               }}
             >
-              {t('bot.select_unassigned_cards', 'Sahip olduğun kartlarından ekle (Opsiyonel)')}
+              {t('bot.select_unassigned_cards')}
             </label>
             {cardLockLimit != null && (
               <span
-                title={t('profile.card_assignment_lock_limit', 'Kart Kilit Limiti')}
+                title={t('profile.card_assignment_lock_limit')}
                 style={{
                   fontSize: 12,
                   padding: '2px 8px',
@@ -814,7 +810,7 @@ export default function CreateEditBotPage() {
                 }}
               >
                 <Lock size={12} style={{ opacity: 0.8 }} />
-                {t('card.total_lock_allowance', 'Toplam Kilit Hakkı')}: {cardLockLimit}
+                {t('card.total_lock_allowance')}: {cardLockLimit}
               </span>
             )}
           </div>
@@ -844,7 +840,7 @@ export default function CreateEditBotPage() {
               textTransform: 'uppercase',
             }}
           >
-            {t('bot.model_selection', 'Model')}
+            {t('bot.model_selection')}
           </label>
           <ModelGlassToggle
             value={formData.preferredModel}
@@ -866,7 +862,7 @@ export default function CreateEditBotPage() {
                 textTransform: 'uppercase',
               }}
             >
-              {t('bot.memory_tuning', 'Memory Tuning')}
+              {t('bot.memory_tuning')}
             </label>
             <div
               style={{
@@ -878,13 +874,12 @@ export default function CreateEditBotPage() {
               }}
             >
               <MemoryTuningSlider
-                title={t('bot.incubation_title', 'Kişilik Değişim Süresi')}
+                title={t('bot.incubation_title')}
                 description={t(
-                  'bot.incubation_desc',
-                  'Yeni eklenen Kişilik Kartlarının botun karakterini değiştirmeden önce ne kadar süre bekleyeceğini belirler. Süre dolduğunda bekleyen kartlar etkinleşerek mevcut kart setinden doğrudan yeni bir kişilik oluşturulur ve Hafıza Haritası bu yeni karaktere uyum sağlayacak şekilde güncellenir. Süreyi kısa tutmak yeni kartların hızla etkisini göstermesini sağlar; ancak çok sık kişilik değişimi anıların birbiriyle çelişip daha dengesiz bir yapıya bürünmesine yol açar ve karakterin oturmasını zorlaştırır.'
+                  'bot.incubation_desc'
                 )}
-                leftLabel={t('bot.incubation_left', 'Fast Personality Change')}
-                rightLabel={t('bot.incubation_right', 'Slow Personality Change')}
+                leftLabel={t('bot.incubation_left')}
+                rightLabel={t('bot.incubation_right')}
                 emblemField="incubationPeriodMultiplier"
                 value={formData.incubationPeriodMultiplier}
                 min={0}
@@ -909,13 +904,12 @@ export default function CreateEditBotPage() {
               }}
             >
               <MemoryTuningSlider
-                title={t('bot.affinity_bias_title', 'Emotionality')}
+                title={t('bot.affinity_bias_title')}
                 description={t(
-                  'bot.affinity_bias_desc',
-                  'Determines how the bot links its past Memories to its Core character. Closer to Logical, it follows the shortest and most direct connections between memories. Closer to Emotional, even if the path is longer, it travels through the memories that left the strongest impression and reinforces them further.'
+                  'bot.affinity_bias_desc'
                 )}
-                leftLabel={t('bot.affinity_bias_left', 'Logical')}
-                rightLabel={t('bot.affinity_bias_right', 'Emotional')}
+                leftLabel={t('bot.affinity_bias_left')}
+                rightLabel={t('bot.affinity_bias_right')}
                 emblemField="affinityBiasMultiplier"
                 value={formData.affinityBiasMultiplier}
                 min={0}
@@ -930,13 +924,12 @@ export default function CreateEditBotPage() {
                 style={sliderRowStyle}
               />
               <MemoryTuningSlider
-                title={t('bot.forgetfulness_title', 'Forgetting Speed')}
+                title={t('bot.forgetfulness_title')}
                 description={t(
-                  'bot.forgetfulness_desc',
-                  'Determines how quickly unvisited Memories fade over time and how frequently they are cleared from the Memory Map. Towards Elephant Memory, the bot retains even its oldest experiences for a long time; towards Alzheimer, it quickly forgets unused old memories and focuses only on recent events.'
+                  'bot.forgetfulness_desc'
                 )}
-                leftLabel={t('bot.forgetfulness_left', 'Elephant Memory')}
-                rightLabel={t('bot.forgetfulness_right', 'Alzheimer')}
+                leftLabel={t('bot.forgetfulness_left')}
+                rightLabel={t('bot.forgetfulness_right')}
                 emblemField="ebbinghausHalfLifePeriodMultiplier"
                 value={formData.ebbinghausHalfLifePeriodMultiplier}
                 min={0}
@@ -961,13 +954,12 @@ export default function CreateEditBotPage() {
               }}
             >
               <MemoryTuningSlider
-                title={t('bot.associative_scope_title', 'Recall Scope')}
+                title={t('bot.associative_scope_title')}
                 description={t(
-                  'bot.associative_scope_desc',
-                  'Determines how many related side memories and relationships are recalled together when a Memory is triggered. At the Autism-like end, the bot focuses solely on the immediate topic and leaves out side details. At the Big Picture end, it brings many surrounding connections into focus at once, forming broad links across different topics.'
+                  'bot.associative_scope_desc'
                 )}
-                leftLabel={t('bot.associative_scope_left', 'Autism-like')}
-                rightLabel={t('bot.associative_scope_right', 'Big Picture')}
+                leftLabel={t('bot.associative_scope_left')}
+                rightLabel={t('bot.associative_scope_right')}
                 emblemField="recallPathLimitMultiplier"
                 value={formData.recallPathLimitMultiplier}
                 min={0}
@@ -983,13 +975,12 @@ export default function CreateEditBotPage() {
                 style={sliderRowStyle}
               />
               <MemoryTuningSlider
-                title={t('bot.fixation_title', 'Idea Fixation')}
+                title={t('bot.fixation_title')}
                 description={t(
-                  'bot.fixation_desc',
-                  'Determines how strongly repeated ideas can solidify in the Memory Map and how easily fading memories are cleared. At the Open-Minded end, no idea becomes overly rigid and fading memories are easily cleared, allowing the bot to adapt quickly to new ideas. At the Resilient end, repeated thoughts take deep root and even the faintest memories resist being forgotten.'
+                  'bot.fixation_desc'
                 )}
-                leftLabel={t('bot.fixation_left', 'Open-Minded')}
-                rightLabel={t('bot.fixation_right', 'Resilient')}
+                leftLabel={t('bot.fixation_left')}
+                rightLabel={t('bot.fixation_right')}
                 emblemField="maxStrengthMultiplier"
                 value={formData.maxStrengthMultiplier}
                 min={0.5}
@@ -1016,12 +1007,12 @@ export default function CreateEditBotPage() {
                 checked={false}
                 onChange={() => {}}
                 disabled
-                label={t('bot.fediverse_support', 'Fediverse Support')}
+                label={t('bot.fediverse_support')}
               >
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                     <Globe size={16} strokeWidth={2} />
-                    {t('bot.fediverse_support', 'Fediverse Support')}
+                    {t('bot.fediverse_support')}
                   </span>
                   <span
                     style={{
@@ -1030,7 +1021,7 @@ export default function CreateEditBotPage() {
                       color: 'var(--color-text-faint)',
                     }}
                   >
-                    {t('bot.too_soon', 'Too soon!')}
+                    {t('bot.too_soon')}
                   </span>
                 </span>
               </SelectionMarker>
@@ -1043,8 +1034,7 @@ export default function CreateEditBotPage() {
                 }}
               >
                 {t(
-                  'bot.fediverse_support_desc',
-                  'Open your bot to the internet. The Fediverse is the open network that connects Bletchly to the outside world.'
+                  'bot.fediverse_support_desc'
                 )}
               </p>
             </div>
@@ -1101,8 +1091,7 @@ export default function CreateEditBotPage() {
             </div>
             <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--color-text-faint)' }}>
               {t(
-                'bot.interests_desc',
-                'Bletchly içerisinde botun ilgisinin daha yüksek olacağı yönelimleri seçebilirsiniz.'
+                'bot.interests_desc'
               )}
             </p>
           </div>
@@ -1120,7 +1109,7 @@ export default function CreateEditBotPage() {
         </div>
 
         <div
-          aria-label={t('card.selected_count', `${totalSelectedCount} kart seçildi`)}
+          aria-label={t('card.selected_count')}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -1168,8 +1157,7 @@ export default function CreateEditBotPage() {
                 }}
               >
                 {t(
-                  'bot.creator_ack',
-                  'AI Ajanımın kurgusal ve hiciv amaçlı bir eser olduğunu kabul ediyor ve yaratıcı sorumluluğuna ilişkin Hizmet Şartları’na uymayı taahhüt ediyorum.'
+                  'bot.creator_ack'
                 )}
               </span>
             </SelectionMarker>
@@ -1199,7 +1187,7 @@ export default function CreateEditBotPage() {
                 {t('auth.processing')}
               </>
             ) : (
-              <>{isEditMode ? t('action.save', 'Kaydet') : t('action.generate')}</>
+              <>{isEditMode ? t('action.save') : t('action.generate')}</>
             )}
           </button>
         </div>
@@ -1247,9 +1235,9 @@ export default function CreateEditBotPage() {
           setIsDeleteModalOpen(false)
           deleteMutation.mutate()
         }}
-        title={t('bot.delete_bot', 'Botu Sil')}
-        description={t('bot.confirm_delete', 'Bu botu kalıcı olarak silmek istediğinize emin misiniz?')}
-        confirmText={t('action.delete', 'Sil')}
+        title={t('bot.delete_bot')}
+        description={t('bot.confirm_delete')}
+        confirmText={t('action.delete')}
         confirmVariant="danger"
         isLoading={deleteMutation.isPending}
       />

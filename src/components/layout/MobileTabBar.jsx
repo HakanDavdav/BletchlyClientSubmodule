@@ -56,32 +56,32 @@ export default function MobileTabBar() {
   const quickLinks = [
     {
       key: 'leaderboard',
-      label: t('topbar.leaderboard', 'Liderlik Tablosu'),
+      label: t('topbar.leaderboard'),
       icon: <Podium size={23} strokeWidth={2.2} />,
       to: '/leaderboard?type=user',
     },
     {
       key: 'tribes',
-      label: t('explore_page.title', 'Keşfet'),
+      label: t('explore_page.title'),
       icon: <Users size={23} strokeWidth={2.2} />,
       to: '/explore',
     },
     {
       key: 'debates',
-      label: t('topbar.active_debates', 'Aktif Meydan Okumalar'),
+      label: t('topbar.active_debates'),
       icon: <AngryBotWithSwordsIcon size={23} />,
       to: '/active-debates',
     },
     {
       key: 'marketplace',
-      label: t('card.marketplace', 'Kart Marketi'),
+      label: t('card.marketplace'),
       icon: <BotFlashCardsIcon size={23} />,
       to: '/marketplace',
     },
     ...(isLoggedIn
       ? [{
           key: 'chat',
-          label: t('topbar.chat', 'Sohbet'),
+          label: t('topbar.chat'),
           icon: <ChatBubbleIcon size={23} />,
           to: '/chat',
         }]
@@ -105,21 +105,21 @@ export default function MobileTabBar() {
   const tabs = [
     {
       key: 'home',
-      label: t('tab_bar.home', 'Ana Sayfa'),
+      label: t('tab_bar.home'),
       icon: (active) => <Home size={21} strokeWidth={active ? 2.65 : 2.0} />,
       active: path === '/',
       to: '/',
     },
     {
       key: 'search',
-      label: t('tab_bar.search', 'Ara'),
+      label: t('tab_bar.search'),
       icon: (active) => <Search size={21} strokeWidth={active ? 2.65 : 2.0} />,
       active: isActive('/search'),
       to: '/search',
     },
     {
       key: 'profile',
-      label: t('tab_bar.profile', 'Profil'),
+      label: t('tab_bar.profile'),
       icon: (active) => <User size={21} strokeWidth={active ? 2.65 : 2.0} />,
       active: isProfileActive,
       to: isLoggedIn && actorId ? `/profile?actorId=${actorId}` : '/login',
@@ -127,12 +127,12 @@ export default function MobileTabBar() {
   ]
 
   return (
-    <nav className="mobile-tab-bar" aria-label={t('tab_bar.nav_label', 'Mobil Gezinme')}>
+    <nav className="mobile-tab-bar" aria-label={t('tab_bar.nav_label')}>
       <button
         type="button"
         className="mobile-tab-bar__item mobile-tab-bar__item--back"
         onClick={goBack}
-        aria-label={t('tab_bar.back', 'Geri')}
+        aria-label={t('tab_bar.back')}
       >
         <ArrowLeft size={21} strokeWidth={2.0} />
       </button>
@@ -155,7 +155,7 @@ export default function MobileTabBar() {
           type="button"
           className={`mobile-tab-bar__quick-btn${isQuickOpen ? ' is-open' : ''}`}
           onClick={() => setIsQuickOpen((v) => !v)}
-          aria-label={t('topbar.quick_links', 'Hızlı Bağlantılar')}
+          aria-label={t('topbar.quick_links')}
           aria-expanded={isQuickOpen}
         >
           {/* Bütünleşik bot ikonu: yön ve renk layout.css ile yönetilir */}

@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { triggerConfetti } from '../../utils/confetti'
 import TokenModal from './TokenModal'
+import ModalPortal from '../common/ModalPortal'
 
 export default function ChangePhoneModal({ isOpen, onClose }) {
   useDevLog('ChangePhoneModal', arguments[0] || {})
@@ -74,7 +75,8 @@ export default function ChangePhoneModal({ isOpen, onClose }) {
   }
 
   return (
-    <div className="modal-overlay" onClick={handleOverlayClick} style={{ zIndex: 100 }}>
+    <ModalPortal>
+      <div className="modal-overlay" onClick={handleOverlayClick} style={{ zIndex: 100 }}>
       <div className="modal-box" style={{ maxWidth: 440, padding: '36px 32px', textAlign: 'left', position: 'relative' }}>
         <button
           type="button"
@@ -159,7 +161,7 @@ export default function ChangePhoneModal({ isOpen, onClose }) {
                   disabled={requestMutation.isPending}
                   style={{ minWidth: 90 }}
                 >
-                  {t('common.close', 'Kapat')}
+                  {t('common.close')}
                 </button>
                 <button
                   type="submit"
@@ -174,6 +176,7 @@ export default function ChangePhoneModal({ isOpen, onClose }) {
           </motion.div>
         </AnimatePresence>
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   )
 }

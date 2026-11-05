@@ -207,10 +207,10 @@ export default function ActorMinimalCard({
                 style={{ color: 'inherit', textDecoration: 'none' }}
                 onClick={(e) => e.stopPropagation()}
               >
-                {profileName || t('actor.unnamed', 'İsimsiz')}
+                {profileName || t('actor.unnamed')}
               </Link>
             ) : (
-              profileName || t('actor.unnamed', 'İsimsiz')
+              profileName || t('actor.unnamed')
             )}
           </div>
         </div>
@@ -262,7 +262,7 @@ export default function ActorMinimalCard({
             type="button"
             className="actor-chip-hier-btn"
             onClick={handleHierarchyClick}
-            aria-label={t('actor.show_hierarchy', 'Hiyerarşiyi göster')}
+            aria-label={t('actor.show_hierarchy')}
           >
             <Network size={12} />
           </button>
@@ -274,8 +274,8 @@ export default function ActorMinimalCard({
             onClick={handleMemoryMapClick}
             aria-label={
               exploreHasTriggered
-                ? `${t('memoryMap.show', 'Memory Map')} (${effectiveTriggeredNodeIds.length} ${t('memoryMap.triggered_nodes', 'tetiklenen anı')})`
-                : t('memoryMap.show', 'Memory Map')
+                ? `${t('memoryMap.show')} (${effectiveTriggeredNodeIds.length} ${t('memoryMap.triggered_nodes')})`
+                : t('memoryMap.show')
             }
           >
             {exploreHasTriggered ? (
@@ -300,7 +300,7 @@ export default function ActorMinimalCard({
             to="/premium"
             className="actor-chip-premium-btn"
             onClick={(e) => e.stopPropagation()}
-            aria-label={isPremiumOwner ? t('premium.active', 'Pro Aktif') : t('premium.title', 'Pro')}
+            aria-label={isPremiumOwner ? t('premium.active') : t('premium.title')}
           >
             {isPremiumOwner ? (
               <KingIcon size={16} />
@@ -377,7 +377,7 @@ export default function ActorMinimalCard({
             type="button"
             className="actor-chip-hier-btn actor-chip-hier-btn--ultra"
             onClick={handleHierarchyClick}
-            aria-label={t('actor.show_hierarchy', 'Hiyerarşiyi göster')}
+            aria-label={t('actor.show_hierarchy')}
           >
             <Network size={11} />
           </button>
@@ -460,10 +460,10 @@ export default function ActorMinimalCard({
               style={{ color: 'inherit', textDecoration: 'none' }}
               onClick={(e) => e.stopPropagation()}
             >
-              {profileName || t('actor.unnamed', 'İsimsiz')}
+              {profileName || t('actor.unnamed')}
             </Link>
           ) : (
-            profileName || t('actor.unnamed', 'İsimsiz')
+            profileName || t('actor.unnamed')
           )}
         </span>
       </div>
@@ -517,7 +517,7 @@ export default function ActorMinimalCard({
           type="button"
           className="actor-chip-hier-btn"
           onClick={handleHierarchyClick}
-          aria-label={t('actor.show_hierarchy', 'Hiyerarşiyi göster')}
+          aria-label={t('actor.show_hierarchy')}
         >
           <Network size={12} />
         </button>
@@ -529,8 +529,8 @@ export default function ActorMinimalCard({
           onClick={handleMemoryMapClick}
           aria-label={
             hasTriggeredNodes
-              ? `${t('memoryMap.show', 'Memory Map')} (${effectiveTriggeredNodeIds.length} ${t('memoryMap.triggered_nodes', 'tetiklenen anı')})`
-              : t('memoryMap.show', 'Memory Map')
+              ? `${t('memoryMap.show')} (${effectiveTriggeredNodeIds.length} ${t('memoryMap.triggered_nodes')})`
+              : t('memoryMap.show')
           }
         >
           {hasTriggeredNodes ? (
@@ -557,7 +557,7 @@ export default function ActorMinimalCard({
           onClick={(e) => {
             e.stopPropagation()
           }}
-          aria-label={isPremiumOwner ? t('premium.active', 'Pro Aktif') : t('premium.title', 'Pro')}
+          aria-label={isPremiumOwner ? t('premium.active') : t('premium.title')}
         >
           {isPremiumOwner ? (
             <KingIcon size={16} />

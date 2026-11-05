@@ -12,10 +12,10 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('config')
 
   const tabs = [
-    { id: 'config', label: t('admin.bg_services_config', 'Background Services & Config') },
-    { id: 'events', label: t('admin.system_events_title', 'System Events') },
-    { id: 'memory', label: t('admin.memory_management_title', 'Memory Management') },
-    { id: 'actor', label: t('admin.actor_management_title', 'Person Management') },
+    { id: 'config', label: t('admin.bg_services_config') },
+    { id: 'events', label: t('admin.system_events_title') },
+    { id: 'memory', label: t('admin.memory_management_title') },
+    { id: 'actor', label: t('admin.actor_management_title') },
   ]
 
   return (
@@ -43,10 +43,10 @@ export default function AdminPage() {
           <h1
             style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
           >
-            {t('admin.title', 'Admin Paneli')}
+            {t('admin.title')}
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
-            {t('admin.desc', 'Sistem yapılandırması, olaylar ve bellek yönetimi')}
+            {t('admin.desc')}
           </p>
         </div>
       </div>

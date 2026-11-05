@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import useDevLog from '../../utils/useDevLog'
 import { KeyRound, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import ModalPortal from '../common/ModalPortal'
 
 export default function TokenModal({
   isOpen,
@@ -100,7 +101,8 @@ export default function TokenModal({
   if (!isOpen) return null
 
   return (
-    <div className="modal-overlay" style={{ zIndex: 1000 }}>
+    <ModalPortal>
+      <div className="modal-overlay" style={{ zIndex: 1000 }}>
       <div
         className="modal-box"
         style={{ maxWidth: 460, padding: '40px 36px', textAlign: 'center', position: 'relative' }}
@@ -132,7 +134,7 @@ export default function TokenModal({
 
         {displayTarget ? (
           <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: '12px 0 28px', lineHeight: 1.6 }}>
-            <span style={{ color: 'var(--color-text)', fontWeight: 500 }}>{displayTarget}</span>{t('auth.to_address', ' adresine')}
+            <span style={{ color: 'var(--color-text)', fontWeight: 500 }}>{displayTarget}</span>{t('auth.to_address')}
             {' '}{description || t('auth.email_verification_desc')}
           </p>
         ) : (
@@ -209,6 +211,7 @@ export default function TokenModal({
           </button>
         </form>
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   )
 }

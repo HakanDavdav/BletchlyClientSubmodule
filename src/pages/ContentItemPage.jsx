@@ -70,7 +70,7 @@ export default function ContentItemPage() {
           onClick={() => navigate(-1)}
           style={{ marginTop: 16 }}
         >
-          {t('common.go_back', 'Geri Dön')}
+          {t('common.go_back')}
         </button>
       </div>
     )

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ArrowLeft, MoreHorizontal, Pin } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -8,41 +8,27 @@ import ActorAvatar from '../actor/ActorAvatar'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
 import ChatComposer from './ChatComposer'
 import ChatMessageMenu from './ChatMessageMenu'
+import InfiniteScrollStatus from '../common/InfiniteScrollStatus'
+import useInfiniteScroll from '../../hooks/useInfiniteScroll'
 import TwemojiText from '../common/TwemojiText'
 import ChatBubbleIcon from '../common/icons/ChatBubbleIcon'
 import BotIcon from '../common/icons/BotIcon'
 import { chatApi } from '../../api/chatApi'
 import { buildReportMessage } from '../../utils/contentActions'
+import { formatDateLong, formatTimeOnly } from '../../utils/formatDate'
 
 function getActionErrorMessage(err, t) {
   return (
     err?.errors?.[0]?.description ||
     err?.response?.data?.errors?.[0]?.description ||
     err?.message ||
-    t('chat.action_failed', 'İşlem tamamlanamadı.')
+    t('chat.action_failed')
   )
 }
 
 function dayKey(value) {
   const date = new Date(value)
   return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
-}
-
-function formatDay(value, language) {
-  const date = new Date(value)
-  return new Intl.DateTimeFormat(language || 'en', {
-    day: 'numeric',
-    month: 'long',
-    year: date.getFullYear() === new Date().getFullYear() ? undefined : 'numeric',
-  }).format(date)
-}
-
-function formatTime(value, language) {
-  const date = new Date(value)
-  return new Intl.DateTimeFormat(language || 'en', {
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date)
 }
 
 export default function ChatThread({
@@ -56,10 +42,14 @@ export default function ChatThread({
   onBack,
   onSend,
 }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const scrollRef = useRef(null)
+  const previousScrollHeightRef = useRef(0)
+  const previousScrollTopRef = useRef(0)
+  const nearBottomRef = useRef(true)
+  const previousTargetRef = useRef(null)
   const messages = thread?.messages || []
   const otherActor = thread?.otherActor
   const [replyTo, setReplyTo] = useState(null)
@@ -67,15 +57,53 @@ export default function ChatThread({
 
   const lastMessageId = messages[messages.length - 1]?.chatMessageId
 
+  const { sentinelRef: loadOlderRef, isWaiting: isWaitingOlder } = useInfiniteScroll({
+    hasNextPage: hasMore,
+    isFetchingNextPage: loadingOlder,
+    fetchNextPage: onLoadOlder,
+    rootRef: scrollRef,
+    rootMargin: '150px',
+    enabled: Boolean(targetActorId) && messages.length > 0,
+  })
+
   useEffect(() => {
+    if (!loadingOlder) return
     const element = scrollRef.current
-    if (element) element.scrollTop = element.scrollHeight
+    if (!element) return
+    previousScrollHeightRef.current = element.scrollHeight
+    previousScrollTopRef.current = element.scrollTop
+  }, [loadingOlder])
+
+  useLayoutEffect(() => {
+    const element = scrollRef.current
+    if (!element) return
+    if (!previousScrollHeightRef.current) return
+    const delta = element.scrollHeight - previousScrollHeightRef.current
+    if (delta > 0) element.scrollTop = previousScrollTopRef.current + delta
+    previousScrollHeightRef.current = 0
+  }, [thread?.messages, loadingOlder])
+
+  useLayoutEffect(() => {
+    const element = scrollRef.current
+    if (!element) return
+    const targetChanged = previousTargetRef.current !== targetActorId
+    previousTargetRef.current = targetActorId
+    if (targetChanged || nearBottomRef.current) {
+      element.scrollTop = element.scrollHeight
+    }
   }, [lastMessageId, targetActorId])
 
   useEffect(() => {
     setReplyTo(null)
     setMenuState(null)
   }, [targetActorId])
+
+  const handleScroll = () => {
+    const element = scrollRef.current
+    if (!element) return
+    nearBottomRef.current =
+      element.scrollHeight - element.scrollTop - element.clientHeight < 100
+  }
 
   const invalidateThread = () => {
     queryClient.invalidateQueries({ queryKey: ['chat', 'thread', targetActorId] })
@@ -90,9 +118,9 @@ export default function ChatThread({
       senderActorId: message.senderActorId,
       senderProfileName:
         message.senderActorId === currentActorId
-          ? t('chat.you', 'Sen')
-          : otherActor?.profileName || t('chat.user', 'Kullanıcı'),
-      content: message.isDeleted ? t('chat.message_deleted', 'Mesaj silindi') : message.content,
+          ? t('chat.you')
+          : otherActor?.profileName || t('chat.user'),
+      content: message.isDeleted ? t('chat.message_deleted') : message.content,
     })
     closeMenu()
   }
@@ -100,9 +128,9 @@ export default function ChatThread({
   const handleCopy = async (message) => {
     try {
       await navigator.clipboard.writeText(message.content)
-      toast.success(t('chat.copy_success', 'Mesaj kopyalandı.'))
+      toast.success(t('chat.copy_success'))
     } catch {
-      toast.error(t('chat.copy_failed', 'Mesaj kopyalanamadı.'))
+      toast.error(t('chat.copy_failed'))
     }
     closeMenu()
   }
@@ -113,8 +141,8 @@ export default function ChatThread({
       const isFavorited = response?.data?.data
       toast.success(
         isFavorited
-          ? t('chat.favorite_added', 'Favorilere eklendi.')
-          : t('chat.favorite_removed', 'Favorilerden çıkarıldı.')
+          ? t('chat.favorite_added')
+          : t('chat.favorite_removed')
       )
       invalidateThread()
     } catch (err) {
@@ -129,8 +157,8 @@ export default function ChatThread({
       const isPinned = response?.data?.data
       toast.success(
         isPinned
-          ? t('chat.pinned', 'Mesaj sabitlendi.')
-          : t('chat.unpinned', 'Mesaj sabitlemesi kaldırıldı.')
+          ? t('chat.pinned')
+          : t('chat.unpinned')
       )
       invalidateThread()
     } catch (err) {
@@ -141,11 +169,11 @@ export default function ChatThread({
 
   const handleDelete = async (message) => {
     closeMenu()
-    if (!window.confirm(t('chat.delete_confirm', 'Bu mesajı silmek istediğine emin misin?'))) return
+    if (!window.confirm(t('chat.delete_confirm'))) return
     try {
       await chatApi.deleteMessage(message.chatMessageId)
       if (replyTo?.chatMessageId === message.chatMessageId) setReplyTo(null)
-      toast.success(t('chat.deleted', 'Mesaj silindi.'))
+      toast.success(t('chat.deleted'))
       invalidateThread()
     } catch (err) {
       toast.error(getActionErrorMessage(err, t))
@@ -165,6 +193,7 @@ export default function ChatThread({
   }
 
   const handleSend = async (content, replyToChatMessageId) => {
+    nearBottomRef.current = true
     await onSend(content, replyToChatMessageId)
     setReplyTo(null)
   }
@@ -185,7 +214,7 @@ export default function ChatThread({
         <BotIcon size={180} />
       </div>
       <header className="chat-thread__header">
-        <button type="button" className="chat-thread__back" onClick={onBack} aria-label={t('common.go_back', 'Geri')}>
+        <button type="button" className="chat-thread__back" onClick={onBack} aria-label={t('common.go_back')}>
           <ArrowLeft size={18} />
         </button>
         {otherActor ? (
@@ -201,27 +230,27 @@ export default function ChatThread({
               chipStyle={{ maxWidth: '100%' }}
               nameMaxWidth="24ch"
             />
-            <span className="chat-thread__identity-sub">{t('chat.private_chat', 'Özel mesajlar')}</span>
+            <span className="chat-thread__identity-sub">{t('chat.private_chat')}</span>
           </Link>
         ) : (
           <div className="chat-thread__identity">
-            <span className="chat-thread__identity-sub">{t('chat.private_chat', 'Özel mesajlar')}</span>
+            <span className="chat-thread__identity-sub">{t('chat.private_chat')}</span>
           </div>
         )}
       </header>
 
-      <div className="chat-thread__messages" ref={scrollRef}>
-        {hasMore && (
-          <button
-            type="button"
-            className="chat-thread__load-older"
-            onClick={onLoadOlder}
-            disabled={loadingOlder}
-          >
-            {loadingOlder
-              ? t('common.loading', 'Yükleniyor...')
-              : t('chat.load_older', 'Daha eski mesajlar')}
-          </button>
+      <div className="chat-thread__messages" ref={scrollRef} onScroll={handleScroll}>
+        {messages.length > 0 && (
+          <>
+            <div ref={loadOlderRef} style={{ height: 1 }} />
+            <div className="chat-thread__older-status">
+              <InfiniteScrollStatus
+                isFetching={loadingOlder || isWaitingOlder}
+                hasNextPage={hasMore}
+                hasItems={messages.length > 0}
+              />
+            </div>
+          </>
         )}
         {loading ? (
           <div className="chat-thread__loading">
@@ -232,8 +261,7 @@ export default function ChatThread({
             <div className="chat-thread__empty-icon">
               <ChatBubbleIcon size={24} color="var(--color-primary)" />
             </div>
-            <h2>{t('chat.no_messages', 'Henüz mesaj yok')}</h2>
-            <p>{t('chat.no_messages_desc', 'İlk mesajı sen yaz.')}</p>
+            <h2>{t('common.nothing_here_yet')}</h2>
           </div>
         ) : (
           messages.map((message, index) => {
@@ -244,7 +272,7 @@ export default function ChatThread({
               <div key={message.chatMessageId}>
                 {showDay && (
                   <div className="chat-thread__day">
-                    <span>{formatDay(message.createdAt, i18n.language)}</span>
+                    <span className="date-text">{formatDateLong(message.createdAt)}</span>
                   </div>
                 )}
                 <div className={`chat-message${isMine ? ' is-mine' : ''}${message.isDeleted ? ' is-deleted' : ''}`}>
@@ -258,7 +286,7 @@ export default function ChatThread({
                       hideBadge
                     />
                   )}
-                  <span className="chat-message__time">{formatTime(message.createdAt, i18n.language)}</span>
+                  <span className="chat-message__time date-text">{formatTimeOnly(message.createdAt)}</span>
                   <div className="chat-message__bubble-wrap">
                     {!message.isDeleted && (
                       <button
@@ -272,14 +300,14 @@ export default function ChatThread({
                             anchorRect: event.currentTarget.getBoundingClientRect(),
                           })
                         }}
-                        aria-label={t('chat.message_actions', 'Mesaj işlemleri')}
+                        aria-label={t('chat.message_actions')}
                       >
                         <MoreHorizontal size={14} />
                       </button>
                     )}
                     <div className={`chat-message__bubble${message.isPinned ? ' is-pinned' : ''}`}>
                       {message.isPinned && (
-                        <span className="chat-message__pin" title={t('chat.pinned_message', 'Sabitlenmiş mesaj')}>
+                        <span className="chat-message__pin" title={t('chat.pinned_message')}>
                           <Pin size={10} />
                         </span>
                       )}
@@ -288,18 +316,18 @@ export default function ChatThread({
                           <strong>
                             {message.replyToSenderProfileName ||
                               (message.replyToSenderActorId === currentActorId
-                                ? t('chat.you', 'Sen')
-                                : t('chat.user', 'Kullanıcı'))}
+                                ? t('chat.you')
+                                : t('chat.user'))}
                           </strong>
                           <span>
                             {message.replyToContent
                               ? <TwemojiText text={message.replyToContent} />
-                              : t('chat.message_deleted', 'Mesaj silindi')}
+                              : t('chat.message_deleted')}
                           </span>
                         </div>
                       )}
                       {message.isDeleted ? (
-                        <p className="chat-message__deleted-text">{t('chat.message_deleted', 'Mesaj silindi')}</p>
+                        <p className="chat-message__deleted-text">{t('chat.message_deleted')}</p>
                       ) : (
                         <p><TwemojiText text={message.content} /></p>
                       )}

@@ -14,38 +14,39 @@ import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
 import { getMemoryEmblems } from '../components/common/MemoryEmblems'
 import { formatMultiplier } from '../components/common/MemoryTuningSlider'
+import { formatDateTime } from '../utils/formatDate'
 import { RotateCcwClock } from '../components/common/icons'
 
 export function getNodeLabelText(label, isRoot = false, isTribeContext = false) {
   if (isRoot) {
     return isTribeContext
-      ? i18n.t('memoryMap.labels.tribe_persona', 'Tribe Persona')
-      : i18n.t('memoryMap.labels.persona', 'Persona')
+      ? i18n.t('memoryMap.labels.tribe_persona')
+      : i18n.t('memoryMap.labels.persona')
   }
   if (label === 'HistoricalPersona' || label === 'HistoricalTribePersona') {
     return isTribeContext || label === 'HistoricalTribePersona'
-      ? i18n.t('memoryMap.labels.historical_tribe_persona', 'Historical Tribe Persona')
-      : i18n.t('memoryMap.labels.historical_persona', 'Historical Persona')
+      ? i18n.t('memoryMap.labels.historical_tribe_persona')
+      : i18n.t('memoryMap.labels.historical_persona')
   }
   if (label === 'HistoricalCore') {
-    return i18n.t('memoryMap.labels.historical_core', 'Historical Core')
+    return i18n.t('memoryMap.labels.historical_core')
   }
   if (label === 'Persona' || label === 'TribePersona') {
     return isTribeContext || label === 'TribePersona'
-      ? i18n.t('memoryMap.labels.tribe_persona', 'Tribe Persona')
-      : i18n.t('memoryMap.labels.persona', 'Persona')
+      ? i18n.t('memoryMap.labels.tribe_persona')
+      : i18n.t('memoryMap.labels.persona')
   }
   if (label === 'Core') {
-    return i18n.t('memoryMap.labels.core', 'Core')
+    return i18n.t('memoryMap.labels.core')
   }
   if (label === 'Tribe' && isTribeContext) {
-    return i18n.t('memoryMap.labels.other_tribes', 'Other Tribes')
+    return i18n.t('memoryMap.labels.other_tribes')
   }
   if (label === 'Tribe') {
-    return i18n.t('memoryMap.labels.tribe', 'Tribe')
+    return i18n.t('memoryMap.labels.tribe')
   }
   if (label === 'Actor' || label === 'User' || label === 'Bot') {
-    return i18n.t('memoryMap.labels.actor', 'Person')
+    return i18n.t('memoryMap.labels.actor')
   }
   if (
     label === 'GeneralThought' ||
@@ -53,7 +54,7 @@ export function getNodeLabelText(label, isRoot = false, isTribeContext = false) 
     label === 'Concept' ||
     label === 'Thought'
   ) {
-    return i18n.t('memoryMap.labels.general_thought', 'Thought')
+    return i18n.t('memoryMap.labels.general_thought')
   }
   return label || ''
 }
@@ -2198,7 +2199,7 @@ function NodeDetailPanel({ node, onClose, isTribeContext = false, relationships 
                   flexWrap: 'wrap',
                 }}
               >
-                <span>{node.name || t('memoryMap.unknown_node', 'Unknown Node')}</span>
+                <span>{node.name || t('memoryMap.unknown_node')}</span>
                 <span
                   style={{
                     fontSize: 13,
@@ -2207,14 +2208,14 @@ function NodeDetailPanel({ node, onClose, isTribeContext = false, relationships 
                     letterSpacing: '0.01em',
                   }}
                 >
-                  [{t('memoryMap.version', 'Version')} : {node.personaVersion || 1}]
+                  [{t('memoryMap.version')} : {node.personaVersion || 1}]
                 </span>
               </div>
             </div>
           </div>
           <button
             onClick={onClose}
-            aria-label={t('common.close', 'Kapat')}
+            aria-label={t('common.close')}
             style={{
               background: 'transparent',
               border: 'none',
@@ -2256,7 +2257,7 @@ function NodeDetailPanel({ node, onClose, isTribeContext = false, relationships 
                 fontSize: 13,
               }}
             >
-              {t('memoryMap.no_extra_props', 'Bu düğüm için ek özellik bulunmuyor.')}
+              {t('memoryMap.no_extra_props')}
             </div>
           ) : (
             <div>
@@ -2273,17 +2274,17 @@ function NodeDetailPanel({ node, onClose, isTribeContext = false, relationships 
                           : null
                 const label =
                   key === 'lastUpdated'
-                    ? t('card.updated_at', 'Updated At')
+                    ? t('card.updated_at')
                     : key === 'description'
-                      ? t('memoryMap.description', 'Açıklama')
+                      ? t('memoryMap.description')
                       : key === 'personaVersion'
-                        ? t('memoryMap.persona_version', 'Persona Version')
+                        ? t('memoryMap.persona_version')
                         : key === 'embeddingPreview'
-                          ? t('memoryMap.embedding_preview', 'Embedding')
+                          ? t('memoryMap.embedding_preview')
                           : key
                 const displayValue =
                   key === 'lastUpdated' && typeof value === 'number'
-                    ? new Date(value).toLocaleString()
+                    ? <span className="date-text">{formatDateTime(value)}</span>
                     : key === 'embeddingPreview' && Array.isArray(value)
                       ? `${value.map((v) => Number(v).toFixed(3)).join(', ')}, ...`
                       : String(value)
@@ -2314,7 +2315,7 @@ function NodeDetailPanel({ node, onClose, isTribeContext = false, relationships 
                 marginBottom: 8,
               }}
             >
-              {t('memoryMap.relationships', 'Relationships')} · {relationships.length}
+              {t('memoryMap.relationships')} · {relationships.length}
             </div>
             {relationships.length === 0 ? (
               <div
@@ -2323,7 +2324,7 @@ function NodeDetailPanel({ node, onClose, isTribeContext = false, relationships 
                   color: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.45)',
                 }}
               >
-                {t('memoryMap.no_relationships', 'No relationships.')}
+                {t('memoryMap.no_relationships')}
               </div>
             ) : (
               relationships.map((rel) => {
@@ -2545,11 +2546,11 @@ export default function MemoryMapPage() {
           return JSON.parse(res.data.data)
         } catch (e) {
           console.error('Failed to parse neo4j output:', e)
-          throw new Error(t('memoryMap.parse_error', 'Failed to parse memory data.'))
+          throw new Error(t('memoryMap.parse_error'))
         }
       }
       throw new Error(
-        res?.data?.errors?.[0]?.description || t('memoryMap.fetch_error', 'Failed to fetch memory.')
+        res?.data?.errors?.[0]?.description || t('memoryMap.fetch_error')
       )
     },
     enabled: Boolean(actorId || tribeId),
@@ -2971,7 +2972,7 @@ export default function MemoryMapPage() {
 
   useEffect(() => {
     if (!actorId && !tribeId) {
-      toast.error(t('memoryMap.id_missing', 'Actor or Tribe ID is missing.'))
+      toast.error(t('memoryMap.id_missing'))
       navigate('/')
     }
   }, [actorId, tribeId, navigate, t])
@@ -2979,7 +2980,7 @@ export default function MemoryMapPage() {
   useEffect(() => {
     if (isError && memoryError) {
       toast.error(
-        memoryError.message || t('memoryMap.generic_error', 'An error occurred while fetching memory.')
+        memoryError.message || t('memoryMap.generic_error')
       )
     }
   }, [isError, memoryError, t])
@@ -3633,7 +3634,7 @@ export default function MemoryMapPage() {
       hasHandledHighlightRef.current = true
 
       // Graceful Nostalgic Fallback: düğüm Neo4j'de zamanla silikleşti / unutuldu
-      toast(t('memoryMap.memory_faded', 'Bu anı zamanla silikleşti ve unutuldu.'), {
+      toast(t('memoryMap.memory_faded'), {
         icon: '🌫️',
         duration: 5000,
       })
@@ -3982,7 +3983,7 @@ export default function MemoryMapPage() {
           >
             <button
               onClick={() => navigate(-1)}
-              aria-label={t('common.back', 'Geri')}
+              aria-label={t('common.back')}
               className="page-back-button"
               style={{
                 width: 30,
@@ -4032,10 +4033,10 @@ export default function MemoryMapPage() {
                 }}
               >
                 <span className="mind-header-label-full">
-                  {t('memoryMap.graph_title', 'MEMORY MAP')}
+                  {t('memoryMap.graph_title')}
                 </span>
                 <span className="mind-header-label-short">
-                  {t('memoryMap.graph_title_short', 'MAP')}
+                  {t('memoryMap.graph_title_short')}
                 </span>
               </span>
               <span
@@ -4083,7 +4084,7 @@ export default function MemoryMapPage() {
                   onClick={() => setMemStatsOpen((v) => !v)}
                   aria-haspopup="dialog"
                   aria-expanded={memStatsOpen}
-                  aria-label={t('bot.memory_tuning', 'Hafıza Ayarı')}
+                  aria-label={t('bot.memory_tuning')}
                 >
                   <span className="mind-identity-emblems bot-capability-emblems bot-capability-emblems--memory-grid">
                     {memoryMapMemoryEmblems.map(
@@ -4115,7 +4116,7 @@ export default function MemoryMapPage() {
                   {memStatsOpen && (
                     <motion.div
                       role="dialog"
-                      aria-label={t('bot.memory_tuning', 'Hafıza Ayarı')}
+                      aria-label={t('bot.memory_tuning')}
                       initial={{ opacity: 0, y: -6 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -6 }}
@@ -4291,7 +4292,7 @@ export default function MemoryMapPage() {
             type="button"
             className="btn btn-primary btn-sm mind-default-mobile"
             onClick={handleResetView}
-            aria-label={t('hierarchy.default_view', 'Varsayılan')}
+            aria-label={t('hierarchy.default_view')}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -4302,7 +4303,7 @@ export default function MemoryMapPage() {
             }}
           >
             <Focus size={12} />
-            <span className="mind-default-label">{t('hierarchy.default_view', 'Varsayılan')}</span>
+            <span className="mind-default-label">{t('hierarchy.default_view')}</span>
           </button>
 
           {/* Sağ: Node tanımları + Varsayılan Görünüm (mobilde legend + Anılar satırı) */}
@@ -4343,7 +4344,7 @@ export default function MemoryMapPage() {
               <button
                 type="button"
                 onClick={() => setGraphTypeFilter((f) => (f === 'recalled' ? null : 'recalled'))}
-                title={t('memoryMap.filter_by_type', 'Filter by type')}
+                title={t('memoryMap.filter_by_type')}
                 aria-pressed={graphTypeFilter === 'recalled'}
                 style={{
                   display: 'flex',
@@ -4397,7 +4398,7 @@ export default function MemoryMapPage() {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {t('memoryMap.labels.recalled', 'Recalled')}
+                    {t('memoryMap.labels.recalled')}
                   </span>
                 </span>
               </button>
@@ -4413,31 +4414,31 @@ export default function MemoryMapPage() {
                   key: 'root',
                   color: accent.activeGlow,
                   label: tribeId
-                    ? t('memoryMap.labels.tribe_persona', 'Tribe Persona')
-                    : t('memoryMap.labels.persona', 'Persona'),
+                    ? t('memoryMap.labels.tribe_persona')
+                    : t('memoryMap.labels.persona'),
                 },
-                { key: 'core', color: accent.activeGlow, label: t('memoryMap.labels.core', 'Core') },
+                { key: 'core', color: accent.activeGlow, label: t('memoryMap.labels.core') },
                 {
                   key: 'historical',
                   color: getHistoricalNeuronColor().core,
-                  label: t('memoryMap.labels.historical', 'Historical'),
+                  label: t('memoryMap.labels.historical'),
                 },
                 {
                   key: 'tribe',
                   color: NEURON_COLORS.Tribe.core,
                   label: tribeId
-                    ? t('memoryMap.labels.other_tribes', 'Other Tribes')
-                    : t('memoryMap.labels.tribe', 'Tribe'),
+                    ? t('memoryMap.labels.other_tribes')
+                    : t('memoryMap.labels.tribe'),
                 },
                 {
                   key: 'person',
                   color: NEURON_COLORS.Actor.core,
-                  label: t('memoryMap.labels.actor', 'Person'),
+                  label: t('memoryMap.labels.actor'),
                 },
                 {
                   key: 'thought',
                   color: NEURON_COLORS.GeneralThought.core,
-                  label: t('memoryMap.labels.general_thought', 'Thought'),
+                  label: t('memoryMap.labels.general_thought'),
                 },
               ].map(({ key, color, label }, idx) => {
                 const isActive = graphTypeFilter === key
@@ -4446,7 +4447,7 @@ export default function MemoryMapPage() {
                     type="button"
                     key={key}
                     onClick={() => setGraphTypeFilter((f) => (f === key ? null : key))}
-                    title={t('memoryMap.filter_by_type', 'Filter by type')}
+                    title={t('memoryMap.filter_by_type')}
                     aria-pressed={isActive}
                     style={{
                       display: 'flex',
@@ -4538,7 +4539,7 @@ export default function MemoryMapPage() {
                 <button
                   type="button"
                   onClick={() => setIsVersionDropdownOpen((v) => !v)}
-                  title={t('memoryMap.filter_by_version', 'Versiyona göre filtrele')}
+                  title={t('memoryMap.filter_by_version')}
                   aria-expanded={isVersionDropdownOpen}
                   aria-haspopup="dialog"
                   style={{
@@ -4594,7 +4595,7 @@ export default function MemoryMapPage() {
                   {isVersionDropdownOpen && (
                     <motion.div
                       role="dialog"
-                      aria-label={t('memoryMap.version_title', 'Versiyon')}
+                      aria-label={t('memoryMap.version_title')}
                       initial={{ opacity: 0, y: -4, scale: 0.96 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -4, scale: 0.96 }}
@@ -4634,7 +4635,7 @@ export default function MemoryMapPage() {
                           marginBottom: 2,
                         }}
                       >
-                        <span>{t('memoryMap.version_title', 'Versiyon')}</span>
+                        <span>{t('memoryMap.version_title')}</span>
                       </div>
 
                       <div
@@ -4740,19 +4741,19 @@ export default function MemoryMapPage() {
                 <MemoryMapToggle
                   active={effectiveHideLinkLabels}
                   onClick={() => setHideLinkLabels(!effectiveHideLinkLabels)}
-                  label={t('memoryMap.view.hide_link_labels', 'Bağlantı yazıları')}
+                  label={t('memoryMap.view.hide_link_labels')}
                   icon={<Tag size={12} />}
                 />
                 <MemoryMapToggle
                   active={effectiveHideNodeLabels}
                   onClick={() => setHideNodeLabels(!effectiveHideNodeLabels)}
-                  label={t('memoryMap.view.hide_node_labels', 'Düğüm yazıları')}
+                  label={t('memoryMap.view.hide_node_labels')}
                   icon={<Type size={12} />}
                 />
                 <MemoryMapToggle
                   active={effectiveLockGraph}
                   onClick={() => setLockGraph(!effectiveLockGraph)}
-                  label={t('memoryMap.view.lock_graph', 'Kilit')}
+                  label={t('memoryMap.view.lock_graph')}
                   icon={effectiveLockGraph ? <Lock size={12} /> : <Unlock size={12} />}
                 />
                 <MemoryMapToggle
@@ -4761,9 +4762,9 @@ export default function MemoryMapPage() {
                     const i = SPACING_OPTIONS.indexOf(effectiveSpacingSetting)
                     setSpacingSetting(SPACING_OPTIONS[(i + 1) % SPACING_OPTIONS.length])
                   }}
-                  label={`${t('memoryMap.view.spacing', 'Aralık')}: ${
+                  label={`${t('memoryMap.view.spacing')}: ${
                     effectiveSpacingSetting === 'auto'
-                      ? t('memoryMap.view.spacing_auto', 'Otomatik')
+                      ? t('memoryMap.view.spacing_auto')
                       : t(
                           `memoryMap.view.spacing_${effectiveSpacingSetting}`,
                           resolveSpacingPreset(effectiveSpacingSetting, graphData.nodes.length)
@@ -4772,7 +4773,7 @@ export default function MemoryMapPage() {
                   }`}
                   shortLabel={
                     effectiveSpacingSetting === 'auto'
-                      ? t('memoryMap.view.spacing_auto', 'Otomatik')
+                      ? t('memoryMap.view.spacing_auto')
                       : t(
                           `memoryMap.view.spacing_${effectiveSpacingSetting}`,
                           resolveSpacingPreset(effectiveSpacingSetting, graphData.nodes.length)
@@ -4784,7 +4785,7 @@ export default function MemoryMapPage() {
                 <MemoryMapToggle
                   active={effectiveLazyRender}
                   onClick={() => setLazyRender(!effectiveLazyRender)}
-                  label={t('memoryMap.view.lazy', 'Lazy')}
+                  label={t('memoryMap.view.lazy')}
                   icon={<Timer size={12} />}
                 />
                 </div>
@@ -4796,7 +4797,7 @@ export default function MemoryMapPage() {
                 type="button"
                 className="btn btn-primary btn-sm mind-default-desktop"
                 onClick={handleResetView}
-                aria-label={t('hierarchy.default_view', 'Varsayılan')}
+                aria-label={t('hierarchy.default_view')}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -4807,7 +4808,7 @@ export default function MemoryMapPage() {
                 }}
               >
                 <Focus size={12} />
-                <span className="mind-default-label">{t('hierarchy.default_view', 'Varsayılan')}</span>
+                <span className="mind-default-label">{t('hierarchy.default_view')}</span>
               </button>
               </div>
             </div>
@@ -4818,11 +4819,11 @@ export default function MemoryMapPage() {
               ref={memBtnRef}
               className="mind-memories-btn"
               onClick={() => setIsNodeListCollapsed((prev) => !prev)}
-              aria-label={t('memoryMap.memories_title', 'Anılar')}
+              aria-label={t('memoryMap.memories_title')}
               aria-expanded={!isNodeListCollapsed}
             >
               <Brain size={15} />
-              <span>{t('memoryMap.memories_title', 'Anılar')}</span>
+              <span>{t('memoryMap.memories_title')}</span>
               <span
                 className="mind-memories-caret"
                 aria-hidden="true"
@@ -4866,7 +4867,7 @@ export default function MemoryMapPage() {
             >
               <Brain size={40} style={{ color: 'var(--color-primary)', opacity: 0.5 }} />
               <p style={{ color: 'var(--color-primary)', opacity: 0.6, fontSize: 14 }}>
-                {t('memoryMap.no_memories', 'No memories found.')}
+                {t('common.nothing_here_yet')}
               </p>
             </div>
           ) : (
@@ -5087,7 +5088,7 @@ export default function MemoryMapPage() {
                         color: isDarkMode ? '#f0e6ff' : '#111827',
                       }}
                     >
-                      {t('memoryMap.memories_title', 'Anılar')}
+                      {t('memoryMap.memories_title')}
                     </span>
                     <span
                       style={{
@@ -5159,7 +5160,7 @@ export default function MemoryMapPage() {
                             type="text"
                             className="input"
                             style={{ paddingLeft: 30, height: 32, fontSize: 12, width: '100%' }}
-                            placeholder={t('topbar.search', 'Ara')}
+                            placeholder={t('topbar.search')}
                             value={nodeSearch}
                             onChange={(e) => setNodeSearch(e.target.value)}
                           />
@@ -5177,7 +5178,7 @@ export default function MemoryMapPage() {
                               borderColor:
                                 memNodeTypes.size > 0 || memVersions.size > 0 || memSortBy ? 'var(--color-primary)' : undefined,
                             }}
-                            aria-label={t('topbar.search_filters', 'Arama Filtreleri')}
+                            aria-label={t('topbar.search_filters')}
                           >
                             <Filter
                               size={14}
@@ -5199,7 +5200,7 @@ export default function MemoryMapPage() {
                                 setMemVersions(new Set())
                                 setMemSortBy('')
                               }}
-                              aria-label={t('common.clear_all', 'Tümünü Temizle')}
+                              aria-label={t('common.clear_all')}
                               style={{
                                 position: 'absolute',
                                 top: -4,
@@ -5257,7 +5258,7 @@ export default function MemoryMapPage() {
                                     paddingBottom: 6,
                                   }}
                                 >
-                                  <span>{t('search.filters_title', 'Arama Filtreleri')}</span>
+                                  <span>{t('search.filters_title')}</span>
                                   <X
                                     size={14}
                                     color="var(--color-text-secondary)"
@@ -5271,30 +5272,30 @@ export default function MemoryMapPage() {
                                   <label
                                     style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}
                                   >
-                                    {t('memoryMap.filters.node_types', 'Düğüm Tipleri')}
+                                    {t('memoryMap.filters.node_types')}
                                   </label>
                                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                                     {[
                                       {
                                         key: 'recalled',
-                                        label: t('memoryMap.labels.recalled', 'Recalled'),
+                                        label: t('memoryMap.labels.recalled'),
                                       },
                                       {
                                         key: 'Persona',
                                         label: tribeId
-                                          ? t('memoryMap.labels.tribe_persona', 'Tribe Persona')
-                                          : t('memoryMap.labels.persona', 'Persona'),
+                                          ? t('memoryMap.labels.tribe_persona')
+                                          : t('memoryMap.labels.persona'),
                                       },
-                                      { key: 'Core', label: t('memoryMap.labels.core', 'Core') },
+                                      { key: 'Core', label: t('memoryMap.labels.core') },
                                       {
                                         key: 'Historical',
-                                        label: t('memoryMap.labels.historical', 'Historical'),
+                                        label: t('memoryMap.labels.historical'),
                                       },
-                                      { key: 'Tribe', label: t('memoryMap.labels.tribe', 'Tribe') },
-                                      { key: 'Person', label: t('memoryMap.labels.actor', 'Person') },
+                                      { key: 'Tribe', label: t('memoryMap.labels.tribe') },
+                                      { key: 'Person', label: t('memoryMap.labels.actor') },
                                       {
                                         key: 'Thought',
-                                        label: t('memoryMap.labels.general_thought', 'Thought'),
+                                        label: t('memoryMap.labels.general_thought'),
                                       },
                                     ].map(({ key, label }) => {
                                       const active = memNodeTypes.has(key)
@@ -5326,7 +5327,7 @@ export default function MemoryMapPage() {
                                     <label
                                       style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}
                                     >
-                                      {t('memoryMap.filters.versions', 'Versiyonlar')}
+                                      {t('memoryMap.filters.versions')}
                                     </label>
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                                       {availableVersions.map((ver) => {
@@ -5359,7 +5360,7 @@ export default function MemoryMapPage() {
                                   <label
                                     style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}
                                   >
-                                    {t('search.sort_by', 'Sıralama')}
+                                    {t('search.sort_by')}
                                   </label>
                                   <select
                                     className="input"
@@ -5367,11 +5368,11 @@ export default function MemoryMapPage() {
                                     value={memSortBy}
                                     onChange={(e) => setMemSortBy(e.target.value)}
                                   >
-                                    <option value="">{t('search.none', 'Yok')}</option>
-                                    <option value="newest">{t('search.newest', 'Newest')}</option>
-                                    <option value="oldest">{t('search.oldest', 'Oldest')}</option>
+                                    <option value="">{t('search.none')}</option>
+                                    <option value="newest">{t('search.newest')}</option>
+                                    <option value="oldest">{t('search.oldest')}</option>
                                     <option value="lastupdated">
-                                      {t('memoryMap.last_updated', 'Last Updated')}
+                                      {t('memoryMap.last_updated')}
                                     </option>
                                   </select>
                                 </div>
@@ -5403,7 +5404,7 @@ export default function MemoryMapPage() {
                             color: isDarkMode ? 'rgba(240,230,255,0.4)' : 'rgba(0,0,0,0.4)',
                           }}
                         >
-                          {t('memoryMap.no_memories_found', 'Eşleşen anı bulunamadı')}
+                          {t('search.no_results')}
                         </div>
                       ) : (
                         filteredNodes.map((node) => {
@@ -5478,7 +5479,7 @@ export default function MemoryMapPage() {
                                   }}
                                   title={node.name}
                                 >
-                                  {node.name || t('memoryMap.unknown_memory', 'Anı')}
+                                  {node.name || t('memoryMap.unknown_memory')}
                                 </div>
                                 <div
                                   style={{

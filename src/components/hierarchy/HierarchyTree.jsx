@@ -405,7 +405,7 @@ function TreeNode({
                 onToggleAncestor(node.actorId)
               }
             }}
-            aria-label={t('hierarchy.collapse_fossil_ancestor_tooltip', 'Fosil atayı daralt ve alt birimleri doğrudan üste bağla')}
+            aria-label={t('hierarchy.collapse_fossil_ancestor_tooltip')}
           >
             <TRexSkullIcon className="badge-fossil-icon" />
             <CircleMinus size={12} strokeWidth={2.4} />
@@ -435,7 +435,7 @@ function TreeNode({
             }}
           >
             <div
-              title={t('hierarchy.bot_deleted', 'Silinmiş Bot')}
+              title={t('hierarchy.bot_deleted')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -503,8 +503,8 @@ function TreeNode({
             className="vtree-toggle-btn"
             aria-label={
               isCollapsed
-                ? t('hierarchy.expand', 'Genişlet')
-                : t('hierarchy.collapse', 'Daralt')
+                ? t('hierarchy.expand')
+                : t('hierarchy.collapse')
             }
           >
             {isExpanding ? (
@@ -592,17 +592,17 @@ function TreeNode({
                     disabled={isLoadingFossils}
                     aria-label={
                       hasFossil && hasDeleted
-                        ? (effectiveFossilExpanded ? t('hierarchy.hide_archive', 'Fosil ve silinmiş alt birimleri daralt') : t('hierarchy.show_archive', 'Fosil ve silinmiş alt birimleri göster'))
+                        ? (effectiveFossilExpanded ? t('hierarchy.hide_archive') : t('hierarchy.show_archive'))
                         : hasFossil
-                          ? (effectiveFossilExpanded ? t('hierarchy.hide_fossils', 'Fosilleşmiş alt birimleri daralt') : t('hierarchy.show_fossils', 'Fosilleşmiş alt birimleri göster'))
-                          : (effectiveFossilExpanded ? t('hierarchy.hide_deleted', 'Silinmiş alt birimleri daralt') : t('hierarchy.show_deleted', 'Silinmiş alt birimleri göster'))
+                          ? (effectiveFossilExpanded ? t('hierarchy.hide_fossils') : t('hierarchy.show_fossils'))
+                          : (effectiveFossilExpanded ? t('hierarchy.hide_deleted') : t('hierarchy.show_deleted'))
                     }
                     title={
                       hasFossil && hasDeleted
-                        ? (effectiveFossilExpanded ? t('hierarchy.hide_archive', 'Fosil ve silinmiş alt birimleri daralt') : t('hierarchy.show_archive', 'Fosil ve silinmiş alt birimleri göster'))
+                        ? (effectiveFossilExpanded ? t('hierarchy.hide_archive') : t('hierarchy.show_archive'))
                         : hasFossil
-                          ? (effectiveFossilExpanded ? t('hierarchy.hide_fossils', 'Fosilleşmiş alt birimleri daralt') : t('hierarchy.show_fossils', 'Fosilleşmiş alt birimleri göster'))
-                          : (effectiveFossilExpanded ? t('hierarchy.hide_deleted', 'Silinmiş alt birimleri daralt') : t('hierarchy.show_deleted', 'Silinmiş alt birimleri göster'))
+                          ? (effectiveFossilExpanded ? t('hierarchy.hide_fossils') : t('hierarchy.show_fossils'))
+                          : (effectiveFossilExpanded ? t('hierarchy.hide_deleted') : t('hierarchy.show_deleted'))
                     }
                   >
                     {hasFossil && hasDeleted ? (
@@ -711,12 +711,12 @@ function TreeNode({
                                 e.stopPropagation()
                                 setFossilVisibleLimit((prev) => prev + 5)
                               }}
-                              aria-label={t('hierarchy.load_more_archive', '+{{count}} daha fazla göster ({{remaining}} kalan)', { count: nextArchiveBatch, remaining: remainingArchiveCount })}
-                              title={t('hierarchy.load_more_archive', '+{{count}} daha fazla göster ({{remaining}} kalan)', { count: nextArchiveBatch, remaining: remainingArchiveCount })}
+                              aria-label={t('hierarchy.load_more_archive', { count: nextArchiveBatch, remaining: remainingArchiveCount })}
+                              title={t('hierarchy.load_more_archive', { count: nextArchiveBatch, remaining: remainingArchiveCount })}
                             >
                               <CirclePlus size={14} strokeWidth={2.2} />
                               <span>+{nextArchiveBatch}</span>
-                              <span className="vtree-fossil-pill-sub">({remainingArchiveCount} {t('hierarchy.remaining', 'kalan')})</span>
+                              <span className="vtree-fossil-pill-sub">({remainingArchiveCount} {t('hierarchy.remaining')})</span>
                             </button>
                           </div>
                         </div>

@@ -45,7 +45,7 @@ export default function ContactPage() {
       setIsSubmitting(false)
       setHasSubmitted(false)
       setFormData({ name: '', email: '', message: '' })
-      toast.success(t('contact.success_msg', 'Mesajınız başarıyla gönderildi! En kısa sürede size dönüş yapacağız.'), { duration: 4000 })
+      toast.success(t('contact.success_msg'), { duration: 4000 })
     }, 1000)
   }
 
@@ -72,10 +72,10 @@ export default function ContactPage() {
         </div>
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}>
-            {t('footer.contact', 'İletişim')}
+            {t('footer.contact')}
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
-            {t('contact.desc', 'Soru, görüş veya destek talepleriniz için bize ulaşın.')}
+            {t('contact.desc')}
           </p>
         </div>
       </div>
@@ -85,7 +85,7 @@ export default function ContactPage() {
         <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-lg">
           
           <div className="form-group">
-            <label className="form-label">{t('contact.name', 'İsim Soyisim')}</label>
+            <label className="form-label">{t('contact.name')}</label>
             <input 
               className={`input ${hasSubmitted && !formData.name.trim() ? 'error' : ''}`}
               type="text" 
@@ -97,7 +97,7 @@ export default function ContactPage() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">{t('auth.email', 'E-posta')}</label>
+            <label className="form-label">{t('auth.email')}</label>
             <input 
               className={`input ${hasSubmitted && !formData.email.trim() ? 'error' : ''}`}
               type="email" 
@@ -109,7 +109,7 @@ export default function ContactPage() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">{t('contact.message', 'Mesajınız')}</label>
+            <label className="form-label">{t('contact.message')}</label>
             <textarea 
               className={`input textarea textarea--autogrow ${hasSubmitted && !formData.message.trim() ? 'error' : ''}`}
               name="message"
@@ -119,7 +119,7 @@ export default function ContactPage() {
                 minHeight: 120, 
                 paddingTop: 12 
               }}
-              placeholder={t('contact.message_placeholder', 'Mesajınızı buraya yazın...')}
+              placeholder={t('contact.message_placeholder')}
             />
           </div>
 
@@ -129,7 +129,7 @@ export default function ContactPage() {
             disabled={isSubmitting}
             style={{ marginTop: 16 }}
           >
-            {isSubmitting ? t('common.sending', 'Gönderiliyor...') : t('common.send', 'Gönder')}
+            {isSubmitting ? t('common.sending') : t('common.send')}
           </button>
           
         </form>

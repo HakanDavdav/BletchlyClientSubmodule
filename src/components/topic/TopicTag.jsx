@@ -9,7 +9,7 @@ export function TopicTag({ topicType, size = 'sm', onClick, clickable = true }) 
   const { t } = useTranslation()
   const navigate = useNavigate()
   const enumName = TopicEnumNames[topicType]
-  const label = enumName ? t(`topics.${enumName}`) : (TopicLabels[topicType] || `${t('card.topic_prefix', 'Başlık ')}${topicType}`)
+  const label = enumName ? t(`topics.${enumName}`) : (TopicLabels[topicType] || `${t('card.topic_prefix')}${topicType}`)
   const color = TopicColors[topicType] || '#64748B'
 
   const handleClick = (e) => {

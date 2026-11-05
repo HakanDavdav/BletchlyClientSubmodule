@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { personalityCardApi } from '../../api/personalityCardApi'
 import { searchApi } from '../../api/searchApi'
@@ -13,7 +13,9 @@ import toast from 'react-hot-toast'
 import BotFlashCardsIcon from '../../components/common/icons/BotFlashCardsIcon'
 import SearchFilterBar from '../../components/common/SearchFilterBar'
 import HowItWorksHelp from '../../components/common/HowItWorksHelp'
+import InfiniteScrollStatus from '../../components/common/InfiniteScrollStatus'
 import ActorMinimalCard from '../../components/actor/ActorMinimalCard'
+import useInfiniteScroll from '../../hooks/useInfiniteScroll'
 import useAuthStore from '../../store/authStore'
 import useMyEntitiesStore from '../../store/myEntitiesStore'
 import { triggerConfetti } from '../../utils/confetti'
@@ -32,6 +34,12 @@ export default function MarketplacePage() {
 
   // Active query parameters that trigger refetch
   const [activeParams, setActiveParams] = useState({ query: '', orderType: '', startDate: null, endDate: null })
+  const hasActiveSearch = Boolean(
+    activeParams.query ||
+    (activeParams.orderType && activeParams.orderType !== 'None') ||
+    activeParams.startDate ||
+    activeParams.endDate
+  )
 
   const {
     data,
@@ -71,41 +79,29 @@ export default function MarketplacePage() {
   }, [activeParams])
 
   const visibleCards = allFetchedCards.slice(0, visibleCount)
+  const canLoadMore = hasNextPage || visibleCount < allFetchedCards.length
 
-  const loadMoreRef = useRef(null)
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          if (visibleCount < allFetchedCards.length) {
-            // We have more items in memory (e.g. from the 100 returned instantly), show 20 more
-            setVisibleCount((prev) => prev + 20)
-          } else if (hasNextPage && !isFetchingNextPage) {
-            // We need to fetch the next page from the backend
-            fetchNextPage().then(() => {
-              setVisibleCount((prev) => prev + 20)
-            })
-          }
-        }
-      },
-      { threshold: 0.1 }
-    )
-
-    const currentRef = loadMoreRef.current
-    if (currentRef) observer.observe(currentRef)
-
-    return () => {
-      if (currentRef) observer.unobserve(currentRef)
-    }
-  }, [visibleCount, allFetchedCards.length, hasNextPage, isFetchingNextPage, fetchNextPage])
+  const { sentinelRef: loadMoreRef, isWaiting } = useInfiniteScroll({
+    hasNextPage: canLoadMore,
+    isFetchingNextPage,
+    onIntersect: () => {
+      if (visibleCount < allFetchedCards.length) {
+        setVisibleCount((prev) => prev + 20)
+      } else if (hasNextPage && !isFetchingNextPage) {
+        fetchNextPage().then(() => {
+          setVisibleCount((prev) => prev + 20)
+        })
+      }
+    },
+    depsKey: `${visibleCount}:${allFetchedCards.length}`,
+  })
 
   const buyMutation = useMutation({
     mutationFn: (cardId) => personalityCardApi.buyCard(cardId),
     meta: { showErrorToast: true },
     onSuccess: () => {
       triggerConfetti()
-      toast.success(t('card.buy_success', 'Kart başarıyla satın alındı!'))
+      toast.success(t('card.buy_success'))
       queryClient.invalidateQueries({ queryKey: ['myPersonalityCards'] })
       useMyEntitiesStore.getState().fetchMyCards()
       refetch()
@@ -128,7 +124,7 @@ export default function MarketplacePage() {
     <div className="flex-col gap-4">
       <div className="px-2" style={{ marginBottom: 16 }}>
         <BackButton
-          text={t('common.go_back', 'Geri Dön')}
+          text={t('common.go_back')}
           onClick={() => navigate(-1)}
           style={{ marginBottom: 0 }}
         />
@@ -149,28 +145,25 @@ export default function MarketplacePage() {
           <h1
             style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
           >
-            {t('card.marketplace', 'Kart Marketi')}
+            {t('card.marketplace')}
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
             {t(
-              'card.marketplace_desc',
-              'Diğer kullanıcıların oluşturduğu kişilik kartlarını keşfedin'
+              'card.marketplace_desc'
             )}
           </p>
         </div>
         <HowItWorksHelp
-          title={t('card.marketplace_how_it_works_title', 'Kart Marketi hakkında')}
+          title={t('card.marketplace_how_it_works_title')}
           items={[
             t(
-              'card.marketplace_how_it_works_1',
-              'Sahip olduğun kartlar markette satılabilir veya başkalarının kartları satın alınabilir. Çok yüksek puanlı botların kartlarını satın alman senin de bu kartı kendi botlarına veya klanlarına atayabileceğin anlamına gelir; ancak satın aldığın kartı tekrar satışa çıkaramazsın veya gizli kişilik metnini göremezsin.'
+              'card.marketplace_how_it_works_1'
             ),
             t(
-              'card.marketplace_how_it_works_2',
-              'Asıl yaratıcısı olduğun bir kartı güncellediğinde, site genelinde senin kişilik kartını slotunda barındıran bütün botların kişiliğini tek bir tuşla anında değiştirebilirsin. Bu sayede eğer kartın yayıldıysa Bletchly genelinde bir çeşit darbe dahi yapabilirsin.'
+              'card.marketplace_how_it_works_2'
             ),
           ]}
-          closeLabel={t('common.close', 'Kapat')}
+          closeLabel={t('common.close')}
           triggerStyle={{ marginLeft: 'auto', marginRight: 24, flexShrink: 0 }}
         />
       </div>
@@ -190,10 +183,7 @@ export default function MarketplacePage() {
           </div>
         ) : visibleCards.length === 0 ? (
           <div className="empty-state" style={{ gridColumn: '1 / -1' }}>
-            {t(
-              'card.no_marketplace_cards',
-              'Markette henüz kart bulunmuyor veya aramanızla eşleşen sonuç yok.'
-            )}
+            {hasActiveSearch ? t('search.no_results') : t('common.nothing_here_yet')}
           </div>
         ) : (
           visibleCards.map((card, index) => (
@@ -230,7 +220,7 @@ export default function MarketplacePage() {
                       marginBottom: 8,
                     }}
                   >
-                    {t('card.seller', 'Satıcı:')}
+                    {t('card.seller')}
                   </span>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, zoom: 0.75 }}>
                     <ActorMinimalCard
@@ -261,7 +251,7 @@ export default function MarketplacePage() {
                   <span></span> /* Placeholder for space-between */
                 )}
                 <span style={{ fontSize: 12, color: 'var(--color-text-faint)' }}>
-                  {t('card.sales', 'Satış')}: {card.card?.ownershipCount || 0}
+                  {t('card.sales')}: {card.card?.ownershipCount || 0}
                 </span>
               </div>
 
@@ -279,52 +269,48 @@ export default function MarketplacePage() {
                 })()}
                 title={
                   !isLoggedIn
-                    ? t('card.login_to_buy', 'Satın almak için giriş yapmalısınız')
+                    ? t('card.login_to_buy')
                     : myCards?.some((mc) => {
                         const mcId = typeof mc === 'string' ? mc : mc?.cardId || mc?.id
                         return mcId && mcId.toLowerCase() === (card.cardId || '').toLowerCase()
                       })
-                    ? t('card.already_owned', 'Bu karta zaten sahipsiniz')
+                    ? t('card.already_owned')
                     : undefined
                 }
               >
-                <ShoppingCart size={14} style={{ marginRight: 4 }} /> {t('card.buy', 'Satın Al')}
+                <ShoppingCart size={14} style={{ marginRight: 4 }} /> {t('card.buy')}
               </button>
             </div>
           ))
         )}
       </div>
 
-      {/* Infinite Scroll trigger element */}
-      <div ref={loadMoreRef} style={{ height: 40, marginTop: 16 }} />
-
-      {isFetchingNextPage && (
-        <div className="flex justify-center" style={{ padding: 20 }}>
-          <div className="spinner spinner-md" />
-        </div>
-      )}
+      <div ref={loadMoreRef} style={{ height: 1 }} />
+      <InfiniteScrollStatus
+        isFetching={isFetchingNextPage || isWaiting}
+        hasNextPage={canLoadMore}
+        hasItems={visibleCards.length > 0}
+      />
 
       <ConfirmModal
         isOpen={buyModal.isOpen}
         onClose={() => setBuyModal({ isOpen: false, cardId: null, price: null, cardName: '' })}
         onConfirm={confirmBuy}
-        title={t('card.buy_confirm_title', 'Satın Alma Onayı')}
+        title={t('card.buy_confirm_title')}
         description={t('card.buy_confirm_desc', {
-          cardName: buyModal.cardName || t('card.card', 'Kişilik Kartı'),
+          cardName: buyModal.cardName || t('card.card'),
           price: buyModal.price,
-          defaultValue: `"${buyModal.cardName || ''}" adlı kişilik kartını ${buyModal.price} AP karşılığında satın almak istediğinize emin misiniz?`,
         })}
         warning={
           isLimitReached
             ? t('card.buy_limit_reached_warning', {
                 limit: cardOwnershipLimit,
-                oldestCard: t('card.oldest_card', 'En eski kartınız'),
-                defaultValue: `Dikkat: Kart limitinize (${cardOwnershipLimit}) ulaştınız! Bu kartı satın aldığınızda, sahip olduğunuz en eski kart olan "${t('card.oldest_card', 'En eski kartınız')}" otomatik ve kalıcı olarak silinecektir.`,
+                oldestCard: t('card.oldest_card'),
               })
             : null
         }
-        confirmText={t('card.confirm_buy_btn', 'Evet, Satın Al')}
-        cancelText={t('common.cancel', 'İptal')}
+        confirmText={t('card.confirm_buy_btn')}
+        cancelText={t('common.cancel')}
         confirmVariant="primary"
         isLoading={buyMutation.isPending}
       />

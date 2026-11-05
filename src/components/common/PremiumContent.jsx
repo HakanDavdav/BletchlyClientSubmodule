@@ -54,6 +54,7 @@ import PersonalityCard from '../card/PersonalityCard'
 import ActorAvatar from '../actor/ActorAvatar'
 import { UserCapabilities } from '../../constants/enums'
 import { trackBeginCheckout } from '../../utils/analytics'
+import { formatDate, formatDateLong } from '../../utils/formatDate'
 import {
   WelcomeAmbience,
   MemoryMapAmbience,
@@ -271,31 +272,31 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
       {
         key: 'incubation-low',
         Icon: Rabbit,
-        title: t('bot.memory_emblem.incubation_low_label', 'Hızlı Kişilik Değişimi'),
+        title: t('bot.memory_emblem.incubation_low_label'),
         tone: 'memory-low',
       },
       {
         key: 'cognitive-low',
         Icon: Zap,
-        title: t('bot.memory_emblem.cognitive_low_label', 'Mantıksal'),
+        title: t('bot.memory_emblem.cognitive_low_label'),
         tone: 'memory-low',
       },
       {
         key: 'forget-low',
         Icon: ElephantIcon,
-        title: t('bot.memory_emblem.forget_low_label', 'Fil Hafızası'),
+        title: t('bot.memory_emblem.forget_low_label'),
         tone: 'memory-low',
       },
       {
         key: 'scope-low',
         Icon: Binoculars,
-        title: `${t('bot.memory_emblem.scope_low_label', 'Otizm Benzeri')} (Pro)`,
+        title: `${t('bot.memory_emblem.scope_low_label')} (Pro)`,
         tone: 'memory-low',
       },
       {
         key: 'fixation-low',
         Icon: Feather,
-        title: `${t('bot.memory_emblem.fixation_low_label', 'Açık Fikirli')} (Pro)`,
+        title: `${t('bot.memory_emblem.fixation_low_label')} (Pro)`,
         tone: 'memory-low',
       },
     ],
@@ -306,31 +307,31 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
       {
         key: 'incubation-high',
         Icon: Snail,
-        title: t('bot.memory_emblem.incubation_high_label', 'Yavaş Kişilik Değişimi'),
+        title: t('bot.memory_emblem.incubation_high_label'),
         tone: 'memory-high',
       },
       {
         key: 'cognitive-high',
         Icon: Flame,
-        title: t('bot.memory_emblem.cognitive_high_label', 'Duygusal'),
+        title: t('bot.memory_emblem.cognitive_high_label'),
         tone: 'memory-high',
       },
       {
         key: 'forget-high',
         Icon: Fish,
-        title: t('bot.memory_emblem.forget_high_label', 'Alzheimer'),
+        title: t('bot.memory_emblem.forget_high_label'),
         tone: 'memory-high',
       },
       {
         key: 'scope-high',
         Icon: Waypoints,
-        title: `${t('bot.memory_emblem.scope_high_label', 'Büyük Resimci')} (Pro)`,
+        title: `${t('bot.memory_emblem.scope_high_label')} (Pro)`,
         tone: 'memory-high',
       },
       {
         key: 'fixation-high',
         Icon: SheepIcon,
-        title: `${t('bot.memory_emblem.fixation_high_label', 'Dirençli')} (Pro)`,
+        title: `${t('bot.memory_emblem.fixation_high_label')} (Pro)`,
         tone: 'memory-high',
       },
     ],
@@ -403,7 +404,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
   const cancelMutation = useMutation({
     mutationFn: () => paymentApi.cancelSubscription(),
     onSuccess: () => {
-      toast.success(t('premium.cancel_success', 'Aboneliğiniz başarıyla iptal edildi.'))
+      toast.success(t('premium.cancel_success'))
       setIsConfirmingCancel(false)
       queryClient.invalidateQueries({ queryKey: ['subscriptionStatus'] })
       queryClient.invalidateQueries({ queryKey: ['actorProfile', actorId] })
@@ -414,7 +415,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
         err.response?.data?.errors?.[0]?.description ||
         err.response?.data?.errors?.[0]?.message ||
         err.message ||
-        t('premium.cancel_failed', 'Abonelik iptal edilemedi.')
+        t('premium.cancel_failed')
       toast.error(msg)
     },
   })
@@ -427,14 +428,14 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
       if (portalUrl) {
         window.location.href = portalUrl
       } else {
-        toast.error(t('premium.portal_failed', 'Stripe müşteri paneline ulaşılamadı.'))
+        toast.error(t('premium.portal_failed'))
       }
     },
     onError: (err) => {
       const msg =
         err.response?.data?.errors?.[0]?.description ||
         err.response?.data?.errors?.[0]?.message ||
-        t('premium.portal_failed', 'Stripe müşteri paneline ulaşılamadı.')
+        t('premium.portal_failed')
       toast.error(msg)
     },
   })
@@ -442,29 +443,29 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
   const profileThemes = [
     {
       id: 'memory-map',
-      title: t('premium.theme_memory_map_title', 'Memory Map'),
+      title: t('premium.theme_memory_map_title'),
       type: 'brain',
     },
     {
       id: 'hierarchy',
-      title: t('premium.theme_hierarchy_title', 'Hiyerarşi Ağacı'),
+      title: t('premium.theme_hierarchy_title'),
       type: 'hierarchy',
     },
     {
       id: 'rainbow',
-      title: t('premium.theme_rainbow_title', 'Gökkuşağı Kartları'),
+      title: t('premium.theme_rainbow_title'),
       type: 'rainbow',
     },
     {
       id: 'bots',
-      title: t('premium.theme_bots_title', 'Yüzen Botlar'),
+      title: t('premium.theme_bots_title'),
       type: 'bot',
     },
   ]
 
   const genericPreviewProfile = {
     profileName: 'Bob01',
-    bio: t('premium.preview_generic_bio', 'hi'),
+    bio: t('premium.preview_generic_bio'),
     createdAt: '2026-01-15T10:00:00Z',
     discriminator: 'User',
     actorPoint: 4850,
@@ -483,7 +484,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
       ? {
           ...userProfile,
           profileName: userProfile.profileName || 'Bletchly Member',
-          bio: userProfile.bio || t('profile.no_bio', 'Henüz bir biyografi eklenmedi.'),
+          bio: userProfile.bio || t('profile.no_bio'),
           actorPoint: userProfile.actorPoint ?? 0,
           likeCount: userProfile.likeCount ?? 0,
           followerCount: userProfile.followerCount ?? 0,
@@ -542,7 +543,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
       if (checkoutUrl) {
         window.location.href = checkoutUrl
       } else {
-        toast.error(t('premium.checkout_failed', 'Ödeme oturumu başlatılamadı.'))
+        toast.error(t('premium.checkout_failed'))
       }
     } catch (err) {
       console.error(err)
@@ -550,7 +551,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
         err.message ||
           err.response?.data?.errors?.[0]?.description ||
           err.response?.data?.errors?.[0]?.message ||
-          t('premium.checkout_failed', 'Ödeme oturumu başlatılamadı.')
+          t('premium.checkout_failed')
       )
     } finally {
       setIsLoading(false)
@@ -575,62 +576,54 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
     {
       icon: <Bot size={16} color="var(--color-primary)" />,
       badge: '+3',
-      title: t('premium.perk_bots_title', '+3 Bot Oluşturma Limiti'),
-      desc: t('premium.perk_bots_desc', 'Ekstra 3 bot üretme ve yönetme kapasitesi.'),
+      title: t('premium.perk_bots_title'),
+      desc: t('premium.perk_bots_desc'),
     },
     {
       icon: <BotFlashCardsIcon size={16} color="var(--color-primary)" />,
       badge: '+4',
-      title: t('premium.perk_cards_title', '+4 Kart Sahiplik Limiti'),
-      desc: t('premium.perk_cards_desc', 'Envanterde daha fazla kişilik kartı barındırma hakkı.'),
+      title: t('premium.perk_cards_title'),
+      desc: t('premium.perk_cards_desc'),
     },
     {
       icon: <Lock size={16} color="var(--color-primary)" />,
       badge: '+4',
-      title: t('premium.perk_locks_title', '+4 Kart Kilitleme Limiti'),
+      title: t('premium.perk_locks_title'),
       desc: t(
-        'premium.perk_locks_desc',
-        'Kişilik kartı atamalarını otomatik tasfiyeden koruma hakkı.'
+        'premium.perk_locks_desc'
       ),
     },
     {
       icon: <Users size={16} color="var(--color-primary)" />,
       badge: '+4',
-      title: t('premium.perk_tribes_title', '+4 Klan Kurma Limiti'),
-      desc: t('premium.perk_tribes_desc', 'Topluluklar oluşturmak için ek klan slotları.'),
+      title: t('premium.perk_tribes_title'),
+      desc: t('premium.perk_tribes_desc'),
     },
     {
       icon: <AngryBotWithSwordsIcon size={18} style={{ color: 'var(--color-primary)' }} />,
       badge: '+4',
-      title: t('premium.perk_debates_title', '+4 Günlük Meydan Okuma Limiti'),
-      desc: t('premium.perk_debates_desc', 'Her gün eşzamanlı ek meydan okuma ve tartışma hakkı.'),
+      title: t('premium.perk_debates_title'),
+      desc: t('premium.perk_debates_desc'),
     },
     {
       icon: <CardContingencyIcon size={13} color="var(--color-primary)" />,
       badge: '+%4',
-      title: t('premium.perk_inheritance_title', '+%4 Kart Miras Şansı'),
+      title: t('premium.perk_inheritance_title'),
       desc: t(
-        'premium.perk_inheritance_desc',
-        'Etkileşimlerde yeni kart türeme ve kalıtım olasılığı artışı.'
+        'premium.perk_inheritance_desc'
       ),
     },
   ]
 
-  const formattedPeriodEnd = subStatus?.currentPeriodEnd
-    ? new Date(subStatus.currentPeriodEnd).toLocaleDateString('tr-TR', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      })
-    : null
+  const formattedPeriodEnd = formatDateLong(subStatus?.currentPeriodEnd, null)
 
   const isAnnualPlan = subStatus?.paymentType === 1
   const planName = isAnnualPlan
-    ? t('premium.plan_annual_label', 'Yıllık Abonelik')
-    : t('premium.plan_label', 'Aylık Abonelik')
+    ? t('premium.plan_annual_label')
+    : t('premium.plan_label')
   const planPriceText = isAnnualPlan
-    ? t('premium.price_annual', '$72 / yıl (peşin)')
-    : t('premium.price_monthly', '$8 / ay')
+    ? t('premium.price_annual')
+    : t('premium.price_monthly')
 
   const content = (
     <>
@@ -638,7 +631,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
       {variant === 'modal' && (
         <ModalHeader
           icon={<Crown size={28} color="#F59E0B" />}
-          title={t('premium.title', 'Pro')}
+          title={t('premium.title')}
           subtitle={null}
           titleId={titleId}
           onClose={onClose}
@@ -786,17 +779,15 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                     <div
                       style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}
                     >
-                      {t('premium.current_status', 'Abonelik Durumu')}
+                      {t('premium.current_status')}
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
                       {isCanceledAtPeriodEnd
                         ? t(
-                            'premium.status_canceled_desc',
-                            'Abonelik yenilenmesi durduruldu. Dönem sonuna kadar ayrıcalıklarınız geçerlidir.'
+                            'premium.status_canceled_desc'
                           )
                         : t(
-                            'premium.status_active_desc',
-                            'Pro üyeliğiniz aktif. Otomatik yenilenme ve tüm ayrıcalıklar devrede.'
+                            'premium.status_active_desc'
                           )}
                     </div>
                   </div>
@@ -826,7 +817,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                         boxShadow: '0 0 8px #F59E0B',
                       }}
                     />
-                    {t('premium.status_canceled', 'Dönem Sonunda İptal Olacak')}
+                    {t('premium.status_canceled')}
                   </div>
                 )}
               </div>
@@ -854,7 +845,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                   }}
                 >
                   <span style={{ fontSize: 11, color: 'var(--color-text-muted)', fontWeight: 500 }}>
-                    {t('premium.plan', 'Plan')}
+                    {t('premium.plan')}
                   </span>
                   <span
                     style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)' }}
@@ -880,18 +871,20 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                 >
                   <span style={{ fontSize: 11, color: 'var(--color-text-muted)', fontWeight: 500 }}>
                     {isCanceledAtPeriodEnd
-                      ? t('premium.period_end_canceled', 'Bitiş Tarihi')
-                      : t('premium.period_end_active', 'Sonraki Yenilenme')}
+                      ? t('premium.period_end_canceled')
+                      : t('premium.period_end_active')}
                   </span>
                   <span
                     style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)' }}
                   >
-                    {formattedPeriodEnd || t('premium.active_period', 'Aktif Dönem')}
+                    {formattedPeriodEnd
+                      ? <span className="date-text">{formattedPeriodEnd}</span>
+                      : t('premium.active_period')}
                   </span>
                   <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
                     {isCanceledAtPeriodEnd
-                      ? t('premium.will_downgrade', 'Bu tarihte standart plana dönülür')
-                      : t('premium.auto_renew', 'Otomatik yenilenir')}
+                      ? t('premium.will_downgrade')
+                      : t('premium.auto_renew')}
                   </span>
                 </div>
 
@@ -908,7 +901,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                   }}
                 >
                   <span style={{ fontSize: 11, color: 'var(--color-text-muted)', fontWeight: 500 }}>
-                    {t('premium.provider', 'Ödeme Sağlayıcı')}
+                    {t('premium.provider')}
                   </span>
                   <span
                     style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)' }}
@@ -918,7 +911,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                   <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
                     {subStatus?.stripeSubscriptionId
                       ? `${subStatus.stripeSubscriptionId.slice(0, 14)}...`
-                      : t('premium.secure_active', 'Doğrulanmış & Korumalı')}
+                      : t('premium.secure_active')}
                   </span>
                 </div>
               </div>
@@ -1001,7 +994,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                     <span
                       style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)' }}
                     >
-                      {t('premium.plan_label', 'Aylık Abonelik')}
+                      {t('premium.plan_label')}
                     </span>
                   </div>
                 </div>
@@ -1029,11 +1022,11 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                     <span
                       style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-muted)' }}
                     >
-                      / {t('premium.month', 'ay')}
+                      / {t('premium.month')}
                     </span>
                   </div>
                   <span style={{ fontSize: 12, color: 'var(--color-text-muted)', fontWeight: 500 }}>
-                    $96 / {t('premium.year', 'yıl')}
+                    $96 / {t('premium.year')}
                   </span>
                 </div>
               </div>
@@ -1082,7 +1075,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                     <span
                       style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)' }}
                     >
-                      {t('premium.plan_annual_label', 'Yıllık Abonelik')}
+                      {t('premium.plan_annual_label')}
                     </span>
                   </div>
                 </div>
@@ -1110,11 +1103,11 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                     <span
                       style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-muted)' }}
                     >
-                      / {t('premium.month', 'ay')}
+                      / {t('premium.month')}
                     </span>
                   </div>
                   <span style={{ fontSize: 12, color: 'var(--color-text-muted)', fontWeight: 500 }}>
-                    $72 / {t('premium.year', 'yıl')} ({t('premium.upfront', 'peşin')})
+                    $72 / {t('premium.year')} ({t('premium.upfront')})
                   </span>
                 </div>
               </div>
@@ -1136,8 +1129,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
 
               <p className="premium-rainbow-showcase-desc" style={{ position: 'relative', zIndex: 2 }}>
                 {t(
-                  'premium.rainbow_customization_desc',
-                  'Personalize your entire site with unique color palettes, and assign custom card visuals visible to everyone.'
+                  'premium.rainbow_customization_desc'
                 )}
               </p>
 
@@ -1420,7 +1412,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
               <div className="premium-themes-showcase-header">
                 <div className="premium-themes-title-row">
                   <div className="premium-themes-title">
-                    {t('premium.themes_section_title', '4 Farklı Profil Görsel Tasarımı')}
+                    {t('premium.themes_section_title')}
                   </div>
 
                   <div className="premium-themes-toggle-group">
@@ -1469,8 +1461,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
 
                 <div className="premium-themes-desc">
                   {t(
-                    'premium.themes_section_desc',
-                    'Profiliniz ve botlarınız için herkes tarafından görülebilen\n4 benzersiz animasyonlu dinamik ambiyans başlık tasarımının kilidini açın.'
+                    'premium.themes_section_desc'
                   )}
                   <div
                     style={{
@@ -1573,8 +1564,8 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                       >
                         <CalendarFold size={14} />
                         <span>
-                          {t('profile.joined', 'Katıldı:')}{' '}
-                          {new Date(previewProfile.createdAt).toLocaleDateString()}
+                          {t('profile.joined')}{' '}
+                          <span className="date-text">{formatDate(previewProfile.createdAt)}</span>
                         </span>
                       </p>
                     )}
@@ -1584,15 +1575,15 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                       <div className="bot-capability-emblems" style={{ marginBottom: 0 }}>
                         <span
                           className="bot-capability-emblem bot-capability-emblem--default"
-                          aria-label={t('user.capability_default', 'Varsayılan')}
-                          title={`${t('user.capability_default', 'Varsayılan')}: ${t('user.capability_default_desc', 'Standart kullanıcı özellikleri ve temel limitler')}`}
+                          aria-label={t('user.capability_default')}
+                          title={`${t('user.capability_default')}: ${t('user.capability_default_desc')}`}
                         >
                           <ShieldCheck size={25} strokeWidth={2.2} aria-hidden="true" />
                         </span>
                         <span
                           className="bot-capability-emblem bot-capability-emblem--premium"
-                          aria-label={t('user.capability_premium', 'Pro')}
-                          title={`${t('user.capability_premium', 'Pro')}: ${t('user.capability_premium_desc', 'Yükseltilmiş limitler ve ayrıcalıklı Pro özellikleri')}`}
+                          aria-label={t('user.capability_premium')}
+                          title={`${t('user.capability_premium')}: ${t('user.capability_premium_desc')}`}
                         >
                           <KingIcon size={25} strokeWidth={2.2} aria-hidden="true" />
                         </span>
@@ -1611,7 +1602,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                         style={{ pointerEvents: 'none', opacity: 0.9 }}
                         tabIndex={-1}
                       >
-                        <Network size={14} /> {t('profile.hierarchy', 'Hierarchy')}
+                        <Network size={14} /> {t('profile.hierarchy')}
                       </button>
                     </div>
                   </div>
@@ -1683,25 +1674,25 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                   <div className="profile-stats-grid" style={{ width: '100%' }}>
                     <div className="profile-stat-box" style={{ cursor: 'default' }}>
                       <span className="profile-stat-value">{previewProfile.likeCount ?? 0}</span>
-                      <span className="profile-stat-label">{t('profile.reaction', 'Etkileşim')}</span>
+                      <span className="profile-stat-label">{t('profile.reaction')}</span>
                     </div>
                     <div className="profile-stat-box" style={{ cursor: 'default' }}>
                       <span className="profile-stat-value">
                         {(previewProfile.actorPoint ?? 0).toLocaleString()}
                       </span>
-                      <span className="profile-stat-label">{t('profile.points', 'Puan')}</span>
+                      <span className="profile-stat-label">{t('profile.points')}</span>
                     </div>
                     <div className="profile-stat-box" style={{ cursor: 'default' }}>
                       <span className="profile-stat-value">
                         {previewProfile.followerCount ?? 0}
                       </span>
-                      <span className="profile-stat-label">{t('profile.followers', 'Takipçi')}</span>
+                      <span className="profile-stat-label">{t('profile.followers')}</span>
                     </div>
                     <div className="profile-stat-box" style={{ cursor: 'default' }}>
                       <span className="profile-stat-value">
                         {previewProfile.followedCount ?? 0}
                       </span>
-                      <span className="profile-stat-label">{t('profile.following', 'Takip')}</span>
+                      <span className="profile-stat-label">{t('profile.following')}</span>
                     </div>
                     <div
                       className="profile-stat-box profile-stat-box--wide"
@@ -1718,7 +1709,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                         }}
                       >
                         <Sliders size={14} style={{ color: 'var(--color-primary)' }} />
-                        <span>{t('profile.grade', 'Derece')}</span>
+                        <span>{t('profile.grade')}</span>
                         <span
                           style={{
                             width: 19,
@@ -1741,7 +1732,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                         </span>
                       </span>
                       <span className="profile-stat-label">
-                        {t('profile.modifiers', 'Modifikatörler')}
+                        {t('profile.modifiers')}
                       </span>
                     </div>
                   </div>
@@ -1795,12 +1786,11 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                     }}
                   >
                     <strong style={{ color: 'var(--color-text-primary)' }}>
-                      {t('premium.memory_section_title', 'Ekstra Hafıza Özelleştirmeleri')}
+                      {t('premium.memory_section_title')}
                     </strong>
                     <span style={{ marginLeft: 8 }}>
                       — {t(
-                        'premium.memory_section_desc',
-                        'Botlarınızın ve klanlarınızın LLM hafıza ağlarını tam kontrol altına alın. Hafızanın belli özelliklerini ekstra değiştirme olanaklarına sahip olun.'
+                        'premium.memory_section_desc'
                       )}
                     </span>
                   </div>
@@ -1870,7 +1860,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                         width: '100%',
                         cursor: 'pointer',
                       }}
-                      aria-label={t('premium.memory_tuning_balance', 'LLM Memory Tuning Balance')}
+                      aria-label={t('premium.memory_tuning_balance')}
                     />
                   </div>
 
@@ -1950,10 +1940,10 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                   }}
                 >
                   <strong style={{ color: 'var(--color-text-primary)' }}>
-                    {t('premium.badge_highlight_title', 'Altın Taç Rozeti')}
+                    {t('premium.badge_highlight_title')}
                   </strong>
                   <span style={{ marginLeft: 8 }}>
-                    — {t('premium.badge_highlight_desc', 'Profilinizde özel rozet gösterilir.')}
+                    — {t('premium.badge_highlight_desc')}
                   </span>
                 </div>
               </div>
@@ -2077,8 +2067,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                       style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)' }}
                     >
                       {t(
-                        'premium.cancel_confirm_title',
-                        'Aboneliğinizi iptal etmek istediğinize emin misiniz?'
+                        'premium.cancel_confirm_title'
                       )}
                     </div>
                     <div
@@ -2090,8 +2079,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                       }}
                     >
                       {t(
-                        'premium.cancel_confirm_desc',
-                        'İptal ettiğinizde mevcut döneminizin sonuna kadar pro özellikleriniz devam edecek, ardından standart plana geçilecektir.'
+                        'premium.cancel_confirm_desc'
                       )}
                     </div>
                   </div>
@@ -2113,7 +2101,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                     disabled={cancelMutation.isPending}
                     style={{ fontSize: 13, padding: '7px 14px' }}
                   >
-                    {t('premium.cancel_abort_btn', 'Vazgeç')}
+                    {t('premium.cancel_abort_btn')}
                   </button>
                   <button
                     type="button"
@@ -2133,7 +2121,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                     }}
                   >
                     {cancelMutation.isPending && <Loader2 size={14} className="animate-spin" />}
-                    {t('premium.cancel_confirm_btn', 'Evet, Aboneliği İptal Et')}
+                    {t('premium.cancel_confirm_btn')}
                   </button>
                 </div>
               </div>
@@ -2169,7 +2157,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                   ) : (
                     <ExternalLink size={14} />
                   )}
-                  {t('premium.manage_portal', 'Fatura & Kartı Yönet')}
+                  {t('premium.manage_portal')}
                 </button>
 
                 {/* EN ALTTADA ABONELİĞİ İPTAL ETME BUTONU */}
@@ -2183,7 +2171,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                       padding: '8px 20px',
                     }}
                   >
-                    {t('common.close', 'Kapat')}
+                    {t('common.close')}
                   </button>
                 ) : (
                   <button
@@ -2213,7 +2201,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                       e.currentTarget.style.color = 'var(--color-danger, #ef4444)'
                     }}
                   >
-                    {t('premium.cancel_subscription', 'Aboneliği İptal Et')}
+                    {t('premium.cancel_subscription')}
                   </button>
                 )}
               </div>
@@ -2263,10 +2251,10 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
               >
                 {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Crown size={18} />}
                 {isLoading
-                  ? t('common.loading', 'Yükleniyor...')
+                  ? t('common.loading')
                   : billingCycle === 'annual'
-                    ? t('premium.checkout_cta_annual', "$72 / Yıl ile Pro'ya Yükselt")
-                    : t('premium.checkout_cta', "$8 / Ay ile Pro'ya Yükselt")}
+                    ? t('premium.checkout_cta_annual')
+                    : t('premium.checkout_cta')}
               </button>
 
               <div
@@ -2278,7 +2266,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                   color: 'var(--color-text-muted)',
                 }}
               >
-                <span>{t('premium.secure_payment', 'Güvenli Stripe Ödemesi')}</span>
+                <span>{t('premium.secure_payment')}</span>
               </div>
             </>
           )}
@@ -2288,7 +2276,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
           <button
             type="button"
             onClick={scrollToNext}
-            aria-label={t('bletchly_guide.scroll_down', 'Aşağı kaydır')}
+            aria-label={t('bletchly_guide.scroll_down')}
             className="page-scroll-btn"
             style={
               variant === 'modal'

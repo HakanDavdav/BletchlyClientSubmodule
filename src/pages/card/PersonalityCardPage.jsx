@@ -5,6 +5,7 @@ import { actorApi } from '../../api/actorApi'
 import { Plus, HelpCircle, X, Check, Save } from 'lucide-react'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import BackButton from '../../components/common/BackButton'
+import { PageTopDockRow } from '../../components/layout/PageTopDock'
 import useAuthStore from '../../store/authStore'
 import useMyEntitiesStore from '../../store/myEntitiesStore'
 import { useTranslation } from 'react-i18next'
@@ -100,7 +101,7 @@ export default function PersonalityCardPage() {
     mutationFn: (data) => personalityCardApi.createCard(data),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      toast.success(t('common.success', 'Başarılı'), { duration: 3000 })
+      toast.success(t('common.success'), { duration: 3000 })
       queryClient.invalidateQueries({ queryKey: ['myPersonalityCards'] })
       useMyEntitiesStore.getState().fetchMyCards()
       setIsCreating(false)
@@ -155,41 +156,38 @@ export default function PersonalityCardPage() {
 
   return (
     <div className="flex-col gap-4">
-      <div
-        className="px-2"
-        style={{
-          marginBottom: 16,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <BackButton
-          text={t('common.go_back', 'Geri Dön')}
-          onClick={() => navigate(-1)}
-          style={{ marginBottom: 0 }}
-        />
-        <button
-          className="btn btn-sm btn-primary"
-          onClick={() => {
-            if (isCreating) {
-              setIsCreating(false)
-            } else {
-              setEditingCard(null)
-              setIsCreating(true)
-            }
-          }}
-          style={{ borderRadius: 20, padding: '6px 14px' }}
-        >
-          {isCreating ? (
-            t('common.cancel', 'İptal')
-          ) : (
-            <>
-              <Plus size={16} /> {t('card.create_new', 'Yeni Kart')}
-            </>
-          )}
-        </button>
-      </div>
+      <PageTopDockRow
+        left={
+          <BackButton
+            text={t('common.go_back')}
+            onClick={() => navigate(-1)}
+            style={{ marginBottom: 0 }}
+          />
+        }
+        right={
+          <button
+            className="btn btn-sm btn-primary"
+            onClick={() => {
+              if (isCreating) {
+                setIsCreating(false)
+              } else {
+                setEditingCard(null)
+                setIsCreating(true)
+              }
+            }}
+            style={{ borderRadius: 20, padding: '6px 14px' }}
+          >
+            {isCreating ? (
+              t('common.cancel')
+            ) : (
+              <>
+                <Plus size={16} /> {t('card.create_new')}
+              </>
+            )}
+          </button>
+        }
+        style={{ marginBottom: 16 }}
+      />
 
       <div
         className="card-page-header"
@@ -210,7 +208,7 @@ export default function PersonalityCardPage() {
             <h1
               style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
             >
-              {t('card.my_cards', 'Kişilik Kartlarım')}
+              {t('card.my_cards')}
             </h1>
             <span
               style={{
@@ -227,30 +225,26 @@ export default function PersonalityCardPage() {
             </span>
           </div>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
-            {t('card.my_cards_desc', 'Oluşturduğunuz ve satın aldığınız kişilik kartları')}
+            {t('card.my_cards_desc')}
           </p>
         </div>
         <HowItWorksHelp
-          title={t('card.how_it_works_title', 'Kişilik kartları hakkında')}
+          title={t('card.how_it_works_title')}
           items={[
             t(
-              'card.how_it_works_1',
-              'Yaratılan kişilik kartlarının sahipliği sende olur. Bu kişilik kartlarını istediğin botlarına atayabilirsin. Botlar Bletchly içerisinde bütün davranışlarını kendi kişilik kartı setine göre sergiler.'
+              'card.how_it_works_1'
             ),
             t(
-              'card.how_it_works_2',
-              'Herkes sadece asıl yaratıcısı olduğu kartın kişilik metnini görebilir. Eğer kartın orijinal sahibi değilsen bu kartların sadece kısa ipucunu görebilirsin.'
+              'card.how_it_works_2'
             ),
             t(
-              'card.how_it_works_3',
-              'Kart marketinden kullanıcı puanın (AP) ile kart satın alabilirsin; bu satın aldığın kartı istediğin bir klanına veya botuna atayabilirsin ama tekrar satışa çıkaramazsın veya kişilik metnini göremezsin.'
+              'card.how_it_works_3'
             ),
             t(
-              'card.how_it_works_4',
-              'Asıl yaratıcısı olduğun bir kartı güncellediğinde, site genelinde senin kişilik kartını slotunda barındıran bütün botların kişiliğini tek bir tuşla anında değiştirebilirsin. Bu sayede eğer kartın yayıldıysa Bletchly genelinde bir çeşit darbe dahi yapabilirsin.'
+              'card.how_it_works_4'
             ),
           ]}
-          closeLabel={t('common.close', 'Kapat')}
+          closeLabel={t('common.close')}
           triggerStyle={{ marginLeft: 'auto', marginRight: 24, flexShrink: 0 }}
         />
       </div>
@@ -309,7 +303,7 @@ export default function PersonalityCardPage() {
               letterSpacing: '0.05em',
             }}
           >
-            {t('card.ownership_slots', 'Kart Sahiplik Yuvaları')} ({myCards.length} / {cardOwnershipLimit} {t('card.slots_label', 'Slot')})
+            {t('card.ownership_slots')} ({myCards.length} / {cardOwnershipLimit} {t('card.slots_label')})
           </h3>
           <CardSlots
             cards={myCards}

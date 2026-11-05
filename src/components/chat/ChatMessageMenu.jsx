@@ -64,24 +64,24 @@ export default function ChatMessageMenu({
 
   return createPortal(
     <div className="chat-message-menu" ref={menuRef} role="menu">
-      {item(t('chat.reply', 'Yanıtla'), Reply, onReply)}
-      {item(t('chat.copy', 'Kopyala'), Copy, onCopy)}
+      {item(t('chat.reply'), Reply, onReply)}
+      {item(t('chat.copy'), Copy, onCopy)}
       {item(
-        message.isFavorited ? t('chat.unfavorite', 'Favoriden çıkar') : t('chat.favorite', 'Favoriye ekle'),
+        message.isFavorited ? t('chat.unfavorite') : t('chat.favorite'),
         message.isFavorited ? StarOff : Star,
         onFavorite,
         false,
         message.isFavorited
       )}
       {item(
-        message.isPinned ? t('chat.unpin', 'Sabitlemeyi kaldır') : t('chat.pin', 'Sabitle'),
+        message.isPinned ? t('chat.unpin') : t('chat.pin'),
         message.isPinned ? PinOff : Pin,
         onPin,
         false,
         message.isPinned
       )}
-      {!isMine && item(t('chat.report', 'Şikayet et'), Flag, onReport, true)}
-      {isMine && item(t('chat.delete', 'Sil'), Trash2, onDelete, true)}
+      {!isMine && item(t('chat.report'), Flag, onReport, true)}
+      {isMine && item(t('chat.delete'), Trash2, onDelete, true)}
     </div>,
     document.body
   )

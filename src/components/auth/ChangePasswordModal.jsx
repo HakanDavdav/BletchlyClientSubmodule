@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { triggerConfetti } from '../../utils/confetti'
 import PasswordInput from '../common/PasswordInput'
+import ModalPortal from '../common/ModalPortal'
 
 export default function ChangePasswordModal({ isOpen, onClose }) {
   useDevLog('ChangePasswordModal', arguments[0] || {})
@@ -51,7 +52,8 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
   if (!isOpen) return null
 
   return (
-    <div className="modal-overlay" onClick={handleOverlayClick} style={{ zIndex: 100 }}>
+    <ModalPortal>
+      <div className="modal-overlay" onClick={handleOverlayClick} style={{ zIndex: 100 }}>
       <div className="modal-box" style={{ maxWidth: 440, padding: '36px 32px', textAlign: 'left', position: 'relative' }}>
         <button
           type="button"
@@ -140,7 +142,7 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
               disabled={changePasswordMutation.isPending}
               style={{ minWidth: 90 }}
             >
-              {t('common.close', 'Kapat')}
+              {t('common.close')}
             </button>
             <button
               type="submit"
@@ -153,6 +155,7 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
           </div>
         </form>
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   )
 }

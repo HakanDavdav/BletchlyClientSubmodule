@@ -35,7 +35,7 @@ export default function AvatarUpload({
       const url = res.data?.data || res.data?.Data || (typeof res.data === 'string' ? res.data : null)
       if (res.data?.succeeded !== false && url) {
         onImageUploaded(url)
-        toast.success(t('upload.success', 'Resim başarıyla yüklendi.'))
+        toast.success(t('upload.success'))
       }
     },
     onSettled: () => {
@@ -63,13 +63,13 @@ export default function AvatarUpload({
 
     if (!allowedTypes.includes(file.type) && !isAllowedExt) {
       toast.error(
-        t('upload.invalid_type', 'Desteklenmeyen dosya türü. (JPEG, PNG, WEBP, GIF, JFIF)')
+        t('upload.invalid_type')
       )
       return
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error(t('upload.size_error', 'Dosya boyutu 5MB dan küçük olmalıdır.'))
+      toast.error(t('upload.size_error'))
       return
     }
 
@@ -169,7 +169,7 @@ export default function AvatarUpload({
             ? '0 6px 20px rgba(0, 0, 0, 0.18)'
             : '0 2px 8px rgba(0, 0, 0, 0.06)',
       }}
-      title={isLocked ? t('premium.required', 'Pro özellik') : undefined}
+      title={isLocked ? t('premium.required') : undefined}
       onClick={() => {
         if (disabled || isUploading) return
         if (isLocked) {
@@ -191,7 +191,7 @@ export default function AvatarUpload({
             style={{ animation: 'spin 1s linear infinite', color: 'var(--color-primary)' }}
           />
           <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 500 }}>
-            {t('upload.uploading', 'Yükleniyor...')}
+            {t('upload.uploading')}
           </span>
         </div>
       ) : imageUrl ? (
@@ -243,7 +243,7 @@ export default function AvatarUpload({
                   textShadow: '0 1px 4px rgba(0, 0, 0, 0.8)',
                 }}
               >
-                {t('upload.change', 'Değiştir')}
+                {t('upload.change')}
               </span>
             )}
           </div>
@@ -268,7 +268,7 @@ export default function AvatarUpload({
           )}
           {size >= 60 && !compact && (
             <span style={{ fontSize: 11, fontWeight: 500 }}>
-              {t('upload.drag_or_click', 'Görsel Seç')}
+              {t('upload.drag_or_click')}
             </span>
           )}
         </div>
@@ -321,7 +321,7 @@ export default function AvatarUpload({
               className="btn btn-danger btn-sm"
               disabled={disabled || isUploading}
               onClick={handleRemove}
-              title={t('upload.remove', 'Kaldır')}
+              title={t('upload.remove')}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -334,7 +334,7 @@ export default function AvatarUpload({
               }}
             >
               <Trash2 size={size < 60 ? 12 : 13} />
-              {size >= 60 && <span>{t('upload.remove', 'Kaldır')}</span>}
+              {size >= 60 && <span>{t('upload.remove')}</span>}
             </button>
           </div>
         )}
@@ -380,8 +380,8 @@ export default function AvatarUpload({
           >
             {imageUrl ? <Camera size={16} /> : <ImagePlus size={16} />}
             {imageUrl
-              ? t('upload.change_image', 'Görseli Değiştir')
-              : t('upload.select_image', 'Görsel Seç')}
+              ? t('upload.change_image')
+              : t('upload.select_image')}
           </button>
 
           {imageUrl && (
@@ -398,18 +398,17 @@ export default function AvatarUpload({
               }}
             >
               <Trash2 size={15} />
-              <span>{t('upload.remove', 'Kaldır')}</span>
+              <span>{t('upload.remove')}</span>
             </button>
           )}
         </div>
 
         <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>
           {t(
-            'upload.drag_hint',
-            'Görseli sürükleyip bırakabilir veya tıklayarak yükleyebilirsiniz.'
+            'upload.drag_hint'
           )}
           <div style={{ fontSize: 11, color: 'var(--color-text-faint)', marginTop: 2 }}>
-            {t('upload.limits', 'Maksimum 5MB (PNG, JPEG, WEBP, GIF, JFIF)')}
+            {t('upload.limits')}
           </div>
         </div>
       </div>
