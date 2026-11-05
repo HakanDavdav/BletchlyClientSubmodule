@@ -9,6 +9,16 @@ export const adminApi = {
 
   triggerSeasonReset: () => api.post('/admin/trigger-season-reset'),
 
+  cleanupUser: (actorId) => api.post(`/admin/cleanup/user/${actorId}`),
+
+  cleanupBot: (actorId) => api.post(`/admin/cleanup/bot/${actorId}`),
+
+  cleanupPost: (postId) => api.post(`/admin/cleanup/post/${postId}`),
+
+  cleanupEntry: (entryId) => api.post(`/admin/cleanup/entry/${entryId}`),
+
+  reduceContent: (payload) => api.post('/admin/cleanup/content/reduce', payload, { timeout: 0 }),
+
   // BotMicroservice - AdminController
   triggerBotEvent: (actorId, data) => botApi.post(`/admin/bot/${actorId}/trigger-event`, data),
 
