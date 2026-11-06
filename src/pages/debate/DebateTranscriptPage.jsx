@@ -2,18 +2,20 @@ import React, { useMemo, useState, useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { getQueryErrorMessage } from '../../utils/errorHelper'
+import { getShortTimeAgo } from '../../utils/formatTime'
 import {
   ArrowLeft,
-  Calendar,
   Crown,
   Trophy,
   MessageSquare,
   Bot as BotIcon,
 } from 'lucide-react'
 import { actorApi } from '../../api/actorApi'
+import useIsMobile from '../../hooks/useIsMobile'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 import BackButton from '../../components/common/BackButton'
 import ActorAvatar from '../../components/actor/ActorAvatar'
-import ActorMinimalCard from '../../components/actor/ActorMinimalCard'
 import AngryBotIcon from '../../components/common/icons/AngryBotIcon'
 import LazyBotIcon from '../../components/common/icons/LazyBotIcon'
 import SwordIcon from '../../components/common/icons/SwordIcon'
@@ -26,18 +28,23 @@ export default function DebateTranscriptPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
   const debateId = searchParams.get('id')
 
   const initialDebate = location.state?.debate || null
 
-  const { data: fetchedDebate, isLoading, isError } = useQuery({
+  const { data: fetchedDebate, isLoading, isError, error } = useQuery({
     queryKey: ['debate-detail', debateId],
     queryFn: () => actorApi.getDebateById(debateId).then((r) => r.data?.data || r.data),
     enabled: Boolean(debateId) && !initialDebate?.debateTranscript,
-    initialData: initialDebate,
+    initialData: initialDebate || undefined,
   })
 
   const debate = fetchedDebate || initialDebate
+
+  useDocumentTitle(
+    debate?.proposition || t('debate.transcript_title')
+  )
 
   const proponent = debate?.proponent || {}
   const opponent = debate?.opponent || {}
@@ -47,7 +54,6 @@ export default function DebateTranscriptPage() {
     !winner &&
     debate?.proponentScore === debate?.opponentScore
 
-  const [isTopicExpanded, setIsTopicExpanded] = useState(false)
   const arenaWrapRef = useRef(null)
   const [ellipseStyle, setEllipseStyle] = useState(null)
   const [debateBots, setDebateBots] = useState([])
@@ -75,7 +81,8 @@ export default function DebateTranscriptPage() {
 
       const icons = []
       const totalPoints = pPoints + oPoints
-      const numIcons = Math.min(300, 72 + Math.floor(totalPoints / 20))
+      const baseIcons = Math.min(300, 72 + Math.floor(totalPoints / 20))
+      const numIcons = isMobile ? Math.round(baseIcons * 0.4) : baseIcons
       for (let i = 0; i < numIcons; i++) {
         const rx = Rx * (1.02 + Math.random() * 0.2)
         const ry = Ry * (1.02 + Math.random() * 0.2)
@@ -115,7 +122,7 @@ export default function DebateTranscriptPage() {
     const ro = new ResizeObserver(update)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [pPoints, oPoints])
+  }, [pPoints, oPoints, isMobile])
 
   const parsedTurns = useMemo(() => {
     if (!debate?.debateTranscript) return []
@@ -123,18 +130,64 @@ export default function DebateTranscriptPage() {
     const turns = []
     let currentTurn = null
 
+    const normalizeName = (value) =>
+      (value || '').toLowerCase().replace(/[:.]+$/, '').trim()
+    const proponentName = normalizeName(proponent?.profileName)
+    const opponentName = normalizeName(opponent?.profileName)
+
+    const resolveRole = (name) => {
+      const normalizedName = normalizeName(name)
+      if (!normalizedName) return 'neutral'
+      if (
+        proponentName &&
+        (normalizedName === proponentName ||
+          proponentName.includes(normalizedName) ||
+          normalizedName.includes(proponentName))
+      ) {
+        return 'proponent'
+      }
+      if (
+        opponentName &&
+        (normalizedName === opponentName ||
+          opponentName.includes(normalizedName) ||
+          normalizedName.includes(opponentName))
+      ) {
+        return 'opponent'
+      }
+      if (normalizedName.includes('proponent')) return 'proponent'
+      if (normalizedName.includes('opponent')) return 'opponent'
+      return 'neutral'
+    }
+
     for (const rawLine of lines) {
       const line = rawLine.trim()
       if (!line) continue
 
-      const match = line.match(/^\[Turn\s+(\d+)\]\s+(Proponent|Opponent)\s*\(([^)]+)\):\s*(.*)$/i)
-      if (match) {
+      const turnHeader = line.match(/^\[Turn\s+(\d+)\]\s+(.+)$/i)
+      if (turnHeader) {
+        const rest = turnHeader[2]
+        const roleMatch = rest.match(/^(Proponent|Opponent)\s*\(([^)]+)\):\s*(.*)$/i)
+        const saidMatch = rest.match(/^(.+?)\s+said:\s*(.*)$/i)
+        let role = 'neutral'
+        let speakerName = ''
+        let content = rest
+
+        if (roleMatch) {
+          role = roleMatch[1].toLowerCase()
+          speakerName = roleMatch[2].trim()
+          content = roleMatch[3] || ''
+        } else if (saidMatch) {
+          speakerName = saidMatch[1].trim().replace(/:$/, '').trim()
+          content = saidMatch[2] || ''
+          role = resolveRole(speakerName)
+        }
+
         if (currentTurn) turns.push(currentTurn)
         currentTurn = {
-          turnNumber: match[1],
-          role: match[2].toLowerCase(),
-          speakerName: match[3],
-          content: match[4] || '',
+          turnNumber: turnHeader[1],
+          role,
+          speakerName,
+          content,
         }
       } else if (currentTurn) {
         currentTurn.content += '\n' + line
@@ -149,7 +202,7 @@ export default function DebateTranscriptPage() {
     }
     if (currentTurn) turns.push(currentTurn)
     return turns
-  }, [debate?.debateTranscript])
+  }, [debate?.debateTranscript, proponent?.profileName, opponent?.profileName])
 
   const maxTurnNumber = useMemo(() => {
     const numbers = parsedTurns
@@ -158,15 +211,7 @@ export default function DebateTranscriptPage() {
     return numbers.length > 0 ? Math.max(...numbers) : parsedTurns.length
   }, [parsedTurns])
 
-  const formattedDate = debate?.completedAt || debate?.createdAt
-    ? new Date(debate.completedAt || debate.createdAt).toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : null
+  const timeAgo = getShortTimeAgo(debate?.completedAt || debate?.createdAt)
 
   if (isLoading && !debate) {
     return (
@@ -179,9 +224,9 @@ export default function DebateTranscriptPage() {
   if (isError && !debate) {
     return (
       <div style={{ padding: '32px', textAlign: 'center' }}>
-        <p style={{ color: '#ef4444', fontWeight: '600' }}>{t('debate.not_found', 'Meydan okuma bulunamadı.')}</p>
+        <p style={{ color: '#ef4444', fontWeight: '600' }}>{getQueryErrorMessage(error, t, true)}</p>
         <button className="btn btn-outline btn-sm" onClick={() => navigate(-1)} style={{ marginTop: '12px' }}>
-          <ArrowLeft size={14} /> {t('common.back', 'Geri')}
+          <ArrowLeft size={14} /> {t('common.back')}
         </button>
       </div>
     )
@@ -190,7 +235,7 @@ export default function DebateTranscriptPage() {
   if (!debate) {
     return (
       <div style={{ padding: '32px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
-        <p>{t('debate.no_debate_selected', 'Görüntülenecek meydan okuma seçilmedi.')}</p>
+        <p>{t('debate.no_debate_selected')}</p>
       </div>
     )
   }
@@ -201,7 +246,7 @@ export default function DebateTranscriptPage() {
       : debate.winnerId === opponent.actorId
       ? opponent.profileName
       : isDraw
-      ? t('debate.draw', 'Berabere')
+      ? t('debate.draw')
       : null
   )
 
@@ -217,12 +262,6 @@ export default function DebateTranscriptPage() {
         }}
       >
         <BackButton onClick={() => navigate(-1)} style={{ marginBottom: 0 }} />
-        {formattedDate && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>
-            <Calendar size={13} />
-            {formattedDate}
-          </div>
-        )}
       </div>
 
       <div className="debate-container">
@@ -238,39 +277,24 @@ export default function DebateTranscriptPage() {
                 letterSpacing: '0.5px',
               }}
             >
-              {t('debate.transcript_title', 'Meydan Okuma Transkripti')}
+              {t('debate.transcript_title')}
             </span>
-            <div
-              style={{
-                position: 'absolute',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '11px',
-                fontWeight: 700,
-                color: 'var(--color-primary)',
-                background: 'color-mix(in srgb, var(--color-surface) 80%, transparent)',
-                border: '1px solid var(--color-border)',
-                padding: '2px 12px',
-                borderRadius: '9999px',
-                letterSpacing: '0.5px',
-              }}
-            >
-              <AngryBotWithSwordsIcon size={14} />
-              <span>{t('debate.completed_status', 'Tamamlandı')}</span>
+            <div className="debate-header__completed-stack">
+              {timeAgo && <div className="date-text debate-header__completed-date">{timeAgo}</div>}
+              <span className="debate-header__completed">
+                <AngryBotWithSwordsIcon size={14} />
+                {t('debate.completed_status')}
+              </span>
             </div>
-            <div className="debate-status">
-              {maxTurnNumber > 0 && `${maxTurnNumber} ${t('debate.turns_total', 'Tur')}`}
-            </div>
+            <span className="debate-status">
+              {maxTurnNumber > 0 && `${maxTurnNumber} ${t('debate.turns_total')}`}
+            </span>
           </div>
 
-          <div
-            className={`debate-proposition-container ${isTopicExpanded ? 'expanded' : ''}`}
-            onClick={() => setIsTopicExpanded(!isTopicExpanded)}
-          >
-            <h2 className="debate-proposition-text">{debate.proposition || t('debate.no_proposition', 'Önerme belirtilmedi')}</h2>
+          <hr className="divider" style={{ margin: 0 }} />
+
+          <div className="debate-proposition-quote">
+            <span>"{debate.proposition || t('debate.no_proposition')}"</span>
           </div>
         </div>
 
@@ -330,27 +354,34 @@ export default function DebateTranscriptPage() {
                   const isOpponent = turn.role === 'opponent'
                   const currentActor = isProponent ? proponent : isOpponent ? opponent : null
                   const speakerDisplayName = turn.speakerName || currentActor?.profileName || (isProponent ? 'Proponent' : isOpponent ? 'Opponent' : '')
+                  const roleLabel = isProponent
+                    ? t('debate.role_proponent_short')
+                    : isOpponent
+                    ? t('debate.role_opponent_short')
+                    : ''
+                  const turnLabel = turn.turnNumber && turn.turnNumber !== '•' ? turn.turnNumber : ''
+                  const metaLabel = [roleLabel, turnLabel].filter(Boolean).join(' • ')
 
                   return (
                     <div
                       key={index}
                       className={`chat-message-block ${isProponent ? 'msg-proponent' : isOpponent ? 'msg-opponent' : ''}`}
                     >
-                      <div className="chat-message-header">
-                        <ActorMinimalCard
-                          actor={currentActor}
-                          variant="ultra-compact"
-                          showHierarchyBtn={false}
-                          showMindBtn={true}
-                          contextTitle={debate.proposition}
-                        />
-                        <div className="chat-message-info">
-                          <span className="chat-message-name">{speakerDisplayName}</span>
-                          <span className="chat-message-role">
-                            {isProponent ? `${t('debate.role_proponent_short', 'Savunan')} • Tur ${turn.turnNumber}` : isOpponent ? `${t('debate.role_opponent_short', 'Karşıt')} • Tur ${turn.turnNumber}` : `Tur ${turn.turnNumber}`}
-                          </span>
+                      {(currentActor || turn.speakerName) && (
+                        <div className="chat-message-header">
+                          <ActorAvatar
+                            profileName={currentActor?.profileName || turn.speakerName}
+                            imageUrl={currentActor?.imageUrl}
+                            actorId={currentActor?.actorId || currentActor?.id}
+                            discriminator={currentActor?.discriminator || 'Bot'}
+                            size="sm"
+                          />
+                          <div className="chat-message-info">
+                            <span className="chat-message-name">{speakerDisplayName}</span>
+                            <span className="chat-message-role">{metaLabel}</span>
+                          </div>
                         </div>
-                      </div>
+                      )}
                       <div className="chat-message-body speech-stream">
                         {turn.content}
                       </div>
@@ -373,7 +404,7 @@ export default function DebateTranscriptPage() {
                   <div style={{ fontSize: '1.05rem', fontWeight: '600' }}>
                     {debate.debateTranscript
                       ? debate.debateTranscript
-                      : t('debate.no_transcript_available', 'Bu meydan okuma için henüz kayıtlı bir transkript bulunmuyor.')}
+                      : t('debate.no_transcript_available')}
                   </div>
                 </div>
               )}
@@ -389,11 +420,11 @@ export default function DebateTranscriptPage() {
                       <AngryBotWithSwordsIcon size={22} color="#fff" />
                     </div>
                     <div className="verdict-banner__text">
-                      <span className="verdict-banner__title">{t('debate.verdict_title', 'Meydan Okuma Sonucu')}</span>
+                      <span className="verdict-banner__title">{t('debate.verdict_title')}</span>
                       <span className="verdict-banner__winner">
                         {winnerName ? (
                           <>
-                            {t('debate.winner', 'Kazanan')}: <strong>{winnerName}</strong> ({debate.proponentScore ?? '-'} - {debate.opponentScore ?? '-'})
+                            {t('debate.winner')}: <strong>{winnerName}</strong> ({debate.proponentScore ?? '-'} - {debate.opponentScore ?? '-'})
                           </>
                         ) : (
                           `${debate.proponentScore ?? '-'} - ${debate.opponentScore ?? '-'}`
@@ -406,7 +437,7 @@ export default function DebateTranscriptPage() {
                     onClick={() => navigate('/')}
                     style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                   >
-                    <ArrowLeft size={16} /> {t('common.back_to_feed', 'Ana Sayfaya Dön')}
+                    <ArrowLeft size={16} /> {t('common.back_to_home')}
                   </button>
                 </div>
               )}
@@ -425,11 +456,11 @@ export default function DebateTranscriptPage() {
                 <AngryBotWithSwordsIcon size={26} color="#fff" />
               </div>
               <div className="verdict-banner__text">
-                <span className="verdict-banner__title">{t('debate.concluded_title', 'Meydan Okuma Tamamlandı')}</span>
+                <span className="verdict-banner__title">{t('debate.concluded_title')}</span>
                 <span className="verdict-banner__winner">
                   {winnerName ? (
                     <>
-                      {t('debate.winner', 'Kazanan')}: <strong>{winnerName}</strong> ({debate.proponentScore ?? '-'} - {debate.opponentScore ?? '-'})
+                      {t('debate.winner')}: <strong>{winnerName}</strong> ({debate.proponentScore ?? '-'} - {debate.opponentScore ?? '-'})
                     </>
                   ) : (
                     `${debate.proponentScore ?? '-'} - ${debate.opponentScore ?? '-'}`
@@ -442,7 +473,7 @@ export default function DebateTranscriptPage() {
               onClick={() => navigate('/')}
               style={{ display: 'flex', alignItems: 'center', gap: 6 }}
             >
-              <ArrowLeft size={16} /> {t('common.back_to_feed', 'Ana Sayfaya Dön')}
+              <ArrowLeft size={16} /> {t('common.back_to_home')}
             </button>
           </div>
         )}

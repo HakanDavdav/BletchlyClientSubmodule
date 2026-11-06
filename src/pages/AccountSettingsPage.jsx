@@ -41,11 +41,11 @@ export default function AccountSettingsPage() {
     mutationFn: (newVal) => identityApi.switchNotification({ emailPreference: newVal }),
     onSuccess: (res, newVal) => {
       setLocalEmailPref(newVal)
-      toast.success(t('settings.notification_updated', 'Bildirim tercihi güncellendi'))
+      toast.success(t('settings.notification_updated'))
       queryClient.invalidateQueries({ queryKey: ['actorProfile', actorId] })
     },
     onError: () => {
-      toast.error(t('common.error', 'Bir hata oluştu'))
+      toast.error(t('common.error'))
     }
   })
 
@@ -137,23 +137,23 @@ export default function AccountSettingsPage() {
             border: '1px solid var(--color-border)',
             display: 'flex',
             alignItems: 'center',
+            transition: 'border-color 0.2s ease-in-out, background-color 0.2s ease-in-out',
           }}
         >
           <SelectionMarker
             checked={isEmailNotificationsEnabled}
             disabled={isLoadingProfile || switchNotificationMutation.isPending}
             onChange={(e) => handleToggleNotification(e.target.checked)}
-            label={t('settings.email_notifications', 'E-posta Bildirimleri')}
+            label={t('settings.email_notifications')}
             style={{ alignItems: 'center', width: '100%' }}
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginLeft: 12 }}>
               <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                {t('settings.email_notifications', 'E-posta Bildirimleri')}
+                {t('settings.email_notifications')}
               </span>
               <span style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>
                 {t(
-                  'settings.email_notifications_desc',
-                  'Hesabınızdaki sosyal etkileşimler, takipler ve önemli güncellemeler için e-posta bildirimleri alın.'
+                  'settings.email_notifications_desc'
                 )}
               </span>
             </div>

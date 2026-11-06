@@ -46,7 +46,6 @@ export default function HierarchyConnectionsOverlay({
   strokeWidth = 2,
   crownedChance = 0.2,
 }) {
-  const cardHeight = Math.round(cardWidth * CARD_ASPECT)
   const cardMapRef = useRef(new Map())
   const routesRef = useRef([])
   const cardsRef = useRef([])
@@ -56,6 +55,30 @@ export default function HierarchyConnectionsOverlay({
   const [paths, setPaths] = useState([])
   const [cards, setCards] = useState([])
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
+  const [sizeScale, setSizeScale] = useState(1)
+
+  // Mobilde mikro kartlar alan ölçeğiyle orantılı küçülür; masaüstü korunur
+  useEffect(() => {
+    const update = () => {
+      const cw = containerRef.current?.getBoundingClientRect().width || 0
+      const isMobile = window.matchMedia('(max-width: 640px)').matches
+      setSizeScale(isMobile && cw > 0 ? Math.max(0.3, Math.min(1, cw / 810)) : 1)
+    }
+    update()
+    window.addEventListener('resize', update)
+    let ro
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(update)
+      if (containerRef.current) ro.observe(containerRef.current)
+    }
+    return () => {
+      window.removeEventListener('resize', update)
+      if (ro) ro.disconnect()
+    }
+  }, [containerRef])
+
+  const effectiveCardWidth = Math.round(cardWidth * sizeScale * 10) / 10
+  const cardHeight = Math.round(effectiveCardWidth * CARD_ASPECT)
 
   const onPulseRef = useRef(onPulse)
   useEffect(() => {
@@ -367,9 +390,9 @@ export default function HierarchyConnectionsOverlay({
           }}
           style={{
             position: 'absolute',
-            left: -cardWidth / 2,
+            left: -effectiveCardWidth / 2,
             top: -cardHeight / 2,
-            width: cardWidth,
+            width: effectiveCardWidth,
             height: cardHeight,
             color: cardColor,
             pointerEvents: 'none',
@@ -380,7 +403,7 @@ export default function HierarchyConnectionsOverlay({
         >
           <CardIcon
             crowned={Boolean(c.crowned)}
-            width={cardWidth}
+            width={effectiveCardWidth}
             height={cardHeight}
             color={cardColor}
             style={{ display: 'block' }}

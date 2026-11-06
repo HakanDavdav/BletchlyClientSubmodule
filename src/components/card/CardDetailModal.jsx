@@ -1,12 +1,17 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
+import { useNavigate } from 'react-router-dom'
 import { BookOpen, Bot, CalendarFold, Hash, Tag, Users, X, Crown, Edit2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
 import TribeMinimalCard from '../tribe/TribeMinimalCard'
 import BotFlashCardsIcon from '../common/icons/BotFlashCardsIcon'
+import CardContingencyIcon from '../common/icons/CardContingencyIcon'
 import IconActionButton from '../common/IconActionButton'
 import ModalHeader from '../common/ModalHeader'
+import useMyEntitiesStore from '../../store/myEntitiesStore'
+import { normalizeCardId } from '../../utils/cardOwnership'
+import { formatDateTime } from '../../utils/formatDate'
 
 import i18n from '../../i18n'
 
@@ -19,56 +24,24 @@ function normalizeTags(rawTags) {
     .filter(Boolean)
 }
 
-function formatDate(value) {
-  if (!value) return null
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return String(value)
-  const locale = (i18n.language && i18n.language.startsWith('en')) ? 'en-US' : 'tr-TR'
-  const datePart = date.toLocaleDateString(locale)
-  const timePart = date.toLocaleTimeString(locale, { hour12: false })
-  return `${datePart} / ${timePart}`
+function formatContingency(contingency, isEn) {
+  if (contingency === null || contingency === undefined) return null
+  const num = Number(contingency)
+  if (Number.isNaN(num)) return null
+  const percent = Number((num <= 1 ? num * 100 : num).toFixed(2))
+  return isEn ? `${percent}%` : `%${percent}`
 }
 
 function DetailRow({ icon: Icon, label, value, multiline = false, iconSize = 14 }) {
   if (value === null || value === undefined || value === '') return null
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'minmax(140px, 0.35fr) minmax(0, 1fr)',
-        gap: 16,
-        padding: '12px 0',
-        borderBottom: '1px solid var(--color-border-light)',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          alignSelf: 'start',
-          gap: 7,
-          color: 'var(--color-text-secondary)',
-          fontSize: 12,
-          fontWeight: 700,
-          textTransform: 'uppercase',
-          letterSpacing: '0.04em',
-        }}
-      >
-        {Icon && <Icon size={iconSize} style={{ flexShrink: 0 }} />}
+    <div className="card-detail-row">
+      <div className="card-detail-row__label">
+        {Icon && <Icon size={iconSize} className="card-detail-row__icon" style={{ flexShrink: 0 }} />}
         <span>{label}</span>
       </div>
-      <div
-        style={{
-          minWidth: 0,
-          color: 'var(--color-text-primary)',
-          fontSize: 13,
-          lineHeight: 1.6,
-          whiteSpace: multiline ? 'pre-wrap' : 'normal',
-          overflowWrap: 'anywhere',
-          wordBreak: 'break-word',
-        }}
-      >
+      <div className={`card-detail-row__value${multiline ? ' is-multiline' : ''}`}>
         {value}
       </div>
     </div>
@@ -76,6 +49,7 @@ function DetailRow({ icon: Icon, label, value, multiline = false, iconSize = 14 
 }
 
 export default function CardDetailModal({ card, isOpen, onClose, onEditClick = null }) {
+  const navigate = useNavigate()
   const { t } = useTranslation()
 
   useEffect(() => {
@@ -92,15 +66,28 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
   if (!isOpen || !card) return null
 
   const cardData = card.card || card.originalCard || card
-  const cardName = cardData.cardName || card.cardName || t('card.card', 'Kart')
+  const cardName = cardData.cardName || card.cardName || t('card.card')
   const personalityPrompt = cardData.personalityPrompt ?? card.personalityPrompt
   const cardHint = cardData.cardHint ?? card.cardHint
   const tags = normalizeTags(cardData.cardTags ?? cardData.tags ?? card.tags)
   const cardId = cardData.personalityCardId ?? card.cardId
   const ownershipId = card.ownershipId
   const actorId = card.actorId
+  const myOwnedCards = useMyEntitiesStore((s) => s.myCards)
+  const targetId = normalizeCardId(card) || normalizeCardId(cardData)
+  const ownedMatch = useMemo(() => {
+    if (!targetId || !Array.isArray(myOwnedCards)) return null
+    return myOwnedCards.find((mc) => normalizeCardId(mc) === targetId) || null
+  }, [targetId, myOwnedCards])
+
+  const isOwnerCard = Boolean(ownedMatch)
+  const effectiveAcqType = ownedMatch?.acquisitionType ?? (isOwnerCard ? (card.acquisitionType ?? cardData.acquisitionType) : null)
   const acquisitionType =
-    card.acquisitionType === 0 ? t('card.created', 'Oluşturuldu') : card.acquisitionType === 1 ? t('card.purchased', 'Satın Alındı') : null
+    effectiveAcqType === 0
+      ? t('card.created')
+      : effectiveAcqType === 1
+        ? t('card.purchased')
+        : null
   const rawAssignedBots = card.assignedBots || cardData.assignedBots || []
   const rawAssignedTribes = card.assignedTribes || cardData.assignedTribes || []
 
@@ -115,103 +102,138 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
 
   const ownershipCount = cardData.ownershipCount ?? card.ownershipCount
   const assignmentCount = cardData.assignmentCount ?? card.assignmentCount
+  const contingency =
+    cardData.contingency ??
+    card.contingency ??
+    card?.ownership?.card?.contingency ??
+    card?.ownership?.originalCard?.contingency ??
+    null
+  const isEn = Boolean(i18n.language && i18n.language.startsWith('en'))
 
   const detailRows = [
     {
       icon: BotFlashCardsIcon,
-      iconSize: 20,
-      label: t('card.prompt', 'Kişilik Promptu'),
+      iconSize: 15,
+      label: t('card.prompt'),
       value: personalityPrompt || (
         <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--color-danger)' }}>
           <Crown size={16} /> 
-          {t('card.hidden_prompt', 'Gizli (Yalnızca Yaratıcı)')}
+          {t('card.hidden_prompt')}
         </span>
       ),
       multiline: true,
     },
     {
       icon: BotFlashCardsIcon,
-      iconSize: 20,
-      label: t('card.hint', 'Kart Hint'),
+      iconSize: 15,
+      label: t('card.hint'),
       value: cardHint,
       multiline: true,
     },
     {
       icon: BotFlashCardsIcon,
-      iconSize: 20,
-      label: t('card.tags', 'Etiketler'),
+      iconSize: 15,
+      label: t('card.tags'),
       value: tags.length > 0 ? tags.join(', ') : null,
     },
     {
       icon: BotFlashCardsIcon,
-      iconSize: 20,
-      label: t('card.marketplace_status', 'Marketplace'),
+      iconSize: 15,
+      label: t('card.marketplace_status'),
       value:
         cardData.isListedOnMarketplace === null || cardData.isListedOnMarketplace === undefined
           ? null
           : cardData.isListedOnMarketplace
-            ? t('common.yes', 'Evet')
-            : t('common.no', 'Hayır'),
+            ? t('common.yes')
+            : t('common.no'),
     },
     {
       icon: BotFlashCardsIcon,
-      iconSize: 20,
-      label: t('card.price', 'Fiyat'),
+      iconSize: 15,
+      label: t('card.price'),
       value: cardData.price == null ? null : `${cardData.price} AP`,
     },
-    { icon: Users, label: t('card.ownership_count', 'Sahiplik Sayısı'), value: ownershipCount },
-    { icon: Bot, label: t('card.assignment_count', 'Atama Sayısı'), value: assignmentCount },
+    { icon: Users, label: t('card.ownership_count'), value: ownershipCount },
+    { icon: Bot, label: t('card.assignment_count'), value: assignmentCount },
+    {
+      icon: CardContingencyIcon,
+      iconSize: 12,
+      label: t('card.initial_contingency'),
+      value: formatContingency(contingency, isEn),
+    },
     { icon: Hash, label: 'Card ID', value: cardId },
     { icon: Hash, label: 'Ownership ID', value: ownershipId },
     { icon: Hash, label: 'Actor ID', value: actorId },
-    { icon: Hash, label: t('card.acquisition_type', 'Edinim Türü'), value: acquisitionType },
+    { icon: Hash, label: t('card.acquisition_type'), value: acquisitionType },
     {
       icon: CalendarFold,
-      label: t('card.acquired_at', 'Edinilme'),
-      value: formatDate(card.acquiredAt),
+      label: t('card.acquired_at'),
+      value: card.acquiredAt
+        ? <span className="date-text">{formatDateTime(card.acquiredAt)}</span>
+        : null,
     },
     {
       icon: CalendarFold,
-      label: t('card.created_at', 'Oluşturulma'),
-      value: formatDate(cardData.createdAt),
+      label: t('card.created_at'),
+      value: cardData.createdAt
+        ? <span className="date-text">{formatDateTime(cardData.createdAt)}</span>
+        : null,
     },
     {
       icon: CalendarFold,
-      label: t('card.updated_at', 'Güncellenme'),
-      value: formatDate(cardData.updatedAt),
+      label: t('card.updated_at'),
+      value: cardData.updatedAt
+        ? <span className="date-text">{formatDateTime(cardData.updatedAt)}</span>
+        : null,
     },
   ]
 
-  const isOwnerCard =
-    card.acquisitionType === 0 ||
-    card.acquisitionType === 1 ||
-    cardData.acquisitionType === 0 ||
-    cardData.acquisitionType === 1
 
   return createPortal(
-    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 150 }} role="presentation">
+    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 100000 }} role="presentation">
       <div
         className="modal-box"
         role="dialog"
         aria-modal="true"
         aria-labelledby="personality-card-detail-title"
         onClick={(event) => event.stopPropagation()}
-        style={{ maxWidth: 680, maxHeight: '88vh', padding: 0, overflow: 'hidden' }}
+        style={{
+          maxWidth: 680,
+          maxHeight: '88vh',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '24px 20px 20px',
+          borderRadius: 16,
+          background: 'var(--color-bg)',
+          border: '1px solid var(--color-border)',
+        }}
       >
         <ModalHeader
           icon={<BotFlashCardsIcon size={28} style={{ color: 'var(--color-primary)' }} />}
           title={cardName}
-          subtitle={t('card.details', 'Kart Detayları')}
+          subtitle={t('card.details')}
           titleId="personality-card-detail-title"
           onClose={onClose}
+          style={{ padding: '0 0 14px 0', marginBottom: 16 }}
           actions={
-            onEditClick && isOwnerCard ? (
+            isOwnerCard ? (
               <IconActionButton
                 onClick={() => {
                   onClose()
-                  onEditClick(card)
+                  if (onEditClick) {
+                    onEditClick(card)
+                  } else {
+                    const targetId =
+                      card?.personalityCardId ||
+                      card?.cardId ||
+                      card?.card?.personalityCardId ||
+                      card?.card?.cardId ||
+                      cardData?.personalityCardId ||
+                      cardData?.cardId
+                    navigate('/cards', { state: { editCardId: targetId, editCard: card } })
+                  }
                 }}
-                aria-label={t('action.edit', 'Düzenle')}
+                aria-label={t('action.edit')}
                 style={{ width: 36, height: 36, borderRadius: 'var(--radius-md)' }}
               >
                 <Edit2 size={17} strokeWidth={2.2} />
@@ -220,9 +242,7 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
           }
         />
 
-        <div
-          style={{ maxHeight: 'calc(88vh - 92px)', overflowY: 'auto', padding: '8px 24px 24px' }}
-        >
+        <div className="card-detail-modal-body" style={{ flex: 1, padding: '0 4px 0 0', maxHeight: 'none' }}>
           <div>
             {detailRows.map((row) => (
               <DetailRow key={row.label} {...row} />
@@ -242,17 +262,19 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
                 }}
               >
                 <Bot size={16} />
-                {t('card.assignments', 'Atamalar')}
+                {t('card.assignments')}
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="minimal-card-list">
                 {assignedNodes.map((node) =>
                   node.type === 'tribe' ? (
                     <TribeMinimalCard
                       key={`assigned-tribe-${node.data.tribeId}`}
+                      tribe={node.data}
                       {...node.data}
                       isDormant={node.data.isDormant ?? node.data.IsDormant}
+                      assignedCardIds={node.data.assignedCardIds || node.data.AssignedCardIds}
                       showPoint={false}
-                      showMindBtn={false}
+                      showMemoryMapBtn={false}
                       showEditBtn={false}
                       clickable={true}
                     />
@@ -261,7 +283,7 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
                       key={`assigned-actor-${node.data.actorId}`}
                       actor={node.data}
                       showHierarchyBtn={false}
-                      showMindBtn={false}
+                      showMemoryMapBtn={false}
                       showEditBtn={false}
                       clickable={true}
                     />

@@ -1,19 +1,24 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { personalityCardApi } from '../../api/personalityCardApi'
 import { searchApi } from '../../api/searchApi'
-import { ShoppingCart, Search as SearchIcon, Filter, X } from 'lucide-react'
+import { ShoppingCart } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import BackButton from '../../components/common/BackButton'
+import ConfirmModal from '../../components/common/ConfirmModal'
 import PersonalityCard from '../../components/card/PersonalityCard'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import BotFlashCardsIcon from '../../components/common/icons/BotFlashCardsIcon'
+import SearchFilterBar from '../../components/common/SearchFilterBar'
 import HowItWorksHelp from '../../components/common/HowItWorksHelp'
+import InfiniteScrollStatus from '../../components/common/InfiniteScrollStatus'
 import ActorMinimalCard from '../../components/actor/ActorMinimalCard'
+import useInfiniteScroll from '../../hooks/useInfiniteScroll'
 import useAuthStore from '../../store/authStore'
 import useMyEntitiesStore from '../../store/myEntitiesStore'
+import { triggerConfetti } from '../../utils/confetti'
 
 export default function MarketplacePage() {
   const navigate = useNavigate()
@@ -21,29 +26,20 @@ export default function MarketplacePage() {
   const queryClient = useQueryClient()
   const { isLoggedIn } = useAuthStore()
   const myCards = useMyEntitiesStore((s) => s.myCards)
+  const storeSettings = useMyEntitiesStore((s) => s.mySettings)
+  const cardOwnershipLimit = storeSettings?.cardOwnershipLimit || 10
+  const isLimitReached = (myCards || []).length >= cardOwnershipLimit
 
   const [buyModal, setBuyModal] = useState({ isOpen: false, cardId: null, price: null, cardName: '' })
 
-  // Search state
-  const [searchInput, setSearchInput] = useState('')
-  const [filterOrderType, setFilterOrderType] = useState('')
-  const [filterStartDate, setFilterStartDate] = useState('')
-  const [filterEndDate, setFilterEndDate] = useState('')
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const filterRef = useRef(null)
-
   // Active query parameters that trigger refetch
   const [activeParams, setActiveParams] = useState({ query: '', orderType: '', startDate: null, endDate: null })
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (filterRef.current && !filterRef.current.contains(e.target)) {
-        setIsFilterOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
+  const hasActiveSearch = Boolean(
+    activeParams.query ||
+    (activeParams.orderType && activeParams.orderType !== 'None') ||
+    activeParams.startDate ||
+    activeParams.endDate
+  )
 
   const {
     data,
@@ -83,40 +79,29 @@ export default function MarketplacePage() {
   }, [activeParams])
 
   const visibleCards = allFetchedCards.slice(0, visibleCount)
+  const canLoadMore = hasNextPage || visibleCount < allFetchedCards.length
 
-  const loadMoreRef = useRef(null)
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          if (visibleCount < allFetchedCards.length) {
-            // We have more items in memory (e.g. from the 100 returned instantly), show 20 more
-            setVisibleCount((prev) => prev + 20)
-          } else if (hasNextPage && !isFetchingNextPage) {
-            // We need to fetch the next page from the backend
-            fetchNextPage().then(() => {
-              setVisibleCount((prev) => prev + 20)
-            })
-          }
-        }
-      },
-      { threshold: 0.1 }
-    )
-
-    const currentRef = loadMoreRef.current
-    if (currentRef) observer.observe(currentRef)
-
-    return () => {
-      if (currentRef) observer.unobserve(currentRef)
-    }
-  }, [visibleCount, allFetchedCards.length, hasNextPage, isFetchingNextPage, fetchNextPage])
+  const { sentinelRef: loadMoreRef, isWaiting } = useInfiniteScroll({
+    hasNextPage: canLoadMore,
+    isFetchingNextPage,
+    onIntersect: () => {
+      if (visibleCount < allFetchedCards.length) {
+        setVisibleCount((prev) => prev + 20)
+      } else if (hasNextPage && !isFetchingNextPage) {
+        fetchNextPage().then(() => {
+          setVisibleCount((prev) => prev + 20)
+        })
+      }
+    },
+    depsKey: `${visibleCount}:${allFetchedCards.length}`,
+  })
 
   const buyMutation = useMutation({
     mutationFn: (cardId) => personalityCardApi.buyCard(cardId),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      toast.success(t('card.buy_success', 'Kart başarıyla satın alındı!'))
+      triggerConfetti()
+      toast.success(t('card.buy_success'))
       queryClient.invalidateQueries({ queryKey: ['myPersonalityCards'] })
       useMyEntitiesStore.getState().fetchMyCards()
       refetch()
@@ -135,22 +120,11 @@ export default function MarketplacePage() {
     setBuyModal({ isOpen: false, cardId: null, price: null, cardName: '' })
   }
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault()
-    setActiveParams({
-      query: searchInput,
-      orderType: filterOrderType || 'None',
-      startDate: filterStartDate || null,
-      endDate: filterEndDate || null,
-    })
-    setIsFilterOpen(false)
-  }
-
   return (
     <div className="flex-col gap-4">
       <div className="px-2" style={{ marginBottom: 16 }}>
         <BackButton
-          text={t('common.go_back', 'Geri Dön')}
+          text={t('common.go_back')}
           onClick={() => navigate(-1)}
           style={{ marginBottom: 0 }}
         />
@@ -171,270 +145,35 @@ export default function MarketplacePage() {
           <h1
             style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
           >
-            {t('card.marketplace', 'Kart Marketi')}
+            {t('card.marketplace')}
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
             {t(
-              'card.marketplace_desc',
-              'Diğer kullanıcıların oluşturduğu kişilik kartlarını keşfedin'
+              'card.marketplace_desc'
             )}
           </p>
         </div>
         <HowItWorksHelp
-          title={t('card.marketplace_how_it_works_title', 'Kart Marketi hakkında')}
+          title={t('card.marketplace_how_it_works_title')}
           items={[
             t(
-              'card.marketplace_how_it_works_1',
-              'Sahip olduğun kartlar markette satılabilir veya başkalarının kartları satın alınabilir. Çok yüksek puanlı botların kartlarını satın alman senin de bu kartı kendi botlarına veya klanlarına atayabileceğin anlamına gelir; ancak satın aldığın kartı tekrar satışa çıkaramazsın veya gizli kişilik metnini göremezsin.'
+              'card.marketplace_how_it_works_1'
             ),
             t(
-              'card.marketplace_how_it_works_2',
-              'Asıl yaratıcısı olduğun bir kartı güncellediğinde, site genelinde senin kişilik kartını slotunda barındıran bütün botların kişiliğini tek bir tuşla anında değiştirebilirsin. Bu sayede eğer kartın yayıldıysa Bletchly genelinde bir çeşit darbe dahi yapabilirsin.'
+              'card.marketplace_how_it_works_2'
             ),
           ]}
-          closeLabel={t('common.close', 'Kapat')}
+          closeLabel={t('common.close')}
           triggerStyle={{ marginLeft: 'auto', marginRight: 24, flexShrink: 0 }}
         />
       </div>
 
-      {/* Advanced Search Bar */}
-      <form
-        onSubmit={handleSearchSubmit}
-        style={{
-          display: 'flex',
-          gap: 6,
-          marginBottom: 32,
-          paddingBottom: 24,
-          borderBottom: '1px solid var(--color-border)',
-        }}
-      >
-        <div style={{ flex: 1, position: 'relative' }}>
-          <SearchIcon
-            size={16}
-            style={{
-              position: 'absolute',
-              left: 10,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: 'var(--color-text-faint)',
-              zIndex: 1,
-            }}
-          />
-          <input
-            className="input"
-            style={{ paddingLeft: 32 }}
-            placeholder={t('card.search_marketplace', 'Marketteki kartlarda ara...')}
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-          />
-        </div>
-
-        {/* Filter button */}
-        <div style={{ position: 'relative' }} ref={filterRef}>
-          <button
-            type="button"
-            className="btn btn-outline btn-sm btn-icon"
-            onClick={() => setIsFilterOpen(!isFilterOpen)}
-            aria-label={t('topbar.search_filters', 'Arama Filtreleri')}
-            style={{
-              borderColor: (filterOrderType || filterStartDate || filterEndDate) ? 'var(--color-primary)' : undefined,
-            }}
-          >
-            <Filter
-              size={14}
-              color={(filterOrderType || filterStartDate || filterEndDate) ? 'var(--color-primary)' : 'currentColor'}
-              fill={(filterOrderType || filterStartDate || filterEndDate) ? 'var(--color-primary)' : 'none'}
-            />
-          </button>
-          {(filterOrderType || filterStartDate || filterEndDate) && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                e.preventDefault()
-                setFilterOrderType('')
-                setFilterStartDate('')
-                setFilterEndDate('')
-                setIsFilterOpen(false)
-              }}
-              aria-label={t('common.clear_all', 'Tümünü Temizle')}
-              style={{
-                position: 'absolute',
-                top: -4,
-                right: -4,
-                transform: 'none',
-                marginTop: 0,
-                background: '#ef4444',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '50%',
-                width: 14,
-                height: 14,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                padding: 0,
-                zIndex: 10,
-              }}
-            >
-              <X size={10} strokeWidth={3} />
-            </button>
-          )}
-          <AnimatePresence>
-            {isFilterOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  marginTop: 4,
-                  background: 'var(--color-bg)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 8,
-                  boxShadow: 'var(--shadow-md)',
-                  zIndex: 200,
-                  minWidth: 220,
-                  padding: 12,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 12,
-                  textAlign: 'left',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: 'var(--color-text)',
-                    borderBottom: '1px solid var(--color-border-light)',
-                    paddingBottom: 6,
-                  }}
-                >
-                  <span>{t('search.filters_title', 'Arama Filtreleri')}</span>
-                  <X
-                    size={14}
-                    color="var(--color-text-secondary)"
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => setIsFilterOpen(false)}
-                  />
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
-                    {t('search.sort_by', 'Sıralama')}
-                  </label>
-                  <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                    <select
-                      className="input"
-                      style={{ padding: '4px 8px', height: 32, fontSize: 13, flex: 1 }}
-                      value={filterOrderType}
-                      onChange={(e) => setFilterOrderType(e.target.value)}
-                    >
-                      <option value="">{t('search.none', 'Yok')}</option>
-                      <option value="MostOwned">
-                        {t('card.most_owned', 'En Çok Satın Alınan')}
-                      </option>
-                      <option value="MostSpread">
-                        {t('card.most_spread', 'En Çok Yayılmış')}
-                      </option>
-                      <option value="Newest">{t('sort.newest', 'En Yeni')}</option>
-                      <option value="Oldest">{t('topbar.oldest', 'En Eski')}</option>
-                    </select>
-                    {filterOrderType && (
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        style={{ padding: 0, width: 32, height: 32, flexShrink: 0 }}
-                        onClick={() => setFilterOrderType('')}
-                        aria-label={t('common.clear', 'Temizle')}
-                      >
-                        <X size={16} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
-                    {t('search.start_date', 'Başlangıç Tarihi')}
-                  </label>
-                  <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                    <input
-                      type="date"
-                      className="input"
-                      style={{ padding: '4px 8px', height: 32, fontSize: 13, flex: 1 }}
-                      value={filterStartDate}
-                      onChange={(e) => setFilterStartDate(e.target.value)}
-                    />
-                    {filterStartDate && (
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        style={{ padding: 0, width: 32, height: 32, flexShrink: 0 }}
-                        onClick={() => setFilterStartDate('')}
-                        aria-label={t('common.clear', 'Temizle')}
-                      >
-                        <X size={16} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
-                    {t('search.end_date', 'Bitiş Tarihi')}
-                  </label>
-                  <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                    <input
-                      type="date"
-                      className="input"
-                      style={{ padding: '4px 8px', height: 32, fontSize: 13, flex: 1 }}
-                      value={filterEndDate}
-                      onChange={(e) => setFilterEndDate(e.target.value)}
-                    />
-                    {filterEndDate && (
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        style={{ padding: 0, width: 32, height: 32, flexShrink: 0 }}
-                        onClick={() => setFilterEndDate('')}
-                        aria-label={t('common.clear', 'Temizle')}
-                      >
-                        <X size={16} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Ara butonu */}
-                <button
-                  type="submit"
-                  className="btn btn-primary btn-sm"
-                  style={{ width: '100%', marginTop: 4, paddingTop: 7, paddingBottom: 7 }}
-                >
-                  {t('topbar.search_button', 'Ara')}
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        <button type="submit" className="btn btn-primary btn-sm">
-          {t('topbar.search_button', 'Ara')}
-        </button>
-      </form>
+      <SearchFilterBar onSearch={setActiveParams} />
 
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(min(300px, 100%), 1fr))',
           gap: 16,
         }}
       >
@@ -444,10 +183,7 @@ export default function MarketplacePage() {
           </div>
         ) : visibleCards.length === 0 ? (
           <div className="empty-state" style={{ gridColumn: '1 / -1' }}>
-            {t(
-              'card.no_marketplace_cards',
-              'Markette henüz kart bulunmuyor veya aramanızla eşleşen sonuç yok.'
-            )}
+            {hasActiveSearch ? t('search.no_results') : t('common.nothing_here_yet')}
           </div>
         ) : (
           visibleCards.map((card, index) => (
@@ -484,13 +220,13 @@ export default function MarketplacePage() {
                       marginBottom: 8,
                     }}
                   >
-                    {t('card.seller', 'Satıcı:')}
+                    {t('card.seller')}
                   </span>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, zoom: 0.75 }}>
                     <ActorMinimalCard
                       actor={card.actor}
                       showHierarchyBtn={false}
-                      showMindBtn={false}
+                      showMemoryMapBtn={false}
                       showPoint={false}
                       showEditBtn={false}
                     />
@@ -515,7 +251,7 @@ export default function MarketplacePage() {
                   <span></span> /* Placeholder for space-between */
                 )}
                 <span style={{ fontSize: 12, color: 'var(--color-text-faint)' }}>
-                  {t('card.sales', 'Satış')}: {card.card?.ownershipCount || 0}
+                  {t('card.sales')}: {card.card?.ownershipCount || 0}
                 </span>
               </div>
 
@@ -533,54 +269,51 @@ export default function MarketplacePage() {
                 })()}
                 title={
                   !isLoggedIn
-                    ? t('card.login_to_buy', 'Satın almak için giriş yapmalısınız')
+                    ? t('card.login_to_buy')
                     : myCards?.some((mc) => {
                         const mcId = typeof mc === 'string' ? mc : mc?.cardId || mc?.id
                         return mcId && mcId.toLowerCase() === (card.cardId || '').toLowerCase()
                       })
-                    ? t('card.already_owned', 'Bu karta zaten sahipsiniz')
+                    ? t('card.already_owned')
                     : undefined
                 }
               >
-                <ShoppingCart size={14} style={{ marginRight: 4 }} /> {t('card.buy', 'Satın Al')}
+                <ShoppingCart size={14} style={{ marginRight: 4 }} /> {t('card.buy')}
               </button>
             </div>
           ))
         )}
       </div>
 
-      {/* Infinite Scroll trigger element */}
-      <div ref={loadMoreRef} style={{ height: 40, marginTop: 16 }} />
+      <div ref={loadMoreRef} style={{ height: 1 }} />
+      <InfiniteScrollStatus
+        isFetching={isFetchingNextPage || isWaiting}
+        hasNextPage={canLoadMore}
+        hasItems={visibleCards.length > 0}
+      />
 
-      <AnimatePresence>
-        {buyModal.isOpen && (
-          <div className="modal-overlay" onClick={() => setBuyModal({ isOpen: false, cardId: null, price: null, cardName: '' })} style={{ zIndex: 500 }}>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="modal-box"
-              onClick={(e) => e.stopPropagation()}
-              style={{ maxWidth: 400, padding: 24, textAlign: 'center' }}
-            >
-              <h3 style={{ marginTop: 0, marginBottom: 16, fontSize: 18, color: 'var(--color-text-primary)' }}>
-                {t('card.buy_confirm_title', 'Satın Alma Onayı')}
-              </h3>
-              <p style={{ color: 'var(--color-text-secondary)', marginBottom: 24, fontSize: 14 }}>
-                <strong>{buyModal.cardName || 'Bu'}</strong> {t('card.buy_confirm_desc', 'adlı kartı')} <strong style={{ color: 'var(--color-primary)' }}>{buyModal.price} AP</strong> {t('card.buy_confirm_desc_2', 'karşılığında satın almak istediğinize emin misiniz?')}
-              </p>
-              <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-                <button className="btn btn-outline" onClick={() => setBuyModal({ isOpen: false, cardId: null, price: null, cardName: '' })}>
-                  {t('common.cancel', 'İptal')}
-                </button>
-                <button className="btn btn-primary" onClick={confirmBuy} disabled={buyMutation.isPending}>
-                  {t('card.confirm_buy_btn', 'Evet, Satın Al')}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <ConfirmModal
+        isOpen={buyModal.isOpen}
+        onClose={() => setBuyModal({ isOpen: false, cardId: null, price: null, cardName: '' })}
+        onConfirm={confirmBuy}
+        title={t('card.buy_confirm_title')}
+        description={t('card.buy_confirm_desc', {
+          cardName: buyModal.cardName || t('card.card'),
+          price: buyModal.price,
+        })}
+        warning={
+          isLimitReached
+            ? t('card.buy_limit_reached_warning', {
+                limit: cardOwnershipLimit,
+                oldestCard: t('card.oldest_card'),
+              })
+            : null
+        }
+        confirmText={t('card.confirm_buy_btn')}
+        cancelText={t('common.cancel')}
+        confirmVariant="primary"
+        isLoading={buyMutation.isPending}
+      />
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { identityApi } from '../../api/identityApi'
 import useDevLog from '../../utils/useDevLog'
@@ -9,6 +9,7 @@ import { triggerConfetti } from '../../utils/confetti'
 import { useNavigate } from 'react-router-dom'
 import TokenModal from './TokenModal'
 import PasswordInput from '../common/PasswordInput'
+import ModalPortal from '../common/ModalPortal'
 
 const PASSWORD_SECONDS = 180
 
@@ -57,27 +58,55 @@ export default function ForgotPasswordModal({ isOpen, onClose }) {
     }
   })
 
+  const passwordEndTimeRef = useRef(null)
+  const hasPasswordTimedOutRef = useRef(false)
+
   // Countdown Logic for set_password step
   useEffect(() => {
-    let timer = null
-    if (isOpen && step === 'set_password') {
-      if (countdown > 0) {
-        timer = setInterval(() => {
-          setCountdown((prev) => prev - 1)
-        }, 1000)
-      } else if (countdown === 0) {
-        toast.error(t('common.session_timeout', 'Oturum zaman aşımına uğradı.'))
+    if (!isOpen || step !== 'set_password') {
+      passwordEndTimeRef.current = null
+      hasPasswordTimedOutRef.current = false
+      setCountdown(PASSWORD_SECONDS)
+      return
+    }
+
+    if (!passwordEndTimeRef.current) {
+      passwordEndTimeRef.current = Date.now() + PASSWORD_SECONDS * 1000
+      hasPasswordTimedOutRef.current = false
+    }
+
+    const updateTimer = () => {
+      if (!passwordEndTimeRef.current) return
+      const remaining = Math.max(0, Math.ceil((passwordEndTimeRef.current - Date.now()) / 1000))
+      setCountdown(remaining)
+      if (remaining === 0 && !hasPasswordTimedOutRef.current) {
+        hasPasswordTimedOutRef.current = true
+        toast.error(t('common.session_timeout'))
         handleClose()
         navigate('/register')
       }
     }
-    return () => {
-      if (timer) clearInterval(timer)
+
+    updateTimer()
+    const timer = setInterval(updateTimer, 1000)
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        updateTimer()
+      }
     }
-  }, [isOpen, step, countdown])
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [isOpen, step, t, navigate])
 
   const handleClose = () => {
     onClose()
+    passwordEndTimeRef.current = null
+    hasPasswordTimedOutRef.current = false
     setTimeout(() => {
       setStep('request')
       setEmailOrUsername('')
@@ -89,17 +118,6 @@ export default function ForgotPasswordModal({ isOpen, onClose }) {
   }
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-    
-    if (isRequired) {
-      return (!value || !value.trim()) ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
 
   const canSubmitRequest = emailOrUsername.trim() !== '' && !requestResetMutation.isPending
   const canSubmitConfirm = newPassword.trim() !== '' && !confirmResetMutation.isPending
@@ -152,7 +170,8 @@ export default function ForgotPasswordModal({ isOpen, onClose }) {
   }
 
   return (
-    <div className="modal-overlay" style={{ zIndex: 1000 }} onClick={handleClose}>
+    <ModalPortal>
+      <div className="modal-overlay" style={{ zIndex: 1000 }} onClick={handleClose}>
       <div 
         className="modal-box" 
         style={{ maxWidth: 460, padding: '40px 36px', textAlign: 'center', position: 'relative' }} 
@@ -187,15 +206,13 @@ export default function ForgotPasswordModal({ isOpen, onClose }) {
             
             <form noValidate onSubmit={handleRequestSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <input 
-                className="input" 
+                className={`input ${hasSubmitted && !emailOrUsername.trim() ? 'error' : ''}`}
                 type="text" 
                 value={emailOrUsername}
                 onChange={(e) => setEmailOrUsername(e.target.value)}
                 required 
                 placeholder={t('auth.email_or_username')}
-                style={{ textAlign: 'center', padding: '14px', fontSize: 14, borderColor: getBorderColor('emailOrUsername', emailOrUsername, true), outline: 'none' }}
-                onFocus={() => setFocused('emailOrUsername')}
-                onBlur={() => setFocused(null)}
+                style={{ textAlign: 'center', padding: '14px', fontSize: 14 }}
               />
 
               <button 
@@ -216,21 +233,20 @@ export default function ForgotPasswordModal({ isOpen, onClose }) {
               {t('settings.change_password')}
             </h2>
             <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: '12px 0 28px', lineHeight: 1.6 }}>
-              {t('auth.set_new_password', 'Lütfen yeni şifrenizi belirleyin.')}
+              {t('auth.set_new_password')}
             </p>
             
             <form noValidate onSubmit={handleConfirmSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               
               {/* New Password */}
               <PasswordInput
+                className={`input w-full ${hasSubmitted && !newPassword.trim() ? 'error' : ''}`}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
                 minLength={6}
                 placeholder={t('auth.new_password')}
-                style={{ textAlign: 'center', padding: '14px', fontSize: 14, borderColor: getBorderColor('newPassword', newPassword, true), outline: 'none' }}
-                onFocus={() => setFocused('newPassword')}
-                onBlur={() => setFocused(null)}
+                style={{ textAlign: 'center', padding: '14px', fontSize: 14 }}
               />
 
               {/* Geri Sayım */}
@@ -270,6 +286,7 @@ export default function ForgotPasswordModal({ isOpen, onClose }) {
           </>
         )}
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   )
 }

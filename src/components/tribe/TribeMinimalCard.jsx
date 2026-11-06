@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { tribeApi } from '../../api/tribeApi'
 import useAuthStore from '../../store/authStore'
@@ -9,6 +9,7 @@ import useDevLog from '../../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 import TRexSkullIcon from '../../assets/t-rex-skull-svgrepo-com.svg?react'
 import CardIcon from '../common/icons/CardIcon'
+import ImageWithLoader from '../common/ImageWithLoader'
 
 /**
  * TribeMinimalCard — plan.md Component #4
@@ -19,14 +20,21 @@ export default function TribeMinimalCard({
   tribeId: propTribeId,
   tribeName: propTribeName,
   tribePoint: propTribePoint,
+  tribeActorPoint: propTribeActorPoint,
+  TribeActorPoint: propTribeActorPointUpper,
+  point: propPoint,
+  Point: propPointUpper,
   imageUrl: propImageUrl,
   isDormant: propIsDormant,
   IsDormant: propIsDormantUpper,
   assignedCardIds: propAssignedCardIds,
   AssignedCardIds: propAssignedCardIdsUpper,
+  mission: propMission,
+  Mission: propMissionUpper,
+  showMission = false,
   clickable = true,
   showPoint = true,
-  showMindBtn = true,
+  showMemoryMapBtn = true,
   showEditBtn = true,
   variant = 'expanded',
   ultraCompact = false,
@@ -34,11 +42,27 @@ export default function TribeMinimalCard({
 }) {
   const tribeId = propTribeId || tribe?.tribeId || tribe?.TribeId
   const tribeName = propTribeName || tribe?.tribeName || tribe?.TribeName
-  const tribePoint = propTribePoint ?? tribe?.tribePoint ?? tribe?.TribePoint ?? tribe?.tribeActorPoint
+  const tribePoint =
+    propTribePoint ??
+    propTribeActorPoint ??
+    propTribeActorPointUpper ??
+    propPoint ??
+    propPointUpper ??
+    tribe?.tribePoint ??
+    tribe?.TribePoint ??
+    tribe?.tribeActorPoint ??
+    tribe?.TribeActorPoint ??
+    tribe?.point ??
+    tribe?.Point
   const imageUrl = propImageUrl || tribe?.imageUrl || tribe?.ImageUrl
   const isDormant = propIsDormant ?? tribe?.isDormant
   const IsDormant = propIsDormantUpper ?? tribe?.IsDormant
+  const mission = propMission ?? propMissionUpper ?? tribe?.mission ?? tribe?.Mission
+  const rawMissionText = typeof mission === 'string' ? mission.trim() : ''
+  const hasMission = Boolean(rawMissionText)
   useDevLog('TribeMinimalCard', arguments[0] || {})
+  const [failedUrl, setFailedUrl] = useState(null)
+  const showImage = Boolean(imageUrl) && failedUrl !== imageUrl
   const navigate = useNavigate()
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
   const { t } = useTranslation()
@@ -98,10 +122,10 @@ export default function TribeMinimalCard({
     navigate('/tribe?tribeId=' + tribeId)
   }
 
-  const handleMindClick = (e) => {
+  const handleMemoryMapClick = (e) => {
     e.preventDefault()
     e.stopPropagation()
-    navigate('/mind?tribeId=' + tribeId, { state: { profileName: tribeName } })
+    navigate('/memory-map?tribeId=' + tribeId, { state: { profileName: tribeName } })
   }
 
   const handleEditClick = (e) => {
@@ -109,6 +133,8 @@ export default function TribeMinimalCard({
     e.stopPropagation()
     navigate('/tribe/settings?tribeId=' + tribeId)
   }
+
+  const shouldShowMission = showMission && !isCompact && !isUltraCompact && hasMission
 
   return (
     <div
@@ -119,12 +145,30 @@ export default function TribeMinimalCard({
         maxWidth: '100%',
         cursor: clickable ? 'pointer' : 'default',
         margin: 0,
+        flexWrap: shouldShowMission ? 'wrap' : undefined,
+        alignSelf: isCompact ? 'center' : 'start',
         ...style,
       }}
     >
       <div style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
-        {imageUrl ? (
-          <img src={imageUrl} alt={tribeName} className="tribe-card-img" />
+        {showImage ? (
+          <ImageWithLoader
+            src={imageUrl}
+            alt={tribeName}
+            className="tribe-card-img"
+            onError={() => setFailedUrl(imageUrl)}
+            spinnerSize="sm"
+            spinnerOpacity={0.4}
+            wrapperClassName="tribe-card-img"
+            wrapperStyle={{
+              padding: 0,
+              overflow: 'hidden',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'var(--color-surface-2)',
+            }}
+          />
         ) : (
           <div
             className="tribe-card-img"
@@ -160,7 +204,19 @@ export default function TribeMinimalCard({
         )}
       </div>
       <div style={{ flex: isCompact ? '0 1 auto' : 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-        <div className="tribe-card-name truncate">{tribeName || t('tribe.unnamed_tribe', 'İsimsiz Klan')}</div>
+        <div className="tribe-card-name truncate">
+          {clickable ? (
+            <Link
+              to={'/tribe?tribeId=' + tribeId}
+              style={{ color: 'inherit', textDecoration: 'none' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {tribeName || t('tribe.unnamed_tribe')}
+            </Link>
+          ) : (
+            tribeName || t('tribe.unnamed_tribe')
+          )}
+        </div>
       </div>
 
       {matchingCardsCount > 0 && (
@@ -206,12 +262,12 @@ export default function TribeMinimalCard({
           <TRexSkullIcon className="badge-fossil-icon" />
         </span>
       )}
-      {!isCompact && showMindBtn && (
+      {!isCompact && showMemoryMapBtn && (
         <button
           type="button"
           className="actor-chip-hier-btn"
-          onClick={handleMindClick}
-          aria-label={t('mind.show', 'Hafıza haritasını göster')}
+          onClick={handleMemoryMapClick}
+          aria-label={t('memoryMap.show')}
           style={{ color: 'var(--color-text-muted)' }}
         >
           <Brain size={12} />
@@ -222,14 +278,15 @@ export default function TribeMinimalCard({
           type="button"
           className="actor-chip-hier-btn"
           onClick={handleEditClick}
-          aria-label={t('action.edit', 'Düzenle')}
+          aria-label={t('action.edit')}
           style={{ color: 'var(--color-text-muted)' }}
         >
           <Edit2 size={12} />
         </button>
       )}
-      {!isCompact && showPoint && tribePoint != null && (
+      {showPoint && !isCompact && tribePoint != null && (
         <span
+          className="tribe-card-points-badge"
           style={{
             fontSize: 10,
             fontWeight: 700,
@@ -237,10 +294,21 @@ export default function TribeMinimalCard({
             backgroundColor: 'var(--color-surface-2)',
             padding: '2px 6px',
             borderRadius: 12,
+            marginLeft: isCompact ? 'auto' : undefined,
+            flexShrink: 0,
           }}
         >
-          {tribePoint.toLocaleString()} P
+          {Number(tribePoint).toLocaleString()} TP
         </span>
+      )}
+
+      {shouldShowMission && (
+        <div
+          className="tribe-card-mission"
+          title={rawMissionText}
+        >
+          {rawMissionText}
+        </div>
       )}
     </div>
   )

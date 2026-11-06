@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { Network, Edit2, Brain } from 'lucide-react'
 import SynapseBrainIcon from '../common/SynapseBrainIcon'
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { actorApi } from '../../api/actorApi'
 import ActorAvatar from './ActorAvatar'
 import useAuthStore from '../../store/authStore'
@@ -10,7 +10,6 @@ import useMyEntitiesStore from '../../store/myEntitiesStore'
 import useDevLog from '../../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 import SelectionMarker from '../common/SelectionMarker'
-import PremiumModal from '../common/PremiumModal'
 import ModifierArrowSvg from '../../assets/FigmaNew/modifierarrow.svg?react'
 import CardIcon from '../common/icons/CardIcon'
 import KingIcon from '../common/icons/KingIcon'
@@ -24,12 +23,14 @@ import { UserCapabilities } from '../../constants/enums'
 export default function ActorMinimalCard({
   actor,
   showHierarchyBtn = true,
-  showMindBtn = true,
+  showMemoryMapBtn = true,
   showPoint = false,
+  showBio = false,
   showJuryPoints = false,
   juryProponentScore = null,
   juryOpponentScore = null,
   showEditBtn = true,
+  showPremiumBtn = true,
   clickable = true,
   variant = 'compact',
   ultraCompact = false,
@@ -50,7 +51,6 @@ export default function ActorMinimalCard({
   const { t } = useTranslation()
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
   const currentUserId = useAuthStore((s) => s.actorId)
-  const [isPremiumOpen, setIsPremiumOpen] = useState(false)
 
   const isUltraCompact =
     ultraCompact ||
@@ -111,6 +111,8 @@ export default function ActorMinimalCard({
   const actorId = actor.actorId || actor.ActorId || actor.id || actor.Id
   const profileName = actor.profileName || actor.ProfileName || actor.name || actor.Name
   const imageUrl = actor.imageUrl !== undefined ? actor.imageUrl : (actor.ImageUrl !== undefined ? actor.ImageUrl : null)
+  const bio = actor.bio ?? actor.Bio ?? null
+  const actorPoint = actor.actorPoint ?? actor.ActorPoint ?? null
   const discriminator = actor.discriminator || actor.Discriminator || 'Bot'
   const isBot = (discriminator || '').toLowerCase() === 'bot'
   const isDormant = Boolean(isBot && (actor.isDormant ?? actor.IsDormant ?? false))
@@ -153,7 +155,7 @@ export default function ActorMinimalCard({
     navigate('/hierarchy?actorId=' + actorId)
   }
 
-  const handleMindClick = (e) => {
+  const handleMemoryMapClick = (e) => {
     e.preventDefault()
     e.stopPropagation()
     let query = ''
@@ -163,7 +165,7 @@ export default function ActorMinimalCard({
     if (contextTitle) {
       query += `&contextTitle=${encodeURIComponent(contextTitle)}`
     }
-    navigate(`/mind?actorId=${actorId}${query}`, { state: { profileName, contextTitle } })
+    navigate(`/memory-map?actorId=${actorId}${query}`, { state: { profileName, contextTitle } })
   }
 
   const handleEditClick = (e) => {
@@ -176,9 +178,168 @@ export default function ActorMinimalCard({
     }
   }
 
-  if (isUltraCompact) {
-    const hasTriggeredNodes = effectiveTriggeredNodeIds && effectiveTriggeredNodeIds.length > 0
+  if (variant === 'explore') {
+    const exploreHasTriggered = effectiveTriggeredNodeIds && effectiveTriggeredNodeIds.length > 0
+    return (
+      <div
+        className={`tribe-card tribe-card--expanded${isDormant ? ' tribe-card--dormant' : ''}`}
+        onClick={handleActorClick}
+        style={{
+          width: '100%',
+          maxWidth: '100%',
+          cursor: clickable ? 'pointer' : 'default',
+          margin: 0,
+        }}
+      >
+        <ActorAvatar
+          profileName={profileName}
+          imageUrl={imageUrl}
+          discriminator={discriminator}
+          actorId={actorId}
+          size="md"
+          clickable={false}
+        />
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div className="tribe-card-name truncate">
+            {clickable ? (
+              <Link
+                to={'/profile?actorId=' + actorId}
+                style={{ color: 'inherit', textDecoration: 'none' }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {profileName || t('actor.unnamed')}
+              </Link>
+            ) : (
+              profileName || t('actor.unnamed')
+            )}
+          </div>
+        </div>
 
+        {matchingCardsCount > 0 && (
+          <div
+            className="actor-chip-card-stack"
+            onClick={clickable ? handleActorClick : undefined}
+            style={{
+              display: 'flex',
+              alignItems: 'flex-end',
+              flexShrink: 0,
+              cursor: clickable ? 'pointer' : 'default',
+              pointerEvents: clickable ? 'auto' : 'none',
+            }}
+          >
+            {visibleCards.map((card, idx) => (
+              <span
+                key={card.id ?? idx}
+                className="actor-chip-card-item"
+                style={{
+                  position: 'relative',
+                  marginLeft: idx === 0 ? 0 : -10,
+                  zIndex: idx + 1,
+                  display: 'inline-flex',
+                  alignItems: 'flex-end',
+                }}
+              >
+                <CardIcon
+                  crowned
+                  purchased={card.acquisitionType === 1}
+                  width={21}
+                  height={24}
+                  style={{ display: 'block' }}
+                />
+              </span>
+            ))}
+          </div>
+        )}
+
+        {isDormant && (
+          <span className="badge-fossil badge-fossil--plain">
+            <TRexSkullIcon className="badge-fossil-icon" />
+          </span>
+        )}
+
+        {showHierarchyBtn && (
+          <button
+            type="button"
+            className="actor-chip-hier-btn"
+            onClick={handleHierarchyClick}
+            aria-label={t('actor.show_hierarchy')}
+          >
+            <Network size={12} />
+          </button>
+        )}
+        {showMemoryMapBtn && (
+          <button
+            type="button"
+            className="actor-chip-hier-btn"
+            onClick={handleMemoryMapClick}
+            aria-label={
+              exploreHasTriggered
+                ? `${t('memoryMap.show')} (${effectiveTriggeredNodeIds.length} ${t('memoryMap.triggered_nodes')})`
+                : t('memoryMap.show')
+            }
+          >
+            {exploreHasTriggered ? (
+              <SynapseBrainIcon brainSize={12} zapSize={8} brainColor="currentColor" zapColor="var(--color-synapse-zap, var(--color-primary))" />
+            ) : (
+              <Brain size={12} />
+            )}
+          </button>
+        )}
+        {showEditBtn && isOwner && !isDormant && (
+          <button
+            type="button"
+            className="actor-chip-hier-btn"
+            onClick={handleEditClick}
+            aria-label={t('action.edit')}
+          >
+            <Edit2 size={12} />
+          </button>
+        )}
+        {showEditBtn && showPremiumBtn && isOwner && !isDormant && (
+          <Link
+            to="/premium"
+            className="actor-chip-premium-btn"
+            onClick={(e) => e.stopPropagation()}
+            aria-label={isPremiumOwner ? t('premium.active') : t('premium.title')}
+          >
+            {isPremiumOwner ? (
+              <KingIcon size={16} />
+            ) : (
+              <ModifierArrowSvg
+                width={16}
+                height={22}
+                className="modifier-arrow"
+                style={{ display: 'block' }}
+              />
+            )}
+          </Link>
+        )}
+
+        {showPoint && actorPoint != null && (
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              color: 'var(--color-text-muted)',
+              backgroundColor: 'var(--color-surface-2)',
+              padding: '2px 6px',
+              borderRadius: 12,
+            }}
+          >
+            {actorPoint.toLocaleString()} AP
+          </span>
+        )}
+
+        {showBio && bio && (
+          <div className="tribe-card-mission" title={bio}>
+            {bio}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  if (isUltraCompact) {
     return (
       <div
         className={`actor-chip actor-chip--ultra-compact${isDormant ? ' actor-chip--dormant' : ''}`}
@@ -216,28 +377,9 @@ export default function ActorMinimalCard({
             type="button"
             className="actor-chip-hier-btn actor-chip-hier-btn--ultra"
             onClick={handleHierarchyClick}
-            aria-label={t('actor.show_hierarchy', 'Hiyerarşiyi göster')}
+            aria-label={t('actor.show_hierarchy')}
           >
             <Network size={11} />
-          </button>
-        )}
-
-        {showMindBtn && !selectable && isBot && (
-          <button
-            type="button"
-            className="actor-chip-hier-btn actor-chip-hier-btn--ultra"
-            onClick={handleMindClick}
-            aria-label={
-              hasTriggeredNodes
-                ? `${t('mind.show', 'Zihin Haritası')} (${effectiveTriggeredNodeIds.length} ${t('mind.triggered_nodes', 'tetiklenen anı')})`
-                : t('mind.show', 'Zihin Haritası')
-            }
-          >
-            {hasTriggeredNodes ? (
-              <SynapseBrainIcon brainSize={12} zapSize={8} brainColor="currentColor" zapColor="var(--color-synapse-zap, var(--color-primary))" />
-            ) : (
-              <Brain size={12} />
-            )}
           </button>
         )}
 
@@ -251,7 +393,7 @@ export default function ActorMinimalCard({
   const hasExtraElements =
     isDormant ||
     (showHierarchyBtn && !selectable) ||
-    (showMindBtn && !selectable && isBot) ||
+    (showMemoryMapBtn && !selectable && isBot) ||
     (showEditBtn && !selectable && isOwner) ||
     (showPoint && actor.actorPoint != null) ||
     showJuryPoints ||
@@ -312,7 +454,17 @@ export default function ActorMinimalCard({
             whiteSpace: 'nowrap',
           }}
         >
-          {profileName || t('actor.unnamed', 'İsimsiz')}
+          {clickable && !selectable ? (
+            <Link
+              to={'/profile?actorId=' + actorId}
+              style={{ color: 'inherit', textDecoration: 'none' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {profileName || t('actor.unnamed')}
+            </Link>
+          ) : (
+            profileName || t('actor.unnamed')
+          )}
         </span>
       </div>
 
@@ -365,20 +517,20 @@ export default function ActorMinimalCard({
           type="button"
           className="actor-chip-hier-btn"
           onClick={handleHierarchyClick}
-          aria-label={t('actor.show_hierarchy', 'Hiyerarşiyi göster')}
+          aria-label={t('actor.show_hierarchy')}
         >
           <Network size={12} />
         </button>
       )}
-      {showMindBtn && !selectable && isBot && (
+      {showMemoryMapBtn && !selectable && isBot && (
         <button
           type="button"
           className="actor-chip-hier-btn"
-          onClick={handleMindClick}
+          onClick={handleMemoryMapClick}
           aria-label={
             hasTriggeredNodes
-              ? `${t('mind.show', 'Zihin Haritası')} (${effectiveTriggeredNodeIds.length} ${t('mind.triggered_nodes', 'tetiklenen anı')})`
-              : t('mind.show', 'Zihin Haritası')
+              ? `${t('memoryMap.show')} (${effectiveTriggeredNodeIds.length} ${t('memoryMap.triggered_nodes')})`
+              : t('memoryMap.show')
           }
         >
           {hasTriggeredNodes ? (
@@ -398,16 +550,14 @@ export default function ActorMinimalCard({
           <Edit2 size={12} />
         </button>
       )}
-      {showEditBtn && !selectable && isOwner && !isDormant && (
-        <button
-          type="button"
+      {showEditBtn && showPremiumBtn && !selectable && isOwner && !isDormant && (
+        <Link
+          to="/premium"
           className="actor-chip-premium-btn"
           onClick={(e) => {
-            e.preventDefault()
             e.stopPropagation()
-            setIsPremiumOpen(true)
           }}
-          aria-label={isPremiumOwner ? t('premium.active', 'Premium Aktif') : t('premium.title', 'Premium')}
+          aria-label={isPremiumOwner ? t('premium.active') : t('premium.title')}
         >
           {isPremiumOwner ? (
             <KingIcon size={16} />
@@ -419,7 +569,7 @@ export default function ActorMinimalCard({
               style={{ display: 'block' }}
             />
           )}
-        </button>
+        </Link>
       )}
       {showPoint && actor.actorPoint != null && (
         <span
@@ -432,7 +582,7 @@ export default function ActorMinimalCard({
             borderRadius: 12,
           }}
         >
-          {actor.actorPoint} P
+          {actor.actorPoint?.toLocaleString?.() ?? actor.actorPoint} AP
         </span>
       )}
       {showJuryPoints && (
@@ -505,10 +655,5 @@ export default function ActorMinimalCard({
     </div>
   )
 
-  return (
-    <>
-      {chipContent}
-      <PremiumModal isOpen={isPremiumOpen} onClose={() => setIsPremiumOpen(false)} />
-    </>
-  )
+  return chipContent
 }

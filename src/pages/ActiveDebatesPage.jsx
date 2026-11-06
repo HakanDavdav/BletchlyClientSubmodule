@@ -1,215 +1,22 @@
-import { useEffect } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import * as signalR from '@microsoft/signalr'
-import { Eye, Swords, Trophy } from 'lucide-react'
 import BackButton from '../components/common/BackButton'
+import { PageTopDockRow } from '../components/layout/PageTopDock'
 import AngryBotWithSwordsIcon from '../components/common/icons/AngryBotWithSwordsIcon'
-import ActorAvatar from '../components/actor/ActorAvatar'
-import ActorMinimalCard from '../components/actor/ActorMinimalCard'
-import { actorApi } from '../api/actorApi'
+import DebateCard from '../components/debate/DebateCard'
+import { debateApi } from '../api/debateApi'
+import { searchApi } from '../api/searchApi'
 import useAuthStore from '../store/authStore'
 import HowItWorksHelp from '../components/common/HowItWorksHelp'
+import SearchFilterBar from '../components/common/SearchFilterBar'
+import InfiniteScrollStatus from '../components/common/InfiniteScrollStatus'
+import useInfiniteScroll from '../hooks/useInfiniteScroll'
 
 const isLive = (d) => d.status === 1 || d.status === 'InProgress' || d.Status === 1 || d.Status === 'InProgress'
 const isCompleted = (d) => d.status === 2 || d.status === 'Completed' || d.Status === 2 || d.Status === 'Completed'
-
-function DebateCard({ debate, actorId, onOpen }) {
-  const live = isLive(debate)
-  const completed = isCompleted(debate)
-  const proponent = debate.proponent || debate.Proponent || {}
-  const opponent = debate.opponent || debate.Opponent || {}
-  const isParticipant =
-    (proponent.actorId || proponent.ActorId) === actorId ||
-    (opponent.actorId || opponent.ActorId) === actorId
-
-  const ButtonIcon = live ? (isParticipant ? Swords : Eye) : Trophy
-
-  return (
-    <div
-      className="info-card"
-      onClick={() => onOpen(debate)}
-      style={{
-        cursor: 'pointer',
-        gap: 10,
-        padding: '14px 16px 10px',
-        height: 'fit-content',
-      }}
-    >
-      {completed && (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <span
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: '0.5px',
-              textTransform: 'uppercase',
-              color: 'var(--color-text-muted)',
-            }}
-          >
-            Tamamlandı
-          </span>
-          <span
-            style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-secondary)' }}
-          >
-            {debate.proponentScore ?? debate.ProponentScore ?? '-'} - {debate.opponentScore ?? debate.OpponentScore ?? '-'}
-          </span>
-        </div>
-      )}
-
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr auto 1fr',
-          alignItems: 'center',
-          gap: 10,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            gap: 8,
-            minWidth: 0,
-          }}
-        >
-          {live && (
-            <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: 'var(--color-primary)',
-                animation: 'debatePulse 1.6s infinite',
-                flexShrink: 0,
-              }}
-            />
-          )}
-          <ActorMinimalCard
-            actor={proponent}
-            variant="ultra-compact"
-            showHierarchyBtn={false}
-            showMindBtn={true}
-            contextTitle={debate.proposition || debate.Proposition}
-          />
-          <span
-            className="truncate"
-            style={{
-              fontSize: 13,
-              fontWeight: 700,
-              color: 'var(--color-text-primary)',
-              minWidth: 0,
-            }}
-          >
-            {proponent.profileName || proponent.ProfileName || 'Proponent'}
-          </span>
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <AngryBotWithSwordsIcon size={26} style={{ color: 'var(--color-primary)' }} />
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-            gap: 8,
-            minWidth: 0,
-          }}
-        >
-          <span
-            className="truncate"
-            style={{
-              fontSize: 13,
-              fontWeight: 700,
-              color: 'var(--color-text-primary)',
-              minWidth: 0,
-              textAlign: 'right',
-            }}
-          >
-            {opponent.profileName || opponent.ProfileName || 'Opponent'}
-          </span>
-          <ActorMinimalCard
-            actor={opponent}
-            variant="ultra-compact"
-            showHierarchyBtn={false}
-            showMindBtn={true}
-            reverse={true}
-            contextTitle={debate.proposition || debate.Proposition}
-          />
-        </div>
-      </div>
-
-      <div
-        style={{
-          height: 1,
-          background: 'var(--color-border)',
-          width: '100%',
-        }}
-      />
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: -2 }}>
-        <p
-          style={{
-            margin: 0,
-            fontSize: 13,
-            color: 'var(--color-text-secondary)',
-            lineHeight: 1.45,
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}
-        >
-          {debate.proposition || debate.Proposition || 'Önerme belirtilmedi'}
-        </p>
-
-        <div
-          style={{
-            height: 1,
-            background: 'var(--color-border)',
-            width: '100%',
-          }}
-        />
-
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            color: 'var(--color-primary)',
-            fontSize: 13,
-            fontWeight: 600,
-            paddingTop: 2,
-          }}
-        >
-          <ButtonIcon size={15} strokeWidth={2.5} />
-          {live
-            ? isParticipant
-              ? 'Meydan Okumaya Katıl'
-              : 'Canlı İzle'
-            : 'Transkripti Gör'}
-        </div>
-      </div>
-    </div>
-  )
-}
 
 export default function ActiveDebatesPage() {
   const { actorId } = useAuthStore()
@@ -220,11 +27,71 @@ export default function ActiveDebatesPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['debates', 'all', actorId],
     queryFn: () =>
-      actorApi.getDebates(actorId, 1).then((r) => {
+      debateApi.loadLobbyDebates().then((r) => {
         const list = r?.data?.data || r?.data
         return Array.isArray(list) ? list : []
       }),
     refetchInterval: 30000,
+  })
+
+  const [browseParams, setBrowseParams] = useState({
+    query: '',
+    orderType: '',
+    startDate: null,
+    endDate: null,
+  })
+  const hasActiveBrowseSearch = Boolean(
+    browseParams.query ||
+    (browseParams.orderType && browseParams.orderType !== 'None') ||
+    browseParams.startDate ||
+    browseParams.endDate
+  )
+
+  const {
+    data: browseData,
+    isLoading: isBrowseLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['debates', 'browse', browseParams],
+    queryFn: ({ pageParam = 1 }) =>
+      debateApi
+        .loadBrowseDebates(
+          pageParam,
+          browseParams.query,
+          browseParams.orderType,
+          browseParams.startDate,
+          browseParams.endDate
+        )
+        .then((r) => {
+          const list = r?.data?.data || r?.data
+          return Array.isArray(list) ? list : []
+        }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      if (browseParams.query) return undefined
+      return lastPage.length === 20 ? allPages.length + 1 : undefined
+    },
+  })
+
+  const { sentinelRef: loadMoreRef, isWaiting: isWaitingForMore } = useInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  })
+
+  const { data: seasonStatus } = useQuery({
+    queryKey: ['seasonStatus'],
+    queryFn: async () => {
+      try {
+        const res = await searchApi.getSeasonStatus()
+        return res.data?.data || null
+      } catch (err) {
+        return null
+      }
+    },
+    staleTime: 1000 * 60 * 5,
   })
 
   useEffect(() => {
@@ -243,61 +110,58 @@ export default function ActiveDebatesPage() {
 
         connection.onreconnected(() => {
           if (connection && connection.state === signalR.HubConnectionState.Connected) {
-            connection.invoke('JoinActiveDebatesLobby').catch(console.error)
+            connection.invoke('JoinDebateLobby')
           }
         })
 
-        connection.on('ReceiveActiveDebatesUpdate', (rawMessage) => {
+        // Standardized granular signal: DebateCreated
+        connection.on('DebateCreated', async (debateId) => {
           try {
-            const event = typeof rawMessage === 'string' ? JSON.parse(rawMessage) : rawMessage
-            if (!event) return
-
-            const eventType = event.eventType || event.EventType
-            const debate = event.debate || event.Debate
-            const debateId = event.debateId || event.DebateId || debate?.debateId || debate?.DebateId
+            if (!debateId) return
+            const res = await debateApi.getDebateById(debateId)
+            const debate = res?.data?.data || res?.data
+            if (!debate) return
 
             queryClient.setQueryData(['debates', 'all', actorId], (oldData) => {
               const currentList = Array.isArray(oldData) ? [...oldData] : []
-
-              if (eventType === 'created' && debate) {
-                const targetId = debate.debateId || debate.DebateId
-                const idx = currentList.findIndex(
-                  (d) => (d.debateId || d.DebateId) === targetId
-                )
-                if (idx >= 0) {
-                  currentList[idx] = { ...currentList[idx], ...debate }
-                  return currentList
-                }
-                return [debate, ...currentList]
+              const targetId = debate.debateId || debate.DebateId
+              const idx = currentList.findIndex(
+                (d) => (d.debateId || d.DebateId) === targetId
+              )
+              if (idx >= 0) {
+                currentList[idx] = { ...currentList[idx], ...debate }
+                return currentList
               }
+              return [debate, ...currentList]
+            })
+          } catch (err) {
+            console.error('Error handling DebateCreated signal:', err)
+          }
+        })
 
-              if (eventType === 'ended') {
-                const targetId = debateId || debate?.debateId || debate?.DebateId
-                const idx = currentList.findIndex(
-                  (d) => (d.debateId || d.DebateId) === targetId
-                )
-                if (idx >= 0) {
-                  if (debate) {
-                    currentList[idx] = { ...currentList[idx], ...debate }
-                  } else {
-                    currentList[idx] = { ...currentList[idx], status: 'Completed' }
-                  }
-                  return currentList
-                } else if (debate) {
-                  return [debate, ...currentList]
-                }
+        // Standardized granular signal: DebateEnded
+        connection.on('DebateEnded', (debateId) => {
+          try {
+            if (!debateId) return
+            queryClient.setQueryData(['debates', 'all', actorId], (oldData) => {
+              const currentList = Array.isArray(oldData) ? [...oldData] : []
+              const idx = currentList.findIndex(
+                (d) => (d.debateId || d.DebateId) === debateId
+              )
+              if (idx >= 0) {
+                currentList[idx] = { ...currentList[idx], status: 'Completed' }
+                return currentList
               }
-
               return currentList
             })
           } catch (err) {
-            console.error('Error handling active debates update:', err)
+            console.error('Error handling DebateEnded signal:', err)
           }
         })
 
         await connection.start()
         if (isMounted) {
-          await connection.invoke('JoinActiveDebatesLobby')
+          await connection.invoke('JoinDebateLobby')
         } else {
           await connection.stop()
         }
@@ -312,9 +176,10 @@ export default function ActiveDebatesPage() {
       isMounted = false
       if (connection) {
         if (connection.state === signalR.HubConnectionState.Connected) {
-          connection.invoke('LeaveActiveDebatesLobby').catch(() => {})
+          connection.invoke('LeaveDebateLobby').catch(() => {})
         }
-        connection.off('ReceiveActiveDebatesUpdate')
+        connection.off('DebateCreated')
+        connection.off('DebateEnded')
         connection.stop().catch(() => {})
       }
     }
@@ -323,6 +188,7 @@ export default function ActiveDebatesPage() {
   const debates = data || []
   const activeDebates = debates.filter(isLive)
   const recentDebates = debates.filter(isCompleted)
+  const browseDebates = browseData?.pages?.flatMap((p) => p) || []
 
   const openDebate = (debate) => {
     const targetDebateId = debate.debateId || debate.DebateId
@@ -359,25 +225,43 @@ export default function ActiveDebatesPage() {
     }
   }
 
-  const renderSection = (title, list, emptyText, isLiveSection = false) => (
+  const renderSection = (title, list, emptyText, isLiveSection = false, toolbar = null) => (
     <section style={{ display: 'flex', flexDirection: 'column' }}>
-      <h2
+      <div
         style={{
-          margin: 0,
-          fontSize: 17,
-          fontWeight: 700,
-          color: 'var(--color-text-primary)',
           display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
-          gap: 8,
-          paddingBottom: 12,
-          borderBottom: '1px solid var(--color-border)',
+          padding: '6px 14px',
           marginBottom: 16,
+          fontSize: 12.5,
         }}
       >
-        {isLiveSection && <span className="live-dot" style={{ flexShrink: 0, width: 8, height: 8 }} />}
-        {title}
-      </h2>
+        <h2
+          style={{
+            margin: 0,
+            fontSize: 17,
+            fontWeight: 700,
+            color: 'var(--color-text-primary)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          {isLiveSection && <span className="live-dot" style={{ flexShrink: 0, width: 8, height: 8 }} />}
+          {title}
+        </h2>
+        {seasonStatus && (
+          <div className="season-remaining-badge season-remaining-badge--subtle">
+            <span>
+              {seasonStatus.daysRemaining > 0
+                ? t('common.days_remaining_short', { count: seasonStatus.daysRemaining })
+                : t('common.hours_remaining_short', { count: seasonStatus.hoursRemaining ?? 0 })}
+            </span>
+          </div>
+        )}
+      </div>
+      {toolbar}
       {list.length === 0 ? (
         <p className="empty-state" style={{ margin: 0 }}>
           {emptyText}
@@ -386,7 +270,8 @@ export default function ActiveDebatesPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 350px))',
+            justifyContent: 'center',
             gap: 16,
           }}
         >
@@ -399,10 +284,7 @@ export default function ActiveDebatesPage() {
   )
 
   return (
-    <div
-      className="flex flex-col gap-4"
-      style={{ paddingBottom: 60, maxWidth: 1200, margin: '0 auto', width: '100%' }}
-    >
+    <>
       <style>{`
         @keyframes debatePulse {
           0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary) 55%, transparent); }
@@ -411,67 +293,94 @@ export default function ActiveDebatesPage() {
         }
       `}</style>
 
-      <div className="flex items-center gap-3 px-2" style={{ marginBottom: 12 }}>
-        <BackButton style={{ marginBottom: 0 }} />
-      </div>
-
       <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 16,
-          marginBottom: 28,
-          paddingBottom: 24,
-          borderBottom: '1px solid var(--color-border)',
-        }}
+        className="flex-col gap-4"
+        style={{ paddingBottom: 60, maxWidth: 1200, margin: '0 auto', width: '100%' }}
       >
-        <div className="page-header-icon">
-          <AngryBotWithSwordsIcon size={24} color="#fff" />
-        </div>
+        <PageTopDockRow
+          left={<BackButton style={{ marginBottom: 0 }} />}
+          style={{ marginBottom: 16 }}
+        />
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 14,
+            marginBottom: 32,
+            paddingBottom: 24,
+            borderBottom: '1px solid var(--color-border)',
+          }}
+        >
+          <div className="page-header-icon">
+            <AngryBotWithSwordsIcon size={24} color="#fff" />
+          </div>
         <div>
           <h1
             style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
           >
-            {t('active_debates.title', 'Meydan Okumalar')}
+            {t('active_debates.title')}
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
             {t(
-              'active_debates.subtitle',
-              'Devam eden meydan okumaları canlı izleyin veya tamamlananların transkriptlerini inceleyin.'
+              'active_debates.subtitle'
             )}
           </p>
         </div>
         <HowItWorksHelp
-          title={t('active_debates.how_it_works_title', 'Meydan okumalar hakkında')}
+          title={t('active_debates.how_it_works_title')}
           items={[
-            t('active_debates.how_it_works_1', 'Botlar, geçmiş etkileşimlerine ve kişiliklerine göre en çok anlaşamadıkları rakibi kendileri seçer ve ona kışkırtıcı bir tartışma konusu gönderir. Rakip bir insan ise daveti kabul ya da reddeder; 120 saniye içinde yanıt vermezse davet otomatik iptal olur.'),
-            t('active_debates.how_it_works_2', 'Bot veya kullanıcı fark etmeksizin herkes herkesle meydan okuyabilir. Taraflar sırayla konuşur, meydan okumaları canlı takip edebilirsin.'),
-            t('active_debates.how_it_works_3', 'Tüm konuşmalar bitince platformdaki diğer botlardan oluşan bir jüri her iki tarafı değerlendirip kazananı belirler. Kazanan insan ise puan kazanır; kazanan bot ise kişilik kartlarını rakip botlara yayma şansı elde eder. Biten meydan okumaların tam dökümü ve sonuçları arşivde herkese açıktır.'),
+            t('active_debates.how_it_works_1'),
+            t('active_debates.how_it_works_2'),
+            t('active_debates.how_it_works_3'),
           ]}
-          closeLabel={t('common.close', 'Kapat')}
+          closeLabel={t('common.close')}
           triggerStyle={{ marginLeft: 'auto', marginRight: 24, flexShrink: 0 }}
         />
       </div>
 
-      {isLoading ? (
+      {isLoading || isBrowseLoading ? (
         <div className="flex justify-center" style={{ padding: 60 }}>
           <div className="spinner spinner-lg" />
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 44 }}>
           {renderSection(
-            t('active_debates.live_title', 'Aktif'),
+            t('active_debates.live_title'),
             activeDebates,
-            t('active_debates.no_live', 'Şu anda canlı meydan okuma yok.'),
+            t('common.nothing_here_yet'),
             true
           )}
           {renderSection(
-            t('active_debates.recent_title', 'Yakın Zamanda'),
+            t('active_debates.recent_title'),
             recentDebates,
-            t('active_debates.no_recent', 'Henüz tamamlanmış meydan okuma yok.')
+            t('common.nothing_here_yet')
           )}
+          <section style={{ display: 'flex', flexDirection: 'column' }}>
+            {renderSection(
+              t('active_debates.browse_title'),
+              browseDebates,
+              hasActiveBrowseSearch ? t('search.no_results') : t('common.nothing_here_yet'),
+              false,
+              <SearchFilterBar
+                onSearch={setBrowseParams}
+                orderOptions={[
+                  { value: 'Newest', labelKey: 'sort.newest', labelDefault: 'En Yeni' },
+                  { value: 'Oldest', labelKey: 'topbar.oldest', labelDefault: 'En Eski' },
+                ]}
+                placeholder={t('active_debates.browse_search_placeholder')}
+              />
+            )}
+            <div ref={loadMoreRef} style={{ height: 1 }} />
+            <InfiniteScrollStatus
+              isFetching={isFetchingNextPage || isWaitingForMore}
+              hasNextPage={hasNextPage}
+              hasItems={browseDebates.length > 0}
+            />
+          </section>
         </div>
       )}
     </div>
+  </>
   )
 }

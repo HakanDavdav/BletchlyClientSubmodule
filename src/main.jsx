@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 import App from './App.jsx'
 import './index.css'
 import './components/layout/layout.css'
-import './i18n'
+import i18n from './i18n'
 
 // Toast hata mesajlarına traceId entegrasyonu
 const origToastError = toast.error
@@ -20,7 +20,7 @@ toast.error = (message, options = {}) => {
     } else if (message.response?.headers?.['x-trace-id'] && !opts.traceId) {
       opts.traceId = message.response.headers['x-trace-id']
     }
-    finalMsg = message.message || 'Beklenmeyen bir hata oluştu.'
+    finalMsg = message.message || i18n.t('common.unexpected_error')
   }
 
   if (!opts.traceId && typeof window !== 'undefined' && window.__lastApiTraceId) {
@@ -59,7 +59,8 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: Infinity, // Veriyi süresiz olarak taze kabul et (arka planda istek atma)
       refetchOnWindowFocus: false, // Sekme değişiminde gereksiz istekleri önler
-      retry: 1, // Hata durumunda sadece 1 kez tekrar dener
+      retry: (failureCount, error) =>
+        failureCount < 1 && !error?.isApiError && (!error?.response || error.response.status >= 500),
     },
   },
   mutationCache: new MutationCache({
@@ -69,7 +70,7 @@ const queryClient = new QueryClient({
       if (!mutation.meta?.showErrorToast) return
 
       const traceId = error.traceId || error.response?.headers?.['x-trace-id']
-      let errorMessages = [error.message || 'Beklenmeyen bir hata oluştu.']
+      let errorMessages = [error.message || i18n.t('common.unexpected_error')]
       if (error.response?.data?.errors) {
         if (Array.isArray(error.response.data.errors)) {
           errorMessages = error.response.data.errors.map((e) => e.description || e.message || e)
@@ -98,7 +99,7 @@ const queryClient = new QueryClient({
       if (!query.meta?.showErrorToast) return
 
       const traceId = error.traceId || error.response?.headers?.['x-trace-id']
-      let errorMessages = [error.message || 'Beklenmeyen bir hata oluştu.']
+      let errorMessages = [error.message || i18n.t('common.unexpected_error')]
       if (error.response?.data?.errors) {
         if (Array.isArray(error.response.data.errors)) {
           errorMessages = error.response.data.errors.map((e) => e.description || e.message || e)
@@ -123,10 +124,19 @@ const queryClient = new QueryClient({
 })
 
 import { BrowserRouter } from 'react-router-dom'
+import useAuthStore from './store/authStore'
+import useMyEntitiesStore from './store/myEntitiesStore'
+
+if (typeof window !== 'undefined') {
+  window.useAuthStore = useAuthStore
+  window.useMyEntitiesStore = useMyEntitiesStore
+}
 
 // Authentication interceptor error handle (Token düştüğünde vb.)
 window.addEventListener('auth:unauthorized', () => {
   import('./store/authStore').then(({ default: useAuthStore }) => {
+    // Oturum yokken (anonim gezinme) 401 alınması login'e yönlendirmez
+    if (!useAuthStore.getState().isLoggedIn) return
     useAuthStore.getState().logout()
     window.location.href = '/login'
   })

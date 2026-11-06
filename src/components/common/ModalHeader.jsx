@@ -12,9 +12,13 @@ export default function ModalHeader({
   style = {},
 }) {
   const { t } = useTranslation()
+  const hasSubtitle = Boolean(subtitle)
 
   return (
-    <div className={`modal-header ${className}`.trim()} style={style}>
+    <div
+      className={`modal-header ${hasSubtitle ? '' : 'modal-header--compact modal-header--no-subtitle'} ${className}`.trim()}
+      style={style}
+    >
       <div className="modal-header-left">
         {icon && <div className="modal-header-icon">{icon}</div>}
         <div className="modal-header-text">
@@ -32,7 +36,7 @@ export default function ModalHeader({
             type="button"
             className="btn-icon"
             onClick={onClose}
-            aria-label={t('common.close', 'Kapat')}
+            aria-label={t('common.close')}
           >
             <X size={18} />
           </button>

@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { personalityCardApi } from '../../api/personalityCardApi'
 import { actorApi } from '../../api/actorApi'
 import { Plus, HelpCircle, X, Check, Save } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import BackButton from '../../components/common/BackButton'
+import { PageTopDockRow } from '../../components/layout/PageTopDock'
 import useAuthStore from '../../store/authStore'
 import useMyEntitiesStore from '../../store/myEntitiesStore'
 import { useTranslation } from 'react-i18next'
@@ -18,15 +19,19 @@ import CardEditComponent from '../../components/card/CardEditComponent'
 
 export default function PersonalityCardPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { actorId } = useAuthStore()
 
   const [isCreating, setIsCreating] = useState(false)
   const [editingCard, setEditingCard] = useState(null)
+  const lastHandledKeyRef = useRef(null)
   const [formData, setFormData] = useState({
     cardName: '',
     personalityPrompt: '',
+    imageUrl: '',
     tags: [],
     personalityCardConfirmed: false,
   })
@@ -40,11 +45,16 @@ export default function PersonalityCardPage() {
 
   const { data: userProfile } = useQuery({
     queryKey: ['actor', actorId],
-    queryFn: () => actorApi.getActor(actorId).then((res) => res.data?.data),
+    queryFn: () => actorApi.getProfile(actorId).then((res) => res.data?.data),
     enabled: Boolean(actorId),
   })
 
-  const cardOwnershipLimit = userProfile?.userSettings?.cardOwnershipLimit || 10
+  const storeSettings = useMyEntitiesStore((state) => state.mySettings)
+  const cardOwnershipLimit =
+    userProfile?.userSettings?.cardOwnershipLimit ||
+    storeSettings?.cardOwnershipLimit ||
+    10
+  const isCardLimitReached = myCards.length >= cardOwnershipLimit
 
   const { data: myBots = [], isLoading: isBotsLoading } = useQuery({
     queryKey: ['myBots', actorId],
@@ -53,17 +63,52 @@ export default function PersonalityCardPage() {
     meta: { showErrorToast: true },
   })
 
+  const targetEditCardId = location.state?.editCardId || searchParams.get('editCardId')
+  const passedCard = location.state?.editCard || null
+
+  useEffect(() => {
+    if (!targetEditCardId && !passedCard) return
+    if (lastHandledKeyRef.current === location.key) return
+
+    if (myCards.length > 0 && targetEditCardId) {
+      const match = myCards.find((c) => {
+        const id =
+          c?.personalityCardId ||
+          c?.cardId ||
+          c?.card?.personalityCardId ||
+          c?.card?.cardId ||
+          c?.ownership?.originalCard?.personalityCardId
+        return id && String(id).toLowerCase() === String(targetEditCardId).toLowerCase()
+      })
+      if (match) {
+        lastHandledKeyRef.current = location.key
+        setIsCreating(false)
+        setEditingCard(match)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        return
+      }
+    }
+
+    if (!isCardsLoading && passedCard) {
+      lastHandledKeyRef.current = location.key
+      setIsCreating(false)
+      setEditingCard(passedCard)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [targetEditCardId, passedCard, myCards, isCardsLoading, location.key])
+
   const createMutation = useMutation({
     mutationFn: (data) => personalityCardApi.createCard(data),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      toast.success(t('common.success', 'Başarılı'), { duration: 3000 })
+      toast.success(t('common.success'), { duration: 3000 })
       queryClient.invalidateQueries({ queryKey: ['myPersonalityCards'] })
       useMyEntitiesStore.getState().fetchMyCards()
       setIsCreating(false)
       setFormData({
         cardName: '',
         personalityPrompt: '',
+        imageUrl: '',
         tags: [],
         personalityCardConfirmed: false,
       })
@@ -75,6 +120,7 @@ export default function PersonalityCardPage() {
       ...current,
       cardName: field === 'cardName' ? value : current.cardName,
       personalityPrompt: field === 'prompt' ? value : current.personalityPrompt,
+      imageUrl: field === 'imageUrl' ? value : current.imageUrl,
       personalityCardConfirmed: false,
     }))
   }
@@ -110,43 +156,41 @@ export default function PersonalityCardPage() {
 
   return (
     <div className="flex-col gap-4">
-      <div
-        className="px-2"
-        style={{
-          marginBottom: 16,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <BackButton
-          text={t('common.go_back', 'Geri Dön')}
-          onClick={() => navigate(-1)}
-          style={{ marginBottom: 0 }}
-        />
-        <button
-          className="btn btn-sm btn-primary"
-          onClick={() => {
-            if (isCreating) {
-              setIsCreating(false)
-            } else {
-              setEditingCard(null)
-              setIsCreating(true)
-            }
-          }}
-          style={{ borderRadius: 20, padding: '6px 14px' }}
-        >
-          {isCreating ? (
-            t('common.cancel', 'İptal')
-          ) : (
-            <>
-              <Plus size={16} /> {t('card.create_new', 'Yeni Kart')}
-            </>
-          )}
-        </button>
-      </div>
+      <PageTopDockRow
+        left={
+          <BackButton
+            text={t('common.go_back')}
+            onClick={() => navigate(-1)}
+            style={{ marginBottom: 0 }}
+          />
+        }
+        right={
+          <button
+            className="btn btn-sm btn-primary"
+            onClick={() => {
+              if (isCreating) {
+                setIsCreating(false)
+              } else {
+                setEditingCard(null)
+                setIsCreating(true)
+              }
+            }}
+            style={{ borderRadius: 20, padding: '6px 14px' }}
+          >
+            {isCreating ? (
+              t('common.cancel')
+            ) : (
+              <>
+                <Plus size={16} /> {t('card.create_new')}
+              </>
+            )}
+          </button>
+        }
+        style={{ marginBottom: 16 }}
+      />
 
       <div
+        className="card-page-header"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -156,40 +200,51 @@ export default function PersonalityCardPage() {
           borderBottom: '1px solid var(--color-border)',
         }}
       >
-        <div className="page-header-icon">
+        <div className="page-header-icon page-header-icon--card">
           <BotFlashCardsIcon size={30} color="#fff" />
         </div>
-        <div>
-          <h1
-            style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
-          >
-            {t('card.my_cards', 'Kişilik Kartlarım')}
-          </h1>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <h1
+              style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
+            >
+              {t('card.my_cards')}
+            </h1>
+            <span
+              style={{
+                fontSize: 12,
+                padding: '2px 8px',
+                borderRadius: 12,
+                background: 'var(--color-surface-raised)',
+                color: 'var(--color-text-secondary)',
+                border: '1px solid var(--color-border)',
+                fontWeight: 600,
+              }}
+            >
+              {myCards.length} / {cardOwnershipLimit}
+            </span>
+          </div>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
-            {t('card.my_cards_desc', 'Oluşturduğunuz ve satın aldığınız kişilik kartları')}
+            {t('card.my_cards_desc')}
           </p>
         </div>
         <HowItWorksHelp
-          title={t('card.how_it_works_title', 'Kişilik kartları hakkında')}
+          title={t('card.how_it_works_title')}
           items={[
             t(
-              'card.how_it_works_1',
-              'Yaratılan kişilik kartlarının sahipliği sende olur. Bu kişilik kartlarını istediğin botlarına atayabilirsin. Botlar Bletchly içerisinde bütün davranışlarını kendi kişilik kartı setine göre sergiler.'
+              'card.how_it_works_1'
             ),
             t(
-              'card.how_it_works_2',
-              'Herkes sadece asıl yaratıcısı olduğu kartın kişilik metnini görebilir. Eğer kartın orijinal sahibi değilsen bu kartların sadece kısa ipucunu görebilirsin.'
+              'card.how_it_works_2'
             ),
             t(
-              'card.how_it_works_3',
-              'Kart marketinden kullanıcı puanın (AP) ile kart satın alabilirsin; bu satın aldığın kartı istediğin bir klanına veya botuna atayabilirsin ama tekrar satışa çıkaramazsın veya kişilik metnini göremezsin.'
+              'card.how_it_works_3'
             ),
             t(
-              'card.how_it_works_4',
-              'Asıl yaratıcısı olduğun bir kartı güncellediğinde, site genelinde senin kişilik kartını slotunda barındıran bütün botların kişiliğini tek bir tuşla anında değiştirebilirsin. Bu sayede eğer kartın yayıldıysa Bletchly genelinde bir çeşit darbe dahi yapabilirsin.'
+              'card.how_it_works_4'
             ),
           ]}
-          closeLabel={t('common.close', 'Kapat')}
+          closeLabel={t('common.close')}
           triggerStyle={{ marginLeft: 'auto', marginRight: 24, flexShrink: 0 }}
         />
       </div>
@@ -209,6 +264,7 @@ export default function PersonalityCardPage() {
               variant="editor"
               editorCardName={formData.cardName}
               editorPrompt={formData.personalityPrompt}
+              editorImageUrl={formData.imageUrl}
               editorConfirmed={formData.personalityCardConfirmed}
               disabled={createMutation.isPending}
               onEditorChange={handlePersonalityCardChange}
@@ -247,7 +303,7 @@ export default function PersonalityCardPage() {
               letterSpacing: '0.05em',
             }}
           >
-            {t('card.ownership_slots', 'Kart Sahiplik Yuvaları')} ({myCards.length} / {cardOwnershipLimit} {t('card.slots_label', 'Slot')})
+            {t('card.ownership_slots')} ({myCards.length} / {cardOwnershipLimit} {t('card.slots_label')})
           </h3>
           <CardSlots
             cards={myCards}

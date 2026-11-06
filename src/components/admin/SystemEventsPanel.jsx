@@ -161,7 +161,7 @@ export default function SystemEventsPanel() {
     onSuccess: (res) => {
       const traceId = res?.headers?.['x-trace-id'] || window.__lastApiSuccessTraceId || null
       setLastTraceId(traceId)
-      toast.success(t('admin.system_event_triggered', 'Sistem olayı başarıyla tetiklendi!'), {
+      toast.success(t('admin.system_event_triggered'), {
         traceId,
       })
     },
@@ -177,7 +177,7 @@ export default function SystemEventsPanel() {
     onSuccess: (res) => {
       const traceId = res?.headers?.['x-trace-id'] || window.__lastApiSuccessTraceId || null
       setLastTraceId(traceId)
-      toast.success(t('admin.bot_event_triggered', 'Bot olayı başarıyla tetiklendi!'), {
+      toast.success(t('admin.bot_event_triggered'), {
         traceId,
       })
     },
@@ -197,7 +197,7 @@ export default function SystemEventsPanel() {
   }
 
   const handleTriggerEvent = () => {
-    if (!eventType) return toast.error(t('admin.event_type_required', 'Olay türü zorunludur'))
+    if (!eventType) return toast.error(t('admin.event_type_required'))
     try {
       const parsed = JSON.parse(payload)
       if (isActorEvent) {
@@ -210,7 +210,7 @@ export default function SystemEventsPanel() {
         triggerSystemEventMutation.mutate({ eventType, payload: parsed })
       }
     } catch {
-      toast.error(t('admin.invalid_json_payload', 'Payload geçerli bir JSON formatında değil'))
+      toast.error(t('admin.invalid_json_payload'))
     }
   }
 
@@ -236,10 +236,10 @@ export default function SystemEventsPanel() {
         }}
       >
         <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: 'var(--color-text)' }}>
-          {t('admin.system_events_title', 'Sistem Olayları')}
+          {t('admin.system_events_title')}
         </h2>
         <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: '2px 0 0' }}>
-          {t('admin.system_events_desc', 'Sistem olayları tetikleme ve yönetimi')}
+          {t('admin.system_events_desc')}
         </p>
       </div>
 
@@ -256,7 +256,7 @@ export default function SystemEventsPanel() {
           <div
             style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: 'var(--color-text)' }}
           >
-            {t('admin.system_events_title', 'Sistem Olayları')}
+            {t('admin.system_events_title')}
           </div>
 
           {/* Event Category & Type Selector Dropdown */}
@@ -271,7 +271,7 @@ export default function SystemEventsPanel() {
                 color: 'var(--color-text-secondary)',
               }}
             >
-              {t('admin.event_type', 'Olay Türü')}
+              {t('admin.event_type')}
             </label>
             <select
               className="input w-full"
@@ -311,7 +311,7 @@ export default function SystemEventsPanel() {
                 color: 'var(--color-text-secondary)',
               }}
             >
-              {t('admin.payload', 'Payload')}
+              {t('admin.payload')}
             </label>
             <textarea
               className="input w-full"
@@ -347,7 +347,7 @@ export default function SystemEventsPanel() {
               borderRadius: 'var(--radius-md)',
             }}
           >
-            {isLoading ? t('admin.processing', 'İşleniyor...') : t('admin.trigger_event', 'Event Tetikle')}
+            {isLoading ? t('admin.processing') : t('admin.trigger_event')}
           </button>
 
           {lastTraceId && (
@@ -368,7 +368,7 @@ export default function SystemEventsPanel() {
                   marginBottom: 2,
                 }}
               >
-                {t('admin.trace_id', 'Trace ID')}
+                {t('admin.trace_id')}
               </div>
               <code
                 style={{

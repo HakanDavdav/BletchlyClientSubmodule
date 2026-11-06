@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import useDevLog from '../../utils/useDevLog'
 import { KeyRound, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import ModalPortal from '../common/ModalPortal'
 
 export default function TokenModal({
   isOpen,
@@ -23,20 +24,48 @@ export default function TokenModal({
 
   const displayTarget = targetText || email
 
+  const endTimeRef = useRef(null)
+  const hasTimedOutRef = useRef(false)
+
   useEffect(() => {
-    let timer = null
-    if (isOpen) {
-      if (countdown > 0) {
-        timer = setInterval(() => setCountdown((prev) => prev - 1), 1000)
-      } else if (countdown === 0) {
-        if (onTimeout) onTimeout()
-      }
-    } else {
+    if (!isOpen) {
+      endTimeRef.current = null
+      hasTimedOutRef.current = false
       setCountdown(totalSeconds)
       setToken('')
+      return
     }
-    return () => { if (timer) clearInterval(timer) }
-  }, [isOpen, countdown, onTimeout, totalSeconds])
+
+    if (!endTimeRef.current) {
+      endTimeRef.current = Date.now() + totalSeconds * 1000
+      hasTimedOutRef.current = false
+    }
+
+    const updateTimer = () => {
+      if (!endTimeRef.current) return
+      const remaining = Math.max(0, Math.ceil((endTimeRef.current - Date.now()) / 1000))
+      setCountdown(remaining)
+      if (remaining === 0 && !hasTimedOutRef.current) {
+        hasTimedOutRef.current = true
+        if (onTimeout) onTimeout()
+      }
+    }
+
+    updateTimer()
+    const timer = setInterval(updateTimer, 1000)
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        updateTimer()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [isOpen, onTimeout, totalSeconds])
 
   useEffect(() => {
     if (isOpen) {
@@ -49,17 +78,6 @@ export default function TokenModal({
   }
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-    
-    if (isRequired) {
-      return (!value || !value.trim()) ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
 
   const canSubmit = token.trim() !== '' && !isPending
 
@@ -83,7 +101,8 @@ export default function TokenModal({
   if (!isOpen) return null
 
   return (
-    <div className="modal-overlay" style={{ zIndex: 1000 }}>
+    <ModalPortal>
+      <div className="modal-overlay" style={{ zIndex: 1000 }}>
       <div
         className="modal-box"
         style={{ maxWidth: 460, padding: '40px 36px', textAlign: 'center', position: 'relative' }}
@@ -115,7 +134,7 @@ export default function TokenModal({
 
         {displayTarget ? (
           <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: '12px 0 28px', lineHeight: 1.6 }}>
-            <span style={{ color: 'var(--color-text)', fontWeight: 500 }}>{displayTarget}</span>{t('auth.to_address', ' adresine')}
+            <span style={{ color: 'var(--color-text)', fontWeight: 500 }}>{displayTarget}</span>{t('auth.to_address')}
             {' '}{description || t('auth.email_verification_desc')}
           </p>
         ) : (
@@ -130,7 +149,7 @@ export default function TokenModal({
             <input
               ref={textareaRef}
               type="text"
-              className="input"
+              className={`input ${hasSubmitted && !token.trim() ? 'error' : ''}`}
               value={token}
               onChange={handleChange}
               placeholder={t('auth.enter_code')}
@@ -142,12 +161,8 @@ export default function TokenModal({
                 padding: '14px',
                 fontSize: 14,
                 letterSpacing: 0.5,
-                border: `1.5px solid ${getBorderColor('token', token, true)}`,
                 paddingRight: hasPasted ? '60px' : '14px',
-                outline: 'none'
               }}
-              onFocus={() => setFocused('token')}
-              onBlur={() => setFocused(null)}
             />
             {/* Yapıştırıldı onay etiketi */}
             {hasPasted && (
@@ -196,6 +211,7 @@ export default function TokenModal({
           </button>
         </form>
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   )
 }

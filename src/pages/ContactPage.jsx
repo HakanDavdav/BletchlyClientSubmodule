@@ -1,33 +1,30 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Mail } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import BackButton from '../components/common/BackButton'
 import { useTranslation } from 'react-i18next'
+import { useLocation } from 'react-router-dom'
 
 export default function ContactPage() {
   const { t } = useTranslation()
+  const location = useLocation()
+  const reportMessage = location.state?.reportMessage || ''
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    message: ''
+    message: reportMessage
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
+
+  useEffect(() => {
+    if (!reportMessage) return
+    setFormData((prev) => ({ ...prev, message: reportMessage }))
+  }, [reportMessage])
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const getBorderColor = (fieldName, isRequired = true) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-    
-    if (isRequired) {
-      return (!formData[fieldName] || !formData[fieldName].trim()) ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
   }
 
   const canSubmit = formData.name.trim() !== '' && formData.email.trim() !== '' && formData.message.trim() !== ''
@@ -48,7 +45,7 @@ export default function ContactPage() {
       setIsSubmitting(false)
       setHasSubmitted(false)
       setFormData({ name: '', email: '', message: '' })
-      toast.success(t('contact.success_msg', 'Mesajınız başarıyla gönderildi! En kısa sürede size dönüş yapacağız.'), { duration: 4000 })
+      toast.success(t('contact.success_msg'), { duration: 4000 })
     }, 1000)
   }
 
@@ -75,10 +72,10 @@ export default function ContactPage() {
         </div>
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}>
-            {t('footer.contact', 'İletişim')}
+            {t('footer.contact')}
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
-            {t('contact.desc', 'Soru, görüş veya destek talepleriniz için bize ulaşın.')}
+            {t('contact.desc')}
           </p>
         </div>
       </div>
@@ -88,52 +85,41 @@ export default function ContactPage() {
         <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-lg">
           
           <div className="form-group">
-            <label className="form-label">{t('contact.name', 'İsim Soyisim')}</label>
+            <label className="form-label">{t('contact.name')}</label>
             <input 
-              className="input" 
+              className={`input ${hasSubmitted && !formData.name.trim() ? 'error' : ''}`}
               type="text" 
               name="name"
               value={formData.name}
               onChange={handleChange}
-              style={{ borderColor: getBorderColor('name'), outline: 'none' }}
-              onFocus={() => setFocused('name')}
-              onBlur={() => setFocused(null)}
               placeholder="John Doe"
             />
           </div>
 
           <div className="form-group">
-            <label className="form-label">{t('auth.email', 'E-posta')}</label>
+            <label className="form-label">{t('auth.email')}</label>
             <input 
-              className="input" 
+              className={`input ${hasSubmitted && !formData.email.trim() ? 'error' : ''}`}
               type="email" 
               name="email"
               value={formData.email}
               onChange={handleChange}
-              style={{ borderColor: getBorderColor('email'), outline: 'none' }}
-              onFocus={() => setFocused('email')}
-              onBlur={() => setFocused(null)}
               placeholder="john@example.com"
             />
           </div>
 
           <div className="form-group">
-            <label className="form-label">{t('contact.message', 'Mesajınız')}</label>
+            <label className="form-label">{t('contact.message')}</label>
             <textarea 
-              className="input" 
+              className={`input textarea textarea--autogrow ${hasSubmitted && !formData.message.trim() ? 'error' : ''}`}
               name="message"
               value={formData.message}
               onChange={handleChange}
               style={{ 
-                borderColor: getBorderColor('message'), 
-                outline: 'none', 
                 minHeight: 120, 
-                resize: 'vertical',
                 paddingTop: 12 
               }}
-              onFocus={() => setFocused('message')}
-              onBlur={() => setFocused(null)}
-              placeholder={t('contact.message_placeholder', 'Mesajınızı buraya yazın...')}
+              placeholder={t('contact.message_placeholder')}
             />
           </div>
 
@@ -143,17 +129,12 @@ export default function ContactPage() {
             disabled={isSubmitting}
             style={{ marginTop: 16 }}
           >
-            {isSubmitting ? t('common.sending', 'Gönderiliyor...') : t('common.send', 'Gönder')}
+            {isSubmitting ? t('common.sending') : t('common.send')}
           </button>
           
         </form>
       </div>
 
-      {/* Alternative Contact Info */}
-      <div style={{ marginTop: 24, textAlign: 'center', fontSize: 13, color: 'var(--color-text-secondary)' }}>
-        {t('contact.alternative', 'Veya bize doğrudan e-posta gönderebilirsiniz:')} <br />
-        <a href="mailto:info@bletchly.com" style={{ color: 'var(--color-primary)', fontWeight: 600, textDecoration: 'none', marginTop: 4, display: 'inline-block' }}>info@bletchly.com</a>
-      </div>
 
     </div>
   )

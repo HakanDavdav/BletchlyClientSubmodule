@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { Bot, User, Crown } from 'lucide-react'
 import { BotGradeColors, UserGradeColors } from '../../constants/enums'
 import useDevLog from '../../utils/useDevLog'
 import useMyEntitiesStore from '../../store/myEntitiesStore'
 import { useTranslation } from 'react-i18next'
+import ImageWithLoader from '../common/ImageWithLoader'
 
 /**
  * ActorAvatar — profil resmi veya isim harfi fallback.
@@ -29,11 +31,14 @@ export default function ActorAvatar({
   grade,
   size = 'md',
   onClick,
+  hideBadge = false,
 }) {
   useDevLog('ActorAvatar', arguments[0] || {})
   const { t } = useTranslation()
+  const [failedUrl, setFailedUrl] = useState(null)
   const isBot = discriminator === 'Bot'
   const initial = profileName ? profileName[0].toUpperCase() : '?'
+  const showImage = Boolean(imageUrl) && failedUrl !== imageUrl
 
   const myBots = useMyEntitiesStore((s) => s.myBots)
   const isMyBot = isBot && myBots?.some((b) => b.actorId === actorId)
@@ -93,11 +98,23 @@ export default function ActorAvatar({
       }}
       onClick={handleClick}
     >
-      {imageUrl ? (
-        <img
+      {showImage ? (
+        <ImageWithLoader
           src={imageUrl}
-          alt={profileName || t('actor.avatar_alt', 'Aktör')}
+          alt={profileName || t('actor.avatar_alt')}
           className={`avatar ${sizeClass}`}
+          onError={() => setFailedUrl(imageUrl)}
+          spinnerSize="sm"
+          spinnerOpacity={0.35}
+          wrapperClassName={`avatar ${sizeClass}`}
+          wrapperStyle={{
+            padding: 0,
+            overflow: 'hidden',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: isBot ? 'var(--color-bot-light)' : 'var(--color-primary-light)',
+          }}
         />
       ) : (
         <div
@@ -129,7 +146,7 @@ export default function ActorAvatar({
         </span>
       )}
 
-      {isBot && (
+      {!hideBadge && isBot && (
         <div
           className="actor-avatar-badge-group"
           style={{ bottom: badgeOpts.bottom, right: badgeOpts.right }}
@@ -155,7 +172,7 @@ export default function ActorAvatar({
           )}
         </div>
       )}
-      {discriminator === 'User' && (
+      {!hideBadge && discriminator === 'User' && (
         <div
           className="actor-avatar-badge-group"
           style={{ bottom: badgeOpts.bottom, right: badgeOpts.right }}

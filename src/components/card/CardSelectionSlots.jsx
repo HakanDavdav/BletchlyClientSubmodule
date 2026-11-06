@@ -8,6 +8,15 @@ function getCardId(item) {
 
 function getCard(item) {
   if (!item?.card) return item
+  if (
+    item.assignmentId ||
+    item.botId ||
+    item.tribeId ||
+    item.assignedTribeId ||
+    typeof item.isEffective === 'boolean'
+  ) {
+    return item
+  }
   return {
     ...item.card,
     assignedBots: item.assignedBots || [],
@@ -56,7 +65,7 @@ export default function CardSelectionSlots({
     return (
       <div className="card-selection-slots">
         <p className="text-muted" style={{ margin: slotCount > 0 ? '0 0 12px' : 0 }}>
-          {t('card.no_owned_cards', 'Henüz sahip olduğunuz bir kişilik kartı yok.')}
+          {t('common.nothing_here_yet')}
         </p>
         {slotCount > 0 && (
           <div className="personality-card-slots" style={{ '--card-count': slotCount }}>
@@ -84,7 +93,7 @@ export default function CardSelectionSlots({
     <div className="card-selection-slots">
       {showHeader && (
         <div className="card-selection-slots__header">
-          <span>{t('card.select_slots', 'Kart slotlarını seçin')}</span>
+          <span>{t('card.select_slots')}</span>
           <span className="card-selection-slots__count">
             {selectedCount}
             {maxSelections ? ` / ${maxSelections}` : ''}

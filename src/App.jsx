@@ -1,13 +1,17 @@
 import MainLayout from './components/layout/MainLayout'
 import useUIStore from './store/uiStore'
 import useThemeStore from './store/themeStore'
+import useAuthStore from './store/authStore'
+import useMyEntitiesStore from './store/myEntitiesStore'
+import { UserCapabilities } from './constants/enums'
 import {
   applyCustomColorVars,
   clearCustomColorVars,
   resolveBaseColor,
 } from './utils/themeColor'
-import { useEffect, lazy, Suspense } from 'react'
+import { useEffect, useRef, useState, lazy, Suspense } from 'react'
 import { Toaster, ToastBar, toast } from 'react-hot-toast'
+import useIsMobile from './hooks/useIsMobile'
 import InitProfileGuard from './components/auth/InitProfileGuard'
 import { useTranslation } from 'react-i18next'
 import ScrollToTop from './components/common/ScrollToTop'
@@ -34,41 +38,134 @@ import MarketplacePage from './pages/card/MarketplacePage'
 import PersonalityCardHierarchyPage from './pages/card/PersonalityCardHierarchyPage'
 import HierarchyPage from './pages/HierarchyPage'
 import BasicConceptsPage from './pages/BasicConceptsPage'
-import TribesPage from './pages/TribesPage'
+import ExplorePage from './pages/ExplorePage'
 import ActiveDebatesPage from './pages/ActiveDebatesPage'
 import EnrichNewsPoolPage from './pages/news/EnrichNewsPoolPage'
 import AboutPage from './pages/AboutPage'
 import ContactPage from './pages/ContactPage'
+import HowItWorksPage from './pages/HowItWorksPage'
+import PremiumPage from './pages/PremiumPage'
 import PrivacyPolicyPage from './pages/legal/PrivacyPolicyPage'
 import TermsOfServicePage from './pages/legal/TermsOfServicePage'
+import CookiePolicyPage from './pages/legal/CookiePolicyPage'
 import DebatePage from './pages/debate/DebatePage'
 import DebateTranscriptPage from './pages/debate/DebateTranscriptPage'
+import ChatPage from './pages/chat/ChatPage'
 import InvitationModal from './components/debate/InvitationModal'
+import CookieConsentBanner from './components/common/CookieConsentBanner'
 import { useInvitationHub } from './hooks/useInvitationHub'
 
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { initGA, trackPageView } from './utils/analytics'
+import { formatPageTitle } from './config/site'
+import { isDynamicTitleRoute, resolveStaticPageTitle } from './config/pageTitles'
 
 const AdminApp = import.meta.env.VITE_IS_ADMIN_BUILD === 'true'
   ? lazy(() => import('./AdminApp'))
   : () => null
 
-const MindPage = lazy(() => import('./pages/MindPage'))
+const MemoryMapPage = lazy(() => import('./pages/MemoryMapPage'))
+
+function LegacyPathRedirect() {
+  const location = useLocation()
+  return <Navigate to={`/memory-map${location.search}`} replace />
+}
+
+// Mobilde toast'ı sağa/sola sürükleyip bırakınca kapatmayı sağlar.
+function SwipeableToast({ toast: t, enabled, children }) {
+  const [dragX, setDragX] = useState(0)
+  const [dragging, setDragging] = useState(false)
+  const startXRef = useRef(null)
+
+  const handlePointerDown = (event) => {
+    if (!enabled) return
+    startXRef.current = event.clientX
+    setDragging(true)
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId)
+    } catch {
+      /* yoksay */
+    }
+  }
+
+  const handlePointerMove = (event) => {
+    if (!enabled || startXRef.current == null) return
+    setDragX(event.clientX - startXRef.current)
+  }
+
+  const handlePointerUp = () => {
+    if (!enabled || startXRef.current == null) return
+    const moved = dragX
+    startXRef.current = null
+    setDragging(false)
+    if (Math.abs(moved) > 80) {
+      toast.dismiss(t.id)
+    } else {
+      setDragX(0)
+    }
+  }
+
+  return (
+    <div
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        transform: dragX ? `translateX(${dragX}px)` : undefined,
+        opacity: dragX ? Math.max(0.25, 1 - Math.abs(dragX) / 220) : 1,
+        transition: dragging ? 'none' : 'transform 0.22s ease, opacity 0.22s ease',
+        touchAction: enabled ? 'pan-y' : undefined,
+      }}
+    >
+      {children}
+    </div>
+  )
+}
 
 export default function App() {
-  const { t: translate } = useTranslation()
+  const { t: translate, i18n } = useTranslation()
+  const isMobile = useIsMobile()
   const { isDarkMode, isGreenMode, customColor } = useThemeStore()
   const { incomingInvitation, isInvitationModalOpen, openInvitationModal, closeInvitation } =
     useInvitationHub()
   const location = useLocation()
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
+  const hasFetchedOnce = useMyEntitiesStore((s) => s.hasFetchedOnce)
+  const mySettings = useMyEntitiesStore((s) => s.mySettings)
 
   useEffect(() => {
     initGA()
   }, [])
 
+  // Yetki doğrulama: kullanıcı premium değilse (veya oturum kapalıysa) ve aktif tema rengi
+  // bir premium renkse güvenli varsayılan olan yeşile çeker.
+  // Ücretsiz renkler (Yeşil, Mavi, Pembe) Dark Mode gibi login/logout'tan bağımsız tarayıcıda kalır.
+  useEffect(() => {
+    if (!isLoggedIn) {
+      useThemeStore.getState().validateThemePermission(false)
+      return
+    }
+    if (hasFetchedOnce) {
+      const userCapabilities = Number(mySettings?.userCapabilities ?? UserCapabilities.Default)
+      const isPremium = (userCapabilities & UserCapabilities.Premium) === UserCapabilities.Premium
+      useThemeStore.getState().validateThemePermission(isPremium)
+    }
+  }, [isLoggedIn, hasFetchedOnce, mySettings])
+
   useEffect(() => {
     trackPageView(location.pathname + location.search)
   }, [location.pathname, location.search])
+
+  // Statik sayfaların sekme başlığını yönetir. Detay sayfaları (post, profil, klan,
+  // meydan okuma vb.) kendi verileriyle useDocumentTitle üzerinden başlığı belirler.
+  useEffect(() => {
+    if (isDynamicTitleRoute(location.pathname)) return
+
+    document.title = formatPageTitle(resolveStaticPageTitle(location.pathname, translate))
+  }, [location.pathname, translate, i18n.language])
 
   useEffect(() => {
     if (isDarkMode) {
@@ -104,8 +201,15 @@ export default function App() {
   return (
     <>
       <ScrollToTop />
-      <Toaster position="top-right" toastOptions={{ duration: 10000 }}>
-        {(t) => (
+      <Toaster
+        position={isMobile ? 'top-center' : 'top-right'}
+        toastOptions={{ duration: 10000 }}
+        containerStyle={
+          isMobile ? { top: 'calc(env(safe-area-inset-top, 0px) + 12px)' } : undefined
+        }
+      >
+        {(t) => {
+          const bar = (
           <ToastBar
             toast={t}
             style={{
@@ -115,7 +219,7 @@ export default function App() {
               gap: '10px',
               padding: '10px 14px',
               borderRadius: '10px',
-              maxWidth: '420px',
+              maxWidth: isMobile ? 'calc(100vw - 32px)' : '420px',
             }}
           >
             {({ icon }) => (
@@ -183,20 +287,31 @@ export default function App() {
               </>
             )}
           </ToastBar>
-        )}
+          )
+          return isMobile ? (
+            <SwipeableToast toast={t} enabled>
+              {bar}
+            </SwipeableToast>
+          ) : (
+            bar
+          )
+        }}
       </Toaster>
       <MainLayout pendingInvitation={incomingInvitation} onOpenInvitation={openInvitationModal}>
         <InitProfileGuard>
           <Routes>
             {import.meta.env.VITE_IS_ADMIN_BUILD === 'true' && (
-              <Route
-                path="/admin/*"
-                element={
-                  <Suspense fallback={null}>
-                    <AdminApp />
-                  </Suspense>
-                }
-              />
+              <>
+                <Route path="/" element={<Navigate to="/admin/panel" replace />} />
+                <Route
+                  path="/admin/*"
+                  element={
+                    <Suspense fallback={null}>
+                      <AdminApp />
+                    </Suspense>
+                  }
+                />
+              </>
             )}
             <Route path="/" element={<FeedPage />} />
             <Route path="/post" element={<PostDetailPage />} />
@@ -219,24 +334,30 @@ export default function App() {
             <Route path="/card-hierarchy" element={<PersonalityCardHierarchyPage />} />
             <Route path="/basic-concepts" element={<BasicConceptsPage />} />
             <Route
-              path="/mind"
+              path="/memory-map"
               element={
                 <Suspense fallback={null}>
-                  <MindPage />
+                  <MemoryMapPage />
                 </Suspense>
               }
             />
+            <Route path="/mind" element={<LegacyPathRedirect />} />
             <Route path="/cards" element={<PersonalityCardPage />} />
             <Route path="/marketplace" element={<MarketplacePage />} />
             <Route path="/enrich-news" element={<EnrichNewsPoolPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/privacy" element={<PrivacyPolicyPage />} />
             <Route path="/terms" element={<TermsOfServicePage />} />
+            <Route path="/cookie-policy" element={<CookiePolicyPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/debate" element={<DebatePage />} />
             <Route path="/debate-transcript" element={<DebateTranscriptPage />} />
-            <Route path="/tribes" element={<TribesPage />} />
+            <Route path="/explore" element={<ExplorePage />} />
+            <Route path="/tribes" element={<Navigate to="/explore" replace />} />
             <Route path="/active-debates" element={<ActiveDebatesPage />} />
+            <Route path="/chat" element={<ChatPage />} />
+            <Route path="/how-it-works" element={<HowItWorksPage />} />
+            <Route path="/premium" element={<PremiumPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </InitProfileGuard>
@@ -245,6 +366,7 @@ export default function App() {
         invitation={isInvitationModalOpen ? incomingInvitation : null}
         onClose={closeInvitation}
       />
+      <CookieConsentBanner />
     </>
   )
 }

@@ -9,7 +9,6 @@ import {
   Podium,
   Users,
   History,
-  ChevronDown,
   Check,
   Sparkles,
   Calendar,
@@ -18,10 +17,14 @@ import {
 } from 'lucide-react'
 import TRexSkullIcon from '../assets/t-rex-skull-svgrepo-com.svg?react'
 import BackButton from '../components/common/BackButton'
+import { PageTopDockRow } from '../components/layout/PageTopDock'
 import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 import useThemeStore from '../store/themeStore'
 import HowItWorksHelp from '../components/common/HowItWorksHelp'
+import { getQueryErrorMessage } from '../utils/errorHelper'
+import { formatDate } from '../utils/formatDate'
+import { useHorizontalScrollIndicator } from '../hooks/useHorizontalScrollIndicator'
 
 export default function LeaderboardPage() {
   const [searchParams] = useSearchParams()
@@ -34,18 +37,56 @@ export default function LeaderboardPage() {
   const type = (searchParams.get('type') || 'user') === 'actor' ? 'user' : searchParams.get('type') || 'user'
   const seasonParam = searchParams.get('season') || 'current'
   const isCurrentSeason = seasonParam === 'current'
+  const [typesRef, typesScroll] = useHorizontalScrollIndicator([isCurrentSeason])
 
   const [seasonDropdownOpen, setSeasonDropdownOpen] = useState(false)
   const dropdownRef = useRef(null)
 
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    let touchStartX = 0
+    let touchStartY = 0
+    let isTouchScroll = false
+
+    function handleTouchStart(e) {
+      if (!e.touches || e.touches.length === 0) return
+      touchStartX = e.touches[0].clientX
+      touchStartY = e.touches[0].clientY
+      isTouchScroll = false
+    }
+
+    function handleTouchMove(e) {
+      if (!e.touches || e.touches.length === 0) return
+      const dx = Math.abs(e.touches[0].clientX - touchStartX)
+      const dy = Math.abs(e.touches[0].clientY - touchStartY)
+      if (dx > 8 || dy > 8) {
+        isTouchScroll = true
+      }
+    }
+
+    function handleTouchEnd(e) {
+      if (isTouchScroll) return
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setSeasonDropdownOpen(false)
       }
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+
+    function handleMouseDown(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setSeasonDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleMouseDown)
+    document.addEventListener('touchstart', handleTouchStart, { passive: true })
+    document.addEventListener('touchmove', handleTouchMove, { passive: true })
+    document.addEventListener('touchend', handleTouchEnd, { passive: true })
+
+    return () => {
+      document.removeEventListener('mousedown', handleMouseDown)
+      document.removeEventListener('touchstart', handleTouchStart)
+      document.removeEventListener('touchmove', handleTouchMove)
+      document.removeEventListener('touchend', handleTouchEnd)
+    }
   }, [])
 
   // 1. Current active season status & countdown
@@ -77,7 +118,7 @@ export default function LeaderboardPage() {
   })
 
   // 3. Leaderboard query
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ['leaderboard', seasonParam, type],
     queryFn: async () => {
       if (isCurrentSeason) {
@@ -135,16 +176,15 @@ export default function LeaderboardPage() {
   }
 
   const selectedSeasonLabel = isCurrentSeason
-    ? `${t('leaderboard.live_badge', 'Canlı')} (S${currentSeasonNumber})`
-    : `${t('common.season', 'Sezon')} ${seasonParam}`
+    ? `${t('leaderboard.live_badge')} (S${currentSeasonNumber})`
+    : `${t('common.season')} ${seasonParam}`
 
   return (
     <div className="flex-col gap-4">
-      <div className="px-2" style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-        <BackButton text={t('common.go_back', 'Geri Dön')} onClick={() => navigate(-1)} style={{ marginBottom: 0 }} />
-
-        {/* Controls: Season Selector & Type Toggles */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+      <PageTopDockRow
+        left={<BackButton text={t('common.go_back')} onClick={() => navigate(-1)} style={{ marginBottom: 0 }} />}
+        right={
+          <div className="leaderboard-controls" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           {/* Season Selector Dropdown */}
           <div ref={dropdownRef} style={{ position: 'relative' }}>
             <button
@@ -168,29 +208,35 @@ export default function LeaderboardPage() {
                 <Bot size={14} style={{ color: 'var(--color-primary)' }} />
               )}
               <span>{selectedSeasonLabel}</span>
-              <ChevronDown
-                size={13}
+              <span
+                aria-hidden="true"
                 style={{
+                  fontSize: 9,
+                  lineHeight: 1,
+                  display: 'inline-block',
                   transform: seasonDropdownOpen ? 'rotate(180deg)' : 'none',
                   transition: 'transform 0.2s',
                 }}
-              />
+              >
+                ▼
+              </span>
             </button>
 
             {seasonDropdownOpen && (
               <div
+                className="leaderboard-season-panel"
                 style={{
                   position: 'absolute',
                   top: '100%',
                   right: 0,
                   marginTop: 6,
                   minWidth: 250,
-                  background: 'var(--color-surface)',
+                  background: 'var(--color-bg)',
                   border: '1px solid var(--color-border)',
                   borderRadius: 12,
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+                  boxShadow: 'var(--shadow-lg)',
                   padding: 6,
-                  zIndex: 100,
+                  zIndex: 50,
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 2,
@@ -206,7 +252,7 @@ export default function LeaderboardPage() {
                     letterSpacing: '0.05em',
                   }}
                 >
-                  {t('leaderboard.season_select', 'Sezon Seç')}
+                  {t('leaderboard.season_select')}
                 </div>
 
                 {/* Option 1: Live current season */}
@@ -221,12 +267,11 @@ export default function LeaderboardPage() {
                       <div style={{ fontWeight: 600, fontSize: 13 }}>
                         {t('leaderboard.active_season', {
                           season: currentSeasonNumber,
-                          defaultValue: `Aktif Sezon (Sezon ${currentSeasonNumber})`,
                         })}
                       </div>
                       {seasonStatus?.daysRemaining != null && (
                         <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                          {seasonStatus.daysRemaining} {t('common.days_left', 'gün kaldı')}
+                          {seasonStatus.daysRemaining} {t('common.days_left')}
                         </div>
                       )}
                     </div>
@@ -249,11 +294,11 @@ export default function LeaderboardPage() {
                           <History size={14} />
                           <div style={{ textAlign: 'left' }}>
                             <div style={{ fontWeight: 600, fontSize: 13 }}>
-                              {t('common.season', 'Sezon')} {s.seasonNumber}
+                              {t('common.season')} {s.seasonNumber}
                             </div>
                             {s.archivedAt && (
-                              <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                                {new Date(s.archivedAt).toLocaleDateString()}
+                              <div className="date-text">
+                                {formatDate(s.archivedAt)}
                               </div>
                             )}
                           </div>
@@ -264,48 +309,60 @@ export default function LeaderboardPage() {
                   })
                 ) : (
                   <div style={{ padding: '8px 10px', fontSize: 12, color: 'var(--color-text-muted)', textAlign: 'center' }}>
-                    {t('leaderboard.no_past_seasons', 'Henüz arşivlenmiş sezon yok')}
+                    {t('common.nothing_here_yet')}
                   </div>
                 )}
               </div>
             )}
           </div>
 
-          {/* Toggle Buttons: Users, Bots, Tribes */}
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button
-              className={`btn btn-sm ${type === 'user' ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => handleTypeChange('user')}
-              style={{ borderRadius: 20, padding: '6px 14px' }}
-            >
-              {t('common.users', 'Kullanıcılar')}
-            </button>
-            <button
-              className={`btn btn-sm ${type === 'bot' ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => handleTypeChange('bot')}
-              style={{ borderRadius: 20, padding: '6px 14px' }}
-            >
-              {t('common.bots', 'Botlar')}
-            </button>
-            <button
-              className={`btn btn-sm ${type === 'tribe' ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => handleTypeChange('tribe')}
-              style={{ borderRadius: 20, padding: '6px 14px' }}
-            >
-              {t('common.tribes', 'Klanlar')}
-            </button>
-            {isCurrentSeason && (
+          {/* Toggle Buttons: Users, Bots, Tribes — mobilde yatay kaydırılır */}
+          <div className="leaderboard-types-wrap">
+            {typesScroll.scrollable && (
+              <div className="leaderboard-types-scrollbar" aria-hidden="true">
+                <div
+                  className="leaderboard-types-scrollbar-thumb"
+                  style={{ width: `${typesScroll.width}%`, left: `${typesScroll.left}%` }}
+                />
+              </div>
+            )}
+            <div className="hscroll-strip leaderboard-types-strip" ref={typesRef} style={{ display: 'flex', gap: 6 }}>
               <button
-                className={`btn btn-sm ${type === 'card' ? 'btn-primary' : 'btn-outline'}`}
-                onClick={() => handleTypeChange('card')}
+                className={`btn btn-sm ${type === 'user' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => handleTypeChange('user')}
                 style={{ borderRadius: 20, padding: '6px 14px' }}
               >
-                {t('common.cards', 'Kişilik Kartları')}
+                {t('common.users')}
               </button>
-            )}
+              <button
+                className={`btn btn-sm ${type === 'bot' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => handleTypeChange('bot')}
+                style={{ borderRadius: 20, padding: '6px 14px' }}
+              >
+                {t('common.bots')}
+              </button>
+              <button
+                className={`btn btn-sm ${type === 'tribe' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => handleTypeChange('tribe')}
+                style={{ borderRadius: 20, padding: '6px 14px' }}
+              >
+                {t('common.tribes')}
+              </button>
+              {isCurrentSeason && (
+                <button
+                  className={`btn btn-sm ${type === 'card' ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() => handleTypeChange('card')}
+                  style={{ borderRadius: 20, padding: '6px 14px' }}
+                >
+                  {t('common.cards')}
+                </button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+        }
+        style={{ marginBottom: 16 }}
+      />
 
       {/* Header */}
       <div
@@ -324,23 +381,23 @@ export default function LeaderboardPage() {
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}>
             {type === 'user'
-              ? t('leaderboard.user_leaderboard', 'Kullanıcı Sıralaması')
+              ? t('leaderboard.user_leaderboard')
               : type === 'bot'
-              ? t('leaderboard.bot_leaderboard', 'Bot Sıralaması')
+              ? t('leaderboard.bot_leaderboard')
               : type === 'tribe'
-              ? t('leaderboard.tribe_leaderboard', 'Klan Sıralaması')
-              : t('leaderboard.card_leaderboard', 'Kişilik Kartı Sıralaması')}
+              ? t('leaderboard.tribe_leaderboard')
+              : t('leaderboard.card_leaderboard')}
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
             {!isCurrentSeason
-              ? t('leaderboard.archive_desc', 'Bu sezona ait geçmiş sıralama ve istatistikler')
+              ? t('leaderboard.archive_desc')
               : type === 'user'
-              ? t('leaderboard.user_desc', 'Platformdaki en yüksek puana sahip kullanıcılar')
+              ? t('leaderboard.user_desc')
               : type === 'bot'
-              ? t('leaderboard.bot_desc', 'Platformdaki en popüler ve başarılı botlar')
+              ? t('leaderboard.bot_desc')
               : type === 'tribe'
-              ? t('leaderboard.tribe_desc', 'Platformdaki en prestijli klanlar')
-              : t('leaderboard.card_desc', 'Platformda botlara en çok atanan ve yayılan kişilik kartları')}
+              ? t('leaderboard.tribe_desc')
+              : t('leaderboard.card_desc')}
           </p>
         </div>
         <HowItWorksHelp
@@ -364,7 +421,6 @@ export default function LeaderboardPage() {
             <span className="live-mini-title">
               {t('leaderboard.active_season', {
                 season: currentSeasonNumber,
-                defaultValue: `Aktif Sezon (S${currentSeasonNumber})`,
               })}
             </span>
           </div>
@@ -374,8 +430,8 @@ export default function LeaderboardPage() {
             >
               <span>
                 {seasonStatus.daysRemaining > 0
-                  ? t('common.days_remaining_short', { count: seasonStatus.daysRemaining, defaultValue: `${seasonStatus.daysRemaining} GÜN!` })
-                  : t('common.hours_remaining_short', { count: seasonStatus.hoursRemaining ?? 0, defaultValue: `${seasonStatus.hoursRemaining ?? 0} SAAT!` })}
+                  ? t('common.days_remaining_short', { count: seasonStatus.daysRemaining })
+                  : t('common.hours_remaining_short', { count: seasonStatus.hoursRemaining ?? 0 })}
               </span>
             </div>
           </div>
@@ -387,11 +443,11 @@ export default function LeaderboardPage() {
         <div className="season-archive-bar-mini">
           <div className="archive-mini-left">
             <span className="archive-mini-title">
-              {t('common.season', 'Sezon')} {seasonParam}
+              {t('common.season')} {seasonParam}
             </span>
             {data?.archivedAt && (
-              <span className="archive-mini-date">
-                • {new Date(data.archivedAt).toLocaleDateString()}
+              <span className="archive-mini-date date-text">
+                • {formatDate(data.archivedAt)}
               </span>
             )}
           </div>
@@ -401,21 +457,21 @@ export default function LeaderboardPage() {
               className="archive-stat-chip archive-stat-chip--fossil"
             >
               <TRexSkullIcon className="badge-fossil-icon" style={{ width: 12, height: 12 }} />
-              <span>{data?.fossilizedBotCount ?? 0} {t('leaderboard.fossil_short', 'Fosil')}</span>
+              <span>{data?.fossilizedBotCount ?? 0} {t('leaderboard.fossil_short')}</span>
             </div>
 
             <div
               className="archive-stat-chip archive-stat-chip--active"
             >
               <Bot size={11} />
-              <span>{data?.activeBotCount ?? 0} {t('leaderboard.active_short', 'Canlı')}</span>
+              <span>{data?.activeBotCount ?? 0} {t('leaderboard.active_short')}</span>
             </div>
 
             <div
               className="archive-stat-chip archive-stat-chip--total"
             >
               <Bot size={11} />
-              <span>{data?.totalBotsEvaluated ?? 0} {t('leaderboard.total_short', 'Toplam')}</span>
+              <span>{data?.totalBotsEvaluated ?? 0} {t('leaderboard.total_short')}</span>
             </div>
           </div>
         </div>
@@ -436,11 +492,11 @@ export default function LeaderboardPage() {
             </div>
           ) : isError ? (
             <div className="empty-state form-error" style={{ gridColumn: '1 / -1' }}>
-              {t('leaderboard.error', 'Sıralama yüklenirken hata oluştu.')}
+              {getQueryErrorMessage(error, t)}
             </div>
           ) : !items || items.length === 0 ? (
             <div className="empty-state" style={{ gridColumn: '1 / -1' }}>
-              {t('leaderboard.no_cards_data', 'Henüz sıralamaya girmiş kişilik kartı bulunmuyor.')}
+              {t('common.nothing_here_yet')}
             </div>
           ) : (
             items.map((item, index) => {
@@ -497,15 +553,15 @@ export default function LeaderboardPage() {
         </div>
       ) : (
         /* Regular List for Users, Bots, Tribes */
-        <div className="flex-col gap-2">
+        <div className="minimal-card-list">
           {isLoading ? (
             <div className="flex justify-center" style={{ padding: 40 }}>
               <div className="spinner spinner-lg" />
             </div>
           ) : isError ? (
-            <div className="empty-state form-error">{t('leaderboard.error', 'Sıralama yüklenirken hata oluştu.')}</div>
+            <div className="empty-state form-error">{getQueryErrorMessage(error, t)}</div>
           ) : !items || items.length === 0 ? (
-            <div className="empty-state">{t('leaderboard.no_data', 'Henüz kimse puan kazanmamış.')}</div>
+            <div className="empty-state">{t('common.nothing_here_yet')}</div>
           ) : (
             items.map((item, index) => {
               const rank = index + 1
@@ -539,12 +595,14 @@ export default function LeaderboardPage() {
                       <ActorMinimalCard actor={item} clickable={true} showPoint={true} />
                     ) : (
                       <TribeMinimalCard
+                        tribe={item}
                         tribeId={item.tribeId ?? item.TribeId}
                         tribeName={item.tribeName ?? item.TribeName}
                         imageUrl={item.imageUrl ?? item.ImageUrl}
-                        tribePoint={item.tribePoint ?? item.TribePoint}
+                        tribePoint={item.tribeActorPoint ?? item.TribeActorPoint ?? item.tribePoint ?? item.TribePoint}
                         isDormant={item.isDormant ?? item.IsDormant ?? false}
                         clickable={true}
+                        showPoint={true}
                       />
                     )}
                   </div>

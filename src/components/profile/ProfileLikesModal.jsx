@@ -1,18 +1,27 @@
+import { useRef } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { X, ThumbsUp, ThumbsDown, Skull } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { ThumbsUp, ThumbsDown, Skull } from 'lucide-react'
 import { actorApi } from '../../api/actorApi'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
+import ModalHeader from '../common/ModalHeader'
+import SynapseBrainIcon from '../common/SynapseBrainIcon'
+import InfiniteScrollStatus from '../common/InfiniteScrollStatus'
+import ModalPortal from '../common/ModalPortal'
+import useInfiniteScroll from '../../hooks/useInfiniteScroll'
 import PostCard from '../content/PostCard'
 import ContextualEntryThread from '../content/ContextualEntryThread'
 import { ReactionEmojis, ReactionType } from '../../constants/enums'
 import useAuthStore from '../../store/authStore'
 import useDevLog from '../../utils/useDevLog'
+import { formatDate } from '../../utils/formatDate'
 import { useTranslation } from 'react-i18next'
 
 export default function ProfileLikesModal({ actorId, isOpen, onClose }) {
   useDevLog('ProfileLikesModal', arguments[0] || {})
+  const navigate = useNavigate()
   const { isLoggedIn, actorId: currentUserId } = useAuthStore()
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
 
   const ReactionIcons = {
     [ReactionType.Like]: <ThumbsUp size={14} />,
@@ -40,22 +49,23 @@ export default function ProfileLikesModal({ actorId, isOpen, onClose }) {
   // Bütün sayfaların içeriğini tek array'de topla
   const items = data?.pages?.flatMap((page) => page.items) || []
 
-  // Infinite scroll için onScroll handler
-  const handleScroll = (e) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.target
-    if (scrollHeight - scrollTop <= clientHeight + 50) {
-      if (hasNextPage && !isFetchingNextPage) {
-        fetchNextPage()
-      }
-    }
-  }
+  const scrollRef = useRef(null)
+  const { sentinelRef: loadMoreRef, isWaiting } = useInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    rootRef: scrollRef,
+    rootMargin: '150px',
+    enabled: isOpen,
+  })
 
   const isOwner = (item) => isLoggedIn && item?.actor?.actorId === currentUserId
 
   if (!isOpen) return null
 
   return (
-    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 100 }}>
+    <ModalPortal>
+      <div className="modal-overlay" onClick={onClose} style={{ zIndex: 100 }}>
       <div
         className="modal-box"
         onClick={(e) => e.stopPropagation()}
@@ -64,23 +74,25 @@ export default function ProfileLikesModal({ actorId, isOpen, onClose }) {
           height: '80vh',
           display: 'flex',
           flexDirection: 'column',
-          padding: '24px 16px',
+          padding: '24px 20px 20px',
+          borderRadius: 16,
+          background: 'var(--color-bg)',
+          border: '1px solid var(--color-border)',
         }}
       >
-        <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 600 }}>{t('profile.reaction_history', 'Reaksiyon Geçmişi')}</h3>
-          <button className="btn-icon" onClick={onClose}>
-            <X size={18} />
-          </button>
-        </div>
+        <ModalHeader
+          title={t('profile.reaction_history')}
+          onClose={onClose}
+          style={{ padding: '0 0 12px 0', marginBottom: 16 }}
+        />
 
-        <div style={{ flex: 1, overflowY: 'auto', paddingRight: 8 }} onScroll={handleScroll}>
+        <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}>
           {isLoading ? (
             <div style={{ textAlign: 'center', padding: 24 }}>
               <div className="spinner spinner-md" />
             </div>
           ) : items.length === 0 ? (
-            <p className="empty-state">{t('common.nothing_here_yet', 'Henüz burada hiçbir şey yok')}</p>
+            <p className="empty-state">{t('common.nothing_here_yet')}</p>
           ) : (
             <div className="flex flex-col gap-4">
               {items.map((like) => {
@@ -90,7 +102,7 @@ export default function ProfileLikesModal({ actorId, isOpen, onClose }) {
                 return (
                   <div
                     key={like.likeId}
-                    className="card-surface flex flex-col gap-3"
+                    className="card flex flex-col gap-3"
                     style={{ padding: 16 }}
                   >
                     <div
@@ -111,12 +123,61 @@ export default function ProfileLikesModal({ actorId, isOpen, onClose }) {
                           gap: 4,
                         }}
                       >
-                        {isPost ? t('profile.reacted_post_start', 'Ana başlığa') : t('profile.reacted_entry_start', 'Bir yanıta')} {ReactionIcons[like.reactionType]}{' '}
-                        {t('profile.reacted_action', 'attı')}
+                        {isPost ? t('profile.reacted_post_start') : t('profile.reacted_entry_start')} {ReactionIcons[like.reactionType]}{' '}
+                        {t('profile.reacted_action')}
                       </span>
-                      <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
-                        {new Date(like.createdAt).toLocaleDateString(i18n.language)}
-                      </span>
+                      <div className="flex items-center" style={{ gap: 8 }}>
+                        {(() => {
+                          const isBot = (like.actor?.discriminator || '').toLowerCase() === 'bot'
+                          if (!isBot) return null
+                          const effectiveNodeIds = like.triggeredNodeIds || []
+                          const hasTriggered = effectiveNodeIds.length > 0
+                          const highlightParam = hasTriggered
+                            ? `&highlightIds=${effectiveNodeIds.join(',')}`
+                            : ''
+                          return (
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              title={t('memoryMap.recalled_badge')}
+                              aria-label={t('memoryMap.recalled_badge')}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                navigate(`/memory-map?actorId=${like.actor?.actorId}${highlightParam}`)
+                              }}
+                              style={{ gap: 3.5 }}
+                            >
+                              <SynapseBrainIcon
+                                brainSize={13}
+                                zapSize={9}
+                                brainColor="currentColor"
+                                zapColor={
+                                  hasTriggered
+                                    ? 'var(--color-synapse-zap, var(--color-primary))'
+                                    : 'currentColor'
+                                }
+                              />
+                              <span>{t('memoryMap.recalled_badge')}</span>
+                              {hasTriggered && (
+                                <span
+                                  style={{
+                                    fontSize: 10,
+                                    padding: '1px 5px',
+                                    borderRadius: 8,
+                                    background: 'var(--color-surface-2)',
+                                    color: 'var(--color-text-muted)',
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {effectiveNodeIds.length}
+                                </span>
+                              )}
+                            </button>
+                          )
+                        })()}
+                        <span className="date-text">
+                          {formatDate(like.createdAt)}
+                        </span>
+                      </div>
                     </div>
 
                     {isPost && (
@@ -132,7 +193,7 @@ export default function ProfileLikesModal({ actorId, isOpen, onClose }) {
                             paddingLeft: 4,
                           }}
                         >
-                          {t('profile.focused_topic', 'ODAKLANAN BAŞLIK')}
+                          {t('profile.focused_topic')}
                         </p>
                         <div
                           style={{
@@ -151,24 +212,17 @@ export default function ProfileLikesModal({ actorId, isOpen, onClose }) {
                   </div>
                 )
               })}
-
-              {isFetchingNextPage && (
-                <div style={{ textAlign: 'center', padding: 16 }}>
-                  <div className="spinner spinner-sm" />
-                </div>
-              )}
-              {!isFetchingNextPage && !hasNextPage && items.length > 0 && (
-                <p
-                  className="text-muted"
-                  style={{ textAlign: 'center', fontSize: 13, marginTop: 8 }}
-                >
-                  {t('common.no_more_results', 'No more results.')}
-                </p>
-              )}
             </div>
           )}
+          <div ref={loadMoreRef} style={{ height: 1 }} />
+          <InfiniteScrollStatus
+            isFetching={isFetchingNextPage || isWaiting}
+            hasNextPage={hasNextPage}
+            hasItems={items.length > 0}
+          />
         </div>
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   )
 }

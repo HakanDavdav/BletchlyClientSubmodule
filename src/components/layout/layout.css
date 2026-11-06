@@ -1,5 +1,1074 @@
-@media (max-width: 767px) {
-  .mobile-footer-wrapper {
+/* ─── Mobil Gezinme Çubuğu (MobileTabBar) & Mobil Layout ─────────────── */
+
+@media (max-width: 400px) {
+  /* Çok dar ekranlarda marka metnini gizle, yalnızca logo kalsın */
+  .topbar-brand-text {
+    display: none;
+  }
+
+  .topbar-row-1 {
+    padding: 0 8px !important;
+    gap: 4px !important;
+  }
+
+  .topbar-right-group .actor-chip {
+    max-width: 104px !important;
+  }
+}
+
+/* Çok dar ekranlarda hızlı bağlantı oku + Klanlar/Botlar/Kartlar sığsın */
+
+
+@media (max-width: 360px) {
+  .topbar-my-entities {
+    margin-left: 8px !important;
+  }
+
+  .topbar-my-entity-btn {
+    width: 84px !important;
+    font-size: 12px !important;
+  }
+}
+
+@media (max-width: 340px) {
+  .topbar-my-entities {
+    margin-left: 6px !important;
+  }
+
+  .topbar-my-entity-btn {
+    width: 80px !important;
+    font-size: 11.5px !important;
+  }
+}
+
+
+.mobile-tab-bar {
+  display: none;
+}
+
+/* Sayfa içi mobil arama formu — yalnızca mobilde görünür */
+.mobile-search-form {
+  display: none;
+}
+
+/* Mobil topbar butonları — yalnızca mobilde görünür */
+.topbar-search-icon-btn {
+  display: none !important;
+}
+
+/* Sol kenar drawer tutamacı — yalnızca mobilde görünür */
+.mobile-drawer-handle {
+  display: none;
+}
+
+/* Mobil sol drawer: akışlı açılış (soldan kayarak girer) */
+@keyframes mobile-drawer-slide-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes mobile-drawer-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ─── Mobil Breakpoint (≤900px) ───────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  :root {
+    --topbar-height: 44px; /* yalnızca row1; row2 sadece Tribes/Bots/Cards varken */
+  }
+
+  /* Tribes/Bots/Cards grubu görünüyorsa topbar iki satır olur */
+  :root:has(.topbar-my-entities) {
+    --topbar-height: 76px;
+  }
+
+  /* Topbar mobil düzen */
+  .topbar-row-1 {
+    height: 44px !important;
+    padding: 0 10px !important;
+    gap: 8px !important;
+  }
+
+  /* Marka logosu daraltılan satıra oranlanır */
+  .topbar-row-1 > div:first-child > div {
+    transform: scale(0.78) !important;
+  }
+
+  /* Mobilde row2 içeriği (sıralama, ikon grubu) drawer'a taşındı;
+     yalnızca Tribes/Bots/Cards grubu görünür ve ortalanır */
+  .topbar-row-2 {
+    display: none !important;
+  }
+
+  .topbar-row-2:has(> .topbar-my-entities) {
+    display: flex !important;
+    height: 32px !important;
+    padding: 0 10px !important;
+    gap: 4px !important;
+    justify-content: center;
+  }
+
+  /* Klanlar/Botlar/Kartlar: satırı doldurup yatayda genişler (eşit pay) */
+  .topbar-my-entities {
+    display: grid !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: 1fr !important;
+    gap: 6px !important;
+    flex: 1 1 auto !important;
+    max-width: 396px;
+    align-items: center;
+  }
+
+  .topbar-my-entities > div {
+    min-width: 0;
+  }
+
+  .topbar-my-entities .topbar-my-entity-btn {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* Mobil üst bar tema/dil kontrolleri (avatarın solunda) */
+  .topbar-mobile-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    margin-right: 6px;
+  }
+
+  /* Çıkış yapılmışken (avatar yerine Giriş/Kayıt butonları varken)
+     kontroller sağdaki butonlara biraz daha yaklaşır */
+  .topbar-mobile-controls:has(+ div:last-child) {
+    margin-right: -2px;
+  }
+
+  .topbar-mobile-controls__btn {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    min-height: 30px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .topbar-mobile-controls__lang {
+    position: relative;
+    display: flex;
+  }
+
+  .topbar-mobile-controls__lang .topbar-mobile-controls__btn {
+    width: auto;
+    min-width: 0;
+    padding: 0 3px;
+    gap: 2px;
+  }
+
+  .topbar-mobile-controls__caret {
+    display: inline-block;
+    font-size: 9px;
+    line-height: 1;
+    transition: transform var(--transition-fast);
+  }
+
+  .topbar-mobile-controls__caret.is-open {
+    transform: rotate(180deg);
+  }
+
+  .topbar-mobile-controls__lang-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 250;
+    min-width: 124px;
+    padding: 6px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .topbar-mobile-controls__lang-option {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 8px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-family: inherit;
+    font-size: 12.5px;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .topbar-mobile-controls__lang-option:hover,
+  .topbar-mobile-controls__lang-option.is-active {
+    background: var(--color-surface-2);
+    color: var(--color-primary);
+  }
+
+  /* Premium özel renk paleti (mobil) */
+  .topbar-mobile-controls__palette {
+    position: relative;
+    display: flex;
+  }
+
+  .topbar-mobile-controls__palette-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 250;
+    width: 172px;
+    padding: 8px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .topbar-mobile-controls__palette-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+  }
+
+  .topbar-mobile-controls__swatch {
+    position: relative;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 800;
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  }
+
+  .topbar-mobile-controls__swatch.is-active {
+    border-color: var(--color-text-primary);
+  }
+
+  /* Premium olmayanlarda varsayılan dışı renkler görünür ama seçilemez */
+  .topbar-mobile-controls__swatch.is-locked {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .topbar-mobile-controls__palette-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .topbar-mobile-controls__palette-custom {
+    position: relative;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .topbar-mobile-controls__palette-custom.is-locked {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  .topbar-mobile-controls__color-input {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Tribes/Bots dropdown panelleri: mobilde ekran genişliğine sığdır
+     ve topbar'ın hemen altından başlat */
+  .topbar-tribes-dropdown,
+  .topbar-bots-dropdown {
+    top: 80px !important;
+    left: 10px !important;
+    right: 10px;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .topbar-brand-text {
+    font-size: 20px !important;
+  }
+
+  /* Mobilde rozet logonun ve arama ikonunun üstüne bindiği için gizlenir */
+  .season-remaining-badge--floating {
+    display: none !important;
+  }
+
+  /* Üstteki ara butonu mobilde kaldırıldı (alt tab bar'da "Ara" var) */
+  .topbar-search-form {
+    display: none !important;
+  }
+
+  .layout-body {
+    padding-top: var(--topbar-height);
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Sol kenar drawer rayı (0 konum + 18px genişlik) sayfa içeriğinin
+     üstüne binmesin diye içerik sağa kaydırılır (inline padding'i ezer) */
+  .layout-center-inner {
+    padding-left: 24px !important;
+  }
+
+  /* Mobilde dış çerçeve boşluğu kaldırılır: sayfa blokları ekran
+     genişliğinden olabildiğince faydalanır (iç boşlukları .layout-center-inner verir) */
+  .layout-body > div:first-child {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  /* Footer yerini mobil tab bar alır */
+  .layout-footer {
+    display: none !important;
+  }
+
+  /* Mobil sol drawer — ekranın en üstünden başlar, üstte boşluk bırakmaz */
+  .layout-left-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(85vw, 340px);
+    z-index: 105;
+    padding-top: env(safe-area-inset-top, 0px);
+    /* Marka barının arkasında sayfa görünsün diye ilk 44px şeffaf,
+       altı opak tema zemini (bar yarı şeffaf + blur) */
+    background: linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent calc(44px + env(safe-area-inset-top, 0px)),
+      var(--color-bg) calc(44px + env(safe-area-inset-top, 0px)),
+      var(--color-bg) 100%
+    );
+    display: flex;
+    flex-direction: column;
+    animation: mobile-drawer-slide-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Sağ kenar gölgesi: row1'in (44px) altından başlar; üst barın en sağ
+     üstünde renk farkı yaratmaz. Drawer'la birlikte kayar. */
+  .layout-left-drawer::after {
+    content: '';
+    position: absolute;
+    left: 100%;
+    top: calc(44px + env(safe-area-inset-top, 0px));
+    bottom: 0;
+    width: 26px;
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.18), transparent);
+    pointer-events: none;
+  }
+
+  /* Kaydırılan bölge bar'ın ALTINDA başlar; içerik bar'ın (şeffaf üst
+     kısmın) altından geçmez, üst kısım sabit görünür */
+  .layout-left-drawer__scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* Kaydırma göstergesi (scrollbar) drawer'ın solunda görünsün */
+    direction: rtl;
+  }
+
+  /* rtl yalnızca scrollbar konumu için; içerik normal (ltr) kalsın */
+  .layout-left-drawer__scroll > * {
+    direction: ltr;
+  }
+
+  .mobile-drawer-overlay {
+    animation: mobile-drawer-overlay-in 0.28s ease;
+    /* Yalnızca row1 (cam bar hizası, 44px) net kalsın; row2
+       (Klanlar/Botlar/Kartlar) diğer ögeler gibi blurlanır */
+    top: calc(44px + env(safe-area-inset-top, 0px));
+  }
+
+  /* Sol kenar rayı: ekranın en soluna yapışık, topbar'dan tab bar'ın
+     üstüne kadar uzanır */
+  .mobile-drawer-handle {
+    position: fixed;
+    left: 0;
+    top: var(--topbar-height);
+    bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+    z-index: 94;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-primary) 8%, transparent) 0%,
+      color-mix(in srgb, var(--color-primary) 16%, transparent) 50%,
+      color-mix(in srgb, var(--color-primary) 8%, transparent) 100%
+    );
+    color: var(--color-text-muted);
+    opacity: 0.45;
+    cursor: grab;
+    touch-action: none;
+    transition: opacity var(--transition-fast), color var(--transition-fast), top 0.28s cubic-bezier(0.22, 1, 0.36, 1), bottom 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Drawer açıkken tutamaç drawer'ın dış sağ sınırında durur (ok sola döner);
+     konum ve boy, açılış animasyonu/sürükleme sırasında JS ile her karede
+     güncellenir; kapanışta iki uç da aynı geçişle kısalır */
+  .mobile-drawer-handle.is-open {
+    top: 0;
+    bottom: 0;
+    z-index: 102;
+    opacity: 0.75;
+  }
+
+  .mobile-drawer-handle:hover,
+  .mobile-drawer-handle:active {
+    opacity: 1;
+    color: var(--color-primary);
+  }
+
+  .mobile-drawer-handle__caret {
+    font-size: 12px;
+    line-height: 1;
+    display: inline-block;
+    transform: rotate(-90deg);
+    transition: transform var(--transition-fast);
+  }
+
+  .mobile-drawer-handle.is-open .mobile-drawer-handle__caret {
+    transform: rotate(90deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .layout-left-drawer,
+    .mobile-drawer-overlay {
+      animation: none;
+    }
+  }
+
+  /* Drawer üst barı: marka + kapat */
+  .layout-left-drawer__bar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    /* Topbar 1. satırıyla (44px) aynı yükseklikte hizalanır */
+    height: 44px;
+    padding: 0 10px 0 14px;
+    /* Tamamen şeffaf: arkadaki topbar hiçbir perde/çizgi olmadan birebir
+       görünür (renk değişmez), yalnızca "letchly" eklenir */
+    background: transparent;
+    border-bottom: none;
+  }
+
+  .layout-left-drawer__brand {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    /* Arkadaki (camdan görünen) sayfa logosunun B harfinin hemen bitişiğine
+       hizalanır: B + letchly tek logo gibi görünür */
+    margin-left: 24px;
+    padding: 0;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--color-primary);
+    cursor: pointer;
+  }
+
+  .season-remaining-badge--drawer {
+    position: absolute;
+    bottom: -3px;
+    right: -17px;
+    z-index: 2;
+    padding: 1px 3.5px;
+    font-size: 8px;
+    line-height: 1.1;
+    transform: rotate(-25deg) scale(0.92);
+    transform-origin: center;
+    display: inline-flex !important;
+  }
+
+  /* Sadece X ikonu: kare arka plan/çerçeve yok */
+  .layout-left-drawer .layout-left {
     display: block !important;
+    position: static;
+    top: 0;
+    width: auto;
+    min-width: 0;
+    height: auto;
+    overflow-y: visible;
+    border: none;
+    box-shadow: none;
+    flex: 1;
+  }
+
+  /* Sayfa içi geri butonları mobilde gizlenir (geri, alt barın solunda) */
+  .page-back-button {
+    display: none !important;
+  }
+
+  /* Geri butonu gizlenince kimlik pillerindeki ayraç da kalkar */
+  .hierarchy-header-left > div[style*="width: 1px"],
+  .mind-header > div:first-child > div[style*="width: 1px"] {
+    display: none;
+  }
+
+  /* Alt tab bar */
+  .mobile-tab-bar {    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 95;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-around;
+    height: calc(56px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: var(--color-bg);
+    border-top: 1px solid var(--color-border);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+  }
+
+  .mobile-tab-bar__item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: 4px 2px;
+    font-family: inherit;
+    text-decoration: none;
+    transition: color 0.22s ease;
+  }
+
+  .mobile-tab-bar__item svg {
+    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), stroke-width 0.22s ease;
+  }
+
+  .mobile-tab-bar__item svg path,
+  .mobile-tab-bar__item svg circle,
+  .mobile-tab-bar__item svg line,
+  .mobile-tab-bar__item svg polyline,
+  .mobile-tab-bar__item svg polygon,
+  .mobile-tab-bar__item svg rect {
+    transition: stroke-width 0.22s ease;
+  }
+
+  /* Seçili sekme: renk + kalınlaşan çizgiler + üstte beliren kısa çizgi + hafif belirginleşen ikon */
+  .mobile-tab-bar__item.is-active {
+    color: var(--color-primary);
+    font-weight: 600;
+  }
+
+  .mobile-tab-bar__item.is-active svg {
+    stroke-width: 2.65px !important;
+    transform: translateY(-1px) scale(1.08);
+  }
+
+  .mobile-tab-bar__item.is-active svg path,
+  .mobile-tab-bar__item.is-active svg circle,
+  .mobile-tab-bar__item.is-active svg line,
+  .mobile-tab-bar__item.is-active svg polyline,
+  .mobile-tab-bar__item.is-active svg polygon,
+  .mobile-tab-bar__item.is-active svg rect {
+    stroke-width: 2.65px !important;
+  }
+
+  .mobile-tab-bar__item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 26px;
+    height: 3px;
+    border-radius: 0 0 4px 4px;
+    background: var(--color-primary);
+    transform: translateX(-50%) scaleX(0);
+    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .mobile-tab-bar__item.is-active::before {
+    transform: translateX(-50%) scaleX(1);
+  }
+
+  /* Sayfa içi mobil arama formu */
+  .mobile-search-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .mobile-search-form__input-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .mobile-search-form__input-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mobile-search-form__icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-faint);
+    pointer-events: none;
+  }
+
+  .mobile-search-form__input-wrap .input {
+    padding-left: 34px;
+    height: 40px;
+  }
+
+  .mobile-search-form__input-row .btn {
+    height: 40px;
+    padding-inline: 14px;
+  }
+
+  .mobile-search-form__modes {
+    display: flex;
+    gap: 6px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+
+  .mobile-search-form__modes::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-search-form__mode {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: all var(--transition-fast, 0.18s ease);
+  }
+
+  .mobile-search-form__mode:hover:not(.is-active) {
+    background: var(--color-surface-2);
+    color: var(--color-text-primary);
+  }
+
+  .mobile-search-form__mode.is-active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
+  }
+
+  /* Drawer alt bölümü (tema + dil + linkler) */
+  .mobile-drawer-extras {
+    border-top: 1px solid var(--color-border);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .mobile-drawer-extras__row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  /* Masaüstü üst bar ikon grubuyla aynı görünüm: yalnızca ikon */
+  .mobile-drawer-extras__quick {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+  }
+
+  .mobile-drawer-quick-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 54px;
+    padding: 0;
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .mobile-drawer-quick-link:hover,
+  .mobile-drawer-quick-link:active {
+    color: var(--color-primary);
+    border-color: var(--color-primary-light);
+  }
+
+  /* HowItWorksHelp ("?") tetikleyicisi: grid hücresini quick-link gibi doldurur */
+  .mobile-drawer-extras__quick .icon-action-button {
+    width: 100%;
+    height: 100%;
+    min-height: 44px;
+    padding: 0;
+    border-radius: 10px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+  }
+
+  .mobile-drawer-extras__quick .icon-action-button:hover,
+  .mobile-drawer-extras__quick .icon-action-button:active {
+    color: var(--color-primary);
+    border-color: var(--color-primary-light);
+  }
+
+  /* Tab bar'ın tam ortasındaki hızlı bağlantı "v" butonu: dropdown yukarı açılır */
+  .mobile-tab-bar__quick {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mobile-tab-bar__quick-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    font-family: inherit;
+    transition: color var(--transition-fast);
+  }
+
+  /* Bütünleşik bot ikonu; varsayılan rengi diğer ikonlarla aynı (text-muted) */
+  .mobile-tab-bar__quick-bot {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+    transform: translateY(-2.5px) rotate(180deg);
+    transition: transform var(--transition-fast), color var(--transition-fast);
+  }
+
+  /* Yalnızca açılır menü açıkken (aktifken) tema rengine boyanır; kapalıyken default renge döner */
+  .mobile-tab-bar__quick-btn.is-open .mobile-tab-bar__quick-bot {
+    color: var(--color-primary);
+    transform: translateY(-2.5px) rotate(0deg) scale(1.06);
+  }
+
+  .mobile-tab-bar__quick-btn:not(.is-open) .mobile-tab-bar__quick-bot {
+    color: var(--color-text-muted) !important;
+  }
+
+  .mobile-tab-bar__quick-btn.is-open .mobile-tab-bar__quick-bot svg [stroke] {
+    stroke-width: 22px;
+  }
+
+  /* MobilBottomMiddleBot.svg stroke ve dolguları buton rengiyle uyumludur */
+  .mobile-tab-bar__quick-bot svg [stroke] {
+    stroke: currentColor;
+    transition: stroke var(--transition-fast);
+  }
+
+  .mobile-tab-bar__quick-bot svg [fill="black"],
+  .mobile-tab-bar__quick-bot svg [fill="currentColor"],
+  .mobile-tab-bar__quick-bot svg path[fill] {
+    fill: currentColor;
+    transition: fill var(--transition-fast);
+  }
+
+  .mobile-tab-bar__quick-dropdown {
+    position: fixed;
+    left: 50%;
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    z-index: 200;
+    width: 360px;
+    max-width: calc(100vw - 24px);
+    padding: 10px;
+    gap: 8px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    /* Öğe sayısı değişse de satırı eşit dağıt (boş hücre kalmasın) */
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  }
+
+  .mobile-drawer-extra-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .mobile-drawer-paint-bot {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  /* Dil seçici dropdown — tema butonlarıyla aynı satırda, sadece bayrak */
+  .mobile-drawer-lang {
+    position: relative;
+    display: flex;
+  }
+
+  .mobile-drawer-lang-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .mobile-drawer-lang-caret {
+    transition: transform var(--transition-fast);
+  }
+
+  .mobile-drawer-lang-caret.is-open {
+    transform: rotate(180deg);
+  }
+
+  .mobile-drawer-lang-menu {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: auto;
+    right: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px;
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    box-shadow: var(--shadow-lg);
+    min-width: 160px;
+    width: max-content;
+    max-height: 260px;
+    overflow-y: auto;
+  }
+
+  .mobile-drawer-lang-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: var(--color-text-secondary);
+    font-size: 12.5px;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+  }
+
+  .mobile-drawer-lang-option.is-active {
+    background: var(--color-primary-alpha, rgba(59, 130, 246, 0.08));
+    color: var(--color-primary);
+    font-weight: 700;
+  }
+
+  /* 2x2 düzen: 1. satır Hakkımızda + İletişim, 2. satır Privacy + Terms */
+  .mobile-drawer-extras__links {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px 14px;
+    font-size: 12px;
+  }
+
+  .mobile-drawer-extras__links a {
+    color: var(--color-text-muted);
+    text-decoration: none;
+  }
+
+  .mobile-drawer-extras__copyright {
+    font-size: 11px;
+    color: var(--color-text-faint);
+  }
+
+  /* Hakan Davdav sosyal blok (üst bardaki masaüstü bloğunun mobil karşılığı) */
+  .mobile-drawer-extras__social {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 10px;
+  }
+
+  .mobile-drawer-extras__social-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+  }
+
+  .mobile-drawer-extras__social a {
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    transform: translateY(-1px);
+  }
+}
+
+/* ─── Login/Register (AuthWelcomeBackground) — mobil ───────────────────── */
+@media (max-width: 640px) {
+  /* Kart mobilde biraz yukarıda konumlanır (inline 60px margin ezilir) ve
+     hafif şeffaflaşır; arkadaki Welcome.svg deseni/kayan kartlar belli olur */
+  .auth-welcome-bg .card-surface {
+    margin-top: 0 !important;
+    /* Bletchly logosunun üstündeki boş şeffaf bant daraltılır */
+    padding-top: 20px !important;
+    background: color-mix(in srgb, var(--color-surface) 40%, transparent) !important;
+  }
+
+  /* Welcome.svg deseni mobilde kartın çevresinde (yan oluklar + alt bant)
+     görünür olsun diye katman karttan geniş ve aşağı taşacak şekilde
+     ortalanır; desen ölçeği masaüstüyle (~%52) aynı kalır */
+  .auth-welcome-bg__layer {
+    left: 50% !important;
+    right: auto !important;
+    top: 110px !important;
+    bottom: auto !important;
+    width: 800px !important;
+    height: 570px !important;
+    margin-left: -400px !important;
+  }
+
+  /* Taşan arka plan katmanı yatay kaydırma yaratmasın diye viewport
+     genişliğinde kırpılır (yalnızca auth sayfalarında) */
+  .layout-center-inner:has(.auth-welcome-bg) {
+    overflow-x: clip;
+  }
+}
+
+/* ─── Login/Register mobil tam-ekran form yüzeyi ─────────────────────────── */
+@media (max-width: 900px) {
+  .layout-center-inner:has(.auth-welcome-bg) {
+    padding: 0 !important;
+  }
+
+  .auth-welcome-bg {
+    min-height: calc(100vh - var(--topbar-height) - 56px);
+  }
+
+  .auth-welcome-bg .card-surface {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: calc(100vh - var(--topbar-height) - 56px);
+    margin: 0 !important;
+    padding: 28px max(20px, env(safe-area-inset-left)) calc(28px + env(safe-area-inset-bottom, 0px)) !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: color-mix(in srgb, var(--color-surface) 42%, transparent) !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .auth-welcome-bg .card-surface > * {
+    width: 100%;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .auth-welcome-bg__layer {
+    left: 50% !important;
+    right: auto !important;
+    top: calc(var(--topbar-height) - 10px) !important;
+    bottom: auto !important;
+    width: min(800px, 160vw) !important;
+    height: 570px !important;
+    margin-left: 0 !important;
+    transform: translateX(-50%) !important;
+  }
+
+  .layout-center-inner:has(.auth-welcome-bg) {
+    overflow-x: clip;
   }
 }

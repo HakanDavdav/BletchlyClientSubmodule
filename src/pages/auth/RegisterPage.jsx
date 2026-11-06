@@ -65,7 +65,7 @@ export default function RegisterPage() {
 
   const handleProviderLogin = async (provider, providerName = 'google') => {
     if (!agreedToTerms) {
-      toast.error(t('auth.must_agree_terms', 'Kayıt olmak için Hizmet Şartları\'nı kabul etmelisiniz.'))
+      toast.error(t('auth.must_agree_terms'))
       setHasTermsError(true)
       return
     }
@@ -96,7 +96,7 @@ export default function RegisterPage() {
     meta: { showErrorToast: true },
     onSuccess: () => {
       trackSignUp('email')
-      toast.success(t('common.success', 'Başarılı'), { duration: 3000 })
+      toast.success(t('common.success'), { duration: 3000 })
       setIsConfirming(false)
       triggerConfetti()
       navigate('/login')
@@ -105,22 +105,11 @@ export default function RegisterPage() {
 
   const handleTimeout = () => {
     setIsConfirming(false)
-    toast.error(t('auth.timeout', 'Zaman aşımı'))
+    toast.error(t('auth.timeout'))
   }
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
   const [hasTermsError, setHasTermsError] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-    
-    if (isRequired) {
-      return (!value || !value.trim()) ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
 
   const canSubmitRegister = username.trim() !== '' && email.trim() !== '' && password.trim() !== '' && passwordConfirm.trim() !== '' && agreedToTerms && !registerMutation.isPending && !requestEmailConfirmMutation.isPending
 
@@ -128,7 +117,7 @@ export default function RegisterPage() {
     e.preventDefault()
     
     if (!agreedToTerms) {
-      toast.error(t('auth.must_agree_terms', 'Kayıt olmak için Hizmet Şartları\'nı kabul etmelisiniz.'))
+      toast.error(t('auth.must_agree_terms'))
       setHasSubmitted(true)
       setHasTermsError(true)
       return
@@ -145,7 +134,7 @@ export default function RegisterPage() {
       // "doluluk boş olma durumları dışında textbox boyama frontend ön kontrolü yapma"
       // If we don't check it here, backend might not check if passwordConfirm matches (usually only frontend checks confirmPassword, backend only receives `password`!)
       // Wait, register endpoint only takes { username, email, password }. `passwordConfirm` is purely frontend! So we MUST check it here.
-      toast.error(t('auth.passwords_do_not_match', 'Şifreler eşleşmiyor'))
+      toast.error(t('auth.passwords_do_not_match'))
       return
     }
 
@@ -185,58 +174,48 @@ export default function RegisterPage() {
         <div className="form-group">
           <label className="form-label">{t('auth.username')}</label>
           <input 
-            className="input" 
+            className={`input ${hasSubmitted && !username.trim() ? 'error' : ''}`}
             type="text" 
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            style={{ borderColor: getBorderColor('username', username, true), outline: 'none' }}
-            onFocus={() => setFocused('username')}
-            onBlur={() => setFocused(null)}
           />
         </div>
 
         <div className="form-group">
           <label className="form-label">{t('auth.email')}</label>
           <input 
-            className="input" 
+            className={`input ${hasSubmitted && !email.trim() ? 'error' : ''}`}
             type="email" 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            style={{ borderColor: getBorderColor('email', email, true), outline: 'none' }}
-            onFocus={() => setFocused('email')}
-            onBlur={() => setFocused(null)}
           />
         </div>
 
         <div className="form-group">
           <label className="form-label">{t('auth.password')}</label>
           <PasswordInput
+            className={`input w-full ${hasSubmitted && !password.trim() ? 'error' : ''}`}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            style={{ borderColor: getBorderColor('password', password, true), outline: 'none' }}
-            onFocus={() => setFocused('password')}
-            onBlur={() => setFocused(null)}
           />
         </div>
 
         <div className="form-group">
           <label className="form-label">{t('auth.password_confirm')}</label>
           <PasswordInput
+            className={`input w-full ${hasSubmitted && !passwordConfirm.trim() ? 'error' : ''}`}
             value={passwordConfirm}
             onChange={(e) => setPasswordConfirm(e.target.value)}
-            style={{ borderColor: getBorderColor('passwordConfirm', passwordConfirm, true), outline: 'none' }}
-            onFocus={() => setFocused('passwordConfirm')}
-            onBlur={() => setFocused(null)}
           />
         </div>
 
         <div style={{ 
           marginTop: 8, 
           padding: '12px 16px', 
-          backgroundColor: 'rgba(59, 130, 246, 0.05)', 
+          backgroundColor: 'var(--color-surface)', 
           borderRadius: 8, 
-          border: (hasTermsError && !agreedToTerms) ? '1px solid var(--color-error)' : '1px solid rgba(59, 130, 246, 0.2)',
-          transition: 'border-color 0.2s ease-in-out'
+          border: (hasTermsError && !agreedToTerms) ? '1px solid var(--color-error)' : '1px solid var(--color-border)',
+          transition: 'border-color 0.2s ease-in-out, background-color 0.2s ease-in-out'
         }}>
           <SelectionMarker 
             checked={agreedToTerms} 
@@ -246,15 +225,15 @@ export default function RegisterPage() {
             }}
           >
             <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: '1.4', userSelect: 'none', display: 'block', paddingLeft: 4 }}>
-              {t('auth.register_agree_prefix', 'Kayıt olarak')}{' '}
+              {t('auth.register_agree_prefix')}{' '}
               <Link to="/terms" style={{ color: 'var(--color-primary)', fontWeight: 700, textDecoration: 'none' }}>
-                {t('auth.terms_of_service', 'Kullanım Koşulları')}
+                Terms of Service
               </Link>{' '}
-              {t('auth.and', 've')}{' '}
+              {t('auth.and')}{' '}
               <Link to="/privacy" style={{ color: 'var(--color-primary)', fontWeight: 700, textDecoration: 'none' }}>
-                {t('auth.privacy_policy', 'Gizlilik Politikası')}
+                Privacy Policy
               </Link>
-              {t('auth.register_agree_suffix', '\'nı okuduğumu ve kabul ettiğimi beyan ederim.')}
+              {t('auth.register_agree_suffix')}
             </span>
           </SelectionMarker>
         </div>

@@ -1,7 +1,21 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Bot, Check, Info, Edit2, Users, Crown, Pencil, Lock, LockOpen, Network } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  Bot,
+  Check,
+  Info,
+  Edit2,
+  Users,
+  Crown,
+  Pencil,
+  Lock,
+  LockOpen,
+  Network,
+  ClockAlert,
+  ClockCheck,
+} from 'lucide-react'
 import CardActorListModal from './CardActorListModal'
 import CardDetailModal from './CardDetailModal'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
@@ -11,6 +25,13 @@ import SelectionMarker from '../common/SelectionMarker'
 import IconActionButton from '../common/IconActionButton'
 import FossilTogglePill from '../common/FossilTogglePill'
 import BotIcon from '../common/icons/BotIcon'
+import AvatarUpload from '../common/AvatarUpload'
+import ImageWithLoader from '../common/ImageWithLoader'
+import ConfirmModal from '../common/ConfirmModal'
+import PremiumModal from '../common/PremiumModal'
+import useMyEntitiesStore from '../../store/myEntitiesStore'
+import useAuthStore from '../../store/authStore'
+import { UserCapabilities } from '../../constants/enums'
 
 export default function PersonalityCard({
   card,
@@ -22,6 +43,8 @@ export default function PersonalityCard({
   selected = false,
   onSelect,
   showMark = true,
+  showStats = true,
+  showRelations = true,
   locked = false,
   tribeAssigned = false,
   tribeBadgeLabel = null,
@@ -30,6 +53,7 @@ export default function PersonalityCard({
   variant = 'default',
   editorCardName = '',
   editorPrompt = '',
+  editorImageUrl = '',
   editorConfirmed = false,
   showValidation = false,
   onEditorChange,
@@ -42,19 +66,52 @@ export default function PersonalityCard({
   selectionReadOnly = false,
   editorLocked = false,
   onToggleEditorLock,
+  interactive = true,
+  style = undefined,
+  className = '',
+  imageStyle = undefined,
 }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const myOwnedCards = useMyEntitiesStore((s) => s.myCards)
+  const currentActorId = useAuthStore((s) => s.actorId)
+  const isAdmin = useAuthStore((s) => s.isAdmin)
+  const storeSettings = useMyEntitiesStore((s) => s.mySettings)
   const [modalType, setModalType] = useState(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [showFossilSources, setShowFossilSources] = useState(false)
   const [showFossilTargets, setShowFossilTargets] = useState(false)
   const [showFossilAssigned, setShowFossilAssigned] = useState(false)
+  const [isEditorConfirmModalOpen, setIsEditorConfirmModalOpen] = useState(false)
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false)
+
+  const isPremiumUser =
+    Boolean(isAdmin) ||
+    ((storeSettings?.userCapabilities ?? UserCapabilities.Default) & UserCapabilities.Premium) ===
+      UserCapabilities.Premium
+
+  const cardOwnershipLimit = storeSettings?.cardOwnershipLimit || 10
+
+  const oldestOwnedCard = useMemo(() => {
+    if (!myOwnedCards || myOwnedCards.length === 0) return null
+    return [...myOwnedCards].sort((a, b) => {
+      const dateA = new Date(a.acquiredAt || a.card?.createdAt || 0).getTime()
+      const dateB = new Date(b.acquiredAt || b.card?.createdAt || 0).getTime()
+      return dateA - dateB
+    })[0]
+  }, [myOwnedCards])
+
+  const oldestCardName =
+    oldestOwnedCard?.card?.cardName ||
+    oldestOwnedCard?.cardName ||
+    t('card.oldest_card')
+
+  const isCardLimitReached = (myOwnedCards || []).length >= cardOwnershipLimit
 
   if (variant === 'distribute') {
     const actorData = actor || card?.actor || card?.winnerActor || {}
     const actorName =
-      actorData.name || actorData.profileName || card?.cardName || t('card.card', 'Kart')
+      actorData.name || actorData.profileName || card?.cardName || t('card.card')
 
     return (
       <div
@@ -99,7 +156,7 @@ export default function PersonalityCard({
             lineHeight: 1.2,
           }}
         >
-          {card?.cardName || t('card.personality_card', 'Kişilik Kartı')}
+          {card?.cardName || t('card.personality_card')}
         </span>
 
         {/* Center Avatar */}
@@ -146,10 +203,42 @@ export default function PersonalityCard({
   if (variant === 'editor') {
     const canConfirm = editorCardName.trim() !== '' && editorPrompt.trim() !== ''
 
+    const handleEditorConfirmTrigger = () => {
+      if (editorConfirmed) {
+        onEditorEdit?.()
+        return
+      }
+      if (!canConfirm) return
+
+      if (isCardLimitReached) {
+        setIsEditorConfirmModalOpen(true)
+      } else {
+        onEditorConfirm?.()
+      }
+    }
+
     return (
       <div
         className={`personality-card personality-card--filled personality-card--editor${editorConfirmed ? ' personality-card--editor-confirmed' : ''}`}
+        style={{ position: 'relative', ...style }}
       >
+        {/* Background Image Layer if present */}
+        {editorImageUrl && (
+          <div className="personality-card__bg-image-wrap" aria-hidden="true">
+            <ImageWithLoader
+              src={editorImageUrl}
+              alt=""
+              className="personality-card__bg-image"
+              style={imageStyle}
+              wrapperStyle={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+              spinnerSize="sm"
+              spinnerOpacity={0.4}
+            />
+            <div className="personality-card__bg-image-overlay" />
+            <div className="personality-card__bg-image-shade" />
+          </div>
+        )}
+
         {/* Background Bot Watermark */}
         <div
           className="personality-card__bg-bot"
@@ -161,8 +250,8 @@ export default function PersonalityCard({
             transform: 'translate(-50%, -50%)',
             pointerEvents: 'none',
             userSelect: 'none',
-            zIndex: 0,
-            opacity: 0.08,
+            zIndex: 1,
+            opacity: editorImageUrl ? 0.22 : 0.08,
             color: 'var(--color-primary)',
             display: 'flex',
             alignItems: 'center',
@@ -172,123 +261,183 @@ export default function PersonalityCard({
           <BotIcon size={120} />
         </div>
 
-        <div className="personality-card__topline">
-          {editorConfirmed && (
-            <span className="personality-card__title personality-card-editor__confirmed-title">
-              {editorCardName}
-            </span>
-          )}
-          {typeof onToggleEditorLock === 'function' && (
-            <IconActionButton
-              onClick={(e) => {
-                e.stopPropagation()
-                onToggleEditorLock(!editorLocked)
-              }}
-              aria-label={
-                editorLocked
-                  ? t('card.locked_assignment', 'Bu atama kilitli')
-                  : t('card.lock_assignment', 'Bu atamayı kilitle')
-              }
-              style={{
-                width: 26,
-                height: 26,
-                borderRadius: 6,
-                zIndex: 3,
-                flexShrink: 0,
-                color: editorLocked ? 'var(--color-primary-dark)' : 'var(--color-text-muted)',
-              }}
-            >
-              {editorLocked ? (
-                <Lock size={13} strokeWidth={2.2} />
-              ) : (
-                <LockOpen size={13} strokeWidth={2.2} />
+        <div className="personality-card-editor__body" style={{ position: 'relative', zIndex: 2 }}>
+          {/* Onaylandıktan sonra da düzen yeri değişmez; alanlar sadece kilitlenir */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
+              <div style={{ flexShrink: 0 }}>
+                <AvatarUpload
+                  imageUrl={editorImageUrl}
+                  onImageUploaded={(url) => onEditorChange?.('imageUrl', url)}
+                  disabled={disabled || editorConfirmed}
+                  size={44}
+                  shape="rect"
+                  compact={true}
+                  aspectRatio={3 / 4}
+                  imageKind="card"
+                  isLocked={!isPremiumUser}
+                  onLockedClick={() => navigate('/premium')}
+                />
+              </div>
+              <input
+                className={`input personality-card__title personality-card-editor__name${showValidation && !editorCardName.trim() ? ' error' : ''}`}
+                type="text"
+                value={editorCardName}
+                onChange={(event) => onEditorChange?.('cardName', event.target.value)}
+                placeholder={t('card.card_name_placeholder')}
+                disabled={disabled}
+                readOnly={editorConfirmed}
+                maxLength={100}
+                aria-label={t('card.card_name')}
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  margin: 0,
+                  // Onaylanınca kutu görsel olarak kaybolur, yazı aynı yerde kalır
+                  ...(editorConfirmed
+                    ? { borderColor: 'transparent', background: 'transparent', boxShadow: 'none' }
+                    : null),
+                }}
+              />
+              {typeof onToggleEditorLock === 'function' && (
+                <IconActionButton
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onToggleEditorLock(!editorLocked)
+                  }}
+                  aria-label={
+                    editorLocked
+                      ? t('card.locked_assignment')
+                      : t('card.lock_assignment')
+                  }
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 14,
+                    // Hover'da bulut butonuyla aynı efekt için CSS değişkenleriyle geçersiz kılınabilir
+                    border: '2px solid var(--editor-box-border, var(--color-border))',
+                    background: editorLocked
+                      ? 'var(--color-primary-light, rgba(99, 102, 241, 0.12))'
+                      : 'var(--color-surface-raised)',
+                    zIndex: 3,
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: editorLocked
+                      ? 'var(--color-primary)'
+                      : 'var(--editor-box-color, var(--color-text-secondary))',
+                    transition: 'all 0.25s ease',
+                    boxShadow: 'var(--editor-box-shadow, 0 2px 8px rgba(0, 0, 0, 0.06))',
+                  }}
+                >
+                  {editorLocked ? (
+                    <Lock size={18} strokeWidth={2.2} />
+                  ) : (
+                    <LockOpen size={18} strokeWidth={2.2} />
+                  )}
+                </IconActionButton>
               )}
-            </IconActionButton>
-          )}
-          <SelectionMarker
-            checked={editorConfirmed}
-            onChange={editorConfirmed ? () => onEditorEdit?.() : undefined}
+              <div style={{ flexShrink: 0, display: 'flex' }}>
+                <SelectionMarker
+                  checked={editorConfirmed}
+                  onChange={
+                    editorConfirmed
+                      ? () => onEditorEdit?.()
+                      : canConfirm
+                        ? handleEditorConfirmTrigger
+                        : undefined
+                  }
+                  disabled={disabled}
+                  size="box"
+                  label={
+                    editorConfirmed
+                      ? t('card.personality_confirmed')
+                      : t('card.personality_pending')
+                  }
+                />
+              </div>
+          </div>
+
+          <textarea
+            className={`input textarea personality-card-editor__prompt${showValidation && !editorPrompt.trim() ? ' error' : ''}`}
+            value={editorPrompt}
+            onChange={(event) => onEditorChange?.('prompt', event.target.value)}
+            placeholder={t('card.personality_prompt_placeholder')}
             disabled={disabled}
-            size="sm"
-            label={
+            readOnly={editorConfirmed}
+            maxLength={2000}
+            aria-label={t('card.personality_prompt')}
+            style={
               editorConfirmed
-                ? t('card.personality_confirmed', 'Kişilik kartı onaylandı')
-                : t('card.personality_pending', 'Kişilik kartı bekliyor')
+                ? {
+                    borderColor: 'transparent',
+                    background: 'transparent',
+                    boxShadow: 'none',
+                    resize: 'none',
+                  }
+                : undefined
             }
           />
         </div>
 
-        <div className="personality-card-editor__body">
-          {!editorConfirmed && (
-            <input
-              className={`input personality-card__title personality-card-editor__name${showValidation && !editorCardName.trim() ? ' error' : ''}`}
-              type="text"
-              value={editorCardName}
-              onChange={(event) => onEditorChange('cardName', event.target.value)}
-              placeholder={t('card.card_name_placeholder', 'Kişilik kart adı')}
-              disabled={disabled}
-              maxLength={100}
-              aria-label={t('card.card_name', 'Kart adı')}
-            />
-          )}
-
-          {editorConfirmed ? (
-            <p className="personality-card-editor__preview">{editorPrompt}</p>
-          ) : (
-            <textarea
-              className={`input textarea personality-card-editor__prompt${showValidation && !editorPrompt.trim() ? ' error' : ''}`}
-              value={editorPrompt}
-              onChange={(event) => onEditorChange('prompt', event.target.value)}
-              placeholder={t('card.personality_prompt_placeholder', 'Bu kişiliği tanımlayın...')}
-              disabled={disabled}
-              maxLength={2000}
-              aria-label={t('card.personality_prompt', 'Kişilik tanımı')}
-            />
-          )}
+        <div
+          className="personality-card-editor__footer personality-card__stats"
+          style={{ position: 'relative', zIndex: 2 }}
+        >
+          <button
+            type="button"
+            className="btn btn-primary btn-sm personality-card-editor__confirm"
+            onClick={handleEditorConfirmTrigger}
+            disabled={disabled || (!editorConfirmed && !canConfirm)}
+          >
+            {editorConfirmed ? (
+              <>
+                <Pencil size={14} /> {t('action.edit')}
+              </>
+            ) : (
+              <>
+                <Check size={14} /> {t('card.confirm_personality')}
+              </>
+            )}
+          </button>
         </div>
 
-        {editorConfirmed && (
-          <div className="personality-card__stats personality-card-editor__confirmed-stats">
-            <span className="personality-card__stat">
-              <Crown size={12} />0
-            </span>
-            <span className="personality-card__stat">
-              <Bot size={12} />0
-            </span>
-          </div>
-        )}
+        <ConfirmModal
+          isOpen={isCardLimitReached && isEditorConfirmModalOpen}
+          onClose={() => setIsEditorConfirmModalOpen(false)}
+          onConfirm={() => {
+            setIsEditorConfirmModalOpen(false)
+            onEditorConfirm?.()
+          }}
+          title={t('card.create_confirm_title')}
+          description={t('card.create_confirm_desc', {
+            cardName: editorCardName,
+          })}
+          warning={t('card.create_limit_reached_warning', {
+            limit: cardOwnershipLimit,
+            oldestCard: oldestCardName,
+          })}
+          confirmText={t('card.confirm_create_btn')}
+          cancelText={t('common.cancel')}
+          confirmVariant="danger"
+          isLoading={disabled}
+        />
 
-        <div className="personality-card-editor__footer personality-card__stats">
-          {editorConfirmed ? (
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm personality-card-editor__edit"
-              onClick={onEditorEdit}
-              disabled={disabled}
-            >
-              <Pencil size={13} /> {t('action.edit', 'Düzenle')}
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="btn btn-primary btn-sm personality-card-editor__confirm"
-              onClick={onEditorConfirm}
-              disabled={disabled || !canConfirm}
-            >
-              <Check size={14} /> {t('card.confirm_personality', 'Kişilik kartını onayla')}
-            </button>
-          )}
-        </div>
+        <PremiumModal
+          isOpen={isPremiumModalOpen}
+          onClose={() => setIsPremiumModalOpen(false)}
+        />
       </div>
     )
   }
 
   const cardName =
-    card?.cardName ||
-    card?.card?.cardName ||
-    card?.ownership?.cardName ||
-    card?.ownership?.originalCard?.cardName ||
-    t('card.card', 'Kart')
+    card?.cardName !== undefined
+      ? card.cardName
+      : card?.card?.cardName ||
+        card?.ownership?.cardName ||
+        card?.ownership?.originalCard?.cardName ||
+        t('card.card')
   const hint =
     card?.cardHint ||
     card?.personalityPrompt ||
@@ -313,12 +462,23 @@ export default function PersonalityCard({
           .map((s) => s.trim())
           .filter(Boolean)
       : []
+  const cardImageUrl =
+    card?.imageUrl ||
+    card?.card?.imageUrl ||
+    card?.ownership?.imageUrl ||
+    card?.ownership?.card?.imageUrl ||
+    card?.ownership?.originalCard?.imageUrl ||
+    card?.originalCard?.imageUrl ||
+    card?.image ||
+    ''
   const filled =
-    !!card?.cardName ||
-    !!card?.card?.cardName ||
-    !!card?.ownership ||
-    !!card?.personalityCardId ||
-    !!card?.cardId
+    card?.filled !== undefined
+      ? card.filled
+      : !!card?.cardName ||
+        !!card?.card?.cardName ||
+        !!card?.ownership ||
+        !!card?.personalityCardId ||
+        !!card?.cardId
 
   const ownershipCount =
     card?.ownershipCount ??
@@ -343,12 +503,33 @@ export default function PersonalityCard({
     card?.cardId ??
     null
 
-  const innerCard = card?.card ?? card?.ownership?.originalCard ?? card
-  const currentAcqType = innerCard?.acquisitionType ?? null
+  const storeMatch =
+    personalityCardId && Array.isArray(myOwnedCards)
+      ? myOwnedCards.find((mc) => {
+          const mId =
+            mc?.cardId ||
+            mc?.personalityCardId ||
+            mc?.id ||
+            (typeof mc === 'string' ? mc : null)
+          return mId && String(mId).toLowerCase() === String(personalityCardId).toLowerCase()
+        })
+      : null
 
   const isAssignedCard = Boolean(
     card?.assignmentId || card?.botId || card?.tribeId || card?.assignedTribeId || tribeAssigned
   )
+  const hasAssignmentRecord = Boolean(
+    filled &&
+      (card?.assignmentId ||
+        card?.botId ||
+        card?.tribeId ||
+        card?.assignedTribeId ||
+        typeof card?.isEffective === 'boolean' ||
+        typeof card?.assignment?.isEffective === 'boolean')
+  )
+  const isIneffectiveAssignment =
+    hasAssignmentRecord &&
+    (card?.isEffective === false || card?.assignment?.isEffective === false)
   const ownerActor = card?.ownership?.actor ?? card?.actor ?? null
   const ownershipId =
     card?.ownershipId ||
@@ -361,6 +542,25 @@ export default function PersonalityCard({
     card?.actorId ||
     ownerActor?.actorId ||
     null
+
+  const isDirectOwner = Boolean(
+    ownerActorId &&
+    currentActorId &&
+    String(ownerActorId).toLowerCase() === String(currentActorId).toLowerCase()
+  )
+
+  let currentAcqType = null
+  if (storeMatch) {
+    currentAcqType = storeMatch?.acquisitionType ?? 0
+  } else if (isDirectOwner) {
+    currentAcqType =
+      card?.acquisitionType ??
+      card?.card?.acquisitionType ??
+      card?.ownership?.acquisitionType ??
+      0
+  } else if (card?.isOwned && card?.acquisitionType != null) {
+    currentAcqType = card.acquisitionType
+  }
 
   const rawAssignments = Array.isArray(card?.assignments) ? card.assignments : []
   const rawAssignedBots =
@@ -474,17 +674,15 @@ export default function PersonalityCard({
         open={showFossils}
         onToggle={onToggleFossils}
         small
-        title={t('card.show_fossil_assignments', 'Fosilleşmiş atamaları göster')}
-        titleOpen={t('card.hide_fossil_assignments', 'Fosilleşmiş atamaları gizle')}
+        title={t('card.show_fossil_assignments')}
+        titleOpen={t('card.hide_fossil_assignments')}
       />
     )
     return (
       <div
+        className="minimal-card-list"
         style={{
-          display: 'flex',
-          flexDirection: 'column',
           alignItems: 'flex-start',
-          gap: 2,
           flex: 1,
           minWidth: 0,
         }}
@@ -496,6 +694,7 @@ export default function PersonalityCard({
           return (
             <div
               key={`${nodeKey}-fossil-toggle`}
+              className="personality-card__assignment-node-row"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -518,15 +717,15 @@ export default function PersonalityCard({
   // IsLocked flag (CardAssignmentProjectionDto.isLocked) coming from assignment-centric renders.
   const effectiveLocked = Boolean(
     locked ||
-      card?.isLocked ||
-      card?.assignment?.isLocked ||
-      card?.card?.isLocked ||
-      card?.ownership?.originalCard?.isLocked
+    card?.isLocked ||
+    card?.assignment?.isLocked ||
+    card?.card?.isLocked ||
+    card?.ownership?.originalCard?.isLocked
   )
   // Pending lock intent for cards about to be assigned (not yet persisted).
   const showLockToggle = typeof onToggleLock === 'function' && lockable !== false
   const lockToggleActive = Boolean(assignLocked)
-  const isAssignmentLocked = showLockToggle ? lockToggleActive : (effectiveLocked || lockToggleActive)
+  const isAssignmentLocked = showLockToggle ? lockToggleActive : effectiveLocked || lockToggleActive
 
   const isSelectionDisabled =
     disabled ||
@@ -534,6 +733,10 @@ export default function PersonalityCard({
     (selectable && !selected && maxSelections != null && selectedCount >= maxSelections)
 
   const handleCardClick = () => {
+    if (!interactive) {
+      onClick?.()
+      return
+    }
     if (selectable) {
       if (!isSelectionDisabled) onSelect?.()
       return
@@ -544,6 +747,7 @@ export default function PersonalityCard({
   }
 
   const handleCardKeyDown = (event) => {
+    if (!interactive) return
     if ((event.key === 'Enter' || event.key === ' ') && filled) {
       event.preventDefault()
       if (selectable) {
@@ -557,14 +761,35 @@ export default function PersonalityCard({
 
   return (
     <div
-      className={`personality-card ${filled ? 'personality-card--filled' : 'personality-card--empty'}${selectable ? ' personality-card--selectable' : ''}${selected ? ' personality-card--selected' : ''}${isSelectionDisabled ? ' personality-card--selection-disabled' : ''}${selectionReadOnly ? ' personality-card--selection-readonly' : ''}${isAssignedCard ? ' personality-card--owner-assigned' : ''}`}
+      className={`personality-card ${filled ? 'personality-card--filled' : 'personality-card--empty'}${selectable ? ' personality-card--selectable' : ''}${selected ? ' personality-card--selected' : ''}${isSelectionDisabled ? ' personality-card--selection-disabled' : ''}${selectionReadOnly ? ' personality-card--selection-readonly' : ''}${isAssignedCard ? ' personality-card--owner-assigned' : ''}${className ? ` ${className}` : ''}`}
       onClick={handleCardClick}
       onKeyDown={handleCardKeyDown}
-      role={filled ? 'button' : undefined}
-      tabIndex={filled ? 0 : undefined}
+      role={filled && interactive ? 'button' : undefined}
+      tabIndex={filled && interactive ? 0 : undefined}
       aria-pressed={selectable ? selected : undefined}
       aria-disabled={disabled || selectionReadOnly}
+      style={{
+        ...(interactive ? {} : { cursor: 'default' }),
+        ...style,
+      }}
     >
+      {/* Background Image Layer if present */}
+      {cardImageUrl && (
+        <div className="personality-card__bg-image-wrap" aria-hidden="true">
+          <ImageWithLoader
+            src={cardImageUrl}
+            alt=""
+            className="personality-card__bg-image"
+            style={imageStyle}
+            wrapperStyle={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+            spinnerSize="sm"
+            spinnerOpacity={0.4}
+          />
+          <div className="personality-card__bg-image-overlay" />
+          <div className="personality-card__bg-image-shade" />
+        </div>
+      )}
+
       {/* Background Bot Watermark */}
       <div
         className="personality-card__bg-bot"
@@ -576,8 +801,8 @@ export default function PersonalityCard({
           transform: 'translate(-50%, -50%)',
           pointerEvents: 'none',
           userSelect: 'none',
-          zIndex: 0,
-          opacity: 0.08,
+          zIndex: 1,
+          opacity: cardImageUrl ? 0.22 : 0.08,
           color: 'var(--color-primary)',
           display: 'flex',
           alignItems: 'center',
@@ -587,7 +812,10 @@ export default function PersonalityCard({
         <BotIcon size={120} />
       </div>
 
-      {(currentAcqType === 0 || currentAcqType === 1 || isAssignmentLocked) && (
+      {(currentAcqType === 0 ||
+        currentAcqType === 1 ||
+        isAssignmentLocked ||
+        hasAssignmentRecord) && (
         <span
           className="personality-card__corner-badges"
           style={{
@@ -597,54 +825,68 @@ export default function PersonalityCard({
             zIndex: 3,
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 2,
+            gap: 4,
             pointerEvents: 'none',
           }}
         >
           {currentAcqType === 0 && (
             <span
-              style={{
-                color: 'var(--color-warning)',
-                filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.5))',
-                transform: 'rotate(-25deg)',
-                pointerEvents: 'auto',
-              }}
+              className="personality-card__corner-badge"
+              title={t('card.tooltip_creator')}
+              aria-label={t('card.tooltip_creator')}
             >
-              <Crown size={28} strokeWidth={2.5} />
+              <span
+                style={{
+                  color: 'var(--color-warning)',
+                  filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.5))',
+                  transform: 'rotate(-25deg)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                }}
+              >
+                <Crown size={28} strokeWidth={2.5} />
+              </span>
             </span>
           )}
           {currentAcqType === 1 && (
             <span
-              style={{
-                color: '#b87333',
-                filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.5))',
-                transform: 'rotate(-18deg)',
-                pointerEvents: 'auto',
-                display: 'inline-flex',
-                alignItems: 'center',
-              }}
+              className="personality-card__corner-badge"
+              title={t('card.tooltip_purchased')}
+              aria-label={t('card.tooltip_purchased')}
             >
-              <Crown size={24} strokeWidth={2.5} />
               <span
                 style={{
-                  marginLeft: '-4px',
-                  marginTop: '4px',
-                  fontSize: '25px',
-                  fontWeight: '900',
-                  fontFamily: '"Arial Black", Impact, system-ui, sans-serif',
-                  lineHeight: 1,
-                  color: '#22c55e',
-                  textShadow: '0 0 3px rgba(34, 197, 94, 0.35), 0 1px 2px rgba(0,0,0,0.8)',
-                  WebkitTextStroke: '0.6px #052e16',
+                  color: '#b87333',
+                  filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.5))',
+                  transform: 'rotate(-18deg)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
                 }}
               >
-                $
+                <Crown size={24} strokeWidth={2.5} />
+                <span
+                  style={{
+                    marginLeft: '-4px',
+                    marginTop: '4px',
+                    fontSize: '25px',
+                    fontWeight: '900',
+                    fontFamily: '"Arial Black", Impact, system-ui, sans-serif',
+                    lineHeight: 1,
+                    color: '#22c55e',
+                    textShadow: '0 0 3px rgba(34, 197, 94, 0.35), 0 1px 2px rgba(0,0,0,0.8)',
+                    WebkitTextStroke: '0.6px #052e16',
+                  }}
+                >
+                  $
+                </span>
               </span>
             </span>
           )}
           {isAssignmentLocked && (
             <span
-              aria-label={t('card.locked_assignment', 'Bu atama kilitli')}
+              className="personality-card__corner-badge"
+              title={t('card.tooltip_locked')}
+              aria-label={t('card.locked_assignment')}
               onClick={
                 showLockToggle
                   ? (e) => {
@@ -654,17 +896,53 @@ export default function PersonalityCard({
                   : undefined
               }
               style={{
-                color: '#ffffff',
-                filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.8))',
-                pointerEvents: 'auto',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transform: 'rotate(-22deg)',
                 cursor: showLockToggle ? 'pointer' : 'default',
               }}
             >
-              <Lock size={26} strokeWidth={3} />
+              <span
+                style={{
+                  color: '#ffffff',
+                  filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.8))',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transform: 'rotate(-22deg)',
+                }}
+              >
+                <Lock size={26} strokeWidth={3} />
+              </span>
+            </span>
+          )}
+          {hasAssignmentRecord && (
+            <span
+              className="personality-card__corner-badge"
+              title={
+                isIneffectiveAssignment
+                  ? t('card.tooltip_incubating')
+                  : t('card.tooltip_effective')
+              }
+              aria-label={
+                isIneffectiveAssignment
+                  ? t('card.incubating_not_effective')
+                  : t('card.tooltip_effective')
+              }
+            >
+              <span
+                style={{
+                  color: isIneffectiveAssignment ? '#ffffff' : 'var(--color-warning)',
+                  filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.8))',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transform: 'rotate(-20deg)',
+                }}
+              >
+                {isIneffectiveAssignment ? (
+                  <ClockAlert size={26} strokeWidth={2.8} />
+                ) : (
+                  <ClockCheck size={26} strokeWidth={2.8} />
+                )}
+              </span>
             </span>
           )}
         </span>
@@ -682,8 +960,8 @@ export default function PersonalityCard({
             }}
             aria-label={
               lockToggleActive
-                ? t('card.locked_assignment', 'Bu atama kilitli')
-                : t('card.lock_assignment', 'Bu atamayı kilitle')
+                ? t('card.locked_assignment')
+                : t('card.lock_assignment')
             }
             style={{
               width: 26,
@@ -691,6 +969,12 @@ export default function PersonalityCard({
               borderRadius: 6,
               zIndex: 3,
               flexShrink: 0,
+              border: lockToggleActive
+                ? '1px solid var(--color-primary)'
+                : '1px solid var(--color-border)',
+              background: lockToggleActive
+                ? 'var(--color-primary-light, rgba(99, 102, 241, 0.12))'
+                : 'var(--color-surface-raised)',
               color: lockToggleActive ? 'var(--color-primary-dark)' : 'var(--color-text-muted)',
             }}
           >
@@ -701,23 +985,39 @@ export default function PersonalityCard({
             )}
           </IconActionButton>
         )}
-        {onEditClick && filled && (currentAcqType === 0 || currentAcqType === 1) ? (
+        {filled && (onEditClick || currentAcqType === 0 || currentAcqType === 1) && !selectable ? (
           <IconActionButton
+            className="personality-card__edit-action"
             onClick={(e) => {
               e.stopPropagation()
-              onEditClick(card)
+              if (onEditClick) {
+                onEditClick(card)
+              } else {
+                const targetId =
+                  personalityCardId ||
+                  card?.cardId ||
+                  card?.personalityCardId ||
+                  innerCard?.personalityCardId ||
+                  innerCard?.cardId
+                navigate('/cards', { state: { editCardId: targetId, editCard: card } })
+              }
             }}
-            aria-label={t('action.edit', 'Düzenle')}
+            aria-label={t('action.edit')}
             style={{
-              width: 26,
-              height: 26,
-              borderRadius: 6,
+              width: 44,
+              height: 44,
+              borderRadius: 14,
+              // Bulut/kilit butonlarıyla aynı tarz (hover için CSS değişkenleri)
+              border: '2px solid var(--card-box-border, var(--color-border))',
+              background: 'var(--color-surface-raised)',
+              color: 'var(--card-box-color, var(--color-text-secondary))',
+              boxShadow: 'var(--card-box-shadow, 0 2px 8px rgba(0, 0, 0, 0.06))',
+              transition: 'all 0.25s ease',
               zIndex: 3,
               flexShrink: 0,
-              color: '#ffffff',
             }}
           >
-            <Edit2 size={13} strokeWidth={2.2} color="#ffffff" />
+            <Edit2 size={18} strokeWidth={2.2} />
           </IconActionButton>
         ) : showMark ? (
           <span className="personality-card__mark">
@@ -729,11 +1029,11 @@ export default function PersonalityCard({
               label={
                 selectable
                   ? selected
-                    ? t('card.selected', 'Seçili kart')
-                    : t('card.select', 'Kartı seç')
+                    ? t('card.selected')
+                    : t('card.select')
                   : filled
-                    ? t('card.selected', 'Seçili kart')
-                    : t('card.empty', 'Boş kart yuvası')
+                    ? t('card.selected')
+                    : t('card.empty')
               }
             />
           </span>
@@ -760,11 +1060,7 @@ export default function PersonalityCard({
         </div>
       )}
 
-      {!hint && !tags.length && (
-        <span className="personality-card__empty-copy">—/{t('card.card', 'Kart')}</span>
-      )}
-
-      {filled && (
+      {filled && showStats && (
         <div
           className="personality-card__footer"
           style={{
@@ -776,20 +1072,19 @@ export default function PersonalityCard({
             gap: 10,
           }}
         >
-          {(isAssignedCard
-            ? ownerActor || hasAssignmentFlow
-            : ownerActor || hasAssigned) && (
+          {showRelations &&
+            (isAssignedCard ? ownerActor || hasAssignmentFlow : ownerActor || hasAssigned) && (
             <div className="personality-card__assignment-sources" style={{ margin: 0 }}>
               {/* 1. Top Row: Owner */}
               {ownerActor && (
                 <div className="personality-card__assignment-row personality-card__assignment-row--owner">
                   <span className="personality-card__assignment-label personality-card__assignment-label--owner">
-                    {t('card.owner_label', 'Sahip')}:
+                    {t('card.owner_label')}:
                   </span>
                   <ActorMinimalCard
                     actor={ownerActor}
                     showHierarchyBtn={false}
-                    showMindBtn={false}
+                    showMemoryMapBtn={false}
                     showEditBtn={false}
                     showPoint={false}
                     clickable={true}
@@ -812,7 +1107,7 @@ export default function PersonalityCard({
                         className="personality-card__assignment-label personality-card__assignment-label--assigned"
                         style={{ marginTop: '5px' }}
                       >
-                        {t('card.assigned_label', 'Assigned')}:
+                        {t('card.assigned_label')}:
                       </span>
                       {renderAssignedNodeColumn(
                         visibleAssignmentSources,
@@ -824,14 +1119,16 @@ export default function PersonalityCard({
                           node.type === 'tribe' ? (
                             <TribeMinimalCard
                               key={nodeKey}
+                              tribe={node.data}
                               tribeId={node.data.tribeId}
                               tribeName={node.data.tribeName}
                               tribePoint={node.data.tribePoint}
                               imageUrl={node.data.imageUrl}
                               isDormant={node.data.isDormant ?? node.data.IsDormant}
+                              assignedCardIds={node.data.assignedCardIds || node.data.AssignedCardIds}
                               variant="compact"
                               clickable={true}
-                              showMindBtn={false}
+                              showMemoryMapBtn={false}
                               showEditBtn={false}
                               showPoint={false}
                             />
@@ -840,7 +1137,7 @@ export default function PersonalityCard({
                               key={nodeKey}
                               actor={node.data}
                               showHierarchyBtn={false}
-                              showMindBtn={false}
+                              showMemoryMapBtn={false}
                               showEditBtn={false}
                               showPoint={false}
                               clickable={true}
@@ -862,7 +1159,7 @@ export default function PersonalityCard({
                         className="personality-card__assignment-label personality-card__assignment-label--assigned"
                         style={{ marginTop: '5px' }}
                       >
-                        {t('card.assigned_label', 'Assigned')}:
+                        {t('card.assigned_label')}:
                       </span>
                       {renderAssignedNodeColumn(
                         visibleAssignmentTargets,
@@ -874,14 +1171,16 @@ export default function PersonalityCard({
                           node.type === 'tribe' ? (
                             <TribeMinimalCard
                               key={nodeKey}
+                              tribe={node.data}
                               tribeId={node.data.tribeId}
                               tribeName={node.data.tribeName}
                               tribePoint={node.data.tribePoint}
                               imageUrl={node.data.imageUrl}
                               isDormant={node.data.isDormant ?? node.data.IsDormant}
+                              assignedCardIds={node.data.assignedCardIds || node.data.AssignedCardIds}
                               variant="compact"
                               clickable={true}
-                              showMindBtn={false}
+                              showMemoryMapBtn={false}
                               showEditBtn={false}
                               showPoint={false}
                             />
@@ -890,7 +1189,7 @@ export default function PersonalityCard({
                               key={nodeKey}
                               actor={node.data}
                               showHierarchyBtn={false}
-                              showMindBtn={false}
+                              showMemoryMapBtn={false}
                               showEditBtn={false}
                               showPoint={false}
                               clickable={true}
@@ -912,7 +1211,7 @@ export default function PersonalityCard({
                       className="personality-card__assignment-label personality-card__assignment-label--assigned"
                       style={{ marginTop: '5px' }}
                     >
-                      {t('card.assigned_label', 'Assigned')}:
+                      {t('card.assigned_label')}:
                     </span>
                     {renderAssignedNodeColumn(
                       visibleAssignedNodes,
@@ -924,11 +1223,13 @@ export default function PersonalityCard({
                         node.type === 'tribe' ? (
                           <TribeMinimalCard
                             key={nodeKey}
+                            tribe={node.data}
                             {...node.data}
                             isDormant={node.data.isDormant ?? node.data.IsDormant}
+                            assignedCardIds={node.data.assignedCardIds || node.data.AssignedCardIds}
                             variant="compact"
                             clickable={true}
-                            showMindBtn={false}
+                            showMemoryMapBtn={false}
                             showEditBtn={false}
                             showPoint={false}
                           />
@@ -937,7 +1238,7 @@ export default function PersonalityCard({
                             key={nodeKey}
                             actor={node.data}
                             showHierarchyBtn={false}
-                            showMindBtn={false}
+                            showMemoryMapBtn={false}
                             showPoint={false}
                             showEditBtn={false}
                             clickable={true}
@@ -957,6 +1258,7 @@ export default function PersonalityCard({
               marginTop: 0,
               paddingTop: 0,
               borderTop: 'none',
+              ...(interactive ? {} : { pointerEvents: 'none' }),
             }}
           >
             <button
@@ -966,7 +1268,7 @@ export default function PersonalityCard({
                 setIsDetailOpen(true)
               }}
               className="personality-card__stat"
-              aria-label={t('card.details', 'Kart Detayları')}
+              aria-label={t('card.details')}
             >
               <Info size={12} />
             </button>
@@ -977,7 +1279,7 @@ export default function PersonalityCard({
                 if (personalityCardId) setModalType('owners')
               }}
               className="personality-card__stat"
-              aria-label={t('card.owners', 'Sahipler')}
+              aria-label={t('card.owners')}
             >
               <Crown size={12} />
               {ownershipCount}
@@ -989,7 +1291,7 @@ export default function PersonalityCard({
                 if (personalityCardId) setModalType('assignees')
               }}
               className="personality-card__stat"
-              aria-label={t('card.assignees', 'Atanmış Botlar')}
+              aria-label={t('card.assignees')}
             >
               <Bot size={12} />
               {assignmentCount}
@@ -1004,7 +1306,7 @@ export default function PersonalityCard({
                 e.stopPropagation()
                 navigate(`/card-hierarchy?cardId=${personalityCardId}`)
               }}
-              aria-label={t('card.view_hierarchy', 'Kart Hiyerarşisi')}
+              aria-label={t('card.view_hierarchy')}
             >
               <Network size={18} strokeWidth={2} />
             </button>
@@ -1027,6 +1329,11 @@ export default function PersonalityCard({
           onEditClick={onEditClick}
         />
       )}
+
+      <PremiumModal
+        isOpen={isPremiumModalOpen}
+        onClose={() => setIsPremiumModalOpen(false)}
+      />
     </div>
   )
 }

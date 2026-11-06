@@ -1,0 +1,120 @@
+.page-top-dock {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 36px;
+  z-index: 5;
+}
+
+/* Chat kartındaki şerit kartın iç padding'ine oturur */
+.page-top-dock--inset {
+  top: 16px;
+  left: 16px;
+  right: 16px;
+}
+
+.page-top-dock__slots {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px 0 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.page-top-dock__slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  pointer-events: none;
+}
+
+.page-top-dock__slot > * {
+  pointer-events: auto;
+}
+
+.page-top-dock__slot--left {
+  flex: 0 0 auto;
+}
+
+.page-top-dock__slot--center {
+  flex: 1;
+  justify-content: center;
+}
+
+.page-top-dock__slot--right {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.page-top-dock__slot--right .leaderboard-controls {
+  flex-wrap: nowrap !important;
+}
+
+.page-top-dock__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  transition: transform 0.18s ease;
+}
+
+/* Hover tetikleyicisi ortak ebeveynde: şerit ve tüm slot öğeleri birlikte tepki verir.
+   Slot içindeki bir öğe hover'lanınca parent hover etkisi devre dışı kalır. */
+.page-top-dock:hover:not(:has(.page-top-dock__item:hover)) .center-deck__handle,
+.page-top-dock:hover:not(:has(.page-top-dock__item:hover)) .page-top-dock__item {
+  transform: translateY(-1px) scale(1.004);
+}
+
+/* Varsayılan orta ikon: tıklamayı alttaki şeride (chat açma) geçirir */
+.page-top-dock__slot .page-top-dock__item--hint {
+  pointer-events: none;
+}
+
+.page-top-dock__chat-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  opacity: 0.75;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+.page-top-dock:hover:not(:has(.page-top-dock__item:hover)) .page-top-dock__chat-hint {
+  opacity: 1;
+}
+
+.page-top-dock-row-spacer {
+  height: 36px;
+}
+
+.page-top-dock-row-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 36px;
+  padding: 0 8px;
+  flex-wrap: wrap;
+}
+
+.page-top-dock-row-fallback__left,
+.page-top-dock-row-fallback__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.page-top-dock-row-fallback__center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}

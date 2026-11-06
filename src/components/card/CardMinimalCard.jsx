@@ -19,7 +19,7 @@ export default function CardMinimalCard({
   const cardData = rawItem?.card || rawItem?.originalCard || rawItem || {}
   const actorData = rawItem?.actor || cardData?.actor || {}
 
-  const cardName = cardData.cardName || rawItem.cardName || t('card.card', 'Kişilik Kartı')
+  const cardName = cardData.cardName || rawItem.cardName || t('card.card')
   const cardId = cardData.personalityCardId || cardData.cardId || rawItem.cardId || rawItem.personalityCardId
   const assignmentCount = cardData.assignmentCount ?? rawItem.assignmentCount ?? 0
   const ownershipCount = cardData.ownershipCount ?? rawItem.ownershipCount ?? 0
@@ -133,7 +133,7 @@ export default function CardMinimalCard({
                 }}
                 onClick={handleActorClick}
               >
-                <span style={{ opacity: 0.7 }}>{t('card.creator', 'Mimar')}:</span>
+                <span style={{ opacity: 0.7 }}>{t('card.creator')}:</span>
                 <ActorAvatar
                   profileName={actorData.profileName}
                   imageUrl={actorData.imageUrl}
@@ -177,7 +177,7 @@ export default function CardMinimalCard({
               {assignmentCount}
             </span>
             <span style={{ fontSize: 10, color: 'var(--color-text-muted)', display: 'none', smDisplay: 'inline' }}>
-              {t('card.assignments_short', 'atama')}
+              {t('card.assignments_short')}
             </span>
           </div>
 
@@ -203,7 +203,7 @@ export default function CardMinimalCard({
               type="button"
               className="btn btn-ghost btn-xs"
               onClick={handleHierarchyClick}
-              aria-label={t('card.view_hierarchy', 'Yayılım / Miras Ağacını Gör')}
+              aria-label={t('card.view_hierarchy')}
               style={{
                 padding: '4px',
                 borderRadius: 6,

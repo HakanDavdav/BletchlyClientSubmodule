@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { X } from 'lucide-react'
 import AngryBotWithSwordsIcon from '../common/icons/AngryBotWithSwordsIcon'
+import ModalHeader from '../common/ModalHeader'
+import ModalPortal from '../common/ModalPortal'
 import { useTranslation } from 'react-i18next'
 
 /**
@@ -25,73 +26,74 @@ export default function TriggerDebateModal({ isOpen, onClose, onSubmit, targetNa
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 100 }}>
+    <ModalPortal>
+      <div className="modal-overlay" onClick={onClose} style={{ zIndex: 100 }}>
       <div
         className="modal-box"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: 480, display: 'flex', flexDirection: 'column' }}
+        style={{
+          maxWidth: 480,
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '24px 20px 20px',
+          borderRadius: 16,
+          background: 'var(--color-bg)',
+          border: '1px solid var(--color-border)',
+        }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between" style={{ marginBottom: 20 }}>
-          <div className="flex items-center" style={{ gap: 14 }}>
-            <AngryBotWithSwordsIcon size={26} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
-            <h3 style={{ fontSize: 17, fontWeight: 700, margin: 0 }}>
-              {t('profile.trigger_debate', 'Meydan Okuma')}
-            </h3>
-          </div>
-          <button className="btn-icon" onClick={onClose}>
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Proposition input */}
-        <textarea
-          value={proposition}
-          onChange={(e) => setProposition(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={t('profile.debate_proposition_placeholder', 'Tartışılacak konuyu yazın...')}
-          autoFocus
-          style={{
-            width: '100%',
-            minHeight: 100,
-            fontSize: 14,
-            padding: '12px 16px',
-            borderRadius: 12,
-            border: '1.5px solid var(--color-border)',
-            background: 'var(--color-surface)',
-            color: 'var(--color-text-primary)',
-            fontFamily: 'inherit',
-            outline: 'none',
-            transition: 'border-color 0.2s',
-            resize: 'vertical',
-          }}
-          onFocus={(e) => (e.target.style.borderColor = 'var(--color-primary)')}
-          onBlur={(e) => (e.target.style.borderColor = 'var(--color-border)')}
+        <ModalHeader
+          icon={<AngryBotWithSwordsIcon size={26} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />}
+          title={t('profile.trigger_debate')}
+          onClose={onClose}
+          style={{ padding: '0 0 12px 0', marginBottom: 18 }}
         />
 
-        {/* Footer */}
-        <div
-          className="flex items-center justify-end"
-          style={{ gap: 10, marginTop: 20 }}
-        >
-          <button className="btn btn-outline btn-sm" onClick={onClose} disabled={isPending}>
-            {t('common.cancel', 'İptal')}
-          </button>
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={handleSubmit}
-            disabled={!proposition.trim() || isPending}
-            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {/* Proposition input */}
+          <textarea
+            className="input textarea textarea--autogrow"
+            value={proposition}
+            onChange={(e) => setProposition(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={t('profile.debate_proposition_placeholder')}
+            autoFocus
+            style={{
+              width: '100%',
+              minHeight: 100,
+              fontSize: 14,
+              padding: '12px 16px',
+              borderRadius: 12,
+              background: 'var(--color-surface)',
+              color: 'var(--color-text-primary)',
+            }}
+          />
+
+          {/* Footer */}
+          <div
+            className="flex items-center justify-end"
+            style={{ gap: 10, marginTop: 20 }}
           >
-            {isPending ? (
-              <div className="spinner spinner-sm" style={{ width: 14, height: 14, borderWidth: 2 }} />
-            ) : (
-              <AngryBotWithSwordsIcon size={14} />
-            )}
-            {t('profile.send_debate', 'Yolla')}
-          </button>
+            <button className="btn btn-outline btn-sm" onClick={onClose} disabled={isPending}>
+              {t('common.cancel')}
+            </button>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={handleSubmit}
+              disabled={!proposition.trim() || isPending}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              {isPending ? (
+                <div className="spinner spinner-sm" style={{ width: 14, height: 14, borderWidth: 2 }} />
+              ) : (
+                <AngryBotWithSwordsIcon size={14} />
+              )}
+              {t('profile.send_debate')}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   )
 }

@@ -77,9 +77,6 @@ botApi.interceptors.response.use(
     if (import.meta.env.DEV) {
       console.log(`[BOT API ✗] ${error.config?.method?.toUpperCase()} ${error.config?.url} — HTTP ${error.response?.status} [Trace: ${traceId || 'N/A'}]`, { error: data })
     }
-    if (error.response?.status === 401) {
-      window.dispatchEvent(new CustomEvent('auth:unauthorized'))
-    }
     return Promise.reject(error)
   }
 )

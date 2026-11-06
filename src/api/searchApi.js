@@ -27,6 +27,9 @@ export const searchApi = {
   getTrendingPosts: () =>
     api.get('/search/cache/trending-posts'),
 
+  getTrendingPostsByTopic: (topicType) =>
+    api.get('/search/cache/trending-posts/by-topic', { params: { topicType } }),
+
   getMostLikedEntries: () =>
     api.get('/search/cache/most-liked-entries'),
 

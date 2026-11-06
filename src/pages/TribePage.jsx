@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   LogOut,
   UserPlus,
@@ -12,8 +13,10 @@ import {
   Crown,
   Sliders,
   ShieldCheck,
+  CirclePlus,
 } from 'lucide-react'
 import BotFlashCardsIcon from '../components/common/icons/BotFlashCardsIcon'
+import PaginationSelect, { PaginationTotal } from '../components/common/PaginationSelect'
 import CardContingencyIcon from '../components/common/icons/CardContingencyIcon'
 import CardContingencyModifierIcon from '../components/common/icons/CardContingencyModifierIcon'
 import FossilIcon from '../components/common/icons/FossilIcon'
@@ -21,8 +24,12 @@ import TRexSkullIcon from '../assets/t-rex-skull-svgrepo-com.svg?react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { tribeApi } from '../api/tribeApi'
 import BackButton from '../components/common/BackButton'
-import TribeMinimalCard from '../components/tribe/TribeMinimalCard'
+import { PageTopDockRow } from '../components/layout/PageTopDock'
+import { TopicTagList } from '../components/topic/TopicTag'
+import { TopicTypes } from '../constants/TopicTypes'
+import ImageWithLoader from '../components/common/ImageWithLoader'
 import ActorMinimalCard from '../components/actor/ActorMinimalCard'
+import InfiniteScrollStatus from '../components/common/InfiniteScrollStatus'
 import FossilTogglePill from '../components/common/FossilTogglePill'
 import PostCard from '../components/content/PostCard'
 import CardSlots from '../components/card/CardSlots'
@@ -32,32 +39,57 @@ import useMyEntitiesStore from '../store/myEntitiesStore'
 import useUIStore from '../store/uiStore'
 import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
-import i18n from '../i18n'
+import useDocumentTitle from '../hooks/useDocumentTitle'
+import { getQueryErrorMessage } from '../utils/errorHelper'
+import { formatDate } from '../utils/formatDate'
 import { buildOwnedCardIdSet, sortCardsOwnedFirst } from '../utils/cardOwnership'
+import { getMemoryEmblems } from '../components/common/MemoryEmblems'
 
-export default function TribePage() {
+export default function TribePage({ tribeId: propTribeId = null, embedded = false }) {
   const [searchParams] = useSearchParams()
-  const tribeId = searchParams.get('tribeId')
+  const tribeId = propTribeId || searchParams.get('tribeId')
   const [postsPage, setPostsPage] = useState(1)
   const inferredPerPage = 5
   useDevLog('TribePage', arguments[0] || {})
   const { actorId: currentUserId, isLoggedIn } = useAuthStore()
   const myCards = useMyEntitiesStore((state) => state.myCards)
+  const myTribes = useMyEntitiesStore((state) => state.myTribes)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { t } = useTranslation()
   const [isBouncing, setIsBouncing] = useState(false)
   const [modifiersModalOpen, setModifiersModalOpen] = useState(false)
+  const [tribeImgFailed, setTribeImgFailed] = useState(false)
   // Fosil (dormant) üyeler varsayılan olarak gizli.
   const [showFossilMembers, setShowFossilMembers] = useState(false)
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false)
   // Limitler & Miras paneli açma/kapama durumu (ProfilePage ile ORTAK global state)
   const { isLimitsExpanded, toggleLimits } = useUIStore()
 
-  const { data: tribe, isLoading } = useQuery({
+  // Ekstra yüklenen klan üyeleri
+  const [extraMembers, setExtraMembers] = useState([])
+  const [membersPage, setMembersPage] = useState(1)
+  const [hasMoreMembers, setHasMoreMembers] = useState(true)
+  const [isLoadingMoreMembers, setIsLoadingMoreMembers] = useState(false)
+
+  const { data: tribe, isLoading, isError: isTribeError, error: tribeError } = useQuery({
     queryKey: ['tribe', tribeId],
     queryFn: () => tribeApi.getTribe(tribeId).then((r) => r.data?.data ?? null),
     enabled: !!tribeId,
   })
+
+  useDocumentTitle(embedded ? '' : tribe?.tribeName)
+
+  // Birleştirilmiş üyeler listesi (default gelen ilk 10 + sonradan loadMore ile çekilenler)
+  const allMembers = useMemo(() => {
+    const base = tribe?.tribeMemberships || []
+    if (extraMembers.length === 0) return base
+    const seen = new Set(base.map((m) => m.actor?.actorId).filter(Boolean))
+    const uniqueExtras = extraMembers.filter(
+      (m) => m.actor?.actorId && !seen.has(m.actor.actorId)
+    )
+    return [...base, ...uniqueExtras]
+  }, [tribe?.tribeMemberships, extraMembers])
 
   const sortedTribeCards = useMemo(
     () => sortCardsOwnedFirst(tribe?.personalityCards || [], buildOwnedCardIdSet(myCards || [])),
@@ -67,18 +99,42 @@ export default function TribePage() {
   const isDormantMember = (member) =>
     Boolean(member?.actor?.isDormant ?? member?.actor?.IsDormant ?? false)
 
-  const visibleMembers = useMemo(
-    () =>
-      showFossilMembers
-        ? tribe?.tribeMemberships || []
-        : (tribe?.tribeMemberships || []).filter((m) => !isDormantMember(m)),
-    [tribe, showFossilMembers]
-  )
+  const visibleMembers = useMemo(() => {
+    if (!showFossilMembers) {
+      return allMembers.filter((m) => !isDormantMember(m))
+    }
+    return [...allMembers].sort((a, b) => (isDormantMember(a) ? 1 : 0) - (isDormantMember(b) ? 1 : 0))
+  }, [allMembers, showFossilMembers])
 
   const fossilMemberCount = useMemo(
-    () => (tribe?.tribeMemberships || []).filter((m) => isDormantMember(m)).length,
-    [tribe]
+    () => allMembers.filter((m) => isDormantMember(m)).length,
+    [allMembers]
   )
+
+  const handleLoadMoreMembers = async () => {
+    if (isLoadingMoreMembers || !hasMoreMembers) return
+    setIsLoadingMoreMembers(true)
+    const nextPage = membersPage + 1
+    try {
+      const res = await tribeApi.getTribeMemberships(tribeId, nextPage)
+      const data = res.data?.data || []
+      if (data.length < 10) {
+        setHasMoreMembers(false)
+      }
+      if (data.length > 0) {
+        setExtraMembers((prev) => [...prev, ...data])
+        setMembersPage(nextPage)
+      } else {
+        setHasMoreMembers(false)
+      }
+    } catch {
+      setHasMoreMembers(false)
+    } finally {
+      setIsLoadingMoreMembers(false)
+    }
+  }
+
+  const canLoadMoreMembers = hasMoreMembers && (tribe?.memberCount ?? 0) > allMembers.length
 
   const { data: postsData, isLoading: isPostsLoading } = useQuery({
     queryKey: ['tribe-posts', tribeId, postsPage],
@@ -88,6 +144,7 @@ export default function TribePage() {
 
   const joinMutation = useMutation({
     mutationFn: () => tribeApi.joinTribe(tribeId),
+    meta: { showErrorToast: true },
     onSuccess: () => {
       queryClient.invalidateQueries(['tribe', tribeId])
       useMyEntitiesStore.getState().fetchMyTribes()
@@ -96,6 +153,7 @@ export default function TribePage() {
 
   const leaveMutation = useMutation({
     mutationFn: () => tribeApi.leaveTribe(tribeId),
+    meta: { showErrorToast: true },
     onSuccess: () => {
       queryClient.invalidateQueries(['tribe', tribeId])
       useMyEntitiesStore.getState().fetchMyTribes()
@@ -108,10 +166,14 @@ export default function TribePage() {
         <div className="spinner spinner-lg" />
       </div>
     )
-  if (!tribe) return <div className="empty-state">{t('tribe.not_found')}</div>
+  if (isTribeError || !tribe) return <div className="empty-state">{getQueryErrorMessage(tribeError, t, true)}</div>
+
+  const totalPages = Math.max(1, Math.ceil((tribe.postCount || 0) / inferredPerPage))
 
   const isDormant = Boolean(tribe.isDormant ?? tribe.IsDormant ?? false)
-  const isMember = tribe.tribeMemberships?.some((m) => m.actor?.actorId === currentUserId)
+  const isMember =
+    tribe.tribeMemberships?.some((m) => m.actor?.actorId === currentUserId) ||
+    myTribes?.some((t) => t.tribeId === tribeId)
   const isLeader = tribe.tribeMemberships?.some(
     (m) => m.actor?.actorId === currentUserId && m.roleName === 'TribeLeader'
   )
@@ -128,7 +190,7 @@ export default function TribePage() {
     (m) => m.actor?.actorId === currentUserId
   )?.roleName
   const canManageTribe = (TRIBE_ROLE_HIERARCHY[myTribeRoleName] || 0) >= 3
-  const isMyTribe = useMyEntitiesStore.getState().myTribes?.some((t) => t.tribeId === tribeId)
+  const isMyTribe = myTribes?.some((t) => t.tribeId === tribeId)
 
   const rawGrade = tribe.tribeGrade
   const gradeMap = {
@@ -159,7 +221,8 @@ export default function TribePage() {
   const capabilityEmblems = [
     {
       key: 'default',
-      label: t('tribe.capability_default', 'Varsayılan'),
+      label: t('tribe.capability_default'),
+      description: `${t('tribe.capability_default')}: ${t('tribe.capability_default_desc')}`,
       Icon: ShieldCheck,
       tone: 'default',
       size: 25,
@@ -169,8 +232,10 @@ export default function TribePage() {
           {
             key: 'fossil',
             label: t(
-              'common.fossil_tribe_desc',
-              'Fosil Klan: Aktif döngüden çekilmiş inaktif klan.'
+              'common.fossil_tribe_desc'
+            ),
+            description: t(
+              'common.fossil_tribe_desc'
             ),
             Icon: FossilIcon,
             tone: 'fossil',
@@ -179,21 +244,87 @@ export default function TribePage() {
         ]
       : []),
   ]
+  const memoryEmblems = getMemoryEmblems(tribe, t)
+
+  const collapseHeaderButton = (
+    <button
+      type="button"
+      className="btn-icon page-back-button"
+      onClick={() => setIsHeaderCollapsed((prev) => !prev)}
+      title={isHeaderCollapsed ? t('common.expand') : t('common.collapse')}
+      aria-label={isHeaderCollapsed ? t('common.expand') : t('common.collapse')}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 32,
+        height: 32,
+        padding: 0,
+        cursor: 'pointer',
+      }}
+    >
+      <span
+        aria-hidden="true"
+        style={{
+          fontSize: 13,
+          lineHeight: 1,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transform: isHeaderCollapsed ? 'none' : 'rotate(180deg)',
+          transformOrigin: '50% 50%',
+          transition: 'transform 0.2s ease',
+        }}
+      >
+        ▼
+      </span>
+    </button>
+  )
 
   return (
-    <div className="flex-col gap-4">
-      <div className="flex items-center gap-3 px-2" style={{ marginBottom: 8 }}>
-        <BackButton style={{ marginBottom: 0 }} />
-      </div>
+    <div className={`flex-col gap-4${embedded ? ' tribe-page-embedded' : ''}`}>
+      {embedded ? (
+        <div className="flex items-center gap-3 px-2" style={{ marginBottom: 8 }}>
+          {collapseHeaderButton}
+        </div>
+      ) : (
+        <PageTopDockRow
+          left={
+            <>
+              <BackButton style={{ marginBottom: 0 }} />
+              {collapseHeaderButton}
+            </>
+          }
+          style={{ marginBottom: 8 }}
+        />
+      )}
 
-      {/* ─── Tribe Header ─── */}
-      <div className={`profile-header-card${isDormant ? ' profile-header-card--dormant' : ''}`}>
+      {/* ─── Collapsible Tribe Header & Members Block ─── */}
+      <AnimatePresence initial={false}>
+        {!isHeaderCollapsed && (
+          <motion.div
+            key="tribe-header-collapsible"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            style={{
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 16,
+              marginBottom: 16,
+            }}
+          >
+            {/* ─── Tribe Header ─── */}
+            <div className={`profile-header-card${isDormant ? ' profile-header-card--dormant' : ''}`}>
         <div
-          className="flex justify-between"
+          className="flex justify-between profile-header-row"
           style={{ gap: 20, width: '100%', alignItems: 'stretch', marginBottom: -6 }}
         >
           {/* ─── LEFT COLUMN ─── */}
           <div
+            className="profile-header-left"
             style={{
               flex: 1,
               minWidth: 0,
@@ -213,7 +344,7 @@ export default function TribePage() {
 
               {tribe.createdAt && (
                 <p
-                  className="text-muted"
+                  className="text-muted tribe-founded"
                   style={{
                     margin: '4px 0 0 0',
                     fontSize: 13,
@@ -225,26 +356,59 @@ export default function TribePage() {
                   <CalendarFold size={14} />
                   <span>
                     {t('tribe.founded')}
-                    {new Date(tribe.createdAt).toLocaleDateString(
-                      i18n.language && i18n.language.startsWith('en') ? 'en-US' : 'tr-TR'
-                    )}
+                    <span className="date-text">{formatDate(tribe.createdAt)}</span>
                   </span>
                 </p>
+              )}
+
+              {tribe.topicTypes && tribe.topicTypes.length > 0 && (
+                <div style={{ marginTop: 12 }}>
+                  <TopicTagList
+                    clickable
+                    max={20}
+                    topicTypes={tribe.topicTypes
+                      .map((tt) => {
+                        const match = TopicTypes.find(
+                          (opt) =>
+                            opt.value === tt?.topicTypeName ||
+                            opt.enumName === tt?.topicTypeName
+                        )
+                        return match ? match.value : null
+                      })
+                      .filter((v) => v != null)}
+                  />
+                </div>
               )}
             </div>
 
             <div style={{ marginTop: 12, marginBottom: 0, maxWidth: 600 }}>
               <div className="bot-capability-emblems" style={{ marginBottom: 0 }}>
-                {capabilityEmblems.map(({ key, label, Icon, tone, size = 25 }) => (
+                {capabilityEmblems.map(({ key, label, description, Icon, tone, size = 25 }) => (
                   <span
                     key={key}
                     className={`bot-capability-emblem bot-capability-emblem--${tone}`}
                     aria-label={label}
+                    title={description || label}
                     role="img"
                   >
                     <Icon size={size} strokeWidth={2.2} aria-hidden="true" />
                   </span>
                 ))}
+                {memoryEmblems.length > 0 && (
+                  <div className="bot-capability-emblems bot-capability-emblems--memory-grid">
+                    {memoryEmblems.map(({ key, label, description, Icon, tone, size = 12 }) => (
+                      <span
+                        key={key}
+                        className={`bot-capability-emblem bot-capability-emblem--${tone}`}
+                        aria-label={label}
+                        title={description || label}
+                        role="img"
+                      >
+                        <Icon size={size} strokeWidth={2.2} aria-hidden="true" />
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -254,16 +418,17 @@ export default function TribePage() {
               <button
                 className="btn btn-outline btn-sm"
                 onClick={() =>
-                  navigate('/mind?tribeId=' + tribeId, { state: { profileName: tribe?.tribeName } })
+                  navigate('/memory-map?tribeId=' + tribeId, { state: { profileName: tribe?.tribeName } })
                 }
               >
-                <Brain size={14} /> {t('tribe.collective_memories', 'Kollektif Anılar')}
+                <Brain size={14} /> {t('tribe.collective_memories')}
               </button>
             </div>
           </div>
 
           {/* ─── VERTICAL DIVIDER ─── */}
           <div
+            className="profile-header-divider"
             style={{
               width: 0,
               borderLeft: '1px solid color-mix(in srgb, var(--color-primary) 50%, transparent)',
@@ -274,6 +439,7 @@ export default function TribePage() {
 
           {/* ─── RIGHT COLUMN ─── */}
           <div
+            className="profile-header-right"
             style={{
               width: 144,
               flexShrink: 0,
@@ -294,10 +460,19 @@ export default function TribePage() {
                 flexShrink: 0,
               }}
             >
-              {tribe.imageUrl ? (
-                <img
+              {tribe.imageUrl && !tribeImgFailed ? (
+                <ImageWithLoader
                   src={tribe.imageUrl}
                   alt={tribe.tribeName}
+                  onError={() => setTribeImgFailed(true)}
+                  spinnerSize="md"
+                  spinnerOpacity={0.45}
+                  wrapperStyle={{
+                    width: 144,
+                    height: 144,
+                    borderRadius: 24,
+                    overflow: 'hidden',
+                  }}
                   style={{
                     width: 144,
                     height: 144,
@@ -325,7 +500,10 @@ export default function TribePage() {
               )}
 
               {isDormant && (
-                <div className="fossil-stamp" style={{ borderRadius: 24 }}>
+                <div
+                  className="fossil-stamp"
+                  style={{ borderRadius: 24 }}
+                >
                   <TRexSkullIcon className="fossil-stamp-icon" />
                 </div>
               )}
@@ -353,21 +531,21 @@ export default function TribePage() {
                 <div
                   style={{
                     position: 'absolute',
-                    bottom: 4,
-                    right: 4,
-                    width: 32,
-                    height: 32,
+                    bottom: -6,
+                    right: -4,
+                    width: 23,
+                    height: 23,
                     borderRadius: '50%',
                     background: tribeGradeColor,
                     color: '#fff',
                     fontWeight: 900,
-                    fontSize: 15,
+                    fontSize: 10,
                     lineHeight: 1,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    border: '3px solid var(--color-surface)',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.4)',
+                    border: '2px solid var(--color-surface)',
+                    boxShadow: '0 1px 4px rgba(0, 0, 0, 0.28)',
                     zIndex: 10,
                     userSelect: 'none',
                   }}
@@ -400,7 +578,7 @@ export default function TribePage() {
                     opacity: isDormant ? 0.5 : 1,
                     cursor: isDormant ? 'not-allowed' : 'pointer',
                   }}
-                  title={isDormant ? t('tribe.dormant_cannot_join', 'Fosil klanlara yeni üye katılamaz.') : undefined}
+                  title={isDormant ? t('tribe.dormant_cannot_join') : undefined}
                 >
                   <UserPlus size={14} /> {t('tribe.join')}
                 </button>
@@ -431,7 +609,7 @@ export default function TribePage() {
                   onClick={() => navigate('/tribe/settings?tribeId=' + tribeId)}
                   style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                 >
-                  <Edit2 size={14} /> {t('action.edit', 'Düzenle')}
+                  <Edit2 size={14} /> {t('action.edit')}
                 </button>
               )}
             </div>
@@ -481,7 +659,7 @@ export default function TribePage() {
                 }}
               >
                 <Sliders size={14} style={{ color: 'var(--color-primary)' }} />
-                <span>Grade</span>
+                <span>{t('profile.grade')}</span>
                 <span
                   style={{
                     width: 19,
@@ -503,7 +681,7 @@ export default function TribePage() {
                   {tribeGradeLabel}
                 </span>
               </span>
-              <span className="profile-stat-label">{t('profile.modifiers', 'Modifiers')}</span>
+              <span className="profile-stat-label">{t('profile.modifiers')}</span>
             </div>
           </div>
 
@@ -513,12 +691,7 @@ export default function TribePage() {
             className="profile-limits-toggle"
             onClick={toggleLimits}
             aria-expanded={isLimitsExpanded}
-            aria-label={t(
-              'profile.limits_header_desc',
-              isLimitsExpanded
-                ? 'Limitler ve miras detaylarını gizle'
-                : 'Limitler ve miras detaylarını göster'
-            )}
+            aria-label={isLimitsExpanded ? t('profile.hide_limits') : t('profile.show_limits')}
           >
             <span
               aria-hidden="true"
@@ -535,11 +708,9 @@ export default function TribePage() {
             className="profile-limits-row"
             style={{ marginTop: 10, marginBottom: 0, paddingLeft: 4, paddingRight: 4 }}
           >
-            <div
-              className="profile-limit-chip"
-            >
+            <div className="profile-limit-chip">
               <Users size={25} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
-              <span>{t('tribe.member_capacity', 'Üye Kapasitesi')}:</span>
+              <span>{t('tribe.member_capacity')}:</span>
               <span className="profile-limit-chip__val">
                 {tribe.memberCount ?? 0} / 50
               </span>
@@ -560,27 +731,23 @@ export default function TribePage() {
             className="profile-limits-row"
             style={{ marginTop: 0, marginBottom: 0, paddingLeft: 4, paddingRight: 4 }}
           >
-            <div
-              className="profile-limit-chip"
-            >
+            <div className="profile-limit-chip">
               <BotFlashCardsIcon
                 size={25}
                 style={{ color: 'var(--color-primary)', flexShrink: 0 }}
               />
-              <span>{t('profile.bot_assignment_limit', 'Kart Atanma Limiti')}:</span>
+              <span>{t('profile.bot_assignment_limit')}:</span>
               <span className="profile-limit-chip__val">
                 {tribe.personalityCards?.length || 0} / {tribe.tribeAssignmentLimit || 4}
               </span>
             </div>
             <span className="profile-limit-divider">•</span>
-            <div
-              className="profile-limit-chip"
-            >
+            <div className="profile-limit-chip">
               <CardContingencyIcon
                 size={25}
                 style={{ color: 'var(--color-primary)', flexShrink: 0 }}
               />
-              <span>{t('profile.card_inheritance_chance', 'Kart Miras Şansı')}:</span>
+              <span>{t('profile.card_inheritance_chance')}:</span>
               <span className="profile-limit-chip__val">
                 %{Math.round((tribe.cardInheritanceChance || 0.25) * 100)}
               </span>
@@ -589,14 +756,12 @@ export default function TribePage() {
               tribe.cardInheritanceModifier !== null && (
                 <>
                   <span className="profile-limit-divider">•</span>
-                  <div
-                    className="profile-limit-chip"
-                  >
+                  <div className="profile-limit-chip">
                     <CardContingencyModifierIcon
                       size={42}
                       style={{ color: 'var(--color-primary)', flexShrink: 0 }}
                     />
-                    <span>{t('profile.card_inheritance_modifier', 'Kart Miras Çarpanı')}:</span>
+                    <span>{t('profile.card_inheritance_modifier')}:</span>
                     <span className="profile-limit-chip__val">
                       +%{Math.round((tribe.cardInheritanceModifier || 0) * 100)}
                     </span>
@@ -638,16 +803,16 @@ export default function TribePage() {
                       letterSpacing: '0.04em',
                     }}
                   >
-                    {t('card.personality_slots', 'Atanmış Kişilik Kartları')} (
+                    {t('card.personality_slots')} (
                     {tribe.personalityCards?.length || 0} / {tribe.tribeAssignmentLimit || 4}{' '}
-                    {t('card.slots_label', 'Slot')})
+                    {t('card.slots_label')})
                   </span>
                 </div>
                 <CardSlots
                   cards={sortedTribeCards}
                   slotCount={tribe.tribeAssignmentLimit || 4}
                   showMark={false}
-                  tribeBadgeLabel={t('tribe.badge_tribe', 'KLAN')}
+                  tribeBadgeLabel={t('tribe.badge_tribe')}
                 />
               </div>
             </>
@@ -662,7 +827,7 @@ export default function TribePage() {
             display: 'flex',
             alignItems: 'center',
             gap: 12,
-            marginBottom: 24,
+            marginBottom: 6,
           }}
         >
           <div
@@ -697,11 +862,19 @@ export default function TribePage() {
             style={{ marginLeft: 'auto' }}
           />
         </div>
+        <div
+          style={{
+            width: '100%',
+            height: 0,
+            borderTop: '1px solid var(--color-border)',
+            margin: '0 0 16px 0',
+          }}
+        />
       </div>
 
-      <div className="flex-col gap-2">
+      <div className="minimal-card-list">
         {visibleMembers.length === 0 && fossilMemberCount === 0 ? (
-          <p className="empty-state">{t('tribe.no_members')}</p>
+          <p className="empty-state">{t('common.nothing_here_yet')}</p>
         ) : (
           visibleMembers.map((member) =>
             member.actor ? (
@@ -727,54 +900,123 @@ export default function TribePage() {
             ) : null
           )
         )}
-      </div>
 
-      {/* ─── Posts Section ─── */}
-      <div className="profile-tabs-container" style={{ marginTop: 24 }}>
-        <div className="profile-tab-group">
-          <button className="profile-tab-btn active" style={{ cursor: 'default' }}>
-            {t('profile.posts')} ({tribe.postCount ?? 0})
-          </button>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button
-            className="btn btn-outline btn-sm"
-            disabled={postsPage === 1 || isPostsLoading}
-            onClick={() => setPostsPage((p) => Math.max(1, p - 1))}
-            style={{ padding: '4px 8px' }}
-          >
-            <ChevronLeft size={14} />
-          </button>
-          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-secondary)' }}>
-            {t('profile.page')} {postsPage} /{' '}
-            {Math.max(1, Math.ceil((tribe.postCount || 0) / inferredPerPage))}
-          </span>
-          <button
-            className="btn btn-outline btn-sm"
-            disabled={
-              postsPage >= Math.ceil((tribe.postCount || 0) / inferredPerPage) || isPostsLoading
-            }
-            onClick={() => setPostsPage((p) => p + 1)}
-            style={{ padding: '4px 8px' }}
-          >
-            <ChevronRight size={14} />
-          </button>
-        </div>
-      </div>
-
-      <div style={{ minHeight: 400, marginTop: 16 }}>
-        {isPostsLoading ? (
-          <div className="spinner spinner-md" style={{ margin: '40px auto', display: 'block' }} />
-        ) : !postsData || postsData.length === 0 ? (
-          <p className="empty-state">{t('tribe.empty_posts')}</p>
-        ) : (
-          <div className="flex-col gap-4">
-            {postsData.map((p) => (
-              <PostCard key={p.contentItemId} {...p} />
-            ))}
+        {canLoadMoreMembers && !isLoadingMoreMembers && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10, width: '100%' }}>
+            <button
+              type="button"
+              className="entry-expand-btn"
+              onClick={handleLoadMoreMembers}
+              aria-label={t('common.more')}
+              title={t('common.more')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--color-text-muted)',
+              }}
+            >
+              <CirclePlus size={19} strokeWidth={2.4} />
+            </button>
           </div>
         )}
+        <InfiniteScrollStatus
+          isFetching={isLoadingMoreMembers}
+          hasNextPage={canLoadMoreMembers}
+          hasItems={visibleMembers.length > 0}
+        />
       </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── Posts Section ─── */}
+      {(() => {
+        const paginationControls = (
+          <div className="pagination-controls" style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <button
+              className="btn btn-outline btn-sm pagination-arrow"
+              disabled={postsPage === 1 || isPostsLoading}
+              onClick={() => setPostsPage((p) => Math.max(1, p - 1))}
+              aria-label={t('common.previous')}
+              title={t('common.previous')}
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <span
+              className="pagination-page-info"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 13,
+                fontWeight: 500,
+                color: 'var(--color-text-secondary)',
+              }}
+            >
+              <PaginationSelect
+                page={postsPage}
+                totalPages={totalPages}
+                onChange={setPostsPage}
+              />
+              / <PaginationTotal totalPages={totalPages} onChange={setPostsPage} />
+            </span>
+            <button
+              className="btn btn-outline btn-sm pagination-arrow"
+              disabled={postsPage >= totalPages || isPostsLoading}
+              onClick={() => setPostsPage((p) => p + 1)}
+              aria-label={t('common.next')}
+              title={t('common.next')}
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        )
+
+        return (
+          <>
+            <div className="profile-tabs-container" style={{ marginTop: 8 }}>
+              <div className="profile-tab-group">
+                <button className="profile-tab-btn active" style={{ cursor: 'default' }}>
+                  {t('profile.posts')} ({tribe.postCount ?? 0})
+                </button>
+              </div>
+              {paginationControls}
+            </div>
+
+            <div style={{ minHeight: 400, marginTop: 16 }}>
+              {isPostsLoading ? (
+                <div className="spinner spinner-md" style={{ margin: '40px auto', display: 'block' }} />
+              ) : !postsData || postsData.length === 0 ? (
+                <p className="empty-state">{t('common.nothing_here_yet')}</p>
+              ) : (
+                <div className="flex-col gap-4">
+                  {postsData.map((p) => (
+                    <PostCard key={p.contentItemId} {...p} />
+                  ))}
+                  {totalPages > 1 && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        marginTop: 16,
+                        paddingTop: 16,
+                        borderTop: '1px solid var(--color-border)',
+                      }}
+                    >
+                      {paginationControls}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </>
+        )
+      })()}
 
       <ProfileModifiersModal
         profile={{ ...tribe, discriminator: 'Tribe' }}

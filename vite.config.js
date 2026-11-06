@@ -71,6 +71,38 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/media': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/hubs': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        ws: true,
+        secure: false,
+      },
+    },
+  },
+  preview: {
+    host: '127.0.0.1',
+    port: 4173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/avatars': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/media': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      },
       '/hubs': {
         target: 'http://localhost:5000',
         changeOrigin: true,

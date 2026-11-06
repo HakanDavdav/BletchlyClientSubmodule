@@ -1,4 +1,4 @@
-import { Crown } from 'lucide-react'
+import { ClockAlert, ClockCheck, Crown, Lock } from 'lucide-react'
 import CardSvg from '../../../assets/FigmaNew/Card.svg?react'
 
 /**
@@ -6,10 +6,16 @@ import CardSvg from '../../../assets/FigmaNew/Card.svg?react'
  * - default: tek, eğik, ortasında bot gölgesi olan kart.
  * - crowned: kartın sol üstünde küçük altın taç.
  * - purchased: crowned ile birlikte; taç + $ ikilisi aynı eğimli container içinde (PersonalityCard stili).
+ * - locked: kartın sol üstünde eğimli beyaz kilit ikonu (PersonalityCard stili).
+ * - effective: kartın sol üstünde eğimli altın saat-onay ikonu (PersonalityCard stili).
+ * - incubating: kartın sol üstünde eğimli beyaz saat-uyarı ikonu (PersonalityCard stili).
  */
 export default function CardIcon({
   crowned = false,
   purchased = false,
+  locked = false,
+  effective = false,
+  incubating = false,
   width = 21,
   height,
   color = 'var(--color-primary)',
@@ -26,11 +32,14 @@ export default function CardIcon({
   const resolvedCrownSize =
     crownSize ??
     (width < 16
-      ? Math.max(Math.round(width * 0.6), 6)
+      ? Math.max(width * 0.6, 3)
       : Math.max(Math.round(width * 0.45), 8))
 
+  // Taç çizgisi de kartla birlikte ölçeklenir (minik kartlarda kalın kalmasın)
+  const resolvedCrownStroke = width < 16 ? Math.max(width * 0.18, 0.8) : 3.2
+
   const resolvedCrownTop = crownTop ?? -Math.max(Math.round(renderedHeight * 0.08), 1)
-  const resolvedCrownLeft = crownLeft ?? -Math.max(Math.round(width * 0.18), 2)
+  const resolvedCrownLeft = crownLeft ?? -Math.max(width * 0.18, 1)
 
   return (
     <span
@@ -55,7 +64,7 @@ export default function CardIcon({
       {crowned && !purchased && (
         <Crown
           size={resolvedCrownSize}
-          strokeWidth={width < 16 ? 2.2 : 3.2}
+          strokeWidth={resolvedCrownStroke}
           style={{
             position: 'absolute',
             top: resolvedCrownTop,
@@ -86,14 +95,14 @@ export default function CardIcon({
         >
           <Crown
             size={resolvedCrownSize}
-            strokeWidth={width < 16 ? 2.2 : 3.2}
+            strokeWidth={resolvedCrownStroke}
             style={{ color: '#b87333', flexShrink: 0 }}
           />
           <span
             style={{
               marginLeft: `${-resolvedCrownSize * 0.17}px`,
               marginTop: `${resolvedCrownSize * 0.17}px`,
-              fontSize: Math.max(Math.round(resolvedCrownSize * 1.04), 7),
+              fontSize: Math.max(resolvedCrownSize * 1.04, 3),
               fontWeight: 900,
               fontFamily: '"Arial Black", Impact, system-ui, sans-serif',
               lineHeight: 1,
@@ -105,6 +114,54 @@ export default function CardIcon({
             $
           </span>
         </span>
+      )}
+      {locked && (
+        <Lock
+          size={resolvedCrownSize}
+          strokeWidth={3}
+          style={{
+            position: 'absolute',
+            top: resolvedCrownTop,
+            left: resolvedCrownLeft,
+            color: '#ffffff',
+            transform: 'rotate(-22deg)',
+            filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.8))',
+            pointerEvents: 'none',
+            zIndex: 2,
+          }}
+        />
+      )}
+      {effective && (
+        <ClockCheck
+          size={resolvedCrownSize}
+          strokeWidth={2.8}
+          style={{
+            position: 'absolute',
+            top: resolvedCrownTop,
+            left: resolvedCrownLeft,
+            color: 'var(--color-warning)',
+            transform: 'rotate(-20deg)',
+            filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.8))',
+            pointerEvents: 'none',
+            zIndex: 2,
+          }}
+        />
+      )}
+      {incubating && (
+        <ClockAlert
+          size={resolvedCrownSize}
+          strokeWidth={2.8}
+          style={{
+            position: 'absolute',
+            top: resolvedCrownTop,
+            left: resolvedCrownLeft,
+            color: '#ffffff',
+            transform: 'rotate(-20deg)',
+            filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.8))',
+            pointerEvents: 'none',
+            zIndex: 2,
+          }}
+        />
       )}
     </span>
   )

@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { triggerConfetti } from '../../utils/confetti'
 import TokenModal from './TokenModal'
+import ModalPortal from '../common/ModalPortal'
 
 export default function ChangeEmailModal({ isOpen, onClose }) {
   useDevLog('ChangeEmailModal', arguments[0] || {})
@@ -42,17 +43,6 @@ export default function ChangeEmailModal({ isOpen, onClose }) {
   })
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-    
-    if (isRequired) {
-      return (!value || !value.trim()) ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
 
   const canSubmitRequest = newEmail.trim() !== '' && !requestMutation.isPending
 
@@ -87,7 +77,8 @@ export default function ChangeEmailModal({ isOpen, onClose }) {
   }
 
   return (
-    <div className="modal-overlay" onClick={handleOverlayClick} style={{ zIndex: 100 }}>
+    <ModalPortal>
+      <div className="modal-overlay" onClick={handleOverlayClick} style={{ zIndex: 100 }}>
       <div className="modal-box" style={{ maxWidth: 440, padding: '36px 32px', textAlign: 'left', position: 'relative' }}>
         <button
           type="button"
@@ -140,7 +131,7 @@ export default function ChangeEmailModal({ isOpen, onClose }) {
                   {t('auth.new_email')}
                 </label>
                 <input
-                  className="input"
+                  className={`input ${hasSubmitted && !newEmail.trim() ? 'error' : ''}`}
                   type="email"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
@@ -150,11 +141,7 @@ export default function ChangeEmailModal({ isOpen, onClose }) {
                     height: 42,
                     padding: '10px 14px',
                     borderRadius: 10,
-                    borderColor: getBorderColor('newEmail', newEmail, true),
-                    outline: 'none',
                   }}
-                  onFocus={() => setFocused('newEmail')}
-                  onBlur={() => setFocused(null)}
                 />
               </div>
 
@@ -176,7 +163,7 @@ export default function ChangeEmailModal({ isOpen, onClose }) {
                   disabled={requestMutation.isPending}
                   style={{ minWidth: 90 }}
                 >
-                  {t('common.close', 'Kapat')}
+                  {t('common.close')}
                 </button>
                 <button
                   type="submit"
@@ -191,6 +178,7 @@ export default function ChangeEmailModal({ isOpen, onClose }) {
           </motion.div>
         </AnimatePresence>
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   )
 }

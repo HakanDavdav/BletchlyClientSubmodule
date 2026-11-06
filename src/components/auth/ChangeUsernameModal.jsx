@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { triggerConfetti } from '../../utils/confetti'
 import PasswordInput from '../common/PasswordInput'
+import ModalPortal from '../common/ModalPortal'
 
 export default function ChangeUsernameModal({ isOpen, onClose }) {
   useDevLog('ChangeUsernameModal', arguments[0] || {})
@@ -38,17 +39,6 @@ export default function ChangeUsernameModal({ isOpen, onClose }) {
   }
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-    
-    if (isRequired) {
-      return (!value || !value.trim()) ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
 
   const canSubmit = formData.password.trim() !== '' && formData.newUsername.trim() !== '' && !changeUsernameMutation.isPending
 
@@ -64,7 +54,8 @@ export default function ChangeUsernameModal({ isOpen, onClose }) {
   if (!isOpen) return null
 
   return (
-    <div className="modal-overlay" onClick={handleOverlayClick} style={{ zIndex: 100 }}>
+    <ModalPortal>
+      <div className="modal-overlay" onClick={handleOverlayClick} style={{ zIndex: 100 }}>
       <div className="modal-box" style={{ maxWidth: 440, padding: '36px 32px', textAlign: 'left', position: 'relative' }}>
         <button
           type="button"
@@ -104,6 +95,7 @@ export default function ChangeUsernameModal({ isOpen, onClose }) {
                 {t('auth.current_password')}
               </label>
               <PasswordInput
+                className={`input w-full ${hasSubmitted && !formData.password.trim() ? 'error' : ''}`}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder="••••••••"
@@ -112,11 +104,7 @@ export default function ChangeUsernameModal({ isOpen, onClose }) {
                   height: 42,
                   padding: '10px 14px',
                   borderRadius: 10,
-                  borderColor: getBorderColor('password', formData.password, true),
-                  outline: 'none',
                 }}
-                onFocus={() => setFocused('password')}
-                onBlur={() => setFocused(null)}
               />
             </div>
 
@@ -126,7 +114,7 @@ export default function ChangeUsernameModal({ isOpen, onClose }) {
                 {t('auth.new_username')}
               </label>
               <input
-                className="input"
+                className={`input ${hasSubmitted && !formData.newUsername.trim() ? 'error' : ''}`}
                 type="text"
                 value={formData.newUsername}
                 onChange={(e) => setFormData({ ...formData, newUsername: e.target.value })}
@@ -135,11 +123,7 @@ export default function ChangeUsernameModal({ isOpen, onClose }) {
                   height: 42,
                   padding: '10px 14px',
                   borderRadius: 10,
-                  borderColor: getBorderColor('newUsername', formData.newUsername, true),
-                  outline: 'none',
                 }}
-                onFocus={() => setFocused('newUsername')}
-                onBlur={() => setFocused(null)}
               />
             </div>
           </div>
@@ -162,7 +146,7 @@ export default function ChangeUsernameModal({ isOpen, onClose }) {
               disabled={changeUsernameMutation.isPending}
               style={{ minWidth: 90 }}
             >
-              {t('common.close', 'Kapat')}
+              {t('common.close')}
             </button>
             <button
               type="submit"
@@ -175,6 +159,7 @@ export default function ChangeUsernameModal({ isOpen, onClose }) {
           </div>
         </form>
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   )
 }

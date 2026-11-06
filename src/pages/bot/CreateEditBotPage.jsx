@@ -2,10 +2,13 @@ import { useState, useEffect, useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { actorApi } from '../../api/actorApi'
 import { personalityCardApi } from '../../api/personalityCardApi'
-import { Trash2, Loader2, Bot } from 'lucide-react'
+import { Trash2, Loader2, Bot, Globe, AlertTriangle, Lock } from 'lucide-react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import BackButton from '../../components/common/BackButton'
+import ConfirmModal from '../../components/common/ConfirmModal'
 import { TopicTypes } from '../../constants/TopicTypes'
+import { UserCapabilities } from '../../constants/enums'
 import useAuthStore from '../../store/authStore'
 import useMyEntitiesStore from '../../store/myEntitiesStore'
 import useDevLog from '../../utils/useDevLog'
@@ -18,10 +21,15 @@ import HowItWorksHelp from '../../components/common/HowItWorksHelp'
 import BotFlashCardsIcon from '../../components/common/icons/BotFlashCardsIcon'
 import AvatarUpload from '../../components/common/AvatarUpload'
 import ModelGlassToggle from '../../components/common/ModelGlassToggle'
+import MemoryTuningSlider, {
+  formatMultiplier,
+} from '../../components/common/MemoryTuningSlider'
+import useIsMobile from '../../hooks/useIsMobile'
 import { buildOwnedCardIdSet, normalizeCardId } from '../../utils/cardOwnership'
 import { trackCreateBot } from '../../utils/analytics'
 
 const RANDOM_BOT_NAMES = ['GigaChad', 'Nietzsche', 'Doge', 'Kitty']
+const BOT_CREATOR_ACK_KEY = 'bletchly_bot_creator_ack'
 
 export default function CreateEditBotPage() {
   useDevLog('CreateEditBotPage', arguments[0] || {})
@@ -39,6 +47,15 @@ export default function CreateEditBotPage() {
 
   // If botId is provided, we are in Edit mode
   const isEditMode = Boolean(botId)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [creatorAcknowledged, setCreatorAcknowledged] = useState(() => {
+    try {
+      return localStorage.getItem(BOT_CREATOR_ACK_KEY) === 'true'
+    } catch {
+      return false
+    }
+  })
+  const [hasCreatorAckError, setHasCreatorAckError] = useState(false)
 
   const [formData, setFormData] = useState({
     profileName: '',
@@ -47,11 +64,18 @@ export default function CreateEditBotPage() {
     personalityCardId: null,
     personalityCardName: '',
     personalityCardPrompt: '',
+    personalityCardImageUrl: '',
     personalityCardConfirmed: false,
     personalityCardLocked: false,
     autoInterests: false,
     autoBio: false,
-    preferredModel: 0,
+    preferredModel: 3,
+    affinityBiasMultiplier: 1,
+    ebbinghausHalfLifePeriodMultiplier: 1,
+    maxStrengthMultiplier: 1,
+    minStrengthThresholdMultiplier: 1,
+    recallPathLimitMultiplier: 1,
+    incubationPeriodMultiplier: 1,
     topicTypes: [],
     selectedCardIds: [],
     lockedCardIds: [],
@@ -77,14 +101,34 @@ export default function CreateEditBotPage() {
     enabled: Boolean(actorId),
   })
 
-  const { data: userProfile } = useQuery({
-    queryKey: ['actor', actorId],
-    queryFn: () => actorApi.getActor(actorId).then((res) => res.data?.data),
+  const storeSettings = useMyEntitiesStore((state) => state.mySettings)
+  const { data: userSettings } = useQuery({
+    queryKey: ['userSettings', actorId],
+    queryFn: async () => {
+      if (storeSettings) return storeSettings
+      const res = await actorApi.getUserSettings()
+      return res.data?.data
+    },
+    initialData: storeSettings || undefined,
     enabled: Boolean(actorId),
   })
 
-  const botCountLimit = userProfile?.userSettings?.botCountLimit || 5
-  const isBotLimitReached = !isEditMode && myBots.length >= botCountLimit
+  const activeBots = useMemo(
+    () => (myBots || []).filter((b) => !b.isDormant && !b.IsDormant),
+    [myBots]
+  )
+  const botCountLimit = userSettings?.botCountLimit ?? storeSettings?.botCountLimit ?? 5
+  const cardLockLimit = userSettings?.cardAssignmentLockLimit ?? storeSettings?.cardAssignmentLockLimit ?? 4
+  const isBotLimitReached = !isEditMode && activeBots.length >= botCountLimit
+
+  // Hafıza dayanıklılığı (Unutkanlık Hızı) ayarı Pro'ya özeldir
+  const isPremiumUser =
+    ((userSettings?.userCapabilities ?? UserCapabilities.Default) & UserCapabilities.Premium) ===
+    UserCapabilities.Premium
+  const isMobileScreen = useIsMobile()
+  const sliderRowStyle = isMobileScreen
+    ? undefined
+    : { flex: 1, minWidth: 0, maxWidth: 'none' }
 
   // Fetch existing data if in Edit Mode
   const { data: existingBot, isLoading: isLoadingExisting } = useQuery({
@@ -106,7 +150,13 @@ export default function CreateEditBotPage() {
     personalityCardLocked: false,
     autoInterests: false,
     autoBio: false,
-    preferredModel: 0,
+    preferredModel: 3,
+    affinityBiasMultiplier: 1,
+    ebbinghausHalfLifePeriodMultiplier: 1,
+    maxStrengthMultiplier: 1,
+    minStrengthThresholdMultiplier: 1,
+    recallPathLimitMultiplier: 1,
+    incubationPeriodMultiplier: 1,
     topicTypes: [],
     selectedCardIds: [],
     lockedCardIds: [],
@@ -128,31 +178,17 @@ export default function CreateEditBotPage() {
       const existingPersonalityCard = personalAssignedCards[0]
       setExistingCard(existingPersonalityCard || null)
 
-      const enums = {
-        Politics: 1,
-        Economy: 2,
-        WorldNews: 4,
-        LocalNews: 8,
-        Trending: 16,
-        Technology: 32,
-        Science: 64,
-        AI: 128,
-        Space: 256,
-        Health: 512,
-        Sports: 1024,
-        Entertainment: 2048,
-        Gaming: 4096,
-        Celebrity: 8192,
-        Lifestyle: 16384,
-        Education: 32768,
-        Relationships: 65536,
-      }
-
       const mappedTopicTypes = (existingBot.topicTypes || [])
         .map((t) => {
           const typeNameOrVal = t.topicTypeName
           if (typeof typeNameOrVal === 'number') return typeNameOrVal
-          return enums[typeNameOrVal] || null
+          const match = TopicTypes.find(
+            (opt) =>
+              opt.enumName === typeNameOrVal ||
+              opt.label === typeNameOrVal ||
+              opt.key === typeNameOrVal?.toLowerCase()
+          )
+          return match ? match.value : null
         })
         .filter((v) => v != null)
 
@@ -169,11 +205,20 @@ export default function CreateEditBotPage() {
         personalityCardId: null,
         personalityCardName: '',
         personalityCardPrompt: '',
+        personalityCardImageUrl: '',
         personalityCardConfirmed: false,
         personalityCardLocked: false,
         autoInterests: existingBot.botSettings?.autoInterests || false,
         autoBio: existingBot.botSettings?.autoBio || false,
-        preferredModel: existingBot.botSettings?.preferredModel ?? 0,
+        preferredModel: existingBot.botSettings?.preferredModel ?? 3,
+        affinityBiasMultiplier: existingBot.botSettings?.affinityBiasMultiplier ?? 1,
+        ebbinghausHalfLifePeriodMultiplier: existingBot.botSettings?.ebbinghausHalfLifePeriodMultiplier ?? 1,
+        maxStrengthMultiplier: existingBot.botSettings?.maxStrengthMultiplier ?? 1,
+        minStrengthThresholdMultiplier: Number(
+          (2 - (existingBot.botSettings?.maxStrengthMultiplier ?? 1)).toFixed(2)
+        ),
+        recallPathLimitMultiplier: existingBot.botSettings?.recallPathLimitMultiplier ?? 1,
+        incubationPeriodMultiplier: existingBot.botSettings?.incubationPeriodMultiplier ?? 1,
         topicTypes: mappedTopicTypes,
         selectedCardIds: personalAssignedIds,
         lockedCardIds: existingLockedIds,
@@ -198,7 +243,7 @@ export default function CreateEditBotPage() {
         })
       }
 
-      toast.success(t('common.success', 'Başarılı'), { duration: 3000 })
+      toast.success(t('common.success'), { duration: 3000 })
       queryClient.invalidateQueries({ queryKey: ['myBots'] })
       queryClient.invalidateQueries({ queryKey: ['actorProfile'] })
       queryClient.invalidateQueries({ queryKey: ['myPersonalityCards'] })
@@ -218,7 +263,7 @@ export default function CreateEditBotPage() {
     mutationFn: () => actorApi.deleteBot(botId),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      toast.success(t('common.success', 'Başarılı'), { duration: 3000 })
+      toast.success(t('common.success'), { duration: 3000 })
       queryClient.invalidateQueries({ queryKey: ['myBots'] })
       queryClient.invalidateQueries({ queryKey: ['actorProfile'] })
       queryClient.invalidateQueries({ queryKey: ['myPersonalityCards'] })
@@ -228,25 +273,70 @@ export default function CreateEditBotPage() {
   })
 
   const handleDeleteBot = () => {
-    if (window.confirm(t('bot.confirm_delete'))) {
-      deleteMutation.mutate()
+    setIsDeleteModalOpen(true)
+  }
+
+  const handleCreatorAckChange = (e) => {
+    const checked = e.target.checked
+    setCreatorAcknowledged(checked)
+    if (checked) setHasCreatorAckError(false)
+    try {
+      localStorage.setItem(BOT_CREATOR_ACK_KEY, checked ? 'true' : 'false')
+    } catch {
+      // Storage unavailable; keep the choice in memory for this session.
     }
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
 
-    if (!canSubmit) {
+    if (mutation.isPending) return
+
+    if (!isEditMode && !creatorAcknowledged) {
+      setHasCreatorAckError(true)
+      toast.error(
+        t(
+          'bot.creator_ack_required'
+        )
+      )
+      return
+    }
+
+    if (isBotLimitReached) {
+      toast.error(
+        t('bot.limit_reached', {
+          limit: botCountLimit,
+        })
+      )
+      return
+    }
+
+    if (!formData.profileName.trim()) {
       setHasSubmitted(true)
-      if (!formData.profileName.trim()) {
-        toast.error(t('bot.name_required', 'Bot ismi gereklidir.'))
-      } else if (!formData.autoBio && !formData.bio.trim()) {
-        toast.error(t('bot.bio_required', 'Biyografi girilmeli veya otomatik biyografi seçilmelidir.'))
-      }
+      toast.error(t('bot.name_required'))
       const firstInvalid = Array.from(e.currentTarget.querySelectorAll('[data-field]')).find(
         (el) => !(el.value || '').trim()
       )
       firstInvalid?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+
+    if (!formData.autoBio && !formData.bio.trim()) {
+      setHasSubmitted(true)
+      toast.error(t('bot.bio_required'))
+      return
+    }
+
+    if (!formData.autoInterests && (formData.topicTypes || []).length < 3) {
+      setHasSubmitted(true)
+      toast.error(t('bot.interests_min'))
+      return
+    }
+
+    const ownedSelectedCardIds = (formData.selectedCardIds || []).filter((id) => isOwnedCardId(id))
+    if (!isEditMode && !formData.personalityCardConfirmed && ownedSelectedCardIds.length === 0) {
+      setHasSubmitted(true)
+      toast.error(t('bot.card_required'))
       return
     }
 
@@ -255,11 +345,11 @@ export default function CreateEditBotPage() {
       lockedCardIds,
       personalityCardName,
       personalityCardPrompt,
+      personalityCardImageUrl,
       personalityCardConfirmed,
       personalityCardLocked,
       ...payload
     } = formData
-    const ownedSelectedCardIds = selectedCardIds.filter((id) => isOwnedCardId(id))
     payload.assignedCardIds = ownedSelectedCardIds
     payload.lockedCardIds = lockedCardIds.filter(
       (id) =>
@@ -276,9 +366,11 @@ export default function CreateEditBotPage() {
     if (personalityCardConfirmed) {
       payload.personalityCardName = personalityCardName
       payload.personalityCardPrompt = personalityCardPrompt
+      payload.personalityCardImageUrl = personalityCardImageUrl || null
     } else {
       payload.personalityCardName = null
       payload.personalityCardPrompt = null
+      payload.personalityCardImageUrl = null
     }
 
     mutation.mutate(payload)
@@ -294,6 +386,9 @@ export default function CreateEditBotPage() {
         selectedCardIds: exists
           ? current.selectedCardIds.filter((selectedId) => selectedId !== lowerId)
           : [...current.selectedCardIds, lowerId],
+        lockedCardIds: exists
+          ? current.lockedCardIds.filter((lockedId) => lockedId !== lowerId)
+          : current.lockedCardIds,
       }
     })
   }
@@ -302,12 +397,19 @@ export default function CreateEditBotPage() {
     const lowerId = normalizeCardId(cardId)
     if (!lowerId) return
     setFormData((current) => {
-      const exists = current.lockedCardIds.includes(lowerId)
-      return {
-        ...current,
-        lockedCardIds: exists
-          ? current.lockedCardIds.filter((lockedId) => lockedId !== lowerId)
-          : [...current.lockedCardIds, lowerId],
+      const isLocked = current.lockedCardIds.includes(lowerId)
+      if (isLocked) {
+        return {
+          ...current,
+          lockedCardIds: current.lockedCardIds.filter((lockedId) => lockedId !== lowerId),
+        }
+      } else {
+        const isSelected = current.selectedCardIds.includes(lowerId)
+        return {
+          ...current,
+          selectedCardIds: isSelected ? current.selectedCardIds : [...current.selectedCardIds, lowerId],
+          lockedCardIds: [...current.lockedCardIds, lowerId],
+        }
       }
     })
   }
@@ -329,22 +431,12 @@ export default function CreateEditBotPage() {
       personalityCardId: current.personalityCardId,
       personalityCardName: field === 'cardName' ? value : current.personalityCardName,
       personalityCardPrompt: field === 'prompt' ? value : current.personalityCardPrompt,
+      personalityCardImageUrl: field === 'imageUrl' ? value : current.personalityCardImageUrl,
       personalityCardConfirmed: false,
     }))
   }
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-
-    if (isRequired) {
-      return !value || !value.toString().trim() ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
 
   const hasNewCard = Boolean(
     formData.personalityCardName.trim() !== '' || formData.personalityCardPrompt.trim() !== ''
@@ -384,6 +476,8 @@ export default function CreateEditBotPage() {
   const canSubmit =
     formData.profileName.trim() !== '' &&
     (formData.autoBio || formData.bio.trim() !== '') &&
+    (formData.autoInterests || (formData.topicTypes || []).length >= 3) &&
+    (isEditMode || formData.personalityCardConfirmed || (formData.selectedCardIds || []).length > 0) &&
     !isBotLimitReached &&
     !mutation.isPending
 
@@ -400,12 +494,11 @@ export default function CreateEditBotPage() {
     return (
       <div className="empty-state">
         <h2 style={{ color: 'var(--color-error)' }}>
-          {t('bot.dormant_unauthorized', 'Fosil botlar düzenlenemez.')}
+          {t('bot.dormant_unauthorized')}
         </h2>
         <p>
           {t(
-            'bot.dormant_unauthorized_desc',
-            'Aktif döngüden çekilmiş botların ayarları ve kart atamaları değiştirilemez.'
+            'bot.dormant_unauthorized_desc'
           )}
         </p>
         <button
@@ -413,7 +506,7 @@ export default function CreateEditBotPage() {
           onClick={() => navigate('/profile?actorId=' + botId)}
           style={{ marginTop: 16 }}
         >
-          {t('bot.return_to_profile', 'Profile Dön')}
+          {t('bot.return_to_profile')}
         </button>
       </div>
     )
@@ -446,6 +539,21 @@ export default function CreateEditBotPage() {
             >
               {isEditMode ? t('bot.bot_settings') : t('bot.create_bot')}
             </h1>
+            {!isEditMode && (
+              <span
+                style={{
+                  fontSize: 12,
+                  padding: '2px 8px',
+                  borderRadius: 12,
+                  background: 'var(--color-surface-raised)',
+                  color: 'var(--color-text-secondary)',
+                  border: '1px solid var(--color-border)',
+                  fontWeight: 600,
+                }}
+              >
+                {activeBots.length} / {botCountLimit}
+              </span>
+            )}
           </div>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
             {isEditMode ? t('bot.edit_bot_desc') : t('bot.create_bot_desc')}
@@ -458,8 +566,9 @@ export default function CreateEditBotPage() {
             t('bot.how_it_works_2'),
             t('bot.how_it_works_3'),
             t('bot.how_it_works_4'),
+            t('bot.how_it_works_5'),
           ]}
-          closeLabel={t('common.close', 'Kapat')}
+          closeLabel={t('common.close')}
           triggerStyle={{ marginLeft: 'auto', marginRight: 24, flexShrink: 0 }}
         />
       </div>
@@ -492,26 +601,16 @@ export default function CreateEditBotPage() {
               data-field="profileName"
               placeholder={t('bot.bot_name_placeholder', {
                 name: randomBotName,
-                defaultValue: `Örn: ${randomBotName}`,
               })}
               value={formData.profileName}
               onChange={(e) => setFormData({ ...formData, profileName: e.target.value })}
               disabled={mutation.isPending || mutation.isSuccess}
+              className={`input ${hasSubmitted && !formData.profileName.trim() ? 'error' : ''}`}
               style={{
-                width: '100%',
                 padding: '14px 16px',
                 borderRadius: 12,
-                border: `1.5px solid ${getBorderColor('profileName', formData.profileName, true)}`,
                 background: 'var(--color-surface)',
-                color: 'var(--color-text-primary)',
-                fontSize: 14,
-                fontFamily: 'inherit',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-                boxSizing: 'border-box',
               }}
-              onFocus={() => setFocused('profileName')}
-              onBlur={() => setFocused(null)}
             />
           </div>
         </div>
@@ -540,24 +639,14 @@ export default function CreateEditBotPage() {
                   value={formData.bio}
                   onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                   disabled={mutation.isPending || mutation.isSuccess}
+                  className={`input textarea textarea--autogrow ${hasSubmitted && !formData.autoBio && !formData.bio.trim() ? 'error' : ''}`}
                   style={{
-                    width: '100%',
-                    resize: 'vertical',
                     minHeight: 80,
                     padding: '14px 16px',
                     borderRadius: 12,
-                    border: `1.5px solid ${getBorderColor('bio', formData.bio, !formData.autoBio)}`,
                     background: 'var(--color-surface)',
-                    color: 'var(--color-text-primary)',
-                    fontSize: 14,
                     lineHeight: 1.65,
-                    fontFamily: 'inherit',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                    boxSizing: 'border-box',
                   }}
-                  onFocus={() => setFocused('bio')}
-                  onBlur={() => setFocused(null)}
                 />
               </div>
             </div>
@@ -582,30 +671,6 @@ export default function CreateEditBotPage() {
           />
         </div>
 
-        <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              marginBottom: 8,
-              letterSpacing: '0.02em',
-              textTransform: 'uppercase',
-            }}
-          >
-            {t('bot.model_selection', 'Model')}
-          </label>
-          <ModelGlassToggle
-            value={formData.preferredModel}
-            onChange={(nextModel) => {
-              if (!mutation.isPending && !mutation.isSuccess) {
-                setFormData({ ...formData, preferredModel: nextModel })
-              }
-            }}
-            disabled={mutation.isPending || mutation.isSuccess}
-          />
-        </div>
 
         <div>
           <label
@@ -619,12 +684,13 @@ export default function CreateEditBotPage() {
               textTransform: 'uppercase',
             }}
           >
-            {t('card.create_personality_optional', 'Kişilik kartı oluştur (Opsiyonel)')}
+            {t('card.create_personality_optional')}
           </label>
           <PersonalityCard
             variant="editor"
             editorCardName={formData.personalityCardName}
             editorPrompt={formData.personalityCardPrompt}
+            editorImageUrl={formData.personalityCardImageUrl}
             editorConfirmed={formData.personalityCardConfirmed}
             editorLocked={formData.personalityCardLocked}
             disabled={mutation.isPending || mutation.isSuccess}
@@ -657,7 +723,7 @@ export default function CreateEditBotPage() {
                 textTransform: 'uppercase',
               }}
             >
-              {t('bot.current_assigned_cards', 'Bota Atanmış Kartlar')}
+              {t('bot.current_assigned_cards')}
             </label>
             <div
               className="personality-card-slots"
@@ -725,8 +791,28 @@ export default function CreateEditBotPage() {
                 textTransform: 'uppercase',
               }}
             >
-              {t('bot.select_unassigned_cards', 'Sahip olduğun kartlarından ekle (Opsiyonel)')}
+              {t('bot.select_unassigned_cards')}
             </label>
+            {cardLockLimit != null && (
+              <span
+                title={t('profile.card_assignment_lock_limit')}
+                style={{
+                  fontSize: 12,
+                  padding: '2px 8px',
+                  borderRadius: 12,
+                  background: 'var(--color-surface-raised)',
+                  color: 'var(--color-text-secondary)',
+                  border: '1px solid var(--color-border)',
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                <Lock size={12} style={{ opacity: 0.8 }} />
+                {t('card.total_lock_allowance')}: {cardLockLimit}
+              </span>
+            )}
           </div>
           <CardSelectionSlots
             cards={myCards}
@@ -735,10 +821,224 @@ export default function CreateEditBotPage() {
             disabled={mutation.isPending || mutation.isSuccess}
             showHeader={false}
             slotCount={10}
+            assignLockedCardIds={formData.lockedCardIds}
+            onToggleAssignLock={toggleLockCardId}
           />
           <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
             {t('bot.additional_personality_cards_desc')}
           </p>
+        </div>
+        <div>
+          <label
+            style={{
+              display: 'block',
+              fontSize: 13,
+              fontWeight: 600,
+              color: 'var(--color-text-secondary)',
+              marginBottom: 8,
+              letterSpacing: '0.02em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {t('bot.model_selection')}
+          </label>
+          <ModelGlassToggle
+            value={formData.preferredModel}
+            onChange={(nextModel) => {
+              if (!mutation.isPending && !mutation.isSuccess) {
+                setFormData({ ...formData, preferredModel: nextModel })
+              }
+            }}
+            disabled={mutation.isPending || mutation.isSuccess}
+            isPremium={isPremiumUser}
+          />
+          <div style={{ marginTop: 18 }}>
+            <label
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: 'var(--color-text-secondary)',
+                letterSpacing: '0.02em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {t('bot.memory_tuning')}
+            </label>
+            <div
+              style={{
+                marginTop: 12,
+                display: 'flex',
+                flexDirection: isMobileScreen ? 'column' : 'row',
+                gap: 12,
+                alignItems: 'stretch',
+              }}
+            >
+              <MemoryTuningSlider
+                title={t('bot.incubation_title')}
+                description={t(
+                  'bot.incubation_desc'
+                )}
+                leftLabel={t('bot.incubation_left')}
+                rightLabel={t('bot.incubation_right')}
+                emblemField="incubationPeriodMultiplier"
+                value={formData.incubationPeriodMultiplier}
+                min={0}
+                max={2}
+                onChange={(v) => {
+                  if (!mutation.isPending && !mutation.isSuccess) {
+                    setFormData((prev) => ({ ...prev, incubationPeriodMultiplier: v }))
+                  }
+                }}
+                disabled={mutation.isPending || mutation.isSuccess}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+            </div>
+            <div
+              style={{
+                marginTop: 12,
+                display: 'flex',
+                flexDirection: isMobileScreen ? 'column' : 'row',
+                gap: 12,
+                alignItems: 'stretch',
+              }}
+            >
+              <MemoryTuningSlider
+                title={t('bot.affinity_bias_title')}
+                description={t(
+                  'bot.affinity_bias_desc'
+                )}
+                leftLabel={t('bot.affinity_bias_left')}
+                rightLabel={t('bot.affinity_bias_right')}
+                emblemField="affinityBiasMultiplier"
+                value={formData.affinityBiasMultiplier}
+                min={0}
+                max={2}
+                onChange={(v) => {
+                  if (!mutation.isPending && !mutation.isSuccess) {
+                    setFormData((prev) => ({ ...prev, affinityBiasMultiplier: v }))
+                  }
+                }}
+                disabled={mutation.isPending || mutation.isSuccess}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+              <MemoryTuningSlider
+                title={t('bot.forgetfulness_title')}
+                description={t(
+                  'bot.forgetfulness_desc'
+                )}
+                leftLabel={t('bot.forgetfulness_left')}
+                rightLabel={t('bot.forgetfulness_right')}
+                emblemField="ebbinghausHalfLifePeriodMultiplier"
+                value={formData.ebbinghausHalfLifePeriodMultiplier}
+                min={0}
+                max={2}
+                onChange={(v) => {
+                  if (!mutation.isPending && !mutation.isSuccess) {
+                    setFormData((prev) => ({ ...prev, ebbinghausHalfLifePeriodMultiplier: v }))
+                  }
+                }}
+                disabled={mutation.isPending || mutation.isSuccess}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+            </div>
+            <div
+              style={{
+                marginTop: 12,
+                display: 'flex',
+                flexDirection: isMobileScreen ? 'column' : 'row',
+                gap: 12,
+                alignItems: 'stretch',
+              }}
+            >
+              <MemoryTuningSlider
+                title={t('bot.associative_scope_title')}
+                description={t(
+                  'bot.associative_scope_desc'
+                )}
+                leftLabel={t('bot.associative_scope_left')}
+                rightLabel={t('bot.associative_scope_right')}
+                emblemField="recallPathLimitMultiplier"
+                value={formData.recallPathLimitMultiplier}
+                min={0}
+                max={2}
+                onChange={(v) => {
+                  if (!mutation.isPending && !mutation.isSuccess) {
+                    setFormData((prev) => ({ ...prev, recallPathLimitMultiplier: v }))
+                  }
+                }}
+                disabled={mutation.isPending || mutation.isSuccess}
+                locked={!isPremiumUser}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+              <MemoryTuningSlider
+                title={t('bot.fixation_title')}
+                description={t(
+                  'bot.fixation_desc'
+                )}
+                leftLabel={t('bot.fixation_left')}
+                rightLabel={t('bot.fixation_right')}
+                emblemField="maxStrengthMultiplier"
+                value={formData.maxStrengthMultiplier}
+                min={0.5}
+                max={2}
+                onChange={(v) => {
+                  if (!mutation.isPending && !mutation.isSuccess) {
+                    setFormData((prev) => ({
+                      ...prev,
+                      maxStrengthMultiplier: v,
+                      minStrengthThresholdMultiplier: Number((2 - v).toFixed(2)),
+                    }))
+                  }
+                }}
+                disabled={mutation.isPending || mutation.isSuccess}
+                locked={!isPremiumUser}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+            </div>
+          </div>
+          {!isEditMode && (
+            <div style={{ marginTop: 12 }}>
+              <SelectionMarker
+                checked={false}
+                onChange={() => {}}
+                disabled
+                label={t('bot.fediverse_support')}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <Globe size={16} strokeWidth={2} />
+                    {t('bot.fediverse_support')}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: 'var(--color-text-faint)',
+                    }}
+                  >
+                    {t('bot.too_soon')}
+                  </span>
+                </span>
+              </SelectionMarker>
+              <p
+                style={{
+                  margin: '2px 0 0 26px',
+                  fontSize: 12,
+                  color: 'var(--color-text-faint)',
+                  lineHeight: 1.5,
+                }}
+              >
+                {t(
+                  'bot.fediverse_support_desc'
+                )}
+              </p>
+            </div>
+          )}
         </div>
 
         {!formData.autoInterests && (
@@ -791,8 +1091,7 @@ export default function CreateEditBotPage() {
             </div>
             <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--color-text-faint)' }}>
               {t(
-                'bot.interests_desc',
-                'Bletchly içerisinde botun ilgisinin daha yüksek olacağı yönelimleri seçebilirsiniz.'
+                'bot.interests_desc'
               )}
             </p>
           </div>
@@ -810,7 +1109,7 @@ export default function CreateEditBotPage() {
         </div>
 
         <div
-          aria-label={t('card.selected_count', `${totalSelectedCount} kart seçildi`)}
+          aria-label={t('card.selected_count')}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -825,6 +1124,45 @@ export default function CreateEditBotPage() {
           <BotFlashCardsIcon size={36} color="var(--color-primary)" />
           <span>{totalSelectedCount}</span>
         </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {!isEditMode && (
+          <div
+            className="bot-creator-ack-block"
+            style={{
+              marginBottom: 0,
+              padding: '12px 16px',
+              backgroundColor: 'var(--color-surface)',
+              borderRadius: 8,
+              border:
+                hasCreatorAckError && !creatorAcknowledged
+                  ? '1px solid var(--color-error)'
+                  : '1px solid var(--color-border)',
+              transition: 'border-color 0.2s ease-in-out, background-color 0.2s ease-in-out',
+            }}
+          >
+            <SelectionMarker
+              checked={creatorAcknowledged}
+              onChange={handleCreatorAckChange}
+              disabled={mutation.isPending || mutation.isSuccess}
+            >
+              <span
+                style={{
+                  fontSize: 12,
+                  color: 'var(--color-text-secondary)',
+                  lineHeight: '1.4',
+                  userSelect: 'none',
+                  display: 'block',
+                  paddingLeft: 4,
+                }}
+              >
+                {t(
+                  'bot.creator_ack'
+                )}
+              </span>
+            </SelectionMarker>
+          </div>
+        )}
 
         {/* Submit button */}
         <div style={{ marginTop: 0 }}>
@@ -849,9 +1187,10 @@ export default function CreateEditBotPage() {
                 {t('auth.processing')}
               </>
             ) : (
-              <>{isEditMode ? t('action.update') : t('action.generate')}</>
+              <>{isEditMode ? t('action.save') : t('action.generate')}</>
             )}
           </button>
+        </div>
         </div>
       </form>
 
@@ -889,6 +1228,19 @@ export default function CreateEditBotPage() {
           </button>
         </div>
       )}
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={() => {
+          setIsDeleteModalOpen(false)
+          deleteMutation.mutate()
+        }}
+        title={t('bot.delete_bot')}
+        description={t('bot.confirm_delete')}
+        confirmText={t('action.delete')}
+        confirmVariant="danger"
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   )
 }

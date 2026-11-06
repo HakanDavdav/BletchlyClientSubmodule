@@ -7,8 +7,14 @@ export const contentItemApi = {
   getContentItem: (contentItemId) =>
     api.get(`/contentitem/${contentItemId}`),
 
-  getContentItemLikes: (contentItemId, page = 1, reactionType = null) =>
-    api.get(`/contentitem/${contentItemId}/likes`, { params: { page, ...(reactionType !== null && { reactionType }) } }),
+  getContentItemLikes: (contentItemId, page = 1, reactionType = null, includeDormant = false) =>
+    api.get(`/contentitem/${contentItemId}/likes`, {
+      params: {
+        page,
+        ...(reactionType !== null && { reactionType }),
+        ...(includeDormant && { includeDormant: true }),
+      },
+    }),
 
   getActorLike: (contentItemId, actorId) =>
     api.get(`/contentitem/${contentItemId}/actor-like/${actorId}`),

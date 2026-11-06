@@ -14,7 +14,7 @@ export default function MemoryManagementPanel() {
     mutationFn: (id) => adminApi.triggerTribeMemory(id),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      toast.success(t('admin.tribe_memory_triggered', 'Tribe hafızası tetiklendi'))
+      toast.success(t('admin.tribe_memory_triggered'))
     },
   })
 
@@ -22,7 +22,7 @@ export default function MemoryManagementPanel() {
     mutationFn: (id) => adminApi.forgetOldTribeMemories(id),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      toast.success(t('admin.tribe_memory_forgotten', 'Eski tribe hafızaları unutuldu'))
+      toast.success(t('admin.tribe_memory_forgotten'))
     },
   })
 
@@ -31,7 +31,7 @@ export default function MemoryManagementPanel() {
     mutationFn: (id) => adminApi.triggerMemory(id),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      toast.success(t('admin.bot_memory_triggered', 'Bot hafızası tetiklendi'))
+      toast.success(t('admin.bot_memory_triggered'))
     },
   })
 
@@ -39,27 +39,27 @@ export default function MemoryManagementPanel() {
     mutationFn: (id) => adminApi.forgetOldMemories(id),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      toast.success(t('admin.bot_memory_forgotten', 'Eski bot hafızaları unutuldu'))
+      toast.success(t('admin.bot_memory_forgotten'))
     },
   })
 
   const handleTriggerTribeMemory = () => {
-    if (!tribeId) return toast.error(t('admin.tribe_id_placeholder', 'Tribe ID girin (GUID)'))
+    if (!tribeId) return toast.error(t('admin.tribe_id_placeholder'))
     triggerTribeMemoryMutation.mutate(tribeId)
   }
 
   const handleForgetTribeMemories = () => {
-    if (!tribeId) return toast.error(t('admin.tribe_id_placeholder', 'Tribe ID girin (GUID)'))
+    if (!tribeId) return toast.error(t('admin.tribe_id_placeholder'))
     forgetTribeMemoriesMutation.mutate(tribeId)
   }
 
   const handleTriggerActorMemory = () => {
-    if (!actorId) return toast.error(t('admin.actor_id_placeholder', 'Actor ID girin (GUID)'))
+    if (!actorId) return toast.error(t('admin.actor_id_placeholder'))
     triggerActorMemoryMutation.mutate(actorId)
   }
 
   const handleForgetActorMemories = () => {
-    if (!actorId) return toast.error(t('admin.actor_id_placeholder', 'Actor ID girin (GUID)'))
+    if (!actorId) return toast.error(t('admin.actor_id_placeholder'))
     forgetActorMemoriesMutation.mutate(actorId)
   }
 
@@ -80,10 +80,10 @@ export default function MemoryManagementPanel() {
       {/* Header */}
       <div className="border-b" style={{ borderColor: 'var(--color-border)', marginBottom: '12px', paddingBottom: '8px' }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: 'var(--color-text)' }}>
-          {t('admin.memory_management_title', 'Hafıza Yönetimi')}
+          {t('admin.memory_management_title')}
         </h2>
         <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: '2px 0 0' }}>
-          {t('admin.memory_management_desc', 'Tribe ve Bot Actor hafızalarını yönetin')}
+          {t('admin.memory_management_desc')}
         </p>
       </div>
 
@@ -98,7 +98,7 @@ export default function MemoryManagementPanel() {
           }}
         >
           <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: 'var(--color-text)' }}>
-            {t('admin.tribe_memory', 'Tribe Hafızası')}
+            {t('admin.tribe_memory')}
           </div>
           <div className="form-group">
             <label
@@ -111,7 +111,7 @@ export default function MemoryManagementPanel() {
                 color: 'var(--color-text-secondary)',
               }}
             >
-              {t('admin.tribe_id', 'Tribe ID')}
+              {t('admin.tribe_id')}
             </label>
             <input
               className="input w-full"
@@ -142,7 +142,7 @@ export default function MemoryManagementPanel() {
                 borderRadius: 'var(--radius-md)',
               }}
             >
-              {t('admin.trigger_memory_extraction', 'Hafıza Çıkarımı Tetikle')}
+              {t('admin.trigger_memory_extraction')}
             </button>
 
             <button
@@ -156,7 +156,7 @@ export default function MemoryManagementPanel() {
                 borderRadius: 'var(--radius-md)',
               }}
             >
-              {t('admin.forget_old_memories', 'Eski Hafızaları Unut')}
+              {t('admin.forget_old_memories')}
             </button>
           </div>
         </div>
@@ -171,7 +171,7 @@ export default function MemoryManagementPanel() {
           }}
         >
           <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: 'var(--color-text)' }}>
-            {t('admin.bot_actor_memory', 'Bot Actor Hafızası')}
+            {t('admin.bot_actor_memory')}
           </div>
           <div className="form-group">
             <label
@@ -184,7 +184,7 @@ export default function MemoryManagementPanel() {
                 color: 'var(--color-text-secondary)',
               }}
             >
-              {t('admin.bot_actor_id', 'Bot Actor ID')}
+              {t('admin.bot_actor_id')}
             </label>
             <input
               className="input w-full"
@@ -215,7 +215,7 @@ export default function MemoryManagementPanel() {
                 borderRadius: 'var(--radius-md)',
               }}
             >
-              {t('admin.trigger_memory_extraction', 'Hafıza Çıkarımı Tetikle')}
+              {t('admin.trigger_memory_extraction')}
             </button>
 
             <button
@@ -229,7 +229,7 @@ export default function MemoryManagementPanel() {
                 borderRadius: 'var(--radius-md)',
               }}
             >
-              {t('admin.forget_old_memories', 'Eski Hafızaları Unut')}
+              {t('admin.forget_old_memories')}
             </button>
           </div>
         </div>

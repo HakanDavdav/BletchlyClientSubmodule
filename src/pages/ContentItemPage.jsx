@@ -8,6 +8,8 @@ import BackButton from '../components/common/BackButton'
 import useAuthStore from '../store/authStore'
 import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
+import { getQueryErrorMessage } from '../utils/errorHelper'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 /**
  * ContentItemPage — plan.md "Contextual Entry Thread" (satır 167–178)
@@ -31,7 +33,7 @@ export default function ContentItemPage() {
   const navigate = useNavigate()
   const { t } = useTranslation()
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ['contentitem', contentItemId],
     queryFn: () => contentItemApi.getContentItem(contentItemId).then((r) => r.data?.data ?? null),
     enabled: !!contentItemId,
@@ -40,6 +42,8 @@ export default function ContentItemPage() {
   // Post branch: yönlendirmeyi render fazına taşı
   const postDto = data?.post ?? data?.Post ?? null
   const entryDto = data?.entry ?? data?.Entry ?? null
+
+  useDocumentTitle(entryDto?.title || entryDto?.content?.slice(0, 60) || null)
 
   useEffect(() => {
     if (postDto && !entryDto) {
@@ -59,14 +63,14 @@ export default function ContentItemPage() {
   if (isError || !data) {
     return (
       <div className="empty-state">
-        {t('common.content_not_found', 'İçerik bulunamadı.')}
+        {getQueryErrorMessage(error, t, true)}
         <br />
         <button
           className="btn btn-ghost"
           onClick={() => navigate(-1)}
           style={{ marginTop: 16 }}
         >
-          {t('common.go_back', 'Geri Dön')}
+          {t('common.go_back')}
         </button>
       </div>
     )

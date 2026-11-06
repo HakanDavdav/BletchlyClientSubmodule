@@ -7,16 +7,13 @@ export default function PrivacyPolicyPage() {
   const cleanHtml = React.useMemo(() => {
     if (!privacyHtml) return ''
     return privacyHtml
-      // 1. Remove top Powered by Termly logo
       .replace(/<span style="[^"]*data:image\/svg\+xml[^"]*"><\/span>/gi, '')
-      // 2. Remove redundant "PRIVACY POLICY" title above Last updated
       .replace(/<div>\s*<strong>[\s\S]*?data-custom-class=['"]title['"][\s\S]*?<\/div>/gi, '')
+      .replace(/<div[^>]*data-custom-class=['"]title['"][^>]*>[\s\S]*?<\/div>/gi, '')
       .replace(/<h1[^>]*>[\s\S]*?PRIVACY POLICY[\s\S]*?<\/h1>/gi, '')
-      // 3. Spacing below Last updated
       .replace(/(?:<div><br><\/div>\s*){2,}/gi, '<div style="height: 24px;"></div>')
-      // 4. Remove bottom "This Privacy Policy was created using Termly's..." attribution
-      .replace(/<br>\s*<div><span[^>]*>This Privacy Policy was created using Termly's\s*<\/span><a[^>]*>Privacy Policy Generator<\/a><\/div>/gi, '')
-      .replace(/<div><span[^>]*>This Privacy Policy was created using Termly's\s*<\/span><a[^>]*>Privacy Policy Generator<\/a><\/div>/gi, '')
+      .replace(/<br>\s*<div><span[^>]*>This Privacy Policy was created using Termly's[\s\S]*?<\/div>/gi, '')
+      .replace(/<div><span[^>]*>This Privacy Policy was created using Termly's[\s\S]*?<\/div>/gi, '')
   }, [])
 
   return (
@@ -24,12 +21,10 @@ export default function PrivacyPolicyPage() {
       className="flex-col gap-4"
       style={{ paddingBottom: 60, maxWidth: 980, margin: '0 auto', width: '100%' }}
     >
-      {/* Back Button */}
       <div className="flex items-center gap-3 px-2" style={{ marginBottom: 16 }}>
         <BackButton style={{ marginBottom: 0 }} />
       </div>
 
-      {/* Header */}
       <div
         style={{
           display: 'flex',
@@ -55,15 +50,12 @@ export default function PrivacyPolicyPage() {
         </div>
       </div>
 
-      {/* Content - Raw Termly HTML */}
       <style>{`
-        /* Hide redundant top title */
         .termly-raw-content [data-custom-class='title'],
         .termly-raw-content [data-custom-class="title"] {
           display: none !important;
         }
 
-        /* Sync Termly colors with site theme */
         .termly-raw-content,
         .termly-raw-content [data-custom-class='body'],
         .termly-raw-content [data-custom-class='body'] * {
@@ -107,7 +99,6 @@ export default function PrivacyPolicyPage() {
           color: var(--color-text) !important;
         }
 
-        /* Restore browser defaults that Tailwind/App CSS reset stripped from Termly's raw HTML */
         .termly-raw-content h1 { margin: 0.67em 0 !important; font-weight: bold !important; }
         .termly-raw-content h2 { margin: 0.83em 0 !important; font-weight: bold !important; }
         .termly-raw-content h3 { margin: 1em 0 !important; font-weight: bold !important; }
@@ -125,7 +116,7 @@ export default function PrivacyPolicyPage() {
           padding: '36px 44px',
           boxShadow: 'var(--shadow-sm)',
           overflowX: 'auto',
-          zoom: 0.95, // Scales down all elements holistically by 5%
+          zoom: 0.95,
         }}
         dangerouslySetInnerHTML={{ __html: cleanHtml }}
       />

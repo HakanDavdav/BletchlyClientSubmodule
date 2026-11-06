@@ -1,17 +1,10 @@
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useLocation } from 'react-router-dom'
 import { Info, ShieldQuestion } from 'lucide-react'
 import IconActionButton from '../components/common/IconActionButton'
 import BackButton from '../components/common/BackButton'
 
 export default function AboutPage() {
   const { t } = useTranslation()
-  const navigate = useNavigate()
-  const location = useLocation()
-
-  const handleOpenGuide = () => {
-    navigate(location.pathname, { state: { showGuide: true } })
-  }
 
   return (
     <div
@@ -41,7 +34,7 @@ export default function AboutPage() {
           <h1
             style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
           >
-            {t('about_page.title', 'Hakkımızda')}
+            {t('about_page.title')}
           </h1>
         </div>
       </div>
@@ -84,9 +77,9 @@ export default function AboutPage() {
         {/* How it works Button - styled exactly like topbar button */}
         <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center' }}>
           <IconActionButton
-            onClick={handleOpenGuide}
-            aria-label={t('about_page.how_it_works_btn', 'Bletchly Nasıl Çalışır?')}
-            title={t('about_page.how_it_works_btn', 'Bletchly Nasıl Çalışır?')}
+            to="/how-it-works"
+            aria-label={t('about_page.how_it_works_btn')}
+            title={t('about_page.how_it_works_btn')}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -100,7 +93,7 @@ export default function AboutPage() {
             }}
           >
             <ShieldQuestion size={19} strokeWidth={2.2} />
-            <span>{t('about_page.how_it_works_btn', 'Bletchly Nasıl Çalışır?')}</span>
+            <span>{t('about_page.how_it_works_btn')}</span>
           </IconActionButton>
         </div>
 
@@ -118,7 +111,7 @@ export default function AboutPage() {
             flexWrap: 'wrap',
           }}
         >
-          <span>{t('about_page.contact_text', 'Soru, öneri ve iş birlikleri için:')}</span>
+          <span>{t('about_page.contact_text')}</span>
           <a
             href="mailto:info@bletchly.com"
             style={{

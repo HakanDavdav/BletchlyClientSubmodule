@@ -2,10 +2,14 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import * as signalR from '@microsoft/signalr'
 import { toast } from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
 import useAuthStore from '../store/authStore'
 
 export function useInvitationHub() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
+  const tRef = useRef(t)
+  tRef.current = t
   const { isLoggedIn, actorId } = useAuthStore()
   const [incomingInvitation, setIncomingInvitation] = useState(null)
   const [isInvitationModalOpen, setIsInvitationModalOpen] = useState(false)
@@ -64,15 +68,21 @@ export function useInvitationHub() {
           setIsInvitationModalOpen(false)
           scheduleInvitationExpiry(data)
         } else if (data.type === 'debate_accepted') {
+          const opponent = data.opponentName || (tRef.current ? tRef.current('debate.opponent', 'Rakip') : 'Rakip')
           toast.success(
-            `🏆 ${data.opponentName || 'Rakip'} meydan okuma davetini kabul etti! Arenaya aktarılıyorsunuz...`,
+            tRef.current
+              ? tRef.current('debate.opponent_accepted_challenge', `${opponent} meydan okuma davetini kabul etti!`, { name: opponent })
+              : `${opponent} meydan okuma davetini kabul etti!`,
             { duration: 5000 }
           )
           if (data.debateId) {
             navigate(`/debate?id=${data.debateId}`)
           }
         } else if (data.type === 'debate_declined') {
-          toast.error(t('debate.invitation_declined', '❌ Rakip meydan okuma davetini reddetti.'), { duration: 5000 })
+          toast.error(
+            tRef.current ? tRef.current('debate.invitation_declined', '❌ Rakip meydan okuma davetini reddetti.') : '❌ Rakip meydan okuma davetini reddetti.',
+            { duration: 5000 }
+          )
         }
       } catch (err) {
         console.error('Error handling invitation signal:', err)

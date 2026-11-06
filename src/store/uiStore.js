@@ -22,19 +22,20 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 const useUIStore = create(
   persist(
     (set) => ({
-      // ─── Center Panel ─────────────────────────────────────────────────────────
-      // Removed centerView, centerViewParams, viewHistory, setCenterView, goBack for React Router migration
-
-
       // ─── Left Panel ───────────────────────────────────────────────────────────
       activeLeftCacheType: 'recent',
       setActiveLeftCacheType: (type) => set({ activeLeftCacheType: type }),
+      activeLeftTopicType: null,
+      setActiveLeftTopicType: (topicType) => set({ activeLeftTopicType: topicType }),
 
       isActivitiesExpanded: false,
       toggleActivities: () => set((state) => ({ isActivitiesExpanded: !state.isActivitiesExpanded })),
 
       isDebatesExpanded: false,
       toggleDebates: () => set((state) => ({ isDebatesExpanded: !state.isDebatesExpanded })),
+
+      rightPanelTribeId: null,
+      setRightPanelTribeId: (tribeId) => set({ rightPanelTribeId: tribeId }),
 
       // ─── Limitler & Miras Paneli (Profil + Tribe sayfaları ORTAK state) ───────
       // Biri açılırsa diğeri de açık kalır; navigasyonlar arasında hatırlanır.
@@ -44,6 +45,7 @@ const useUIStore = create(
       // ─── Responsive Drawers ───────────────────────────────────────────────────
       isLeftDrawerOpen: false,
       isRightDrawerOpen: false,
+      openLeftDrawer: () => set({ isLeftDrawerOpen: true }),
       toggleLeftDrawer: () => set((state) => ({ isLeftDrawerOpen: !state.isLeftDrawerOpen })),
       toggleRightDrawer: () => set((state) => ({ isRightDrawerOpen: !state.isRightDrawerOpen })),
       closeDrawers: () => set({ isLeftDrawerOpen: false, isRightDrawerOpen: false }),
@@ -57,25 +59,25 @@ const useUIStore = create(
       searchMode: 'general', // 'general' | 'posts' | 'actors' | 'tribes'
       setSearchMode: (mode) => set({ searchMode: mode }),
 
-      // ─── Ambient Bots / Welcome / Mind (profil arka planı seçenekleri) ────────
+      // ─── Ambient Bots / Welcome / Memory Map (profil arka planı seçenekleri) ──
       isBotsAmbience: false,
       toggleBotsAmbience: () =>
         set((state) => ({
           isBotsAmbience: !state.isBotsAmbience,
           isWelcomeAmbience: false,
-          isMindAmbience: false,
+          isMemoryMapAmbience: false,
         })),
       isWelcomeAmbience: false,
       toggleWelcomeAmbience: () =>
         set((state) => ({
           isWelcomeAmbience: !state.isWelcomeAmbience,
           isBotsAmbience: false,
-          isMindAmbience: false,
+          isMemoryMapAmbience: false,
         })),
-      isMindAmbience: false,
-      toggleMindAmbience: () =>
+      isMemoryMapAmbience: false,
+      toggleMemoryMapAmbience: () =>
         set((state) => ({
-          isMindAmbience: !state.isMindAmbience,
+          isMemoryMapAmbience: !state.isMemoryMapAmbience,
           isBotsAmbience: false,
           isWelcomeAmbience: false,
         })),

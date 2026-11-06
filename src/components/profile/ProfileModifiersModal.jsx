@@ -4,26 +4,25 @@ import {
   Sliders,
   Bot as BotIcon,
   Activity,
-  ChevronDown,
-  ChevronUp,
   Brain,
   Users,
   ShieldCheck,
   Lock,
 } from 'lucide-react'
 import KingIcon from '../common/icons/KingIcon'
+import ModalPortal from '../common/ModalPortal'
 import AngryBotWithSwordsIcon from '../common/icons/AngryBotWithSwordsIcon'
 import BotFlashCardsIcon from '../common/icons/BotFlashCardsIcon'
 import CardContingencyIcon from '../common/icons/CardContingencyIcon'
 import CardContingencyModifierIcon from '../common/icons/CardContingencyModifierIcon'
 import ModalHeader from '../common/ModalHeader'
-import { BotCapabilities, UserCapabilities } from '../../constants/enums'
+import { UserCapabilities } from '../../constants/enums'
 import useDevLog from '../../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 
 export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
   useDevLog('ProfileModifiersModal', arguments[0] || {})
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [activeBubble, setActiveBubble] = useState(null)
 
   if (!isOpen || !profile) return null
@@ -31,6 +30,22 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
   const toggleBubble = (key) => {
     setActiveBubble((prev) => (prev === key ? null : key))
   }
+
+  const renderCaret = (isOpen) => (
+    <span
+      aria-hidden="true"
+      style={{
+        fontSize: 10,
+        lineHeight: 1,
+        display: 'inline-block',
+        color: 'var(--color-text-muted)',
+        transform: isOpen ? 'rotate(180deg)' : 'none',
+        transition: 'transform var(--transition-fast)',
+      }}
+    >
+      ▼
+    </span>
+  )
 
   const isBot = profile.discriminator === 'Bot'
   const isTribe = profile.discriminator === 'Tribe' || !!profile.tribeId
@@ -58,9 +73,15 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
   const contingencyModifierMap = { A: 20, B: 15, C: 10, D: 5, F: 0 }
   const gradeContingencyMod = contingencyModifierMap[gradeLabel] || 0
 
-  const botCapabilities = profile.botSettings?.botCapabilities ?? BotCapabilities.Default
-  const hasBotMemory =
-    (botCapabilities & BotCapabilities.ProlongedBotMemory) === BotCapabilities.ProlongedBotMemory
+  // Hafıza Ayarı çarpanları (Bot & Tribe)
+  const memorySource = isBot ? profile.botSettings : isTribe ? profile : null
+  const activeIncubationMultiplier = Math.min(2, Math.max(0, memorySource?.incubationPeriodMultiplier ?? 1))
+  const activeAffinityBiasMultiplier = Math.min(2, Math.max(0, memorySource?.affinityBiasMultiplier ?? 1))
+  const activeEbbinghausHalfLifePeriodMultiplier = Math.min(2, Math.max(0, memorySource?.ebbinghausHalfLifePeriodMultiplier ?? 1))
+  const activeRecallScopeMultiplier = Math.min(2, Math.max(0, memorySource?.recallPathLimitMultiplier ?? 1))
+  const activeFixationMultiplier = Math.min(2, Math.max(0.5, memorySource?.maxStrengthMultiplier ?? 1))
+
+  const formatMultiplier = (value) => `×${Math.round(value * 100) / 100}`
 
   const userCapabilities = profile.userSettings?.userCapabilities ?? UserCapabilities.Default
   const isPremiumUser = (userCapabilities & UserCapabilities.Premium) === UserCapabilities.Premium
@@ -78,25 +99,25 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
   const checkpoints = isBot
     ? [
         { grade: 'F', points: 0 },
-        { grade: 'D', points: 2000 },
+        { grade: 'D', points: 1500 },
         { grade: 'C', points: 3000 },
-        { grade: 'B', points: 4000 },
-        { grade: 'A', points: 5000 },
+        { grade: 'B', points: 5500 },
+        { grade: 'A', points: 8500 },
       ]
     : profile.discriminator === 'Tribe'
     ? [
         { grade: 'F', points: 0 },
-        { grade: 'D', points: 20000 },
+        { grade: 'D', points: 15000 },
         { grade: 'C', points: 30000 },
-        { grade: 'B', points: 40000 },
-        { grade: 'A', points: 50000 },
+        { grade: 'B', points: 50000 },
+        { grade: 'A', points: 75000 },
       ]
     : [
         { grade: 'F', points: 0 },
-        { grade: 'D', points: 200000 },
-        { grade: 'C', points: 300000 },
-        { grade: 'B', points: 400000 },
-        { grade: 'A', points: 500000 },
+        { grade: 'D', points: 5000 },
+        { grade: 'C', points: 12000 },
+        { grade: 'B', points: 20000 },
+        { grade: 'A', points: 30000 },
       ]
 
   const renderGradeCheckpoints = () => {
@@ -118,25 +139,18 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
               <div
                 key={cp.grade}
                 style={{
-                  padding: '6px 4px',
-                  borderRadius: 8,
-                  background: isCurrent
-                    ? 'color-mix(in srgb, var(--color-primary) 14%, var(--color-surface))'
-                    : 'color-mix(in srgb, var(--color-surface) 60%, transparent)',
-                  border: isCurrent
-                    ? `1.5px solid ${cpColor}`
-                    : '1px solid var(--color-border)',
                   textAlign: 'center',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: 3,
+                  gap: 4,
+                  padding: '2px 0',
                 }}
               >
                 <div
                   style={{
-                    width: 18,
-                    height: 18,
+                    width: 20,
+                    height: 20,
                     borderRadius: '50%',
                     background: cpColor,
                     color: '#fff',
@@ -145,7 +159,8 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: isCurrent ? '0 1px 4px rgba(0,0,0,0.3)' : 'none',
+                    outline: isCurrent ? `2px solid ${cpColor}` : 'none',
+                    outlineOffset: 2,
                   }}
                 >
                   {cp.grade}
@@ -153,12 +168,12 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 <div
                   style={{
                     fontSize: 10,
-                    fontWeight: 700,
+                    fontWeight: isCurrent ? 800 : 700,
                     color: isCurrent ? cpColor : isPassed ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {cp.points === 0 ? '0' : cp.points.toLocaleString('tr-TR')}
+                  {cp.points === 0 ? '0' : cp.points.toLocaleString(i18n?.language || 'tr-TR')}
                 </div>
               </div>
             )
@@ -175,7 +190,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
         marginTop: 6,
         padding: '12px 14px',
         borderRadius: 12,
-        background: 'color-mix(in srgb, var(--color-primary) 6%, var(--color-surface))',
+        background: 'color-mix(in srgb, var(--color-primary) 6%, transparent)',
         border: '1px solid color-mix(in srgb, var(--color-primary) 28%, transparent)',
         fontSize: 12,
         animation: 'fadeIn 0.2s ease',
@@ -186,7 +201,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
         {/* Base value - Sadece 'Base:' ve sağında sayı */}
         {baseValue !== undefined && (
           <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary)' }}>
-            <span style={{ fontWeight: 600 }}>{t('profile.mod_base', 'Base')}:</span>
+            <span style={{ fontWeight: 600 }}>{t('profile.mod_base')}:</span>
             <span style={{ fontWeight: 700, color: 'var(--color-text-primary)' }}>{baseValue}</span>
           </div>
         )}
@@ -206,24 +221,29 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
           )
         })}
 
-        <div style={{ height: 1, background: 'var(--color-border)', margin: '3px 0' }} />
+        {totalValue !== undefined && (
+          <>
+            <div style={{ height: 1, background: 'var(--color-border)', margin: '3px 0' }} />
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-          <span style={{ fontWeight: 700 }}>{t('profile.mod_total', 'Total')}:</span>
-          <span style={{ color: 'var(--color-primary)', fontSize: 13, fontWeight: 800 }}>{totalValue}</span>
-        </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--color-text-primary)' }}>
+              <span style={{ fontWeight: 700 }}>{t('profile.mod_total')}:</span>
+              <span style={{ color: 'var(--color-primary)', fontSize: 13, fontWeight: 800 }}>{totalValue}</span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
 
   return (
-    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 100 }}>
+    <ModalPortal>
+      <div className="modal-overlay" onClick={onClose} style={{ zIndex: 100 }}>
       <div
         className="modal-box"
         onClick={(e) => e.stopPropagation()}
         style={{
           maxWidth: 540,
-          maxHeight: '85vh',
+          maxHeight: '78vh',
           display: 'flex',
           flexDirection: 'column',
           padding: '24px 20px',
@@ -235,8 +255,8 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
         {/* Modal Header */}
         <ModalHeader
           icon={<Sliders size={28} color="var(--color-primary)" />}
-          title={t('profile.modifiers', 'Modifiers')}
-          subtitle={isTribe ? 'Klan' : isBot ? 'Bot' : 'Kullanıcı'}
+          title={t('profile.modifiers')}
+          subtitle={isTribe ? t('common.tribe') : isBot ? t('common.bot') : t('common.user')}
           onClose={onClose}
           style={{ padding: '0 0 14px 0', marginBottom: 20 }}
         />
@@ -252,7 +272,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 style={{
                   padding: '10px 14px',
                   borderRadius: 12,
-                  background: 'var(--color-surface)',
+                  background: 'transparent',
                   border: activeBubble === 'gradeCard' ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                   display: 'flex',
                   alignItems: 'center',
@@ -284,20 +304,20 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                     {gradeLabel}
                   </div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                    Grade {gradeLabel}
+                    {t('profile.grade')} {gradeLabel}
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>
-                      {t('profile.points', 'Puan')}
+                      {t('profile.points')}
                     </div>
                     <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--color-text-primary)' }}>
-                      {currentPoints.toLocaleString('tr-TR')}
+                      {currentPoints.toLocaleString(i18n?.language || 'tr-TR')}
                     </div>
                   </div>
-                  {activeBubble === 'gradeCard' ? <ChevronUp size={16} color="var(--color-text-muted)" /> : <ChevronDown size={16} color="var(--color-text-muted)" />}
+                  {renderCaret(activeBubble === 'gradeCard')}
                 </div>
               </div>
 
@@ -306,10 +326,10 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   topContent: renderGradeCheckpoints(),
                   baseValue: '0',
                   modifiers: [
-                    { label: t('profile.mod_slot_card', 'Slot/Kart'), value: `+${stepBonus}`, color: gradeColor },
-                    ...(!isTribe ? [{ label: t('profile.mod_debate', 'Meydan Okuma'), value: `+${stepBonus}`, color: 'var(--color-primary)' }] : []),
-                    { label: t('profile.mod_contingency', 'Miras'), value: `+%${stepBonus}`, color: 'var(--color-primary)' },
-                    ...(isBot || isTribe ? [{ label: t('profile.mod_contingency_mult', 'Miras Çarpanı'), value: `+%${gradeContingencyMod}`, color: '#f59e0b' }] : []),
+                    { label: t('profile.mod_slot_card'), value: `+${stepBonus}`, color: gradeColor },
+                    ...(!isTribe ? [{ label: t('profile.mod_debate'), value: `+${stepBonus}`, color: 'var(--color-primary)' }] : []),
+                    { label: t('profile.mod_contingency'), value: `+%${stepBonus}`, color: 'var(--color-primary)' },
+                    ...(isBot || isTribe ? [{ label: t('profile.mod_contingency_mult'), value: `+%${gradeContingencyMod}`, color: '#f59e0b' }] : []),
                   ],
                   totalValue: `+${stepBonus}`,
                 })}
@@ -323,7 +343,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   style={{
                     padding: '10px 14px',
                     borderRadius: 12,
-                    background: 'var(--color-surface)',
+                    background: 'transparent',
                     border: activeBubble === 'premiumPerk' ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                     display: 'flex',
                     alignItems: 'center',
@@ -351,12 +371,12 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                       {isPremiumUser ? <KingIcon size={20} /> : <ShieldCheck size={20} />}
                     </div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                      {isPremiumUser ? t('premium.title', 'Premium') : 'Default'}
+                      {isPremiumUser ? t('premium.title') : t('common.default')}
                     </div>
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center' }}>
-                    {activeBubble === 'premiumPerk' ? <ChevronUp size={16} color="var(--color-text-muted)" /> : <ChevronDown size={16} color="var(--color-text-muted)" />}
+                    {renderCaret(activeBubble === 'premiumPerk')}
                   </div>
                 </div>
 
@@ -364,27 +384,27 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   renderModifierBubble({
                     baseValue: '0',
                     modifiers: [
-                      { label: t('profile.mod_bot_quota', 'Bot Kotası'), value: isPremiumUser ? '+4' : '+0', color: 'var(--color-primary)' },
-                      { label: t('profile.mod_card_area', 'Kart Alanı'), value: isPremiumUser ? '+4' : '+0', color: 'var(--color-primary)' },
-                      { label: t('profile.mod_debate', 'Meydan Okuma'), value: isPremiumUser ? '+4' : '+0', color: 'var(--color-primary)' },
-                      { label: t('profile.mod_contingency_chance', 'Miras Şansı'), value: isPremiumUser ? '+%4' : '+%0', color: 'var(--color-primary)' },
+                      { label: t('profile.mod_bot_quota'), value: isPremiumUser ? '+4' : '+0', color: 'var(--color-primary)' },
+                      { label: t('profile.mod_card_area'), value: isPremiumUser ? '+4' : '+0', color: 'var(--color-primary)' },
+                      { label: t('profile.mod_debate'), value: isPremiumUser ? '+4' : '+0', color: 'var(--color-primary)' },
+                      { label: t('profile.mod_contingency_chance'), value: isPremiumUser ? '+%4' : '+%0', color: 'var(--color-primary)' },
                     ],
                     totalValue: isPremiumUser ? '+4' : '+0',
                   })}
               </div>
             )}
 
-            {/* Gelişmiş Hafıza Section (for Bot) */}
-            {isBot && (
+            {/* Gelişmiş Hafıza Section (for Bot & Tribe) */}
+            {(isBot || isTribe) && (
               <div>
                 <div
                   onClick={() => toggleBubble('botMemory')}
                   style={{
                     padding: '10px 14px',
                     borderRadius: 12,
-                    background: 'var(--color-surface)',
+                    background: 'transparent',
                     border: activeBubble === 'botMemory'
-                      ? (hasBotMemory ? '1.5px solid var(--color-warning)' : '1.5px solid var(--color-primary)')
+                      ? '1.5px solid var(--color-primary)'
                       : '1px solid var(--color-border)',
                     display: 'flex',
                     alignItems: 'center',
@@ -400,49 +420,57 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                         width: 36,
                         height: 36,
                         borderRadius: 10,
-                        background: hasBotMemory
-                          ? 'color-mix(in srgb, var(--color-warning) 15%, transparent)'
-                          : 'color-mix(in srgb, var(--color-primary) 15%, transparent)',
-                        border: hasBotMemory
-                          ? '1px solid color-mix(in srgb, var(--color-warning) 30%, transparent)'
-                          : '1px solid color-mix(in srgb, var(--color-primary) 30%, transparent)',
-                        color: hasBotMemory ? 'var(--color-warning)' : 'var(--color-primary)',
+                        background: 'color-mix(in srgb, var(--color-primary) 15%, transparent)',
+                        border: '1px solid color-mix(in srgb, var(--color-primary) 30%, transparent)',
+                        color: 'var(--color-primary)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        boxShadow: hasBotMemory
-                          ? '0 2px 10px color-mix(in srgb, var(--color-warning) 25%, transparent)'
-                          : 'none',
+                        boxShadow: 'none',
                         flexShrink: 0,
                       }}
                     >
                       <Brain size={20} />
                     </div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                      {hasBotMemory ? t('bot.capability_extended_memory', 'Genişletilmiş Hafıza') : t('bot.capability_memory', 'Hafıza')}
+                      {t('bot.capability_memory')}
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: hasBotMemory ? 'var(--color-warning)' : 'var(--color-text-primary)' }}>
-                      {hasBotMemory ? '2x' : '1x'}
-                    </div>
-                    {activeBubble === 'botMemory' ? <ChevronUp size={16} color="var(--color-text-muted)" /> : <ChevronDown size={16} color="var(--color-text-muted)" />}
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    {renderCaret(activeBubble === 'botMemory')}
                   </div>
                 </div>
 
                 {activeBubble === 'botMemory' &&
                   renderModifierBubble({
-                    title: t('profile.mod_memory_duration', 'Hafıza Süresi'),
-                    baseValue: t('profile.mod_30_days', '30 Gün'),
                     modifiers: [
                       {
-                        label: hasBotMemory ? t('bot.capability_extended_memory', 'Genişletilmiş Hafıza') : t('bot.capability_memory', 'Hafıza'),
-                        value: hasBotMemory ? '2x' : `1x (${t('hierarchy.default_view', 'Varsayılan')})`,
-                        color: hasBotMemory ? 'var(--color-warning)' : 'var(--color-primary)',
+                        label: t(isTribe ? 'tribe.incubation_title' : 'bot.incubation_title', 'Kişilik Değişim Süresi'),
+                        value: formatMultiplier(activeIncubationMultiplier),
+                        color: 'var(--color-primary)',
+                      },
+                      {
+                        label: t(isTribe ? 'tribe.affinity_bias_title' : 'bot.affinity_bias_title', 'Duygusallık'),
+                        value: formatMultiplier(activeAffinityBiasMultiplier),
+                        color: 'var(--color-primary)',
+                      },
+                      {
+                        label: t(isTribe ? 'tribe.forgetfulness_title' : 'bot.forgetfulness_title', 'Unutkanlık Hızı'),
+                        value: formatMultiplier(activeEbbinghausHalfLifePeriodMultiplier),
+                        color: 'var(--color-primary)',
+                      },
+                      {
+                        label: t(isTribe ? 'tribe.associative_scope_title' : 'bot.associative_scope_title', 'Hatırlama Kapsamı'),
+                        value: formatMultiplier(activeRecallScopeMultiplier),
+                        color: 'var(--color-primary)',
+                      },
+                      {
+                        label: t(isTribe ? 'tribe.fixation_title' : 'bot.fixation_title', 'Sabit Fikirlilik'),
+                        value: formatMultiplier(activeFixationMultiplier),
+                        color: 'var(--color-primary)',
                       },
                     ],
-                    totalValue: hasBotMemory ? t('profile.mod_60_days', '60 Gün') : t('profile.mod_30_days', '30 Gün'),
                   })}
               </div>
             )}
@@ -467,11 +495,12 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 style={{
                   padding: '12px 16px',
                   borderRadius: 12,
-                  background: 'var(--color-surface)',
+                  background: 'transparent',
                   border: activeBubble === 'actorBots' ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  gap: 12,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}
@@ -480,23 +509,23 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   <BotIcon size={22} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                      {t('profile.bot_ownership_limit', 'Bot Sahiplik Limiti')}
+                      {t('profile.bot_ownership_limit')}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
                       {isBot
-                        ? t('profile.bot_creation_limit_desc', 'Maksimum sahip olunabilir alt bot sayısı')
-                        : t('profile.bot_ownership_limit_desc', 'Maksimum sahip olunabilir bot sayısı')}
+                        ? t('profile.bot_creation_limit_desc')
+                        : t('profile.bot_ownership_limit_desc')}
                     </div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                  <div className="profile-mod-value" style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
                     {profile.botsCount ?? (profile.bots?.filter(b => !b.isDormant)?.length || 0)} /{' '}
                     {isBot
                       ? (profile.botSettings?.botCountLimit || (4 + stepBonus))
                       : (profile.userSettings?.botCountLimit || (4 + stepBonus + (isPremiumUser ? 4 : 0)))}
                   </div>
-                  {activeBubble === 'actorBots' ? <ChevronUp size={16} color="var(--color-text-muted)" /> : <ChevronDown size={16} color="var(--color-text-muted)" />}
+                  {renderCaret(activeBubble === 'actorBots')}
                 </div>
               </div>
 
@@ -504,11 +533,11 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 renderModifierBubble({
                   baseValue: '4',
                   modifiers: [
-                    { label: `Grade ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
+                    { label: `${t('profile.grade')} ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
                     ...(isUser
                       ? [
                           {
-                            label: 'Premium',
+                            label: t('premium.title'),
                             value: isPremiumUser ? '+4' : '+0',
                             color: isPremiumUser ? 'var(--color-primary)' : 'var(--color-text-muted)',
                           },
@@ -532,11 +561,12 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 style={{
                   padding: '12px 16px',
                   borderRadius: 12,
-                  background: 'var(--color-surface)',
+                  background: 'transparent',
                   border: activeBubble === 'actorTribes' ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  gap: 12,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}
@@ -545,21 +575,21 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   <Users size={22} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                      {t('profile.tribe_limit', 'Klan Limiti')}
+                      {t('profile.tribe_limit')}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                      {t('profile.tribe_limit_desc', 'Dahil olunabilecek maksimum klan sayısı')}
+                      {t('profile.tribe_limit_desc')}
                     </div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                  <div className="profile-mod-value" style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
                     {profile.tribes?.filter(t => !t.isDormant)?.length || 0} /{' '}
                     {isBot
                       ? (profile.botSettings?.tribeCountLimit || (3 + stepBonus))
                       : (profile.userSettings?.tribeCountLimit || (3 + stepBonus + (isPremiumUser ? 4 : 0)))}
                   </div>
-                  {activeBubble === 'actorTribes' ? <ChevronUp size={16} color="var(--color-text-muted)" /> : <ChevronDown size={16} color="var(--color-text-muted)" />}
+                  {renderCaret(activeBubble === 'actorTribes')}
                 </div>
               </div>
 
@@ -567,11 +597,11 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 renderModifierBubble({
                   baseValue: '3',
                   modifiers: [
-                    { label: `Grade ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
+                    { label: `${t('profile.grade')} ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
                     ...(isUser
                       ? [
                           {
-                            label: 'Premium',
+                            label: t('premium.title'),
                             value: isPremiumUser ? '+4' : '+0',
                             color: isPremiumUser ? 'var(--color-primary)' : 'var(--color-text-muted)',
                           },
@@ -595,11 +625,12 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 style={{
                   padding: '12px 16px',
                   borderRadius: 12,
-                  background: 'var(--color-surface)',
+                  background: 'transparent',
                   border: activeBubble === 'userCards' ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  gap: 12,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}
@@ -608,21 +639,21 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   <BotFlashCardsIcon size={22} color="var(--color-primary)" />
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                      {t('profile.card_ownership_limit', 'Kart Sahiplik Limiti')}
+                      {t('profile.card_ownership_limit')}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                      {t('profile.card_ownership_limit_desc', 'Envanterde tutulabilecek maksimum kişilik kartı')}
+                      {t('profile.card_ownership_limit_desc')}
                     </div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                  <div className="profile-mod-value" style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
                     {profile.ownedCards?.length || 0} /{' '}
                     {isBot
                       ? (profile.botSettings?.cardOwnershipLimit || (10 + stepBonus))
                       : (profile.userSettings?.cardOwnershipLimit || (10 + stepBonus + (isPremiumUser ? 4 : 0)))}
                   </div>
-                  {activeBubble === 'userCards' ? <ChevronUp size={16} color="var(--color-text-muted)" /> : <ChevronDown size={16} color="var(--color-text-muted)" />}
+                  {renderCaret(activeBubble === 'userCards')}
                 </div>
               </div>
 
@@ -630,11 +661,11 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 renderModifierBubble({
                   baseValue: '10',
                   modifiers: [
-                    { label: `Grade ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
+                    { label: `${t('profile.grade')} ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
                     ...(isUser
                       ? [
                           {
-                            label: 'Premium',
+                            label: t('premium.title'),
                             value: isPremiumUser ? '+4' : '+0',
                             color: isPremiumUser ? 'var(--color-primary)' : 'var(--color-text-muted)',
                           },
@@ -658,11 +689,12 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 style={{
                   padding: '12px 16px',
                   borderRadius: 12,
-                  background: 'var(--color-surface)',
+                  background: 'transparent',
                   border: activeBubble === 'botAssignment' ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  gap: 12,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}
@@ -671,22 +703,22 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   <BotFlashCardsIcon size={22} color="var(--color-primary)" />
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                      {t('profile.bot_assignment_limit', 'Kart Atanma Limiti')}
+                      {t('profile.bot_assignment_limit')}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
                       {isTribe
-                        ? t('profile.tribe_assignment_limit_desc', 'Klanın aktif kuşanabileceği kişilik kartı slotu')
-                        : t('profile.bot_assignment_limit_desc', 'Botun aktif kuşanabileceği kişilik kartı slotu')}
+                        ? t('profile.tribe_assignment_limit_desc')
+                        : t('profile.bot_assignment_limit_desc')}
                     </div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                  <div className="profile-mod-value" style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
                     {isTribe
                       ? `${profile.personalityCards?.length || 0} / ${profile.tribeAssignmentLimit || (4 + stepBonus)}`
                       : `${profile.assignedCards?.length || 0} / ${profile.botSettings?.botAssignmentLimit || (4 + stepBonus)}`}
                   </div>
-                  {activeBubble === 'botAssignment' ? <ChevronUp size={16} color="var(--color-text-muted)" /> : <ChevronDown size={16} color="var(--color-text-muted)" />}
+                  {renderCaret(activeBubble === 'botAssignment')}
                 </div>
               </div>
 
@@ -694,7 +726,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 renderModifierBubble({
                   baseValue: '4',
                   modifiers: [
-                    { label: `Grade ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
+                    { label: `${t('profile.grade')} ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
                   ],
                   totalValue: `${isTribe ? (profile.tribeAssignmentLimit || (4 + stepBonus)) : (profile.botSettings?.botAssignmentLimit || (4 + stepBonus))}`,
                 })}
@@ -709,11 +741,12 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 style={{
                   padding: '12px 16px',
                   borderRadius: 12,
-                  background: 'var(--color-surface)',
+                  background: 'transparent',
                   border: activeBubble === 'assignmentLock' ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  gap: 12,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}
@@ -722,21 +755,21 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   <Lock size={22} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                      {t('profile.card_assignment_lock_limit', 'Kart Kilitleme Limiti')}
+                      {t('profile.card_assignment_lock_limit')}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                      {t('profile.card_assignment_lock_limit_desc', 'Sahip olunan atamalarda kilitlenebilecek maksimum kişilik kartı')}
+                      {t('profile.card_assignment_lock_limit_desc')}
                     </div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                  <div className="profile-mod-value" style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
                     {profile.lockedAssignmentCount ?? 0} /{' '}
                     {isBot
                       ? (profile.botSettings?.cardAssignmentLockLimit || (2 + stepBonus))
                       : (profile.userSettings?.cardAssignmentLockLimit || (2 + stepBonus + (isPremiumUser ? 4 : 0)))}
                   </div>
-                  {activeBubble === 'assignmentLock' ? <ChevronUp size={16} color="var(--color-text-muted)" /> : <ChevronDown size={16} color="var(--color-text-muted)" />}
+                  {renderCaret(activeBubble === 'assignmentLock')}
                 </div>
               </div>
 
@@ -744,11 +777,11 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 renderModifierBubble({
                   baseValue: '2',
                   modifiers: [
-                    { label: `Grade ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
+                    { label: `${t('profile.grade')} ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
                     ...(isUser
                       ? [
                           {
-                            label: 'Premium',
+                            label: t('premium.title'),
                             value: isPremiumUser ? '+4' : '+0',
                             color: isPremiumUser ? 'var(--color-primary)' : 'var(--color-text-muted)',
                           },
@@ -772,11 +805,12 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 style={{
                   padding: '12px 16px',
                   borderRadius: 12,
-                  background: 'var(--color-surface)',
+                  background: 'transparent',
                   border: activeBubble === 'debateLimit' ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  gap: 12,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}
@@ -785,10 +819,10 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   <AngryBotWithSwordsIcon size={22} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                      {t('profile.daily_debate_limit', 'Günlük Tartışma Limiti')}
+                      {t('profile.daily_debate_limit')}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                      {t('profile.daily_debate_limit_desc', 'Eşzamanlı aktif meydan okuma ve tartışma hakkı')}
+                      {t('profile.daily_debate_limit_desc')}
                     </div>
                   </div>
                 </div>
@@ -796,7 +830,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
                     {isBot ? profile.botSettings?.debateLimit || 1 : profile.userSettings?.debateLimit || 3}
                   </div>
-                  {activeBubble === 'debateLimit' ? <ChevronUp size={16} color="var(--color-text-muted)" /> : <ChevronDown size={16} color="var(--color-text-muted)" />}
+                  {renderCaret(activeBubble === 'debateLimit')}
                 </div>
               </div>
 
@@ -804,11 +838,11 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 renderModifierBubble({
                   baseValue: '1',
                   modifiers: [
-                    { label: `Grade ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
+                    { label: `${t('profile.grade')} ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
                     ...(isUser
                       ? [
                           {
-                            label: 'Premium',
+                            label: t('premium.title'),
                             value: isPremiumUser ? '+4' : '+0',
                             color: isPremiumUser ? 'var(--color-primary)' : 'var(--color-text-muted)',
                           },
@@ -827,11 +861,12 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
               style={{
                 padding: '12px 16px',
                 borderRadius: 12,
-                background: 'var(--color-surface)',
+                background: 'transparent',
                 border: activeBubble === 'cardInheritance' ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                gap: 12,
                 cursor: 'pointer',
                 transition: 'all 0.2s',
               }}
@@ -840,10 +875,10 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 <CardContingencyIcon size={22} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                    {t('profile.card_inheritance_chance', 'Kart Miras Şansı')}
+                    {t('profile.card_inheritance_chance')}
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                    {t('profile.card_inheritance_chance_desc', 'Kişilik kartı kalıtım ve miras alma olasılığı')}
+                    {t('profile.card_inheritance_chance_desc')}
                   </div>
                 </div>
               </div>
@@ -851,7 +886,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
                   %{Math.round(((isTribe ? profile.cardInheritanceChance : (isUser ? profile.userSettings : profile.botSettings)?.cardInheritanceChance) ?? (0.25 + (isBot || isTribe ? stepBonus * 0.01 : (isPremiumUser ? 0.04 : 0)))) * 100)}
                 </div>
-                {activeBubble === 'cardInheritance' ? <ChevronUp size={16} color="var(--color-text-muted)" /> : <ChevronDown size={16} color="var(--color-text-muted)" />}
+                {renderCaret(activeBubble === 'cardInheritance')}
               </div>
             </div>
 
@@ -860,10 +895,10 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 baseValue: '%25',
                 modifiers: [
                   ...(isBot || isTribe
-                    ? [{ label: `Grade ${gradeLabel}`, value: `+%${stepBonus}`, color: gradeColor }]
+                    ? [{ label: `${t('profile.grade')} ${gradeLabel}`, value: `+%${stepBonus}`, color: gradeColor }]
                     : [
                         {
-                          label: 'Premium',
+                          label: t('premium.title'),
                           value: isPremiumUser ? '+%4' : '+%0',
                           color: isPremiumUser ? 'var(--color-primary)' : 'var(--color-text-muted)',
                         },
@@ -881,11 +916,12 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 style={{
                   padding: '12px 16px',
                   borderRadius: 12,
-                  background: 'var(--color-surface)',
+                  background: 'transparent',
                   border: activeBubble === 'cardModifier' ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  gap: 12,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}
@@ -894,10 +930,10 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   <CardContingencyModifierIcon size={34} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                      {t('profile.card_inheritance_modifier', 'Kart Miras Çarpanı')}
+                      {t('profile.card_inheritance_modifier')}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                      {t('profile.card_inheritance_modifier_desc', 'Dereceye bağlı ek kişilik kartı miras çarpanı')}
+                      {t('profile.card_inheritance_modifier_desc')}
                     </div>
                   </div>
                 </div>
@@ -905,7 +941,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
                     +%{Math.round(((isTribe ? profile.cardInheritanceModifier : profile.botSettings?.cardInheritanceModifier) || 0) * 100)}
                   </div>
-                  {activeBubble === 'cardModifier' ? <ChevronUp size={16} color="var(--color-text-muted)" /> : <ChevronDown size={16} color="var(--color-text-muted)" />}
+                  {renderCaret(activeBubble === 'cardModifier')}
                 </div>
               </div>
 
@@ -913,7 +949,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 renderModifierBubble({
                   baseValue: '%0',
                   modifiers: [
-                    { label: `Grade ${gradeLabel}`, value: `+%${gradeContingencyMod}`, color: '#10b981' },
+                    { label: `${t('profile.grade')} ${gradeLabel}`, value: `+%${gradeContingencyMod}`, color: '#10b981' },
                   ],
                   totalValue: `+%${Math.round(((isTribe ? profile.cardInheritanceModifier : profile.botSettings?.cardInheritanceModifier) || 0) * 100)}`,
                 })}
@@ -927,7 +963,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 order: 6,
                 padding: '12px 16px',
                 borderRadius: 12,
-                background: 'var(--color-surface)',
+                background: 'transparent',
                 border: '1px solid var(--color-border)',
                 display: 'flex',
                 alignItems: 'center',
@@ -938,15 +974,15 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 <Activity size={22} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                    {t('profile.daily_bot_operations', 'Günlük Bot Operasyonu')}
+                    {t('profile.daily_bot_operations')}
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                    {t('profile.daily_bot_operations_desc', 'Botun gerçekleştirdiği günlük aktivite sayısı')}
+                    {t('profile.daily_bot_operations_desc')}
                   </div>
                 </div>
               </div>
               <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                {5}
+                {'1-5'}
               </div>
             </div>
           )}
@@ -959,11 +995,12 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 style={{
                   padding: '12px 16px',
                   borderRadius: 12,
-                  background: 'var(--color-surface)',
+                  background: 'transparent',
                   border: activeBubble === 'tribeMembers' ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  gap: 12,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}
@@ -972,10 +1009,10 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   <Users size={22} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                      {t('tribe.member_capacity', 'Üye Kapasitesi')}
+                      {t('tribe.member_capacity')}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                      {t('tribe.member_capacity_desc', 'Klanın alabileceği maksimum üye sayısı')}
+                      {t('tribe.member_capacity_desc')}
                     </div>
                   </div>
                 </div>
@@ -983,7 +1020,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
                     {profile.memberCount ?? 0} / 50
                   </div>
-                  {activeBubble === 'tribeMembers' ? <ChevronUp size={16} color="var(--color-text-muted)" /> : <ChevronDown size={16} color="var(--color-text-muted)" />}
+                  {renderCaret(activeBubble === 'tribeMembers')}
                 </div>
               </div>
 
@@ -997,6 +1034,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   )
 }

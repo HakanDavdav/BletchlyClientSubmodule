@@ -8,6 +8,7 @@ import { X, AlertTriangle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import PasswordInput from '../common/PasswordInput'
+import ModalPortal from '../common/ModalPortal'
 
 export default function DeleteAccountModal({ isOpen, onClose }) {
   useDevLog('DeleteAccountModal', arguments[0] || {})
@@ -20,7 +21,7 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
     mutationFn: (data) => identityApi.deleteAccount(data),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      toast.success(t('common.success', 'Başarılı'), { duration: 3000 })
+      toast.success(t('common.success'), { duration: 3000 })
       clearAuth()
       navigate('/login')
       onClose()
@@ -34,17 +35,6 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
   }
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-error)'
-    if (!hasSubmitted) return 'var(--color-border)'
-    
-    if (isRequired) {
-      return (!value || !value.trim()) ? 'var(--color-error)' : 'var(--color-border)'
-    }
-    return 'var(--color-border)'
-  }
 
   const canSubmit = password.trim() !== '' && !deleteAccountMutation.isPending
 
@@ -60,7 +50,8 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
   if (!isOpen) return null
 
   return (
-    <div className="modal-overlay" onClick={handleOverlayClick} style={{ zIndex: 100 }}>
+    <ModalPortal>
+      <div className="modal-overlay" onClick={handleOverlayClick} style={{ zIndex: 100 }}>
       <div className="modal-box" style={{ maxWidth: 440, padding: '36px 32px', textAlign: 'left', position: 'relative', border: '1px solid var(--color-error-border, rgba(239, 68, 68, 0.4))' }}>
         <button
           type="button"
@@ -114,6 +105,7 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
               {t('auth.password')}
             </label>
             <PasswordInput
+              className={`input w-full ${hasSubmitted && !password.trim() ? 'error' : ''}`}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -122,11 +114,7 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
                 height: 42,
                 padding: '10px 14px',
                 borderRadius: 10,
-                borderColor: getBorderColor('password', password, true),
-                outline: 'none',
               }}
-              onFocus={() => setFocused('password')}
-              onBlur={() => setFocused(null)}
             />
           </div>
 
@@ -148,7 +136,7 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
               disabled={deleteAccountMutation.isPending}
               style={{ minWidth: 90 }}
             >
-              {t('common.close', 'Kapat')}
+              {t('common.close')}
             </button>
             <button
               type="submit"
@@ -161,6 +149,7 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
           </div>
         </form>
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   )
 }

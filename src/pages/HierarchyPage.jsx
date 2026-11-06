@@ -1,13 +1,14 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { Maximize2, Network, Plus, Minus, Focus } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { Maximize2, Network, Plus, Minus, Focus, Trash2, CirclePlus, CircleMinus } from 'lucide-react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { actorApi } from '../api/actorApi'
 import BackButton from '../components/common/BackButton'
 import HierarchyTree from '../components/hierarchy/HierarchyTree'
+import FossilTogglePill from '../components/common/FossilTogglePill'
 import HeartSvg from '../assets/FigmaNew/heart.svg?react'
-import TRexSkullIcon from '../assets/t-rex-skull-svgrepo-com.svg?react'
 import useDevLog from '../utils/useDevLog'
+import useTouchPanZoom from '../hooks/useTouchPanZoom'
 import { useTranslation } from 'react-i18next'
 
 export default function HierarchyPage() {
@@ -28,10 +29,42 @@ export default function HierarchyPage() {
 
   const [treeData, setTreeData] = useState(null)
   const [isExpandingAll, setIsExpandingAll] = useState(false)
+  const [isAllExpanded, setIsAllExpanded] = useState(false)
   const [expandCounter, setExpandCounter] = useState(0)
   const [fetchDepth, setFetchDepth] = useState(1)
   const [actorName, setActorName] = useState('')
   const [showFossils, setShowFossils] = useState(false)
+  const [showDeleted, setShowDeleted] = useState(false)
+
+  const fossilCount = useMemo(() => {
+    const countFossils = (node) => {
+      if (!node) return 0
+      let count = 0
+      for (const tribe of node.tribes || []) {
+        if (tribe.isDormant ?? tribe.IsDormant ?? false) count += 1
+      }
+      for (const bot of node.bots || []) {
+        if (bot.isDormant ?? bot.IsDormant ?? false) count += 1
+        count += countFossils(bot)
+      }
+      return count
+    }
+    return countFossils(treeData)
+  }, [treeData])
+
+  const deletedCount = useMemo(() => {
+    const countDeleted = (node) => {
+      if (!node) return 0
+      let count = 0
+      for (const bot of node.bots || []) {
+        if (bot.isDeleted ?? bot.IsDeleted ?? false) count += 1
+        count += countDeleted(bot)
+      }
+      return count
+    }
+    return countDeleted(treeData)
+  }, [treeData])
+
   const [zoomLevel, setZoomLevel] = useState(0.82)
   const [isViewReady, setIsViewReady] = useState(false)
   // Sınırsız pan: scroll sınırları yerine transform translate ile her yöne serbest kaydırma
@@ -61,7 +94,19 @@ export default function HierarchyPage() {
     hasMoved: false,
   })
 
+  // Mobil: tek parmak pan + iki parmak pinch-zoom
+  const { onTouchStart, onTouchMove, onTouchEnd, lastTouchAt } = useTouchPanZoom({
+    containerRef,
+    zoomRef: zoomLevelRef,
+    panRef: panOffsetRef,
+    setZoom: setZoomLevel,
+    setPan: setPanOffset,
+    panState,
+  })
+
   const handleMouseDown = (e) => {
+    // Dokunmatikten gelen sentetik fare olaylarını yok say
+    if (Date.now() - lastTouchAt.current < 700) return
     // Sol tık (0) veya orta tekerlek tuşu (1) ile sürükleme
     if (e.button !== 0 && e.button !== 1) return
     // Sol tıkta buton veya form elemanına tıklandıysa sürüklemeyi başlatma; orta tıkta ise her yerden sürükleme başlatılabilir
@@ -79,8 +124,8 @@ export default function HierarchyPage() {
       button: e.button,
       startX: e.pageX,
       startY: e.pageY,
-      startPanX: panOffset.x,
-      startPanY: panOffset.y,
+      startPanX: panOffsetRef.current.x,
+      startPanY: panOffsetRef.current.y,
       hasMoved: false,
     }
     setIsPanning(true)
@@ -98,10 +143,12 @@ export default function HierarchyPage() {
       }
 
       // Transform bazlı sınırsız pan: scroll alanına takılmaz, istenildiği kadar gidilir
-      setPanOffset({
+      const newPan = {
         x: panState.current.startPanX + deltaX,
         y: panState.current.startPanY + deltaY,
-      })
+      }
+      panOffsetRef.current = newPan
+      setPanOffset(newPan)
     }
 
     const handleMouseUp = () => {
@@ -144,38 +191,54 @@ export default function HierarchyPage() {
     }
   }, [])
 
+  // Kamera orta noktasını (viewport center) referans alarak yakınlaştır/uzaklaştır
+  const handleZoom = useCallback((targetZoomOrFn) => {
+    const container = containerRef.current
+    if (!container) return
+
+    const prevZoom = zoomLevelRef.current
+    const nextZoom = typeof targetZoomOrFn === 'function'
+      ? targetZoomOrFn(prevZoom)
+      : targetZoomOrFn
+
+    const clampedZoom = Math.min(2.5, Math.max(0.05, +nextZoom.toFixed(2)))
+    if (clampedZoom === prevZoom) return
+
+    const rect = container.getBoundingClientRect()
+    const cs = window.getComputedStyle(container)
+    const padLeft = parseFloat(cs.paddingLeft) || 0
+    const padTop = parseFloat(cs.paddingTop) || 0
+
+    // Kameranın tam orta noktası (viewport center)
+    const cx = (rect.width / 2) - padLeft
+    const cy = (rect.height / 2) - padTop
+
+    const ratio = clampedZoom / prevZoom
+    const pan = panOffsetRef.current
+
+    const newPan = {
+      x: cx - (cx - pan.x) * ratio,
+      y: cy - (cy - pan.y) * ratio,
+    }
+
+    panOffsetRef.current = newPan
+    zoomLevelRef.current = clampedZoom
+
+    setPanOffset(newPan)
+    setZoomLevel(clampedZoom)
+  }, [])
+
   // Mouse tekerleği: Normal tekerlek ile kamerayı kaydır (pan), Ctrl + tekerlek ile zoom yap
   useEffect(() => {
     const targetEl = blockRef.current || containerRef.current
     if (!targetEl) return
 
     const handleWheel = (e) => {
-      // 1. Ctrl + Tekerlek veya Meta + Tekerlek (Trackpad pinch dahil) -> Kamera Yakınlaştır / Uzaklaştır (Zoom)
+      // 1. Ctrl + Tekerlek veya Meta + Tekerlek (Trackpad pinch dahil) -> Kamera Yakınlaştır / Uzaklaştır (Kamera merkezli)
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault()
         const factor = Math.abs(e.deltaY) < 20 ? -e.deltaY * 0.005 : (e.deltaY < 0 ? 0.05 : -0.05)
-        const prev = zoomLevelRef.current
-        const next = Math.min(2.5, Math.max(0.05, +(prev + factor).toFixed(2)))
-        if (next === prev) return
-
-        // İmlecin altındaki dünya noktasını sabit tut: içerik imleç lokasyonuna
-        // doğru yakınlaşsın (aksi halde top-left'e göre büyüyüp sola kayıyor).
-        const container = containerRef.current
-        if (container) {
-          const rect = container.getBoundingClientRect()
-          const cs = window.getComputedStyle(container)
-          const padLeft = parseFloat(cs.paddingLeft) || 0
-          const padTop = parseFloat(cs.paddingTop) || 0
-          const cx = e.clientX - rect.left - padLeft
-          const cy = e.clientY - rect.top - padTop
-          const ratio = next / prev
-          const pan = panOffsetRef.current
-          setPanOffset({
-            x: cx - (cx - pan.x) * ratio,
-            y: cy - (cy - pan.y) * ratio,
-          })
-        }
-        setZoomLevel(next)
+        handleZoom((prev) => prev + factor)
         return
       }
 
@@ -184,17 +247,19 @@ export default function HierarchyPage() {
       const dx = e.shiftKey ? -e.deltaY : -e.deltaX
       const dy = e.shiftKey ? 0 : -e.deltaY
 
-      setPanOffset((prev) => ({
-        x: prev.x + dx,
-        y: prev.y + dy,
-      }))
+      const newPan = {
+        x: panOffsetRef.current.x + dx,
+        y: panOffsetRef.current.y + dy,
+      }
+      panOffsetRef.current = newPan
+      setPanOffset(newPan)
     }
 
     targetEl.addEventListener('wheel', handleWheel, { passive: false })
     return () => {
       targetEl.removeEventListener('wheel', handleWheel)
     }
-  }, [isLoading])
+  }, [handleZoom, isLoading])
 
   // İlk giriş (oto-zoom) ile Default butonunun birebir aynı görünümü üretmesi için ortak rutin:
   // doğal boyut ilk seferde ölçülüp önbelleğe alınır; Default'a art arda basınca sapma (drift) olmaz.
@@ -300,10 +365,12 @@ export default function HierarchyPage() {
     })
 
     setTreeData(rootNode)
+    setIsAllExpanded(false)
   }, [hierarchyData])
 
   const handleExpandAll = () => {
     setIsExpandingAll(true)
+    setIsAllExpanded(true)
     setExpandCounter((c) => c + 1)
     setIsExpandingAll(false)
   }
@@ -311,6 +378,7 @@ export default function HierarchyPage() {
   return (
     <div
       ref={blockRef}
+      className="hierarchy-page-root"
       style={{
         width: '100%',
         height: 'calc(100vh - 135px)',
@@ -327,6 +395,7 @@ export default function HierarchyPage() {
     >
       {/* ── Floating Controls & Header (Sol ve Sağ Üst Bloklar) ──────────────── */}
       <div
+        className="hierarchy-header"
         style={{
           position: 'absolute',
           top: 14,
@@ -341,27 +410,41 @@ export default function HierarchyPage() {
         }}
       >
         {/* Sol Üst Blok: Geri Dön Butonu & Aktör Kimlik Kartı */}
+        <div
+          className="hierarchy-header-left"
+          style={{
+            pointerEvents: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            minHeight: 44,
+            background: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 12,
+            padding: '6px 14px',
+            boxShadow: 'var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1))',
+            maxWidth: '100%',
+            minWidth: 0,
+            flexShrink: 1,
+          }}
+        >
+          <BackButton plain style={{ marginBottom: 0, width: 30, height: 30, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', flexShrink: 0 }} />
+          <div style={{ width: 1, height: 24, background: 'var(--color-border)', flexShrink: 0 }} />
+
           <div
+            className="hierarchy-header-identity"
             style={{
-              pointerEvents: 'auto',
               display: 'flex',
               alignItems: 'center',
-              gap: 12,
-              minHeight: 44,
-              background: 'var(--color-surface)',
-              border: '1px solid var(--color-border)',
-              borderRadius: 12,
-              padding: '6px 14px',
-              boxShadow: 'var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1))',
-              maxWidth: '55%',
+              gap: 8,
+              minWidth: 0,
+              flex: '1 1 auto',
+              overflow: 'hidden',
             }}
           >
-            <BackButton style={{ marginBottom: 0, width: 30, height: 30, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }} />
-          <div style={{ width: 1, height: 24, background: 'var(--color-border)' }} />
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
             <Network size={16} color="var(--color-primary)" style={{ flexShrink: 0, display: 'block' }} />
             <span
+              className="hierarchy-header-label"
               style={{
                 fontWeight: 800,
                 fontSize: 11,
@@ -369,11 +452,17 @@ export default function HierarchyPage() {
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
                 whiteSpace: 'nowrap',
+                flexShrink: 0,
               }}
             >
-              {t('hierarchy.profile_hierarchy_title', 'Profile Hierarchy')}
+              <span className="hierarchy-header-label-full">
+                {t('hierarchy.profile_hierarchy_title')}
+              </span>
+              <span className="hierarchy-header-label-short">
+                {t('hierarchy.profile_hierarchy_title_short')}
+              </span>
             </span>
-            <span style={{ color: 'var(--color-primary)', flexShrink: 0, transform: 'translateY(-1px)' }}>•</span>
+            <span className="hierarchy-header-bullet" style={{ color: 'var(--color-primary)', flexShrink: 0, transform: 'translateY(-1px)' }}>•</span>
             <span
               onClick={() => {
                 if (actorId) navigate(`/profile?actorId=${actorId}`)
@@ -389,25 +478,29 @@ export default function HierarchyPage() {
                 cursor: actorId ? 'pointer' : 'default',
                 transform: 'translateY(1px)',
                 minWidth: 0,
+                flex: '0 1 auto',
               }}
             >
-              {actorName || t('hierarchy.no_name', 'isim')}
+              {actorName || t('hierarchy.no_name')}
             </span>
           </div>
         </div>
 
         {/* Sağ Üst: Derinlik/Zoom Araçları ve Altında Ortalı Heartbeat */}
         <div
+          className="hierarchy-header-right"
           style={{
             pointerEvents: 'none',
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
+            alignItems: 'flex-end',
             gap: 10,
+            flexShrink: 0,
           }}
         >
           {/* Sağ Üst Blok: Derinlik, Zoom & Genişletme Araçları */}
           <div
+            className="hierarchy-toolbar"
             style={{
               pointerEvents: 'auto',
               display: 'flex',
@@ -421,12 +514,13 @@ export default function HierarchyPage() {
               boxShadow: 'var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1))',
             }}
           >
+            <div className="hierarchy-toolbar-secondary">
             {/* Derinlik Kontrolü */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div className="hierarchy-depth" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span
                 style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)' }}
               >
-                {t('hierarchy.depth', 'Derinlik:')}
+                {t('hierarchy.depth')}
               </span>
               <input
                 type="text"
@@ -465,6 +559,7 @@ export default function HierarchyPage() {
 
             {/* Zoom Level Göstergesi */}
             <span
+              className="hierarchy-zoom-pct"
               style={{
                 fontSize: 12,
                 fontWeight: 600,
@@ -479,32 +574,62 @@ export default function HierarchyPage() {
             {/* Zoom Butonları */}
             <button
               type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => setZoomLevel((z) => Math.min(2.0, +(z + 0.05).toFixed(2)))}
-              aria-label={t('hierarchy.zoom_in', 'Büyüt (+)')}
-              style={{ width: 28, height: 28, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              className="btn btn-ghost btn-sm hierarchy-zoom-btn"
+              onClick={() => handleZoom((z) => z + 0.05)}
+              aria-label={t('hierarchy.zoom_in')}
+              style={{ flexShrink: 0, width: 26, height: 26, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              <Plus size={14} />
+              <Plus size={12} />
             </button>
             <button
               type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => setZoomLevel((z) => Math.max(0.05, +(z - 0.05).toFixed(2)))}
-              aria-label={t('hierarchy.zoom_out', 'Küçült (-)')}
-              style={{ width: 28, height: 28, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              className="btn btn-ghost btn-sm hierarchy-zoom-btn"
+              onClick={() => handleZoom((z) => z - 0.05)}
+              aria-label={t('hierarchy.zoom_out')}
+              style={{ flexShrink: 0, width: 26, height: 26, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              <Minus size={14} />
+              <Minus size={12} />
             </button>
 
             <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
 
+            {/* Fosil Düğümleri Göster / Gizle Toggle */}
+            <FossilTogglePill
+              count={fossilCount}
+              open={showFossils}
+              showCountOnlyWhenOpen={true}
+              onToggle={() => setShowFossils((prev) => !prev)}
+              style={{ flexShrink: 0 }}
+            />
+
+            {/* Silinmiş Düğümleri Göster / Gizle Toggle (Trash2) */}
+            <button
+              type="button"
+              className={`vtree-fossil-pill ${showDeleted ? 'vtree-fossil-pill--expanded' : ''}`}
+              onClick={() => setShowDeleted((prev) => !prev)}
+              aria-label={showDeleted ? t('hierarchy.hide_deleted') : t('hierarchy.show_deleted')}
+              title={t('hierarchy.show_deleted_tooltip')}
+              style={{ flexShrink: 0 }}
+            >
+              <Trash2 size={14} style={{ flexShrink: 0 }} />
+              {showDeleted && deletedCount > 0 && <span>{deletedCount}</span>}
+              {showDeleted ? (
+                <CircleMinus size={15} strokeWidth={2.2} />
+              ) : (
+                <CirclePlus size={15} strokeWidth={2.2} />
+              )}
+            </button>
+            </div>
+
+            <div className="hierarchy-toolbar-main">
             {/* Tümünü Genişlet Butonu */}
             <button
               type="button"
-              className="btn btn-primary btn-sm"
+              className={`btn btn-sm hierarchy-toggle-btn ${isAllExpanded ? 'hierarchy-toggle-btn--active' : ''}`}
               onClick={handleExpandAll}
               disabled={isExpandingAll || !treeData}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '0 16px', height: 32 }}
+              aria-label={t('hierarchy.expand_all')}
+              style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '0 12px', height: 26 }}
             >
               {isExpandingAll ? (
                 <div
@@ -512,9 +637,9 @@ export default function HierarchyPage() {
                   style={{ width: 14, height: 14, borderWidth: 2 }}
                 />
               ) : (
-                <Maximize2 size={13} />
+                <Maximize2 size={12} />
               )}
-              <span>{t('hierarchy.expand_all', 'Tümünü Genişlet')}</span>
+              <span>{t('hierarchy.expand_all')}</span>
             </button>
 
             <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
@@ -525,50 +650,31 @@ export default function HierarchyPage() {
               className="btn btn-primary btn-sm"
               onClick={handleDefaultView}
               disabled={!treeData}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '0 16px', height: 32 }}
+              aria-label={t('hierarchy.default_view')}
+              style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '0 12px', height: 26 }}
             >
-              <Focus size={13} />
-              <span>{t('hierarchy.default_view', 'Varsayılan')}</span>
+              <Focus size={12} />
+              <span>{t('hierarchy.default_view')}</span>
             </button>
-
-            <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
-
-            {/* Fosil Düğümleri Göster / Gizle Toggle */}
-            <button
-              type="button"
-              className={`btn btn-primary btn-sm btn-fossil-toggle ${showFossils ? 'btn-fossil-toggle--active' : ''}`}
-              onClick={() => setShowFossils((prev) => !prev)}
-              disabled={!treeData}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                padding: '0 16px',
-                height: 32,
-                opacity: showFossils ? 1 : 0.85,
-              }}
-            >
-              <TRexSkullIcon className="badge-fossil-icon" />
-              <span>{showFossils ? t('common.enabled', 'Enabled') : t('common.disabled', 'Disabled')}</span>
-            </button>
+            </div>
           </div>
 
           {/* Sağ Üst Bloğun Altında Ortalı Heartbeat (Büyük & Hızlı Nabız) */}
           <div
+            className="hierarchy-heartbeat"
             style={{
               pointerEvents: 'auto',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
-            title={t('hierarchy_info.section_heartbeat_title', 'Heartbeat')}
+            title={t('hierarchy_info.section_heartbeat_title')}
           >
             <div
               key={pulseCount}
               style={{
-                width: 56,
-                height: 56,
+                width: 68,
+                height: 68,
                 color: 'var(--color-primary)',
                 animation: 'heartBeat 0.38s ease',
                 display: 'flex',
@@ -578,7 +684,7 @@ export default function HierarchyPage() {
                 cursor: 'default',
               }}
             >
-              <HeartSvg width={52} height={52} style={{ display: 'block' }} />
+              <HeartSvg width={64} height={64} style={{ display: 'block' }} />
             </div>
           </div>
         </div>
@@ -588,6 +694,10 @@ export default function HierarchyPage() {
       <div
         ref={containerRef}
         onMouseDown={handleMouseDown}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchEnd}
         onClickCapture={handleClickCapture}
         onAuxClick={(e) => {
           if (e.button === 1) {
@@ -608,6 +718,7 @@ export default function HierarchyPage() {
           userSelect: isPanning ? 'none' : 'auto',
           background: 'transparent',
           padding: '76px 20px 24px',
+          touchAction: 'none',
         }}
       >
         {isLoading ? null : treeData ? (
@@ -628,11 +739,12 @@ export default function HierarchyPage() {
             zoomLevel={zoomLevel}
             onPulse={handlePulse}
             showFossils={showFossils}
+            showDeleted={showDeleted}
           />
           </div>
         ) : (
           <div className="empty-state">
-            {t('hierarchy.no_data', 'Hiyerarşi verisi bulunamadı.')}
+            {t('common.nothing_here_yet')}
           </div>
         )}
       </div>

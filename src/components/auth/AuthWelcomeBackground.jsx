@@ -7,9 +7,10 @@ import WelcomeSvg from '../../assets/FigmaNew/Welcome.svg?react'
  */
 export default function AuthWelcomeBackground({ children }) {
   return (
-    <div style={{ position: 'relative' }}>
+    <div className="auth-welcome-bg" style={{ position: 'relative' }}>
       <div
         aria-hidden="true"
+        className="auth-welcome-bg__layer"
         style={{
           position: 'absolute',
           inset: 0,

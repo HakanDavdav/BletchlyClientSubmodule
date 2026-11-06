@@ -3,7 +3,8 @@ import api from './axios'
 // ─── Tribe API ────────────────────────────────────────────────────────────────
 
 export const tribeApi = {
-  loadTribes: (page = 1, query = '', orderType = '', startDate = null, endDate = null) => {
+  loadTribes: (page = 1, query = '', orderType = '', startDate = null, endDate = null, topicType = '', includeDormant = false) => {
+    const topicTypes = Array.isArray(topicType) ? topicType.filter(Boolean) : topicType ? [topicType] : []
     return api.get('/tribe/load', {
       params: {
         page,
@@ -11,7 +12,10 @@ export const tribeApi = {
         orderType: orderType || undefined,
         startDate: startDate || undefined,
         endDate: endDate || undefined,
+        topicType: topicTypes.length ? topicTypes : undefined,
+        includeDormant: includeDormant ? true : undefined,
       },
+      paramsSerializer: { indexes: null },
     })
   },
 
@@ -44,6 +48,9 @@ export const tribeApi = {
 
   getTribePosts: (tribeId, page = 1) =>
     api.get(`/tribe/${tribeId}/posts`, { params: { page } }),
+
+  getTribeMemberships: (tribeId, page = 1) =>
+    api.get(`/tribe/${tribeId}/memberships`, { params: { page } }),
 
   getFullMemory: (tribeId) =>
     api.get(`/tribe/${tribeId}/memory`),

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Network,
   Search,
@@ -20,23 +21,31 @@ import {
   Users,
 } from 'lucide-react'
 import { MODEL_GLASS_ITEMS } from '../components/common/ModelGlassToggle'
+import PaginationSelect, { PaginationTotal } from '../components/common/PaginationSelect'
+import { getMemoryEmblems } from '../components/common/MemoryEmblems'
 import KingIcon from '../components/common/icons/KingIcon'
 import FossilIcon from '../components/common/icons/FossilIcon'
 import AngryBotWithSwordsIcon from '../components/common/icons/AngryBotWithSwordsIcon'
+import ChatBubbleIcon from '../components/common/icons/ChatBubbleIcon'
+import useChatDeckStore from '../store/chatDeckStore'
+import useIsMobile from '../hooks/useIsMobile'
+import { isChatDeckEligible } from '../utils/chatDeck'
 import AmbientBots from '../components/common/ambiances/AmbientBots'
 import WelcomeAmbience from '../components/common/ambiances/WelcomeAmbience'
-import MindAmbience from '../components/common/ambiances/MindAmbience'
+import MemoryMapAmbience from '../components/common/ambiances/MemoryMapAmbience'
+import RainbowCardsAmbience from '../components/common/ambiances/RainbowCardsAmbience'
 import BotFlashCardsIcon from '../components/common/icons/BotFlashCardsIcon'
 import CardContingencyIcon from '../components/common/icons/CardContingencyIcon'
 import CardContingencyModifierIcon from '../components/common/icons/CardContingencyModifierIcon'
 import toast from 'react-hot-toast'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { actorApi } from '../api/actorApi'
 import { personalityCardApi } from '../api/personalityCardApi'
-import { BotCapabilities, UserCapabilities, Theme } from '../constants/enums'
+import { UserCapabilities, Theme } from '../constants/enums'
 import TriggerDebateModal from '../components/profile/TriggerDebateModal'
 import { trackDebate } from '../utils/analytics'
 import BackButton from '../components/common/BackButton'
+import { PageTopDockRow } from '../components/layout/PageTopDock'
 import ActorAvatar from '../components/actor/ActorAvatar'
 import CardSlots from '../components/card/CardSlots'
 import { TopicTagList } from '../components/topic/TopicTag'
@@ -55,31 +64,15 @@ import useMyEntitiesStore from '../store/myEntitiesStore'
 import useUIStore from '../store/uiStore'
 import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
+import useDocumentTitle from '../hooks/useDocumentTitle'
+import { getQueryErrorMessage } from '../utils/errorHelper'
+import { formatDate } from '../utils/formatDate'
 import AvatarUpload from '../components/common/AvatarUpload'
 import PremiumModal from '../components/common/PremiumModal'
 import ModifierArrowSvg from '../assets/FigmaNew/modifierarrow.svg?react'
 import TRexSkullIcon from '../assets/t-rex-skull-svgrepo-com.svg?react'
 import { buildOwnedCardIdSet, sortCardsOwnedFirst } from '../utils/cardOwnership'
-
-const TOPIC_TYPES = [
-  { value: 1, enumName: 'Politics', label: 'Politika' },
-  { value: 2, enumName: 'Economy', label: 'Ekonomi' },
-  { value: 4, enumName: 'WorldNews', label: 'Dünya Haberleri' },
-  { value: 8, enumName: 'LocalNews', label: 'Yerel Haberler' },
-  { value: 16, enumName: 'Trending', label: 'Trend Başlıklar' },
-  { value: 32, enumName: 'Technology', label: 'Teknoloji' },
-  { value: 64, enumName: 'Science', label: 'Bilim' },
-  { value: 128, enumName: 'AI', label: 'Yapay Zeka' },
-  { value: 256, enumName: 'Space', label: 'Uzay' },
-  { value: 512, enumName: 'Health', label: 'Sağlık' },
-  { value: 1024, enumName: 'Sports', label: 'Spor' },
-  { value: 2048, enumName: 'Entertainment', label: 'Eğlence' },
-  { value: 4096, enumName: 'Gaming', label: 'Oyun' },
-  { value: 8192, enumName: 'Celebrity', label: 'Ünlüler' },
-  { value: 16384, enumName: 'Lifestyle', label: 'Yaşam Tarzı' },
-  { value: 32768, enumName: 'Education', label: 'Eğitim' },
-  { value: 65536, enumName: 'Relationships', label: 'İlişkiler' },
-]
+import { TopicTypes } from '../constants/TopicTypes'
 
 function FramedThemeIcon({ type, isLocked, size = 20 }) {
   return (
@@ -131,6 +124,13 @@ function FramedThemeIcon({ type, isLocked, size = 20 }) {
             <path d="M9 13v2" />
           </>
         )}
+        {type === 'rainbow' && (
+          <>
+            <path d="M3 16.5 A 9 9 0 0 1 21 16.5" />
+            <path d="M6.75 16.5 A 5.25 5.25 0 0 1 17.25 16.5" />
+            <path d="M10.25 16.5 A 1.75 1.75 0 0 1 13.75 16.5" />
+          </>
+        )}
       </g>
 
       {/* Premium yoksa üstü çizili (1.5px Sarı Çizik) */}
@@ -156,13 +156,21 @@ export default function ProfilePage() {
   const { actorId: currentUserId, isLoggedIn } = useAuthStore()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const location = useLocation()
+  const isMobile = useIsMobile()
+  const openChatDeck = useChatDeckStore((s) => s.openChatDeck)
   const [activeTab, setActiveTab] = useState('bots')
   // Fosil (dormant) bot/klanlar bu sayfada varsayılan olarak gizli.
   const [showFossilProfileBots, setShowFossilProfileBots] = useState(false)
   const [showFossilProfileTribes, setShowFossilProfileTribes] = useState(false)
   const [postsPage, setPostsPage] = useState(1)
   const [entriesPage, setEntriesPage] = useState(1)
+  const [favouritesPage, setFavouritesPage] = useState(1)
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false)
   const inferredPerPage = 5
+  // Profil sekmeleri: mobilde yatay kaydırma göstergesi (kaydıraç) durumu
+  const profileTabGroupRef = useRef(null)
+  const [tabScroll, setTabScroll] = useState({ scrollable: false, left: 0, width: 100 })
   const { t } = useTranslation()
   // Limitler & Miras paneli açma/kapama durumu (TribePage ile ORTAK global state)
   const { isLimitsExpanded, toggleLimits } = useUIStore()
@@ -200,7 +208,7 @@ export default function ProfilePage() {
   const handleTriggerDebate = async (proposition) => {
     try {
       setDebatePending(true)
-      toast.loading(t('profile.triggering_debate', 'Meydan okuma başlatılıyor...'), {
+      toast.loading(t('profile.triggering_debate'), {
         id: 'debate-trigger',
       })
       const res = await actorApi.triggerDebate({
@@ -210,7 +218,7 @@ export default function ProfilePage() {
       const isBotTarget = profile?.discriminator === 'Bot'
       if (isBotTarget) {
         toast.success(
-          t('profile.debate_triggered', 'Meydan okuma başlatıldı! Arenaya aktarılıyorsunuz...'),
+          t('profile.debate_triggered'),
           {
             id: 'debate-trigger',
           }
@@ -218,8 +226,7 @@ export default function ProfilePage() {
       } else {
         toast.success(
           t(
-            'profile.debate_invitation_sent',
-            'Meydan okuma kullanıcıya iletildi. Rakibin kabul etmesi bekleniyor...'
+            'profile.debate_invitation_sent'
           ),
           {
             id: 'debate-trigger',
@@ -243,7 +250,7 @@ export default function ProfilePage() {
           state: {
             proponent: {
               id: currentUserId,
-              name: t('actor.you', 'Sen'),
+              name: t('actor.you'),
               imageUrl: null,
               discriminator: 'User',
             },
@@ -273,7 +280,7 @@ export default function ProfilePage() {
         errorMessages = [
           err.response?.data?.message ||
             err.message ||
-            t('profile.debate_error', 'Meydan okuma başlatılamadı.'),
+            t('profile.debate_error'),
         ]
       }
 
@@ -300,6 +307,8 @@ export default function ProfilePage() {
     imageUrl: '',
     topicTypes: [],
   })
+  const editNameRef = useRef(null)
+  const editBioRef = useRef(null)
 
   const toggleTopic = (value) => {
     setEditForm((prev) => ({
@@ -314,11 +323,13 @@ export default function ProfilePage() {
   const myBots = useMyEntitiesStore((state) => state.myBots)
   const myCards = useMyEntitiesStore((state) => state.myCards)
 
-  const { data: profile, isLoading } = useQuery({
+  const { data: profile, isLoading, isError: isProfileError, error: profileError } = useQuery({
     queryKey: ['actorProfile', actorId],
     queryFn: () => actorApi.getProfile(actorId).then((r) => r.data?.data ?? null),
     enabled: !!actorId,
   })
+
+  useDocumentTitle(profile?.profileName)
 
   const sortedAssignedCards = useMemo(
     () => sortCardsOwnedFirst(profile?.assignedCards || [], buildOwnedCardIdSet(myCards || [])),
@@ -327,21 +338,21 @@ export default function ProfilePage() {
 
   const isDormantItem = (item) => Boolean(item?.isDormant ?? item?.IsDormant ?? false)
 
-  const visibleProfileBots = useMemo(
-    () =>
-      showFossilProfileBots
-        ? profile?.bots || []
-        : (profile?.bots || []).filter((b) => !isDormantItem(b)),
-    [profile, showFossilProfileBots]
-  )
+  const visibleProfileBots = useMemo(() => {
+    const list = profile?.bots || []
+    if (!showFossilProfileBots) {
+      return list.filter((b) => !isDormantItem(b))
+    }
+    return [...list].sort((a, b) => (isDormantItem(a) ? 1 : 0) - (isDormantItem(b) ? 1 : 0))
+  }, [profile, showFossilProfileBots])
 
-  const visibleProfileTribes = useMemo(
-    () =>
-      showFossilProfileTribes
-        ? profile?.tribes || []
-        : (profile?.tribes || []).filter((t) => !isDormantItem(t)),
-    [profile, showFossilProfileTribes]
-  )
+  const visibleProfileTribes = useMemo(() => {
+    const list = profile?.tribes || []
+    if (!showFossilProfileTribes) {
+      return list.filter((t) => !isDormantItem(t))
+    }
+    return [...list].sort((a, b) => (isDormantItem(a) ? 1 : 0) - (isDormantItem(b) ? 1 : 0))
+  }, [profile, showFossilProfileTribes])
 
   const fossilProfileBotCount = useMemo(
     () => (profile?.bots || []).filter((b) => isDormantItem(b)).length,
@@ -352,6 +363,38 @@ export default function ProfilePage() {
     () => (profile?.tribes || []).filter((t) => isDormantItem(t)).length,
     [profile]
   )
+
+  // Mobilde yatay kaydırılabilen sekme grubu için kaydıraç konumunu takip et
+  useEffect(() => {
+    const el = profileTabGroupRef.current
+    if (!el) return undefined
+    const update = () => {
+      const sw = el.scrollWidth
+      const cw = el.clientWidth
+      const scrollable = sw > cw + 1
+      const width = scrollable ? Math.max(14, (cw / sw) * 100 * 0.8) : 100
+      const maxScroll = sw - cw
+      const left = scrollable && maxScroll > 0 ? (el.scrollLeft / maxScroll) * (100 - width) : 0
+      setTabScroll({ scrollable, left, width })
+    }
+    update()
+    el.addEventListener('scroll', update, { passive: true })
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(update) : null
+    if (ro) ro.observe(el)
+    window.addEventListener('resize', update)
+    return () => {
+      el.removeEventListener('scroll', update)
+      if (ro) ro.disconnect()
+      window.removeEventListener('resize', update)
+    }
+  }, [
+    activeTab,
+    profile?.postCount,
+    profile?.entryCount,
+    profile?.favouriteCount,
+    visibleProfileBots.length,
+    visibleProfileTribes.length,
+  ])
 
   const isMyBot =
     profile?.discriminator === 'Bot' &&
@@ -384,7 +427,7 @@ export default function ProfilePage() {
     },
     onError: (err) => {
       const errMsgs = err.response?.data?.errors || [
-        err.response?.data?.message || t('profile.error_occurred', 'Bir hata oluştu.'),
+        err.response?.data?.message || t('profile.error_occurred'),
       ]
       if (Array.isArray(errMsgs)) {
         errMsgs.forEach((m) =>
@@ -400,7 +443,7 @@ export default function ProfilePage() {
 
   const handleSelectTheme = (targetTheme) => {
     if (!isCurrentUserPremium) {
-      setIsPremiumOpen(true)
+      navigate('/premium')
       return
     }
 
@@ -413,12 +456,11 @@ export default function ProfilePage() {
 
   const renderThemeSelector = () => (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-      <button
-        type="button"
+      <Link
+        to="/premium"
         className={
           isCurrentUserPremium ? 'btn btn-sm' : 'btn btn-primary btn-sm profile-premium-btn'
         }
-        onClick={() => setIsPremiumOpen(true)}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -432,6 +474,7 @@ export default function ProfilePage() {
           cursor: 'pointer',
           paddingTop: 6,
           paddingBottom: 6,
+          textDecoration: 'none',
         }}
       >
         {isCurrentUserPremium ? (
@@ -439,8 +482,8 @@ export default function ProfilePage() {
         ) : (
           <ModifierArrowSvg width={10} height={14} style={{ display: 'block' }} />
         )}
-        {t('premium.button', 'Premium')}
-      </button>
+        {t('premium.button')}
+      </Link>
       <div
         style={{
           display: 'flex',
@@ -451,10 +494,10 @@ export default function ProfilePage() {
       >
         <button
           type="button"
-          className={`btn btn-sm ${activeProfileTheme === Theme.Mind ? 'btn-primary' : 'btn-outline'}`}
-          onClick={() => handleSelectTheme(Theme.Mind)}
+          className={`btn btn-sm ${activeProfileTheme === Theme.MemoryMap ? 'btn-primary' : 'btn-outline'}`}
+          onClick={() => handleSelectTheme(Theme.MemoryMap)}
           disabled={themeMutation.isPending}
-          aria-label={t('topbar.mind_ambience', 'Mind Arka Planı')}
+          aria-label={t('topbar.memory_map_ambience')}
           style={{
             flex: 1,
             minWidth: 0,
@@ -467,8 +510,8 @@ export default function ProfilePage() {
             borderTopRightRadius: 0,
             borderBottomRightRadius: 0,
             position: 'relative',
-            zIndex: activeProfileTheme === Theme.Mind ? 2 : 1,
-            ...(activeProfileTheme === Theme.Mind
+            zIndex: activeProfileTheme === Theme.MemoryMap ? 2 : 1,
+            ...(activeProfileTheme === Theme.MemoryMap
               ? {}
               : {
                   borderColor: 'var(--color-border-light)',
@@ -484,7 +527,7 @@ export default function ProfilePage() {
           className={`btn btn-sm ${activeProfileTheme === Theme.Welcome ? 'btn-primary' : 'btn-outline'}`}
           onClick={() => handleSelectTheme(Theme.Welcome)}
           disabled={themeMutation.isPending}
-          aria-label={t('topbar.welcome_ambience', 'Welcome Arka Planı')}
+          aria-label={t('topbar.welcome_ambience')}
           style={{
             flex: 1,
             minWidth: 0,
@@ -510,10 +553,39 @@ export default function ProfilePage() {
         </button>
         <button
           type="button"
+          className={`btn btn-sm ${activeProfileTheme === Theme.Rainbow ? 'btn-primary' : 'btn-outline'}`}
+          onClick={() => handleSelectTheme(Theme.Rainbow)}
+          disabled={themeMutation.isPending}
+          aria-label={t('topbar.rainbow_ambience')}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            padding: '4px 0',
+            height: 30,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 0,
+            marginLeft: -1,
+            position: 'relative',
+            zIndex: activeProfileTheme === Theme.Rainbow ? 2 : 1,
+            ...(activeProfileTheme === Theme.Rainbow
+              ? {}
+              : {
+                  borderColor: 'var(--color-border-light)',
+                  color: 'var(--color-text-muted)',
+                  background: 'var(--color-surface)',
+                }),
+          }}
+        >
+          <FramedThemeIcon type="rainbow" isLocked={!isCurrentUserPremium} size={20} />
+        </button>
+        <button
+          type="button"
           className={`btn btn-sm ${activeProfileTheme === Theme.Bots ? 'btn-primary' : 'btn-outline'}`}
           onClick={() => handleSelectTheme(Theme.Bots)}
           disabled={themeMutation.isPending}
-          aria-label={t('topbar.ambient_bots', 'Bot Arka Planı')}
+          aria-label={t('topbar.ambient_bots')}
           style={{
             flex: 1,
             minWidth: 0,
@@ -545,17 +617,25 @@ export default function ProfilePage() {
 
   const followMutation = useMutation({
     mutationFn: () => actorApi.follow(actorId),
+    meta: { showErrorToast: true },
     onSuccess: () => {
       addFollowing(actorId)
       queryClient.invalidateQueries({ queryKey: ['actorProfile', actorId] })
+    },
+    onError: () => {
+      setLocalIsFollowing(false)
     },
   })
 
   const unfollowMutation = useMutation({
     mutationFn: () => actorApi.unfollow(actorId),
+    meta: { showErrorToast: true },
     onSuccess: () => {
       removeFollowing(actorId)
       queryClient.invalidateQueries({ queryKey: ['actorProfile', actorId] })
+    },
+    onError: () => {
+      setLocalIsFollowing(true)
     },
   })
 
@@ -605,7 +685,7 @@ export default function ProfilePage() {
     if (profile?.topicTypes) {
       profile.topicTypes.forEach((t) => {
         if (t?.topicTypeName === undefined || t?.topicTypeName === null) return
-        const match = TOPIC_TYPES.find(
+        const match = TopicTypes.find(
           (opt) =>
             opt.value === t.topicTypeName ||
             opt.enumName === t.topicTypeName ||
@@ -624,15 +704,17 @@ export default function ProfilePage() {
   }
 
   const handleEditSave = () => {
-    if (!editForm.bio.trim()) {
+    const profileName = editNameRef.current?.value ?? editForm.profileName
+    const bio = editBioRef.current?.value ?? editForm.bio
+    if (!bio.trim()) {
       toast.error(t('profile.bio_empty_error'))
       return
     }
     const payload = {
       userId: actorId,
-      profileName: editForm.profileName,
+      profileName,
       imageUrl: editForm.imageUrl || '',
-      bio: editForm.bio,
+      bio,
       topicTypes: editForm.topicTypes,
 
       postPerPage: profile?.postPerPage || 20,
@@ -672,27 +754,109 @@ export default function ProfilePage() {
     enabled: !!actorId && activeTab === 'entries',
   })
 
+  const {
+    data: favouritesData,
+    isLoading: isFavouritesLoading,
+    isFetching: isFavouritesFetching,
+  } = useQuery({
+    queryKey: ['profile-favourites', actorId, favouritesPage],
+    queryFn: () => actorApi.getProfileFavourites(actorId, favouritesPage).then((r) => r.data?.data || []),
+    enabled: !!actorId && activeTab === 'favourites',
+  })
+
   if (isLoading)
     return (
       <div className="flex justify-center" style={{ padding: 40 }}>
         <div className="spinner spinner-lg" />
       </div>
     )
-  if (!profile) return <div className="empty-state">{t('profile.not_found')}</div>
+  if (isProfileError || !profile) return <div className="empty-state">{getQueryErrorMessage(profileError, t, true)}</div>
+
+  const activePage =
+    activeTab === 'posts'
+      ? postsPage
+      : activeTab === 'favourites'
+        ? favouritesPage
+        : entriesPage
+  const activeTotalCount =
+    activeTab === 'posts'
+      ? profile.postCount || 0
+      : activeTab === 'favourites'
+        ? profile.favouriteCount || 0
+        : profile.entryCount || 0
+  const totalPages = Math.max(1, Math.ceil(activeTotalCount / inferredPerPage))
+  const isPagingFetching = isPostsFetching || isEntriesFetching || isFavouritesFetching
+
+  const renderPaginationControls = () => (
+    <div className="pagination-controls" style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+      <button
+        className="btn btn-outline btn-sm pagination-arrow"
+        disabled={activePage === 1 || isPagingFetching}
+        onClick={() => {
+          if (activeTab === 'posts') setPostsPage((p) => Math.max(1, p - 1))
+          else if (activeTab === 'favourites') setFavouritesPage((p) => Math.max(1, p - 1))
+          else setEntriesPage((p) => Math.max(1, p - 1))
+        }}
+        aria-label={t('common.previous')}
+        title={t('common.previous')}
+      >
+        <ChevronLeft size={14} />
+      </button>
+      <span
+        className="pagination-page-info"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          fontSize: 13,
+          fontWeight: 500,
+          color: 'var(--color-text-secondary)',
+        }}
+      >
+        <PaginationSelect
+          page={activePage}
+          totalPages={totalPages}
+          onChange={(nextPage) => {
+            if (activeTab === 'posts') setPostsPage(nextPage)
+            else if (activeTab === 'favourites') setFavouritesPage(nextPage)
+            else setEntriesPage(nextPage)
+          }}
+        />
+        / <PaginationTotal
+          totalPages={totalPages}
+          onChange={(nextPage) => {
+            if (activeTab === 'posts') setPostsPage(nextPage)
+            else if (activeTab === 'favourites') setFavouritesPage(nextPage)
+            else setEntriesPage(nextPage)
+          }}
+        />
+      </span>
+      <button
+        className="btn btn-outline btn-sm pagination-arrow"
+        disabled={activePage >= totalPages || isPagingFetching}
+        onClick={() => {
+          if (activeTab === 'posts') setPostsPage((p) => p + 1)
+          else if (activeTab === 'favourites') setFavouritesPage((p) => p + 1)
+          else setEntriesPage((p) => p + 1)
+        }}
+        aria-label={t('common.next')}
+        title={t('common.next')}
+      >
+        <ChevronRight size={14} />
+      </button>
+    </div>
+  )
 
   const isBot = profile.discriminator === 'Bot'
   const isDormant = Boolean(isBot && (profile.isDormant ?? profile.IsDormant ?? false))
 
-  const botCapabilities = profile.botSettings?.botCapabilities ?? BotCapabilities.Default
-  const hasBotMemory =
-    (botCapabilities & BotCapabilities.ProlongedBotMemory) === BotCapabilities.ProlongedBotMemory
-
-  const preferredModel = profile.botSettings?.preferredModel ?? 0
+  const preferredModel = profile.botSettings?.preferredModel ?? 3
   const activeModelItem = MODEL_GLASS_ITEMS.find((m) => m.value === preferredModel) || MODEL_GLASS_ITEMS[0]
   const modelEmblem = [
     {
       key: 'model',
       label: activeModelItem.title,
+      description: `${t('bot.model_label')}: ${activeModelItem.title}`,
       Icon: activeModelItem.Icon,
       tone: 'model',
       size: 24,
@@ -702,34 +866,22 @@ export default function ProfilePage() {
   const capabilityEmblems = [
     {
       key: 'default',
-      label: t('bot.capability_default', 'Varsayılan'),
+      label: t('bot.capability_default'),
+      description: `${t('bot.capability_default')}: ${t('bot.capability_default_desc')}`,
       Icon: ShieldCheck,
       tone: 'default',
       size: 25,
     },
-    hasBotMemory
-      ? {
-          key: 'extended_memory',
-          label: t('bot.capability_extended_memory', 'Genişletilmiş Hafıza'),
-          Icon: Brain,
-          tone: 'extended-memory',
-          size: 25,
-        }
-      : {
-          key: 'memory',
-          label: t('bot.capability_memory', 'Hafıza'),
-          Icon: Brain,
-          tone: 'memory',
-          size: 25,
-        },
     ...modelEmblem,
     ...(isDormant
       ? [
           {
             key: 'fossil',
             label: t(
-              'common.fossil_bot_desc',
-              'Fosil Bot: Aktif döngüden çekilmiş, soy ağacında köprü görevi görür.'
+              'common.fossil_bot_desc'
+            ),
+            description: t(
+              'common.fossil_bot_desc'
             ),
             Icon: FossilIcon,
             tone: 'fossil',
@@ -738,13 +890,15 @@ export default function ProfilePage() {
         ]
       : []),
   ]
+  const memoryEmblems = getMemoryEmblems(profile.botSettings, t)
 
   const userCapabilities = profile.userSettings?.userCapabilities ?? UserCapabilities.Default
   const isPremiumUser = (userCapabilities & UserCapabilities.Premium) === UserCapabilities.Premium
   const userCapabilityEmblems = [
     {
       key: 'default',
-      label: t('user.capability_default', 'Varsayılan'),
+      label: t('user.capability_default'),
+      description: `${t('user.capability_default')}: ${t('user.capability_default_desc')}`,
       Icon: ShieldCheck,
       tone: 'default',
       size: 25,
@@ -753,7 +907,8 @@ export default function ProfilePage() {
       ? [
           {
             key: 'premium',
-            label: t('user.capability_premium', 'Premium'),
+            label: t('user.capability_premium'),
+            description: `${t('user.capability_premium')}: ${t('user.capability_premium_desc')}`,
             Icon: KingIcon,
             tone: 'premium',
             size: 25,
@@ -764,24 +919,79 @@ export default function ProfilePage() {
 
   return (
     <div className="flex-col gap-4">
-      <div className="flex items-center gap-3 px-2" style={{ marginBottom: 8 }}>
-        <BackButton style={{ marginBottom: 0 }} />
-      </div>
+      <PageTopDockRow
+        left={
+          <>
+            <BackButton style={{ marginBottom: 0 }} />
+            <button
+              type="button"
+              className="btn-icon page-back-button"
+              onClick={() => setIsHeaderCollapsed((prev) => !prev)}
+              title={isHeaderCollapsed ? t('common.expand') : t('common.collapse')}
+              aria-label={isHeaderCollapsed ? t('common.expand') : t('common.collapse')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 32,
+                height: 32,
+                padding: 0,
+                cursor: 'pointer',
+              }}
+            >
+              <span
+                aria-hidden="true"
+                style={{
+                  fontSize: 13,
+                  lineHeight: 1,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transform: isHeaderCollapsed ? 'none' : 'rotate(180deg)',
+                  transformOrigin: '50% 50%',
+                  transition: 'transform 0.2s ease',
+                }}
+              >
+                ▼
+              </span>
+            </button>
+          </>
+        }
+        style={{ marginBottom: 8 }}
+      />
 
-      {/* ─── Profile Header ─── */}
-      <div className={`profile-header-card${isDormant ? ' profile-header-card--dormant' : ''}`}>
+      {/* ─── Collapsible Profile Header Block ─── */}
+      <AnimatePresence initial={false}>
+        {!isHeaderCollapsed && (
+          <motion.div
+            key="profile-header-collapsible"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            style={{
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 16,
+            }}
+          >
+            {/* ─── Profile Header ─── */}
+            <div className={`profile-header-card${isDormant ? ' profile-header-card--dormant' : ''}`}>
         <AmbientBots active={activeProfileTheme === Theme.Bots} />
         <WelcomeAmbience active={activeProfileTheme === Theme.Welcome} />
-        <MindAmbience
+        <MemoryMapAmbience
           profileName={profile?.profileName}
-          active={activeProfileTheme === Theme.Mind}
+          active={activeProfileTheme === Theme.MemoryMap}
         />
+        <RainbowCardsAmbience active={activeProfileTheme === Theme.Rainbow} showLiquid={false} />
         <div
-          className="flex justify-between"
+          className="flex justify-between profile-header-row"
           style={{ gap: 20, width: '100%', alignItems: 'stretch', marginBottom: -6 }}
         >
           {/* ─── LEFT COLUMN ─── */}
           <div
+            className="profile-header-left"
             style={{
               flex: 1,
               minWidth: 0,
@@ -805,24 +1015,19 @@ export default function ProfilePage() {
               >
                 {isEditing ? (
                   <input
+                    ref={editNameRef}
                     type="text"
+                    className="input"
                     style={{
                       flex: 1,
                       maxWidth: 300,
                       fontSize: 18,
                       padding: '8px 16px',
                       borderRadius: 12,
-                      border: '1.5px solid var(--color-border)',
                       background: 'var(--color-surface)',
                       color: 'var(--color-text-primary)',
-                      fontFamily: 'inherit',
-                      outline: 'none',
-                      transition: 'border-color 0.2s',
                     }}
-                    onFocus={(e) => (e.target.style.borderColor = 'var(--color-primary)')}
-                    onBlur={(e) => (e.target.style.borderColor = 'var(--color-border)')}
-                    value={editForm.profileName}
-                    onChange={(e) => setEditForm((f) => ({ ...f, profileName: e.target.value }))}
+                    defaultValue={editForm.profileName}
                   />
                 ) : (
                   <span
@@ -837,6 +1042,8 @@ export default function ProfilePage() {
             {isEditing ? (
               <>
                 <textarea
+                  ref={editBioRef}
+                  className="input textarea textarea--autogrow"
                   style={{
                     margin: '8px 0',
                     width: '100%',
@@ -845,18 +1052,10 @@ export default function ProfilePage() {
                     fontSize: 14,
                     padding: '12px 16px',
                     borderRadius: 12,
-                    border: '1.5px solid var(--color-border)',
                     background: 'var(--color-surface)',
                     color: 'var(--color-text-primary)',
-                    fontFamily: 'inherit',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                    resize: 'vertical',
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = 'var(--color-primary)')}
-                  onBlur={(e) => (e.target.style.borderColor = 'var(--color-border)')}
-                  value={editForm.bio}
-                  onChange={(e) => setEditForm((f) => ({ ...f, bio: e.target.value }))}
+                  defaultValue={editForm.bio}
                   placeholder={t('profile.bio_placeholder')}
                 />
                 <div style={{ margin: '4px 0 12px 0', maxWidth: 600 }}>
@@ -873,8 +1072,9 @@ export default function ProfilePage() {
                     {t('profile.interests')}
                   </label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {TOPIC_TYPES.map((topic) => {
+                    {TopicTypes.map((topic) => {
                       const isSelected = editForm.topicTypes.includes(topic.value)
+                      const translationKey = (topic.key || topic.enumName).toLowerCase()
                       return (
                         <label
                           key={topic.value}
@@ -904,7 +1104,7 @@ export default function ProfilePage() {
                             onChange={() => toggleTopic(topic.value)}
                             style={{ display: 'none' }}
                           />
-                          {t(`topics.${topic.enumName.toLowerCase()}`)}
+                          {t(`topics.${translationKey}`)}
                         </label>
                       )
                     })}
@@ -933,9 +1133,7 @@ export default function ProfilePage() {
                 <CalendarFold size={14} />
                 <span>
                   {t('profile.joined')}{' '}
-                  {new Date(profile.createdAt).toLocaleDateString(
-                    currentUserId === actorId ? undefined : 'tr-TR'
-                  )}
+                  <span className="date-text">{formatDate(profile.createdAt)}</span>
                 </span>
               </p>
             )}
@@ -943,9 +1141,11 @@ export default function ProfilePage() {
             {!isEditing && profile.topicTypes && profile.topicTypes.length > 0 && (
               <div style={{ marginBottom: 12 }}>
                 <TopicTagList
+                  clickable
+                  max={20}
                   topicTypes={profile.topicTypes
                     .map((t) => {
-                      const match = TOPIC_TYPES.find(
+                      const match = TopicTypes.find(
                         (opt) =>
                           opt.value === t?.topicTypeName ||
                           opt.enumName === t?.topicTypeName ||
@@ -981,26 +1181,43 @@ export default function ProfilePage() {
             {profile.discriminator === 'Bot' ? (
               <div style={{ marginTop: 0, marginBottom: 0, maxWidth: 600 }}>
                 <div className="bot-capability-emblems" style={{ marginBottom: 0 }}>
-                  {capabilityEmblems.map(({ key, label, Icon, tone, size = 25 }) => (
+                  {capabilityEmblems.map(({ key, label, description, Icon, tone, size = 25 }) => (
                     <span
                       key={key}
                       className={`bot-capability-emblem bot-capability-emblem--${tone}`}
                       aria-label={label}
+                      title={description || label}
                       role="img"
                     >
                       <Icon size={size} strokeWidth={2.2} aria-hidden="true" />
                     </span>
                   ))}
+                  {memoryEmblems.length > 0 && (
+                    <div className="bot-capability-emblems bot-capability-emblems--memory-grid">
+                      {memoryEmblems.map(({ key, label, description, Icon, tone, size = 12 }) => (
+                        <span
+                          key={key}
+                          className={`bot-capability-emblem bot-capability-emblem--${tone}`}
+                          aria-label={label}
+                          title={description || label}
+                          role="img"
+                        >
+                          <Icon size={size} strokeWidth={2.2} aria-hidden="true" />
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
               <div style={{ marginTop: 0, marginBottom: 0, maxWidth: 600 }}>
                 <div className="bot-capability-emblems" style={{ marginBottom: 0 }}>
-                  {userCapabilityEmblems.map(({ key, label, Icon, tone, size = 25 }) => (
+                  {userCapabilityEmblems.map(({ key, label, description, Icon, tone, size = 25 }) => (
                     <span
                       key={key}
                       className={`bot-capability-emblem bot-capability-emblem--${tone}`}
                       aria-label={label}
+                      title={description || label}
                       role="img"
                     >
                       <Icon size={size} strokeWidth={2.2} aria-hidden="true" />
@@ -1012,12 +1229,12 @@ export default function ProfilePage() {
 
             <div style={{ flexGrow: 1 }} />
 
-            <div className="flex flex-wrap gap-2" style={{ paddingTop: 12, paddingBottom: 0 }}>
+            <div className="flex flex-wrap gap-2 hscroll-strip profile-header-actions" style={{ paddingTop: 12, paddingBottom: 0 }}>
               {profile.discriminator === 'Bot' && (
                 <button
                   className="btn btn-outline btn-sm"
                   onClick={() =>
-                    navigate('/mind?actorId=' + actorId, {
+                    navigate('/memory-map?actorId=' + actorId, {
                       state: { profileName: profile.profileName },
                     })
                   }
@@ -1029,7 +1246,7 @@ export default function ProfilePage() {
                 className="btn btn-outline btn-sm"
                 onClick={() => navigate('/hierarchy?actorId=' + actorId)}
               >
-                <Network size={14} /> {t('profile.hierarchy', 'Hierarchy')}
+                <Network size={14} /> {t('profile.hierarchy')}
               </button>
               {isLoggedIn && !isOwnProfile && (
                 <button
@@ -1037,9 +1254,23 @@ export default function ProfilePage() {
                   onClick={isDormant ? undefined : () => setDebateModalOpen(true)}
                   disabled={isDormant}
                   style={isDormant ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
-                  title={isDormant ? t('profile.dormant_cannot_debate', 'Fosil botlar yeni meydan okumaya katılamaz.') : undefined}
+                  title={isDormant ? t('profile.dormant_cannot_debate') : undefined}
                 >
-                  <AngryBotWithSwordsIcon size={14} /> {t('profile.trigger_debate', 'Meydan Okuma')}
+                  <AngryBotWithSwordsIcon size={14} /> {t('profile.trigger_debate')}
+                </button>
+              )}
+              {isLoggedIn && !isOwnProfile && profile.discriminator === 'User' && (
+                <button
+                  className="btn btn-outline btn-sm"
+                  onClick={() => {
+                    if (!isMobile && isChatDeckEligible(location.pathname)) {
+                      openChatDeck(actorId)
+                      return
+                    }
+                    navigate('/chat?actorId=' + actorId)
+                  }}
+                >
+                  <ChatBubbleIcon size={14} /> {t('profile.chat')}
                 </button>
               )}
             </div>
@@ -1047,6 +1278,7 @@ export default function ProfilePage() {
 
           {/* ─── VERTICAL DIVIDER ─── */}
           <div
+            className="profile-header-divider"
             style={{
               width: 0,
               borderLeft: '1px solid color-mix(in srgb, var(--color-primary) 50%, transparent)',
@@ -1057,6 +1289,7 @@ export default function ProfilePage() {
 
           {/* ─── RIGHT COLUMN ─── */}
           <div
+            className="profile-header-right"
             style={{
               width: 144,
               flexShrink: 0,
@@ -1243,7 +1476,7 @@ export default function ProfilePage() {
               <span className="profile-stat-label">{t('profile.following')}</span>
             </div>
             <div
-              className="profile-stat-box"
+              className="profile-stat-box profile-stat-box--wide"
               onClick={() => setModifiersModalOpen(true)}
             >
               <span
@@ -1257,7 +1490,7 @@ export default function ProfilePage() {
                 }}
               >
                 <Sliders size={14} style={{ color: 'var(--color-primary)' }} />
-                <span>Grade</span>
+                <span>{t('profile.grade')}</span>
                 {(() => {
                   const rawG =
                     profile.discriminator === 'Bot'
@@ -1308,7 +1541,7 @@ export default function ProfilePage() {
                   )
                 })()}
               </span>
-              <span className="profile-stat-label">{t('profile.modifiers', 'Modifiers')}</span>
+              <span className="profile-stat-label">{t('profile.modifiers')}</span>
             </div>
           </div>
 
@@ -1320,12 +1553,7 @@ export default function ProfilePage() {
               className="profile-limits-toggle"
               onClick={toggleLimits}
               aria-expanded={isLimitsExpanded}
-              aria-label={t(
-                'profile.limits_header_desc',
-                isLimitsExpanded
-                  ? 'Limitler ve miras detaylarını gizle'
-                  : 'Limitler ve miras detaylarını göster'
-              )}
+              aria-label={isLimitsExpanded ? t('profile.hide_limits') : t('profile.show_limits')}
             >
             <span
               aria-hidden="true"
@@ -1347,7 +1575,7 @@ export default function ProfilePage() {
                 className="profile-limit-chip"
               >
                 <Bot size={25} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
-                <span>{t('profile.bot_ownership_limit', 'Bot Sahiplik Limiti')}:</span>
+                <span>{t('profile.bot_ownership_limit')}:</span>
                 <span className="profile-limit-chip__val">
                   {profile.botsCount ?? (profile.bots?.filter(b => !b.isDormant)?.length || 0)} /{' '}
                   {profile.userSettings.botCountLimit || 5}
@@ -1358,7 +1586,7 @@ export default function ProfilePage() {
                 className="profile-limit-chip"
               >
                 <Users size={25} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
-                <span>{t('profile.tribe_limit', 'Klan Limiti')}:</span>
+                <span>{t('profile.tribe_limit')}:</span>
                 <span className="profile-limit-chip__val">
                   {profile.tribes?.filter(t => !t.isDormant)?.length || 0} / {profile.userSettings.tribeCountLimit || 3}
                 </span>
@@ -1371,7 +1599,7 @@ export default function ProfilePage() {
                   size={25}
                   style={{ color: 'var(--color-primary)', flexShrink: 0 }}
                 />
-                <span>{t('profile.daily_debate_limit', 'Günlük Tartışma Limiti')}:</span>
+                <span>{t('profile.daily_debate_limit')}:</span>
                 <span className="profile-limit-chip__val">
                   {profile.userSettings.debateLimit || 3}
                 </span>
@@ -1388,7 +1616,7 @@ export default function ProfilePage() {
                 className="profile-limit-chip"
               >
                 <Bot size={25} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
-                <span>{t('profile.bot_ownership_limit', 'Bot Sahiplik Limiti')}:</span>
+                <span>{t('profile.bot_ownership_limit')}:</span>
                 <span className="profile-limit-chip__val">
                   {profile.botsCount ?? (profile.bots?.filter(b => !b.isDormant)?.length || 0)} /{' '}
                   {profile.botSettings.botCountLimit || 4}
@@ -1399,7 +1627,7 @@ export default function ProfilePage() {
                 className="profile-limit-chip"
               >
                 <Users size={25} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
-                <span>{t('profile.tribe_limit', 'Klan Limiti')}:</span>
+                <span>{t('profile.tribe_limit')}:</span>
                 <span className="profile-limit-chip__val">
                   {profile.tribes?.filter(t => !t.isDormant)?.length || 0} / {profile.botSettings.tribeCountLimit || 3}
                 </span>
@@ -1412,7 +1640,7 @@ export default function ProfilePage() {
                   size={25}
                   style={{ color: 'var(--color-primary)', flexShrink: 0 }}
                 />
-                <span>{t('profile.daily_debate_limit', 'Günlük Tartışma Limiti')}:</span>
+                <span>{t('profile.daily_debate_limit')}:</span>
                 <span className="profile-limit-chip__val">
                   {profile.botSettings.debateLimit || 1}
                 </span>
@@ -1443,7 +1671,7 @@ export default function ProfilePage() {
                   size={25}
                   style={{ color: 'var(--color-primary)', flexShrink: 0 }}
                 />
-                <span>{t('profile.card_ownership_limit', 'Kart Sahiplik Limiti')}:</span>
+                <span>{t('profile.card_ownership_limit')}:</span>
                 <span className="profile-limit-chip__val">
                   {profile.ownedCards?.length || 0} /{' '}
                   {(profile.discriminator === 'Bot'
@@ -1461,7 +1689,7 @@ export default function ProfilePage() {
                       size={25}
                       style={{ color: 'var(--color-primary)', flexShrink: 0 }}
                     />
-                    <span>{t('profile.bot_assignment_limit', 'Kart Atanma Limiti')}:</span>
+                    <span>{t('profile.bot_assignment_limit')}:</span>
                     <span className="profile-limit-chip__val">
                       {profile.assignedCards?.length || 0} /{' '}
                       {profile.botSettings.botAssignmentLimit || 4}
@@ -1477,7 +1705,7 @@ export default function ProfilePage() {
                   size={25}
                   style={{ color: 'var(--color-primary)', flexShrink: 0 }}
                 />
-                <span>{t('profile.card_inheritance_chance', 'Kart Miras Şansı')}:</span>
+                <span>{t('profile.card_inheritance_chance')}:</span>
                 <span className="profile-limit-chip__val">
                   %
                   {Math.round(
@@ -1498,7 +1726,7 @@ export default function ProfilePage() {
                         size={42}
                         style={{ color: 'var(--color-primary)', flexShrink: 0 }}
                       />
-                      <span>{t('profile.card_inheritance_modifier', 'Kart Miras Çarpanı')}:</span>
+                      <span>{t('profile.card_inheritance_modifier')}:</span>
                       <span className="profile-limit-chip__val">
                         +%{Math.round((profile.botSettings.cardInheritanceModifier || 0) * 100)}
                       </span>
@@ -1531,9 +1759,9 @@ export default function ProfilePage() {
                     letterSpacing: '0.04em',
                   }}
                 >
-                  {t('card.personality_slots', 'Atanmış Kişilik Kartları')} (
+                  {t('card.personality_slots')} (
                   {profile.assignedCards?.length || 0} /{' '}
-                  {profile.botSettings?.botAssignmentLimit || 4} {t('card.slots_label', 'Slot')})
+                  {profile.botSettings?.botAssignmentLimit || 4} {t('card.slots_label')})
                 </span>
               </div>
 
@@ -1567,12 +1795,12 @@ export default function ProfilePage() {
                     letterSpacing: '0.04em',
                   }}
                 >
-                  {t('card.owned_cards', 'Sahip Olunan Kartlar')} ({profile.ownedCards?.length || 0}{' '}
+                  {t('card.owned_cards')} ({profile.ownedCards?.length || 0}{' '}
                   /{' '}
                   {(profile.discriminator === 'Bot'
                     ? profile.botSettings?.cardOwnershipLimit
                     : profile.userSettings?.cardOwnershipLimit) || 10}{' '}
-                  {t('card.slots_label', 'Slot')})
+                  {t('card.slots_label')})
                 </span>
               </div>
 
@@ -1590,74 +1818,43 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* ─── Profile Activities Panel ─── */}
-      <ProfileActivitiesPanel actorId={actorId} profileName={profile.profileName} />
+            {/* ─── Profile Activities Panel ─── */}
+            <ProfileActivitiesPanel actorId={actorId} profileName={profile.profileName} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ─── Tabs & Pagination ─── */}
       <div className="profile-tabs-container">
-        <div className="profile-tab-group">
-          {['posts', 'entries', 'bots', 'tribes'].map((tab) => (
-            <button
-              key={tab}
-              className={`profile-tab-btn ${activeTab === tab ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab)}
-            >
-              {tab === 'posts' && `${t('profile.posts')} (${profile.postCount ?? 0})`}
-              {tab === 'entries' && `${t('profile.entries')} (${profile.entryCount ?? 0})`}
-              {tab === 'bots' && `${t('profile.bots')} (${visibleProfileBots.length})`}
-              {tab === 'tribes' && `${t('profile.tribes')} (${visibleProfileTribes.length})`}
-            </button>
-          ))}
+        <div className="profile-tab-group-wrap">
+          {tabScroll.scrollable && (
+            <div className="profile-tabs-scrollbar" aria-hidden="true">
+              <div
+                className="profile-tabs-scrollbar-thumb"
+                style={{ width: `${tabScroll.width}%`, left: `${tabScroll.left}%` }}
+              />
+            </div>
+          )}
+          <div className="profile-tab-group" ref={profileTabGroupRef}>
+            {['posts', 'entries', 'favourites', 'bots', 'tribes'].map((tab) => (
+              <button
+                key={tab}
+                className={`profile-tab-btn ${activeTab === tab ? 'active' : ''}`}
+                onClick={() => setActiveTab(tab)}
+              >
+                {tab === 'posts' && `${t('profile.posts')} (${profile.postCount ?? 0})`}
+                {tab === 'entries' && `${t('profile.entries')} (${profile.entryCount ?? 0})`}
+                {tab === 'favourites' && `${t('profile.favourites')} (${profile.favouriteCount ?? 0})`}
+                {tab === 'bots' && `${t('profile.bots')} (${visibleProfileBots.length})`}
+                {tab === 'tribes' && `${t('profile.tribes')} (${visibleProfileTribes.length})`}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Paging Controls */}
-        {activeTab === 'posts' || activeTab === 'entries' ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button
-              className="btn btn-outline btn-sm"
-              disabled={
-                (activeTab === 'posts' ? postsPage : entriesPage) === 1 ||
-                isPostsFetching ||
-                isEntriesFetching
-              }
-              onClick={() => {
-                if (activeTab === 'posts') setPostsPage((p) => Math.max(1, p - 1))
-                else setEntriesPage((p) => Math.max(1, p - 1))
-              }}
-              style={{ padding: '4px 8px' }}
-            >
-              <ChevronLeft size={14} />
-            </button>
-            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-secondary)' }}>
-              {t('profile.page')} {activeTab === 'posts' ? postsPage : entriesPage} /{' '}
-              {Math.max(
-                1,
-                Math.ceil(
-                  (activeTab === 'posts' ? profile.postCount || 0 : profile.entryCount || 0) /
-                    inferredPerPage
-                )
-              )}
-            </span>
-            <button
-              className="btn btn-outline btn-sm"
-              disabled={
-                (activeTab === 'posts' ? postsPage : entriesPage) >=
-                  Math.ceil(
-                    (activeTab === 'posts' ? profile.postCount || 0 : profile.entryCount || 0) /
-                      inferredPerPage
-                  ) ||
-                isPostsFetching ||
-                isEntriesFetching
-              }
-              onClick={() => {
-                if (activeTab === 'posts') setPostsPage((p) => p + 1)
-                else setEntriesPage((p) => p + 1)
-              }}
-              style={{ padding: '4px 8px' }}
-            >
-              <ChevronRight size={14} />
-            </button>
-          </div>
+        {activeTab === 'posts' || activeTab === 'entries' || activeTab === 'favourites' ? (
+          renderPaginationControls()
         ) : activeTab === 'bots' ? (
           <FossilTogglePill
             count={fossilProfileBotCount}
@@ -1679,12 +1876,25 @@ export default function ProfilePage() {
           (isPostsLoading ? (
             <div className="spinner spinner-md" style={{ margin: '40px auto', display: 'block' }} />
           ) : !postsData || postsData.length === 0 ? (
-            <p className="empty-state">{t('profile.no_posts')}</p>
+            <p className="empty-state">{t('common.nothing_here_yet')}</p>
           ) : (
             <div className="flex-col gap-4">
               {postsData.map((p) => (
                 <PostCard key={p.contentItemId} {...p} />
               ))}
+              {totalPages > 1 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    marginTop: 16,
+                    paddingTop: 16,
+                    borderTop: '1px solid var(--color-border)',
+                  }}
+                >
+                  {renderPaginationControls()}
+                </div>
+              )}
             </div>
           ))}
 
@@ -1692,19 +1902,62 @@ export default function ProfilePage() {
           (isEntriesLoading ? (
             <div className="spinner spinner-md" style={{ margin: '40px auto', display: 'block' }} />
           ) : !entriesData || entriesData.length === 0 ? (
-            <p className="empty-state">{t('profile.no_entries')}</p>
+            <p className="empty-state">{t('common.nothing_here_yet')}</p>
           ) : (
             <div className="flex-col gap-6">
               {entriesData.map((e) => (
                 <ContextualEntryThread key={e.contentItemId} entryDto={e} />
               ))}
+              {totalPages > 1 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    marginTop: 16,
+                    paddingTop: 16,
+                    borderTop: '1px solid var(--color-border)',
+                  }}
+                >
+                  {renderPaginationControls()}
+                </div>
+              )}
+            </div>
+          ))}
+
+        {activeTab === 'favourites' &&
+          (isFavouritesLoading ? (
+            <div className="spinner spinner-md" style={{ margin: '40px auto', display: 'block' }} />
+          ) : !favouritesData || favouritesData.length === 0 ? (
+            <p className="empty-state">{t('common.nothing_here_yet')}</p>
+          ) : (
+            <div className="flex-col gap-6">
+              {favouritesData.map((f) => (
+                f.isPost ? (
+                  <PostCard key={f.contentItemId} {...f.post} />
+                ) : (
+                  <ContextualEntryThread key={f.contentItemId} entryDto={f.entry} />
+                )
+              ))}
+              {totalPages > 1 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    marginTop: 16,
+                    paddingTop: 16,
+                    borderTop: '1px solid var(--color-border)',
+                  }}
+                >
+                  {renderPaginationControls()}
+                </div>
+              )}
             </div>
           ))}
 
         {activeTab === 'bots' && (
-          <div className="flex-col gap-2">
+          <div className="minimal-card-list">
             {visibleProfileBots.length === 0 && fossilProfileBotCount === 0 ? (
-              <p className="empty-state">{t('profile.no_bots')}</p>
+              <p className="empty-state">{t('common.nothing_here_yet')}</p>
             ) : (
               visibleProfileBots.map((bot) => (
                 <div key={bot.actorId} className="lb-card" style={{ padding: '8px 16px' }}>
@@ -1718,9 +1971,9 @@ export default function ProfilePage() {
         )}
 
         {activeTab === 'tribes' && (
-          <div className="flex-col gap-2">
+          <div className="minimal-card-list">
             {visibleProfileTribes.length === 0 && fossilProfileTribeCount === 0 ? (
-              <p className="empty-state">{t('profile.no_tribes')}</p>
+              <p className="empty-state">{t('common.nothing_here_yet')}</p>
             ) : (
               visibleProfileTribes.map((tribe) => <TribeMinimalCard key={tribe.tribeId} {...tribe} />)
             )}

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { Send } from 'lucide-react'
 import { contentItemApi } from '../../api/contentItemApi'
 import useAuthStore from '../../store/authStore'
 import useDevLog from '../../utils/useDevLog'
@@ -35,17 +34,6 @@ export default function EntryDraft({ parentContentItemId, editContentItemId = nu
   })
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-    
-    if (isRequired) {
-      return (!value || !value.trim()) ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
 
   const canSubmit = content.trim() !== '' && !mutation.isPending
 
@@ -66,23 +54,11 @@ export default function EntryDraft({ parentContentItemId, editContentItemId = nu
     <div className="entry-draft">
       <form noValidate onSubmit={handleSubmit}>
         <textarea
-          className="input textarea"
+          className={`input textarea textarea--autogrow ${hasSubmitted && !content.trim() ? 'error' : ''}`}
           placeholder={editContentItemId ? t('action.edit') : t('card.write_reply')}
           value={content}
           onChange={(e) => setContent(e.target.value)}
           rows={3}
-          style={{ 
-            border: `1px solid ${getBorderColor('content', content, true)}`, 
-            background: 'var(--color-surface)', 
-            padding: '12px',
-            borderRadius: '8px',
-            outline: 'none',
-            transition: 'border-color 0.2s',
-            width: '100%',
-            boxSizing: 'border-box'
-          }}
-          onFocus={() => setFocused('content')}
-          onBlur={() => setFocused(null)}
         />
         <div className="flex items-center justify-between" style={{ marginTop: 8 }}>
           {onCancel && (
@@ -96,7 +72,6 @@ export default function EntryDraft({ parentContentItemId, editContentItemId = nu
             disabled={mutation.isPending}
             style={{ marginLeft: 'auto' }}
           >
-            <Send size={13} />
             {mutation.isPending 
               ? (editContentItemId ? t('action.saving') : t('action.sending')) 
               : (editContentItemId ? t('action.save') : t('action.send'))}

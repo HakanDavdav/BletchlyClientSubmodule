@@ -1,22 +1,32 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Trash2, Shield, UserMinus, Users, Loader2 } from 'lucide-react'
+import { Trash2, Shield, UserMinus, Users, Loader2, Lock } from 'lucide-react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { tribeApi } from '../api/tribeApi'
+import { actorApi } from '../api/actorApi'
 import { personalityCardApi } from '../api/personalityCardApi'
 import BackButton from '../components/common/BackButton'
+import ConfirmModal from '../components/common/ConfirmModal'
 import BotFlashCardsIcon from '../components/common/icons/BotFlashCardsIcon'
 import CardSelectionSlots from '../components/card/CardSelectionSlots'
 import PersonalityCard from '../components/card/PersonalityCard'
 import ActorMinimalCard from '../components/actor/ActorMinimalCard'
 import AvatarUpload from '../components/common/AvatarUpload'
 import ModelGlassToggle from '../components/common/ModelGlassToggle'
+import MemoryTuningSlider, {
+  formatMultiplier,
+} from '../components/common/MemoryTuningSlider'
+import useIsMobile from '../hooks/useIsMobile'
 import useAuthStore from '../store/authStore'
 import useMyEntitiesStore from '../store/myEntitiesStore'
 import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
+import { getQueryErrorMessage } from '../utils/errorHelper'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 import toast from 'react-hot-toast'
 import { buildOwnedCardIdSet, normalizeCardId, sortCardsOwnedFirst } from '../utils/cardOwnership'
+import { TopicTypes } from '../constants/TopicTypes'
+import { TopicTypes as TopicTypesEnum, UserCapabilities } from '../constants/enums'
 
 export default function TribeSettingsPage() {
   const [searchParams] = useSearchParams()
@@ -26,13 +36,21 @@ export default function TribeSettingsPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { t } = useTranslation()
+  const storeSettings = useMyEntitiesStore((state) => state.mySettings)
 
   // Form states
   const [formData, setFormData] = useState({
     tribeName: '',
     imageUrl: '',
     mission: '',
-    preferredModel: 0,
+    preferredModel: 3,
+    affinityBiasMultiplier: 1,
+    ebbinghausHalfLifePeriodMultiplier: 1,
+    maxStrengthMultiplier: 1,
+    minStrengthThresholdMultiplier: 1,
+    recallPathLimitMultiplier: 1,
+    incubationPeriodMultiplier: 1,
+    topicTypes: [],
     personalityCardName: '',
     personalityCardPrompt: '',
     personalityCardConfirmed: false,
@@ -41,14 +59,41 @@ export default function TribeSettingsPage() {
   const [selectedCardIds, setSelectedCardIds] = useState([])
   const [lockedCardIds, setLockedCardIds] = useState([])
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
+  const [isDeleteTribeModalOpen, setIsDeleteTribeModalOpen] = useState(false)
+  const [expelTargetMember, setExpelTargetMember] = useState(null)
 
   // Fetch Tribe
-  const { data: tribe, isLoading } = useQuery({
+  const { data: tribe, isLoading, isError: isTribeError, error: tribeError } = useQuery({
     queryKey: ['tribe', tribeId],
     queryFn: () => tribeApi.getTribe(tribeId).then((r) => r.data?.data ?? null),
     enabled: !!tribeId,
   })
+
+  useDocumentTitle(
+    tribe ? `${tribe.tribeName} - ${t('tribe_settings.title')}` : null
+  )
+
+  const { data: userSettings } = useQuery({
+    queryKey: ['userSettings', currentUserId],
+    queryFn: async () => {
+      if (storeSettings) return storeSettings
+      const res = await actorApi.getUserSettings()
+      return res.data?.data
+    },
+    initialData: storeSettings || undefined,
+    enabled: Boolean(currentUserId),
+  })
+
+  const cardLockLimit = userSettings?.cardAssignmentLockLimit ?? storeSettings?.cardAssignmentLockLimit ?? 4
+
+  // Hafıza dayanıklılığı (Unutkanlık Hızı) ayarı Pro'ya özeldir
+  const isPremiumUser =
+    ((userSettings?.userCapabilities ?? UserCapabilities.Default) & UserCapabilities.Premium) ===
+    UserCapabilities.Premium
+  const isMobileScreen = useIsMobile()
+  const sliderRowStyle = isMobileScreen
+    ? undefined
+    : { flex: 1, minWidth: 0, maxWidth: 'none' }
 
   const { data: myCards = [] } = useQuery({
     queryKey: ['myPersonalityCards', currentUserId],
@@ -59,6 +104,7 @@ export default function TribeSettingsPage() {
   })
 
   const storeMyCards = useMyEntitiesStore((state) => state.myCards)
+
   const ownedCardIdSet = useMemo(
     () => buildOwnedCardIdSet([...(myCards || []), ...(storeMyCards || [])]),
     [myCards, storeMyCards]
@@ -72,11 +118,25 @@ export default function TribeSettingsPage() {
   // Populate form
   useEffect(() => {
     if (tribe) {
+      const mappedTopicTypes = (tribe.topicTypes || [])
+        .map((tt) => {
+          const typeNameOrVal = tt.topicTypeName
+          if (typeof typeNameOrVal === 'number') return typeNameOrVal
+          return TopicTypesEnum[typeNameOrVal] || null
+        })
+        .filter((v) => v != null)
       setFormData({
         tribeName: tribe.tribeName || '',
         imageUrl: tribe.imageUrl || '',
         mission: tribe.mission || '',
-        preferredModel: tribe.preferredModel ?? 0,
+        preferredModel: tribe.preferredModel ?? 3,
+        affinityBiasMultiplier: tribe.affinityBiasMultiplier ?? 1,
+        ebbinghausHalfLifePeriodMultiplier: tribe.ebbinghausHalfLifePeriodMultiplier ?? 1,
+        maxStrengthMultiplier: tribe.maxStrengthMultiplier ?? 1,
+        minStrengthThresholdMultiplier: Number((2 - (tribe.maxStrengthMultiplier ?? 1)).toFixed(2)),
+        recallPathLimitMultiplier: tribe.recallPathLimitMultiplier ?? 1,
+        incubationPeriodMultiplier: tribe.incubationPeriodMultiplier ?? 1,
+        topicTypes: mappedTopicTypes,
       })
       const assignedCards = tribe.personalityCards || []
       setSelectedCardIds(assignedCards.map(normalizeCardId).filter(Boolean))
@@ -96,7 +156,7 @@ export default function TribeSettingsPage() {
     mutationFn: (dto) => tribeApi.editTribe(tribeId, dto),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      toast.success(t('tribe_settings.success_update', 'Değişiklikler kaydedildi'))
+      toast.success(t('tribe_settings.success_update'))
       queryClient.invalidateQueries({ queryKey: ['tribe', tribeId] })
       queryClient.invalidateQueries({ queryKey: ['myPersonalityCards'] })
       setTimeout(() => {
@@ -122,7 +182,7 @@ export default function TribeSettingsPage() {
     mutationFn: () => tribeApi.deleteTribe(tribeId),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      toast.success(t('common.success', 'Başarılı'))
+      toast.success(t('common.success'))
       queryClient.invalidateQueries({ queryKey: ['tribe'] })
       queryClient.invalidateQueries({ queryKey: ['myTribes'] })
       useMyEntitiesStore.getState().fetchMyTribes()
@@ -136,19 +196,18 @@ export default function TribeSettingsPage() {
         <div className="spinner spinner-lg" />
       </div>
     )
-  if (!tribe) return <div className="empty-state">{t('tribe_settings.not_found')}</div>
+  if (isTribeError || !tribe) return <div className="empty-state">{getQueryErrorMessage(tribeError, t, true)}</div>
 
   const isDormantTribe = Boolean(tribe.isDormant ?? tribe.IsDormant ?? false)
   if (isDormantTribe) {
     return (
       <div className="empty-state">
         <h2 style={{ color: 'var(--color-error)' }}>
-          {t('tribe_settings.dormant_unauthorized', 'Fosil klanlar düzenlenemez.')}
+          {t('tribe_settings.dormant_unauthorized')}
         </h2>
         <p>
           {t(
-            'tribe_settings.dormant_unauthorized_desc',
-            'Aktif döngüden çekilmiş klanların ayarları değiştirilemez.'
+            'tribe_settings.dormant_unauthorized_desc'
           )}
         </p>
         <button
@@ -215,35 +274,49 @@ export default function TribeSettingsPage() {
         ? current.filter((selectedId) => selectedId !== lowerId)
         : [...current, lowerId]
     )
+    setLockedCardIds((current) => current.filter((lockedId) => lockedId !== lowerId))
   }
 
   const toggleLockCard = (cardId) => {
     const lowerId = normalizeCardId(cardId)
     if (!lowerId) return
-    setLockedCardIds((current) =>
-      current.includes(lowerId)
-        ? current.filter((lockedId) => lockedId !== lowerId)
-        : [...current, lowerId]
-    )
+    setLockedCardIds((current) => {
+      const isLocked = current.includes(lowerId)
+      if (isLocked) {
+        return current.filter((lockedId) => lockedId !== lowerId)
+      } else {
+        setSelectedCardIds((prev) => (prev.includes(lowerId) ? prev : [...prev, lowerId]))
+        return [...current, lowerId]
+      }
+    })
   }
 
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-
-    if (isRequired) {
-      return !value || !value.trim() ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
+  const handleTopicToggle = (value) => {
+    setFormData((prev) => {
+      const exists = prev.topicTypes.includes(value)
+      if (exists) {
+        return { ...prev, topicTypes: prev.topicTypes.filter((t) => t !== value) }
+      } else {
+        return { ...prev, topicTypes: [...prev.topicTypes, value] }
+      }
+    })
   }
 
-  const canSubmit = formData.tribeName.trim() !== '' && !editMutation.isPending
+  const canSubmit =
+    formData.tribeName.trim() !== '' &&
+    (formData.topicTypes || []).length >= 3 &&
+    !editMutation.isPending
 
   const handleSave = (e) => {
     e.preventDefault()
 
     if (!canSubmit) {
       setHasSubmitted(true)
+      if (!formData.tribeName.trim()) {
+        toast.error(t('tribe_settings.name_required'))
+      } else if ((formData.topicTypes || []).length < 3) {
+        toast.error(t('tribe.interests_min'))
+      }
       return
     }
 
@@ -271,23 +344,7 @@ export default function TribeSettingsPage() {
   }
 
   const handleDeleteTribe = () => {
-    if (window.confirm(t('tribe_settings.confirm_delete'))) {
-      deleteMutation.mutate()
-    }
-  }
-
-  const inputStyle = {
-    width: '100%',
-    padding: '14px 16px',
-    borderRadius: 12,
-    border: '1.5px solid var(--color-border)',
-    background: 'var(--color-surface)',
-    color: 'var(--color-text-primary)',
-    fontSize: 14,
-    fontFamily: 'inherit',
-    outline: 'none',
-    transition: 'border-color 0.2s',
-    boxSizing: 'border-box',
+    setIsDeleteTribeModalOpen(true)
   }
 
   const labelStyle = {
@@ -331,8 +388,7 @@ export default function TribeSettingsPage() {
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
             {t(
-              'tribe_settings.title_desc',
-              'Klanınızın genel ayarlarını ve üyelerini buradan yönetebilirsiniz.'
+              'tribe_settings.title_desc'
             )}
           </p>
         </div>
@@ -363,12 +419,7 @@ export default function TribeSettingsPage() {
               value={formData.tribeName}
               onChange={handleChange}
               disabled={editMutation.isPending}
-              style={{
-                ...inputStyle,
-                borderColor: getBorderColor('tribeName', formData.tribeName, true),
-              }}
-              onFocus={() => setFocused('tribeName')}
-              onBlur={() => setFocused(null)}
+              className={`input ${hasSubmitted && !formData.tribeName.trim() ? 'error' : ''}`}
             />
           </div>
         </div>
@@ -382,22 +433,15 @@ export default function TribeSettingsPage() {
               value={formData.mission}
               onChange={handleChange}
               disabled={editMutation.isPending}
-              style={{
-                ...inputStyle,
-                resize: 'vertical',
-                minHeight: 100,
-                lineHeight: 1.65,
-                borderColor: getBorderColor('mission', formData.mission, false),
-              }}
-              onFocus={() => setFocused('mission')}
-              onBlur={() => setFocused(null)}
+              className="input textarea textarea--autogrow"
+              style={{ minHeight: 100, lineHeight: 1.65 }}
             />
           </div>
         </div>
 
         <div>
           <label style={labelStyle}>
-            {t('card.create_personality_optional', 'Kişilik kartı oluştur (Opsiyonel)')}
+            {t('card.create_personality_optional')}
           </label>
           <PersonalityCard
             variant="editor"
@@ -422,21 +466,10 @@ export default function TribeSettingsPage() {
           </p>
         </div>
 
-        <div>
-          <label style={labelStyle}>{t('bot.model_selection', 'Model')}</label>
-          <ModelGlassToggle
-            value={formData.preferredModel}
-            disabled={editMutation.isPending}
-            onChange={(nextModel) => setFormData((current) => ({ ...current, preferredModel: nextModel }))}
-          />
-          <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
-            {t('tribe_settings.model_selection_desc', 'Klan hafızası ve kişilik işlemlerinde kullanılır.')}
-          </p>
-        </div>
 
         <div>
           <label style={labelStyle}>
-            {t('card.personality_cards', 'KLANA ATANMIŞ KOLEKTİF KİŞİLİK KARTLARI')}
+            {t('card.personality_cards')}
           </label>
           {tribe.personalityCards?.length > 0 ? (
             <CardSelectionSlots
@@ -455,18 +488,47 @@ export default function TribeSettingsPage() {
             />
           ) : (
             <p className="text-muted" style={{ fontSize: 13 }}>
-              {t('card.no_assigned_cards', 'Henüz klana kart atanmamış.')}
+              {t('common.nothing_here_yet')}
             </p>
           )}
         </div>
 
         <div>
-          <label style={labelStyle}>
-            {t(
-              'bot.select_unassigned_cards',
-              'Sahip olduğun kartlarından ekle (Opsiyonel)'
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+              marginBottom: 8,
+            }}
+          >
+            <label style={{ ...labelStyle, marginBottom: 0 }}>
+              {t(
+                'bot.select_unassigned_cards'
+              )}
+            </label>
+            {cardLockLimit != null && (
+              <span
+                title={t('profile.card_assignment_lock_limit')}
+                style={{
+                  fontSize: 12,
+                  padding: '2px 8px',
+                  borderRadius: 12,
+                  background: 'var(--color-surface-raised)',
+                  color: 'var(--color-text-secondary)',
+                  border: '1px solid var(--color-border)',
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                <Lock size={12} style={{ opacity: 0.8 }} />
+                {t('card.total_lock_allowance')}: {cardLockLimit}
+              </span>
             )}
-          </label>
+          </div>
           <CardSelectionSlots
             cards={myCards}
             selectedCardIds={selectedCardIds}
@@ -474,17 +536,192 @@ export default function TribeSettingsPage() {
             disabled={editMutation.isPending}
             showHeader={false}
             slotCount={10}
+            assignLockedCardIds={lockedCardIds}
+            onToggleAssignLock={toggleLockCard}
+            ownedCardIds={myCards}
           />
           <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
             {t('tribe_settings.additional_personality_cards_desc')}
           </p>
         </div>
+        <div>
+          <label style={labelStyle}>{t('bot.model_selection')}</label>
+          <ModelGlassToggle
+            value={formData.preferredModel}
+            disabled={editMutation.isPending}
+            isPremium={isPremiumUser}
+            onChange={(nextModel) => setFormData((current) => ({ ...current, preferredModel: nextModel }))}
+          />
+          <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
+            {t('tribe_settings.model_selection_desc')}
+          </p>
+          <div style={{ marginTop: 18 }}>
+            <label style={labelStyle}>{t('tribe.memory_tuning')}</label>
+            <div
+              style={{
+                marginTop: 12,
+                display: 'flex',
+                flexDirection: isMobileScreen ? 'column' : 'row',
+                gap: 12,
+                alignItems: 'stretch',
+              }}
+            >
+              <MemoryTuningSlider
+                title={t('tribe.incubation_title')}
+                description={t(
+                  'tribe.incubation_desc'
+                )}
+                leftLabel={t('tribe.incubation_left')}
+                rightLabel={t('tribe.incubation_right')}
+                emblemField="incubationPeriodMultiplier"
+                value={formData.incubationPeriodMultiplier}
+                min={0}
+                max={2}
+                onChange={(v) => setFormData((current) => ({ ...current, incubationPeriodMultiplier: v }))}
+                disabled={editMutation.isPending}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+            </div>
+            <div
+              style={{
+                marginTop: 12,
+                display: 'flex',
+                flexDirection: isMobileScreen ? 'column' : 'row',
+                gap: 12,
+                alignItems: 'stretch',
+              }}
+            >
+              <MemoryTuningSlider
+                title={t('tribe.affinity_bias_title')}
+                description={t(
+                  'tribe.affinity_bias_desc'
+                )}
+                leftLabel={t('tribe.affinity_bias_left')}
+                rightLabel={t('tribe.affinity_bias_right')}
+                emblemField="affinityBiasMultiplier"
+                value={formData.affinityBiasMultiplier}
+                min={0}
+                max={2}
+                onChange={(v) => setFormData((current) => ({ ...current, affinityBiasMultiplier: v }))}
+                disabled={editMutation.isPending}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+              <MemoryTuningSlider
+                title={t('tribe.forgetfulness_title')}
+                description={t(
+                  'tribe.forgetfulness_desc'
+                )}
+                leftLabel={t('tribe.forgetfulness_left')}
+                rightLabel={t('tribe.forgetfulness_right')}
+                emblemField="ebbinghausHalfLifePeriodMultiplier"
+                value={formData.ebbinghausHalfLifePeriodMultiplier}
+                min={0}
+                max={2}
+                onChange={(v) => setFormData((current) => ({ ...current, ebbinghausHalfLifePeriodMultiplier: v }))}
+                disabled={editMutation.isPending}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+            </div>
+            <div
+              style={{
+                marginTop: 12,
+                display: 'flex',
+                flexDirection: isMobileScreen ? 'column' : 'row',
+                gap: 12,
+                alignItems: 'stretch',
+              }}
+            >
+              <MemoryTuningSlider
+                title={t('tribe.associative_scope_title')}
+                description={t(
+                  'tribe.associative_scope_desc'
+                )}
+                leftLabel={t('tribe.associative_scope_left')}
+                rightLabel={t('tribe.associative_scope_right')}
+                emblemField="recallPathLimitMultiplier"
+                value={formData.recallPathLimitMultiplier}
+                min={0}
+                max={2}
+                onChange={(v) => setFormData((current) => ({ ...current, recallPathLimitMultiplier: v }))}
+                disabled={editMutation.isPending}
+                locked={!isPremiumUser}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+              <MemoryTuningSlider
+                title={t('tribe.fixation_title')}
+                description={t(
+                  'tribe.fixation_desc'
+                )}
+                leftLabel={t('tribe.fixation_left')}
+                rightLabel={t('tribe.fixation_right')}
+                emblemField="maxStrengthMultiplier"
+                value={formData.maxStrengthMultiplier}
+                min={0.5}
+                max={2}
+                onChange={(v) =>
+                  setFormData((current) => ({
+                    ...current,
+                    maxStrengthMultiplier: v,
+                    minStrengthThresholdMultiplier: Number((2 - v).toFixed(2)),
+                  }))
+                }
+                disabled={editMutation.isPending}
+                locked={!isPremiumUser}
+                formatValue={formatMultiplier}
+                style={sliderRowStyle}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label style={labelStyle}>{t('tribe.interests')}</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {TopicTypes.map((topic) => {
+              const isSelected = formData.topicTypes.includes(topic.value)
+              return (
+                <div
+                  key={topic.value}
+                  onClick={() => {
+                    if (!editMutation.isPending) {
+                      handleTopicToggle(topic.value)
+                    }
+                  }}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 20,
+                    fontSize: 13,
+                    fontWeight: 500,
+                    cursor: editMutation.isPending ? 'default' : 'pointer',
+                    background: isSelected
+                      ? 'var(--color-primary)'
+                      : 'var(--color-surface-raised, var(--color-surface))',
+                    color: isSelected ? '#fff' : 'var(--color-text-secondary)',
+                    border: `1px solid ${isSelected ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                    transition: 'all 0.2s',
+                    boxShadow: isSelected
+                      ? '0 2px 8px rgba(var(--color-primary-rgb, 99,102,241), 0.25)'
+                      : 'none',
+                  }}
+                >
+                  {t(`topics.${topic.key || topic.enumName?.toLowerCase()}`, topic.label)}
+                </div>
+              )
+            })}
+          </div>
+          <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--color-text-faint)' }}>
+            {t(
+              'tribe.interests_desc'
+            )}
+          </p>
+        </div>
 
         <div
-          aria-label={t(
-            'card.selected_count',
-            `${selectedCardIds.length + (formData.personalityCardConfirmed ? 1 : 0)} kart seçildi`
-          )}
+          aria-label={`${selectedCardIds.length + (formData.personalityCardConfirmed ? 1 : 0)} ${t('card.selected_count')}`}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -523,7 +760,7 @@ export default function TribeSettingsPage() {
                 {t('auth.processing')}
               </>
             ) : (
-              <>{t('action.update', 'Güncelle')}</>
+              <>{t('action.save')}</>
             )}
           </button>
         </div>
@@ -566,7 +803,7 @@ export default function TribeSettingsPage() {
           </div>
         </div>
 
-        <div className="flex-col gap-2">
+        <div className="minimal-card-list">
           {tribe.tribeMemberships?.map((member, index) =>
             member.actor ? (
               <div
@@ -586,11 +823,11 @@ export default function TribeSettingsPage() {
                     {member.roleName === 'TribeLeader'
                       ? t('tribe_settings.leader')
                       : member.roleName === 'TribeAssistantLeader'
-                        ? t('tribe_settings.assistant_leader', 'Yardımcı Lider')
+                        ? t('tribe_settings.assistant_leader')
                         : member.roleName === 'TribeCoLeader'
-                          ? t('tribe_settings.co_leader', 'Eş Lider')
+                          ? t('tribe_settings.co_leader')
                           : member.roleName === 'TribeSenior'
-                            ? t('tribe_settings.senior', 'Kıdemli')
+                            ? t('tribe_settings.senior')
                             : member.roleName || t('tribe_settings.member')}
                   </span>
 
@@ -628,11 +865,7 @@ export default function TribeSettingsPage() {
                         <button
                           className="btn btn-ghost btn-sm"
                           style={{ color: '#ef4444' }}
-                          onClick={() => {
-                            if (window.confirm(t('tribe_settings.confirm_expel'))) {
-                              expelMutation.mutate(member.actor.actorId)
-                            }
-                          }}
+                          onClick={() => setExpelTargetMember(member)}
                           disabled={expelMutation.isPending}
                         >
                           <UserMinus size={14} /> {t('tribe_settings.expel')}
@@ -689,6 +922,38 @@ export default function TribeSettingsPage() {
         </button>
         </div>
       )}
+      <ConfirmModal
+        isOpen={Boolean(expelTargetMember)}
+        onClose={() => setExpelTargetMember(null)}
+        onConfirm={() => {
+          if (expelTargetMember?.actor?.actorId) {
+            expelMutation.mutate(expelTargetMember.actor.actorId)
+            setExpelTargetMember(null)
+          }
+        }}
+        title={t('tribe_settings.expel')}
+        description={t(
+          'tribe_settings.confirm_expel'
+        )}
+        confirmText={t('action.delete')}
+        confirmVariant="danger"
+        isLoading={expelMutation.isPending}
+      />
+      <ConfirmModal
+        isOpen={isDeleteTribeModalOpen}
+        onClose={() => setIsDeleteTribeModalOpen(false)}
+        onConfirm={() => {
+          setIsDeleteTribeModalOpen(false)
+          deleteMutation.mutate()
+        }}
+        title={t('tribe_settings.delete_tribe')}
+        description={t(
+          'tribe_settings.confirm_delete'
+        )}
+        confirmText={t('action.delete')}
+        confirmVariant="danger"
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   )
 }

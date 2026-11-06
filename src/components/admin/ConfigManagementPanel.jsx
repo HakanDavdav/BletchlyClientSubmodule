@@ -42,7 +42,7 @@ export default function ConfigManagementPanel() {
     mutationFn: (newSettings) => adminApi.updateAppSettings(newSettings),
     meta: { showErrorToast: true },
     onSuccess: (_, newSettings) => {
-      toast.success(t('admin.config_saved', 'Configuration saved successfully!'))
+      toast.success(t('admin.config_saved'))
       setConfig(newSettings)
       setConfigText(JSON.stringify(newSettings, null, 2))
       setIsDirty(false)
@@ -56,7 +56,7 @@ export default function ConfigManagementPanel() {
         const parsed = JSON.parse(configText)
         updateConfigMutation.mutate(parsed)
       } catch {
-        toast.error(t('admin.invalid_json', 'Invalid JSON format'))
+        toast.error(t('admin.invalid_json'))
       }
     } else {
       if (!config) return
@@ -74,7 +74,7 @@ export default function ConfigManagementPanel() {
         setIsDirty(false)
       }
     } catch {
-      toast.error(t('admin.config_refresh_error', 'Ayarlar yenilenirken bir hata oluştu.'))
+      toast.error(t('admin.config_refresh_error'))
     }
   }
 
@@ -239,7 +239,7 @@ export default function ConfigManagementPanel() {
                 transition: 'all var(--transition-fast)',
               }}
             >
-              {value ? t('admin.active', 'Active') : t('admin.disabled', 'Disabled')}
+              {value ? t('admin.active') : t('admin.disabled')}
             </button>
           </div>
         </div>
@@ -356,7 +356,7 @@ export default function ConfigManagementPanel() {
                 color: 'var(--color-text-muted)',
               }}
             >
-              {arr.length} {t('admin.prompts', 'prompts')}
+              {arr.length} {t('admin.prompts')}
             </span>
           )}
           <span
@@ -412,7 +412,7 @@ export default function ConfigManagementPanel() {
                       </span>
                       {text.length > 0 && (
                         <span style={{ fontSize: 10.5, color: 'var(--color-text-muted)' }}>
-                          {text.length} {t('admin.chars', 'chars')}
+                          {text.length} {t('admin.chars')}
                         </span>
                       )}
                     </div>
@@ -431,7 +431,7 @@ export default function ConfigManagementPanel() {
                         transition: 'all var(--transition-fast)',
                       }}
                     >
-                      {t('admin.delete_item', '✕ Sil')}
+                      {t('admin.delete_item')}
                     </button>
                   </div>
                   <textarea
@@ -477,7 +477,7 @@ export default function ConfigManagementPanel() {
                   transition: 'all var(--transition-fast)',
                 }}
               >
-                {t('admin.add_new_prompt', '+ Yeni Prompt Ekle')}
+                {t('admin.add_new_prompt')}
               </button>
             </div>
           </div>
@@ -539,7 +539,7 @@ export default function ConfigManagementPanel() {
               color: 'var(--color-text-muted)',
             }}
           >
-            {text.length} {t('admin.chars', 'chars')}
+            {text.length} {t('admin.chars')}
           </span>
           <span
             className="config-card-arrow"
@@ -669,9 +669,10 @@ export default function ConfigManagementPanel() {
                   >
                     {formatLabel(k)}
                   </span>
-                  {/* Field count badge when collapsed */}
+                  {/* Field count badge when collapsed (mobilde gizlenir) */}
                   {!isExpanded && (
                     <span
+                      className="config-field-count"
                       style={{
                         fontSize: 10,
                         padding: '1px 6px',
@@ -681,7 +682,7 @@ export default function ConfigManagementPanel() {
                         color: 'var(--color-text-muted)',
                       }}
                     >
-                      {fieldCount} {t('admin.fields', 'fields')}
+                      {fieldCount} {t('admin.fields')}
                     </span>
                   )}
                   <span
@@ -712,7 +713,7 @@ export default function ConfigManagementPanel() {
                         transition: 'all var(--transition-fast)',
                       }}
                     >
-                      {v.Enabled ? t('admin.active', 'Active') : t('admin.disabled', 'Disabled')}
+                      {v.Enabled ? t('admin.active') : t('admin.disabled')}
                     </button>
                   </div>
                 )}
@@ -753,10 +754,10 @@ export default function ConfigManagementPanel() {
       >
         <div>
           <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: 'var(--color-text)' }}>
-            {t('admin.bg_services_config', 'Background Services & Config')}
+            {t('admin.bg_services_config')}
           </h2>
           <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: '2px 0 0' }}>
-            {t('admin.bg_services_config_desc', 'Dinamik konfigürasyon ve background worker ayarları')}
+            {t('admin.bg_services_config_desc')}
           </p>
         </div>
 
@@ -772,7 +773,7 @@ export default function ConfigManagementPanel() {
               borderRadius: 'var(--radius-md)',
             }}
           >
-            {isFetching ? t('admin.loading', 'Yükleniyor...') : t('admin.refresh', 'Yenile')}
+            {isFetching ? t('admin.loading') : t('admin.refresh')}
           </button>
           <button
             className="btn btn-primary"
@@ -792,7 +793,7 @@ export default function ConfigManagementPanel() {
                 : {}),
             }}
           >
-            {isSaving ? t('admin.saving', 'Kaydediliyor...') : isDirty ? `● ${t('admin.save', 'Kaydet')}` : t('admin.save', 'Kaydet')}
+            {isSaving ? t('admin.saving') : isDirty ? `● ${t('admin.save')}` : t('admin.save')}
           </button>
         </div>
       </div>
@@ -802,7 +803,7 @@ export default function ConfigManagementPanel() {
         className="flex justify-between items-center border-b shrink-0 mb-3 gap-2 flex-wrap"
         style={{ borderColor: 'var(--color-border)', paddingBottom: 8 }}
       >
-        <div className="flex items-center gap-2 overflow-x-auto">
+        <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar" style={{ minWidth: 0, overflowX: 'auto' }}>
           {topSections.map((secKey) => {
             const isActive = activeSection === secKey
             return (
@@ -873,7 +874,7 @@ export default function ConfigManagementPanel() {
               cursor: 'pointer',
               transition: 'all var(--transition-fast)',
             }}
-            aria-label={isAllExpanded ? t('admin.collapse_all', 'Tümünü Kapat') : t('admin.expand_all', 'Tümünü Aç')}
+            aria-label={isAllExpanded ? t('admin.collapse_all') : t('admin.expand_all')}
           >
             <span
               style={{
@@ -903,7 +904,7 @@ export default function ConfigManagementPanel() {
             <div
               style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: 'var(--color-text)' }}
             >
-              {t('admin.raw_json_config', 'Raw JSON Configuration')}
+              {t('admin.raw_json_config')}
             </div>
             <textarea
               className="input w-full"
@@ -951,7 +952,7 @@ export default function ConfigManagementPanel() {
               textAlign: 'center',
             }}
           >
-            {t('admin.no_config_found', 'Bu bölüm için konfigürasyon bulunamadı.')}
+            {t('admin.no_config_found')}
           </div>
         )}
       </div>

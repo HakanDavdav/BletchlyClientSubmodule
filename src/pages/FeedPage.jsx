@@ -8,6 +8,7 @@ import BackButton from '../components/common/BackButton'
 import useUIStore from '../store/uiStore'
 import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
+import { getQueryErrorMessage } from '../utils/errorHelper'
 
 export default function FeedPage({ cacheType = 'recent' }) {
   useDevLog('FeedPage', arguments[0] || {})
@@ -53,7 +54,7 @@ export default function FeedPage({ cacheType = 'recent' }) {
   const { queryFn, title, icon, description, isPost } = getFeedConfig()
 
   // 1. Önce Redis'ten (veya Cache'den) Minimal Listeyi Çek
-  const { data: minimalData, isLoading: isListLoading, isError: isListError } = useQuery({
+  const { data: minimalData, isLoading: isListLoading, isError: isListError, error: listError } = useQuery({
     queryKey: ['feed', cacheType],
     queryFn: queryFn,
     select: parseCacheResponse,
@@ -91,11 +92,12 @@ export default function FeedPage({ cacheType = 'recent' }) {
   }
 
   if (isListError || isErrorDetails) {
-    return <div className="empty-state">{t('common.loading_error')}</div>
+    const activeError = listError || fullItemQueries.find((q) => q.isError)?.error
+    return <div className="empty-state">{getQueryErrorMessage(activeError, t)}</div>
   }
 
   if (!minimalData || minimalData.length === 0) {
-    return <div className="empty-state">{t('common.no_content')}</div>
+    return <div className="empty-state">{t('common.nothing_here_yet')}</div>
   }
 
   return (

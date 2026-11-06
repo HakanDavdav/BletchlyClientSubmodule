@@ -11,13 +11,56 @@ const GA_ID =
   import.meta.env.VITE_FIREBASE_MEASUREMENT_ID ||
   'G-VZ5X8HWH62'
 
+export const COOKIE_CONSENT_KEY = 'bletchly_cookie_consent'
+
 /**
- * Initializes GA4 script and dataLayer.
- * Injects the official Google gtag.js script and sets up config.
+ * Returns user's cookie consent status: 'granted' | 'denied' | null
+ */
+export function getCookieConsent() {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem(COOKIE_CONSENT_KEY)
+}
+
+/**
+ * Updates cookie consent status and configures GA accordingly.
+ * @param {'granted' | 'denied'} status
+ */
+export function setCookieConsent(status) {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(COOKIE_CONSENT_KEY, status)
+
+  if (status === 'granted') {
+    initGA()
+    if (typeof window.gtag === 'function') {
+      window.gtag('consent', 'update', {
+        analytics_storage: 'granted',
+        ad_storage: 'granted',
+        ad_user_data: 'granted',
+        ad_personalization: 'granted',
+      })
+    }
+  } else {
+    if (typeof window.gtag === 'function') {
+      window.gtag('consent', 'update', {
+        analytics_storage: 'denied',
+        ad_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
+      })
+    }
+  }
+}
+
+/**
+ * Initializes GA4 script and dataLayer respecting cookie consent.
  */
 export function initGA() {
   if (typeof window === 'undefined') return
   if (!GA_ID) return
+
+  const consent = getCookieConsent()
+  // If user explicitly denied, do not initialize or inject script
+  if (consent === 'denied') return
 
   // Prevent duplicate script insertion
   if (document.getElementById('ga-gtag-script')) return
@@ -28,19 +71,30 @@ export function initGA() {
     window.gtag = function () {
       window.dataLayer.push(arguments)
     }
+
+    // Google Consent Mode default
+    window.gtag('consent', 'default', {
+      analytics_storage: consent === 'granted' ? 'granted' : 'denied',
+      ad_storage: consent === 'granted' ? 'granted' : 'denied',
+      ad_user_data: consent === 'granted' ? 'granted' : 'denied',
+      ad_personalization: consent === 'granted' ? 'granted' : 'denied',
+    })
+
     window.gtag('js', new Date())
     // Disable default page_view because SPA route transitions are tracked explicitly in App.jsx
     window.gtag('config', GA_ID, { send_page_view: false })
 
-    // 2. Dynamically load Google's gtag.js
-    const script = document.createElement('script')
-    script.id = 'ga-gtag-script'
-    script.async = true
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`
-    document.head.appendChild(script)
+    // Inject Google's gtag.js only if user granted consent
+    if (consent === 'granted') {
+      const script = document.createElement('script')
+      script.id = 'ga-gtag-script'
+      script.async = true
+      script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`
+      document.head.appendChild(script)
 
-    if (import.meta.env.DEV) {
-      console.info(`[Analytics] GA4 active with ID: "${GA_ID}". Real network requests are enabled.`)
+      if (import.meta.env.DEV) {
+        console.info(`[Analytics] GA4 active with ID: "${GA_ID}". Consent granted.`)
+      }
     }
   } catch (err) {
     console.warn('[Analytics] Failed to initialize Google Analytics:', err)

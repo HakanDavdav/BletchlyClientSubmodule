@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
@@ -9,9 +9,12 @@ import EntryCard from '../components/content/EntryCard'
 import ContextualEntryThread from '../components/content/ContextualEntryThread'
 import EntryDraft from '../components/content/EntryDraft'
 import BackButton from '../components/common/BackButton'
+import PaginationSelect, { PaginationTotal } from '../components/common/PaginationSelect'
 import useAuthStore from '../store/authStore'
 import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
+import { getQueryErrorMessage } from '../utils/errorHelper'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 export default function PostDetailPage() {
   const [searchParams] = useSearchParams()
@@ -31,11 +34,13 @@ export default function PostDetailPage() {
 
   const postId = propPostId || (trendingData && trendingData[0]?.contentItemId)
 
-  const { data: postData, isLoading: isPostLoading } = useQuery({
+  const { data: postData, isLoading: isPostLoading, isError: isPostError, error: postError } = useQuery({
     queryKey: ['post', postId],
     queryFn: () => contentItemApi.getPost(postId).then((r) => r.data?.data ?? null),
     enabled: !!postId,
   })
+
+  useDocumentTitle(postData?.title)
 
   const [page, setPage] = useState(1)
 
@@ -60,6 +65,33 @@ export default function PostDetailPage() {
     enabled: !!postId && !!postData,
   })
 
+  const totalPages = Math.max(
+    1,
+    Math.ceil((postData?.entryCount || 0) / inferredPerPage)
+  )
+
+  const defaultExpandedEntryIds = useMemo(() => {
+    const withReplies = (Array.isArray(entriesData) ? entriesData : []).filter(
+      (entry) => (entry.entryCount || 0) > 0 || (entry.childEntries?.length || 0) > 0
+    )
+    if (withReplies.length === 0) return new Set()
+
+    const reactionCount = (entry) =>
+      (entry.likeCount || 0) + (entry.dislikeCount || 0)
+
+    const replyLeaderIds = [...withReplies]
+      .sort((a, b) => (b.entryCount || 0) - (a.entryCount || 0))
+      .slice(0, 2)
+      .map((entry) => entry.contentItemId)
+
+    const reactionLeaderIds = [...withReplies]
+      .sort((a, b) => reactionCount(b) - reactionCount(a))
+      .slice(0, 2)
+      .map((entry) => entry.contentItemId)
+
+    return new Set([...replyLeaderIds, ...reactionLeaderIds].filter(Boolean))
+  }, [entriesData])
+
   if (isPostLoading || isEntriesLoading || isTrendingLoading) {
     return (
       <div className="flex justify-center" style={{ padding: 40 }}>
@@ -68,10 +100,10 @@ export default function PostDetailPage() {
     )
   }
 
-  if (!postData) {
+  if (isPostError || !postData) {
     return (
       <div className="empty-state">
-        {t('post.not_found')}
+        {getQueryErrorMessage(postError, t, true)}
         <br />
         <button
           className="btn btn-ghost"
@@ -83,6 +115,47 @@ export default function PostDetailPage() {
       </div>
     )
   }
+
+  const paginationControls = postData.entryCount > inferredPerPage ? (
+    <div className="pagination-controls" style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+      <button
+        className="btn btn-outline btn-sm pagination-arrow"
+        disabled={page === 1 || isEntriesFetching}
+        onClick={() => setPage((p) => Math.max(1, p - 1))}
+        aria-label={t('common.previous')}
+        title={t('common.previous')}
+      >
+        <ChevronLeft size={14} />
+      </button>
+      <span
+        className="pagination-page-info"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 4,
+          fontSize: 13,
+          fontWeight: 500,
+          color: 'var(--color-text-secondary)',
+        }}
+      >
+        <PaginationSelect
+          page={page}
+          totalPages={totalPages}
+          onChange={setPage}
+        />
+        / <PaginationTotal totalPages={totalPages} onChange={setPage} />
+      </span>
+      <button
+        className="btn btn-outline btn-sm pagination-arrow"
+        disabled={page >= totalPages || isEntriesFetching}
+        onClick={() => setPage((p) => p + 1)}
+        aria-label={t('common.next')}
+        title={t('common.next')}
+      >
+        <ChevronRight size={14} />
+      </button>
+    </div>
+  ) : null
 
   return (
     <div className="flex-col gap-4">
@@ -122,16 +195,21 @@ export default function PostDetailPage() {
 
       {/* Entries List */}
       <div className="flex-col gap-4" style={{ marginTop: 24 }}>
-        <h3
+        <div
           style={{
-            fontSize: 18,
-            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
             paddingBottom: 8,
             borderBottom: '1px solid var(--color-border)',
           }}
         >
-          {t('post.comments')} ({postData.entryCount ?? 0})
-        </h3>
+          <h3 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>
+            {t('post.comments')} ({postData.entryCount ?? 0})
+          </h3>
+          {paginationControls}
+        </div>
 
         {!entriesData || entriesData.length === 0 ? (
           <p className="empty-state" style={{ paddingTop: 40 }}>
@@ -145,42 +223,22 @@ export default function PostDetailPage() {
               readMode="parentToChild"
               hideRootPost={true}
               queryKey={['post-entries', postId, page]}
+              defaultExpandedEntryIds={defaultExpandedEntryIds}
             />
           ))
         )}
 
-        {/* Pagination Controls */}
-        {postData.entryCount > inferredPerPage && (
+        {paginationControls && (
           <div
             style={{
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 16,
-              marginTop: 24,
+              justifyContent: 'flex-end',
+              marginTop: 16,
               paddingTop: 16,
               borderTop: '1px solid var(--color-border)',
             }}
           >
-            <button
-              className="btn btn-outline btn-sm"
-              disabled={page === 1 || isEntriesFetching}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              <ChevronLeft size={16} /> {t('common.previous')}
-            </button>
-            <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-secondary)' }}>
-              {t('profile.page')} {page} / {Math.max(1, Math.ceil((postData.entryCount || 0) / inferredPerPage))}
-            </span>
-            <button
-              className="btn btn-outline btn-sm"
-              disabled={
-                page >= Math.ceil((postData.entryCount || 0) / inferredPerPage) || isEntriesFetching
-              }
-              onClick={() => setPage((p) => p + 1)}
-            >
-              {t('common.next')} <ChevronRight size={16} />
-            </button>
+            {paginationControls}
           </div>
         )}
       </div>

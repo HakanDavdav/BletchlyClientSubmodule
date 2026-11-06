@@ -8,8 +8,10 @@ import { actorApi } from '../../api/actorApi'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
 import ActorAvatar from '../actor/ActorAvatar'
 import TribeMinimalCard from '../tribe/TribeMinimalCard'
+import TribePage from '../../pages/TribePage'
 import useAuthStore from '../../store/authStore'
 import useMyEntitiesStore from '../../store/myEntitiesStore'
+import useUIStore from '../../store/uiStore'
 import useDevLog from '../../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 
@@ -22,24 +24,36 @@ export default function RightPanel() {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
 
   const myBots = useMyEntitiesStore((s) => s.myBots)
+  const rightPanelTribeId = useUIStore((s) => s.rightPanelTribeId)
 
   const { data: userLeaderboard } = useQuery({
     queryKey: ['cache', 'user-leaderboard'],
     queryFn: () => searchApi.getUserLeaderboard().then(parseCacheResponse),
     staleTime: 60_000,
+    enabled: !rightPanelTribeId,
   })
 
   const { data: botLeaderboard } = useQuery({
     queryKey: ['cache', 'bot-leaderboard'],
     queryFn: () => searchApi.getBotLeaderboard().then(parseCacheResponse),
     staleTime: 60_000,
+    enabled: !rightPanelTribeId,
   })
 
   const { data: tribeLeaderboard } = useQuery({
     queryKey: ['cache', 'tribe-leaderboard'],
     queryFn: () => searchApi.getTribeLeaderboard().then(parseCacheResponse),
     staleTime: 60_000,
+    enabled: !rightPanelTribeId,
   })
+
+  if (rightPanelTribeId) {
+    return (
+      <aside className="layout-right" style={{ padding: '8px 6px' }}>
+        <TribePage tribeId={rightPanelTribeId} embedded />
+      </aside>
+    )
+  }
 
   return (
     <aside className="layout-right" style={{ padding: '16px 0' }}>
@@ -48,10 +62,10 @@ export default function RightPanel() {
         <div style={{ padding: '0 12px', marginBottom: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-evenly', alignItems: 'center' }}>
             {myBots.slice(0, 3).map((bot) => (
-              <div
+              <Link
                 key={bot.actorId}
-                onClick={() => navigate('/profile?actorId=' + bot.actorId)}
-                style={{ cursor: 'pointer' }}
+                to={'/profile?actorId=' + bot.actorId}
+                style={{ cursor: 'pointer', textDecoration: 'none' }}
               >
                 <ActorAvatar
                   profileName={bot.profileName}
@@ -61,7 +75,7 @@ export default function RightPanel() {
                   size="lg"
                   clickable={false}
                 />
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -70,10 +84,10 @@ export default function RightPanel() {
       {/* ─── User Leaderboard Cache Widget ────── */}
       <div style={{ padding: '0 12px' }}>
         <CacheWidget
-          title={t('leaderboard.user_leaderboard', 'Kullanıcı Sıralaması')}
+          title={t('leaderboard.user_leaderboard')}
           items={userLeaderboard}
           type="user"
-          onViewAll={() => navigate('/leaderboard?type=user')}
+          viewAllTo="/leaderboard?type=user"
         />
       </div>
 
@@ -82,10 +96,10 @@ export default function RightPanel() {
       {/* ─── Bot Leaderboard Cache Widget ────── */}
       <div style={{ padding: '0 12px' }}>
         <CacheWidget
-          title={t('leaderboard.bot_leaderboard', 'Bot Sıralaması')}
+          title={t('leaderboard.bot_leaderboard')}
           items={botLeaderboard}
           type="bot"
-          onViewAll={() => navigate('/leaderboard?type=bot')}
+          viewAllTo="/leaderboard?type=bot"
         />
       </div>
 
@@ -94,10 +108,10 @@ export default function RightPanel() {
       {/* ─── Tribe Leaderboard Cache Widget ────── */}
       <div style={{ padding: '0 12px' }}>
         <CacheWidget
-          title={t('leaderboard.tribe_leaderboard', 'Klan Sıralaması')}
+          title={t('leaderboard.tribe_leaderboard')}
           items={tribeLeaderboard}
           type="tribe"
-          onViewAll={() => navigate('/leaderboard?type=tribe')}
+          viewAllTo="/leaderboard?type=tribe"
         />
       </div>
 
@@ -105,7 +119,7 @@ export default function RightPanel() {
 
       {/* ─── Reklam Alanı ────── */}
       <div className="ad-card" style={{ marginTop: 16, margin: '0 12px' }}>
-        <div className="ad-label">{t('common.ad', 'Reklam')}</div>
+        <div className="ad-label">{t('common.ad')}</div>
         {/* Örnek placeholder */}
         <div
           style={{
@@ -117,7 +131,7 @@ export default function RightPanel() {
             color: 'var(--color-text-faint)',
           }}
         >
-          {t('common.ad_space', '300x250 Reklam Alanı')}
+          {t('common.ad_space')}
         </div>
       </div>
 
@@ -138,6 +152,10 @@ export default function RightPanel() {
           •
           <Link to="/terms" style={{ color: 'inherit', textDecoration: 'none' }}>
             Terms of Service
+          </Link>{' '}
+          •
+          <Link to="/cookie-policy" style={{ color: 'inherit', textDecoration: 'none' }}>
+            Cookie Policy
           </Link>
         </div>
       </div>
@@ -147,7 +165,7 @@ export default function RightPanel() {
 
 // ─── Cache Widget sub-component ───────────────────────────────────────────────
 
-function CacheWidget({ title, items, type, onViewAll }) {
+function CacheWidget({ title, items, type, viewAllTo }) {
   const [expanded, setExpanded] = useState(false)
   const navigate = useNavigate()
   const { t } = useTranslation()
@@ -195,7 +213,7 @@ function CacheWidget({ title, items, type, onViewAll }) {
             transition={{ duration: 0.25 }}
             style={{ overflow: 'hidden' }}
           >
-            <div style={{ padding: '4px 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="minimal-card-list" style={{ padding: '4px 0' }}>
               {!items || items.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '4px 12px' }}>
                   <div className="spinner spinner-sm" />
@@ -210,7 +228,7 @@ function CacheWidget({ title, items, type, onViewAll }) {
                     <div
                       key={type !== 'tribe' ? item.actorId : item.tribeId}
                       className="lb-card"
-                      style={{ padding: '6px 8px', margin: '2px 0' }}
+                      style={{ padding: '6px 8px' }}
                       onClick={() =>
                         navigate(
                           type !== 'tribe'
@@ -248,9 +266,9 @@ function CacheWidget({ title, items, type, onViewAll }) {
 
                       <div style={{ flex: 1, minWidth: 0 }}>
                         {type !== 'tribe' ? (
-                          <ActorMinimalCard actor={item} clickable={true} showPoint={true} />
+                          <ActorMinimalCard actor={item} clickable={true} showPoint={true} showPremiumBtn={false} />
                         ) : (
-                          <TribeMinimalCard {...item} clickable={true} />
+                          <TribeMinimalCard {...item} clickable={true} showPoint={true} />
                         )}
                       </div>
                     </div>
@@ -258,13 +276,13 @@ function CacheWidget({ title, items, type, onViewAll }) {
                 })
               )}
               {items && items.length > 3 && (
-                <button
+                <Link
                   className="btn btn-ghost btn-sm"
-                  style={{ marginTop: 4 }}
-                  onClick={onViewAll}
+                  style={{ marginTop: 4, textDecoration: 'none' }}
+                  to={viewAllTo}
                 >
-                  {t('common.view_all', 'Tümünü Gör')}
-                </button>
+                  {t('common.view_all')}
+                </Link>
               )}
             </div>
           </motion.div>

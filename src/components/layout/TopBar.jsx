@@ -3,7 +3,6 @@ import {
   Search,
   Settings,
   User,
-  Menu,
   Bell,
   LogOut,
   PenLine,
@@ -16,10 +15,14 @@ import {
   CirclePlus,
   PaintbrushVertical,
   Edit2,
+  Lock,
   X,
-  Users,
+  Compass,
   Brain,
+  ShieldQuestion,
+  Clock,
 } from 'lucide-react'
+import { getRecentSearches, saveRecentSearch, removeRecentSearch } from '../../utils/recentSearches'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -27,8 +30,9 @@ import { tribeApi } from '../../api/tribeApi'
 import { searchApi } from '../../api/searchApi'
 import { actorApi } from '../../api/actorApi'
 import { identityApi } from '../../api/identityApi'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { OrderType, OrderTypeLabels, UserCapabilities } from '../../constants/enums'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
+import { OrderType, OrderTypeLabels, TopicColors, UserCapabilities } from '../../constants/enums'
+import { TopicTypes } from '../../constants/TopicTypes'
 import TribeMinimalCard from '../tribe/TribeMinimalCard'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
 import PostMinimalCard from '../content/PostMinimalCard'
@@ -37,26 +41,57 @@ import useAuthStore from '../../store/authStore'
 import useUIStore from '../../store/uiStore'
 import useThemeStore from '../../store/themeStore'
 import useMyEntitiesStore from '../../store/myEntitiesStore'
+import useIsMobile from '../../hooks/useIsMobile'
 import useDevLog from '../../utils/useDevLog'
 import BotFlashCardsIcon from '../common/icons/BotFlashCardsIcon'
 import IconActionButton from '../common/IconActionButton'
 import AngryBotWithSwordsIcon from '../common/icons/AngryBotWithSwordsIcon'
-import BletchlyGuideModal from '../common/BletchlyGuideModal'
+import ChatBubbleIcon from '../common/icons/ChatBubbleIcon'
+import useChatDeckStore from '../../store/chatDeckStore'
+import { isChatDeckEligible } from '../../utils/chatDeck'
 import Logo from '../common/icons/Logo'
 import FossilTogglePill from '../common/FossilTogglePill'
 import { applyCustomColorVars, clearCustomColorVars, normalizeHex } from '../../utils/themeColor'
 
+function PaletteLockedSlash({ size = '100%', strokeWidth = 2 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        pointerEvents: 'none',
+        overflow: 'visible',
+        filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55))',
+      }}
+    >
+      <line
+        x1="2.5"
+        y1="21.5"
+        x2="21.5"
+        y2="2.5"
+        stroke="var(--color-warning)"
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
 const COLOR_PRESETS = [
-  { color: '#3b82f6', label: 'Mavi', isDefault: true },
-  { color: '#10b981', label: 'Yeşil', isDefault: true },
-  { color: '#8b5cf6', label: 'Mor' },
-  { color: '#06b6d4', label: 'Turkuaz' },
-  { color: '#f97316', label: 'Turuncu' },
-  { color: '#ec4899', label: 'Pembe' },
-  { color: '#ef4444', label: 'Kırmızı' },
-  { color: '#eab308', label: 'Sarı' },
-  { color: '#14b8a6', label: 'Teal' },
-  { color: '#6366f1', label: 'İndigo' },
+  { key: 'green', color: '#10b981', label: 'Yeşil', isDefault: true },
+  { key: 'blue', color: '#3b82f6', label: 'Mavi', isDefault: true },
+  { key: 'pink', color: '#ec4899', label: 'Pembe', isDefault: true },
+  { key: 'purple', color: '#8b5cf6', label: 'Mor' },
+  { key: 'cyan', color: '#06b6d4', label: 'Turkuaz' },
+  { key: 'orange', color: '#f97316', label: 'Turuncu' },
+  { key: 'red', color: '#ef4444', label: 'Kırmızı' },
+  { key: 'yellow', color: '#eab308', label: 'Sarı' },
+  { key: 'teal', color: '#14b8a6', label: 'Teal' },
+  { key: 'indigo', color: '#6366f1', label: 'İndigo' },
 ]
 
 export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
@@ -100,27 +135,39 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
   const {
     setSearchMode,
     searchMode,
-    toggleLeftDrawer,
     activeLeftCacheType,
     setActiveLeftCacheType,
+    activeLeftTopicType,
+    setActiveLeftTopicType,
   } = useUIStore()
   const langs = [
-    { code: 'tr', label: 'Türkçe', flagUrl: 'https://flagcdn.com/w20/tr.png' },
-    { code: 'en', label: 'English', flagUrl: 'https://flagcdn.com/w20/us.png' },
-    { code: 'ja', label: '日本語', flagUrl: 'https://flagcdn.com/w20/jp.png' },
-    { code: 'hi', label: 'हिन्दी', flagUrl: 'https://flagcdn.com/w20/in.png' },
-    { code: 'de', label: 'Deutsch', flagUrl: 'https://flagcdn.com/w20/de.png' },
-    { code: 'fr', label: 'Français', flagUrl: 'https://flagcdn.com/w20/fr.png' },
-    { code: 'ar', label: 'العربية', flagUrl: 'https://flagcdn.com/w20/sa.png' },
+    { code: 'tr', label: 'Türkçe', flagUrl: 'https://flagcdn.com/tr.svg' },
+    { code: 'en', label: 'English', flagUrl: 'https://flagcdn.com/us.svg' },
+    { code: 'ja', label: '日本語', flagUrl: 'https://flagcdn.com/jp.svg' },
+    { code: 'hi', label: 'हिन्दी', flagUrl: 'https://flagcdn.com/in.svg' },
+    { code: 'de', label: 'Deutsch', flagUrl: 'https://flagcdn.com/de.svg' },
+    { code: 'fr', label: 'Français', flagUrl: 'https://flagcdn.com/fr.svg' },
+    { code: 'ar', label: 'العربية', flagUrl: 'https://flagcdn.com/sa.svg' },
   ]
 
   const { t, i18n } = useTranslation()
-  const rawLang = (i18n.language || 'tr').toLowerCase()
+  const isMobile = useIsMobile()
+  const { isOpen: isChatDeckOpen, openChatDeck, closeChatDeck } = useChatDeckStore()
+  const handleChatClick = () => {
+    if (!isMobile && isChatDeckEligible(location.pathname)) {
+      if (isChatDeckOpen) closeChatDeck()
+      else openChatDeck()
+      return
+    }
+    navigate('/chat')
+  }
+
+  const rawLang = (i18n.language || 'en').toLowerCase()
   const activeLangObj =
     langs.find((l) => l.code === rawLang || l.code === rawLang.split('-')[0]) || langs[0]
   const currentLang = activeLangObj.code
 
-  const { isDarkMode, toggleTheme, isGreenMode, toggleGreenMode, customColor, setCustomColor, setGreenMode, savedCustomColor, setSavedCustomColor } =
+  const { isDarkMode, toggleTheme, isGreenMode, customColor, selectThemeColor, savedCustomColor, setSavedCustomColor } =
     useThemeStore()
   const [isBotShaking, setIsBotShaking] = useState(false)
   const [isPaletteOpen, setIsPaletteOpen] = useState(false)
@@ -135,11 +182,20 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
   const [showFossilTribes, setShowFossilTribes] = useState(false)
   const [showFossilBots, setShowFossilBots] = useState(false)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [isTopicOpen, setIsTopicOpen] = useState(false)
+  const [topicDropdownPos, setTopicDropdownPos] = useState(null)
   const [tribesDropdownPos, setTribesDropdownPos] = useState(null)
   const [botsDropdownPos, setBotsDropdownPos] = useState(null)
   const [suggestions, setSuggestions] = useState(null)
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
+  const [recentSearches, setRecentSearches] = useState(() => getRecentSearches())
+
+  useEffect(() => {
+    const handleUpdate = () => setRecentSearches(getRecentSearches())
+    window.addEventListener('recent-searches-updated', handleUpdate)
+    return () => window.removeEventListener('recent-searches-updated', handleUpdate)
+  }, [])
 
   const [filterOrderType, setFilterOrderType] = useState('')
   const [filterStartDate, setFilterStartDate] = useState('')
@@ -153,28 +209,14 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
   const handleBotClick = () => {
     setIsBotShaking(true)
     setTimeout(() => setIsBotShaking(false), 500)
-    if (isPremium) {
-      setIsPaletteOpen((v) => !v)
-      return
-    }
-    toggleGreenMode()
+    setIsPaletteOpen((v) => !v)
   }
 
   const applyPaletteColor = useCallback(
     (color) => {
-      const normalized = typeof color === 'string' ? color.toLowerCase() : ''
-      if (normalized === '#10b981') {
-        setCustomColor(null)
-        setGreenMode(true)
-      } else if (normalized === '#3b82f6') {
-        setCustomColor(null)
-        setGreenMode(false)
-      } else {
-        setGreenMode(false)
-        setCustomColor(normalized)
-      }
+      selectThemeColor(color)
     },
-    [setCustomColor, setGreenMode]
+    [selectThemeColor]
   )
 
   const queryClient = useQueryClient()
@@ -184,6 +226,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
   const searchRef = useRef(null)
   const langRef = useRef(null)
   const paletteRef = useRef(null)
+  const topicRef = useRef(null)
   const colorInputRef = useRef(null)
   const colorRafRef = useRef(null)
   const pendingPreviewColorRef = useRef(null)
@@ -198,6 +241,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
     fetchMyBots,
     fetchMyFollowData,
     fetchMyCards,
+    fetchMySettings,
     hasFetchedOnce,
     clear: clearEntities,
   } = useMyEntitiesStore()
@@ -253,8 +297,9 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
       fetchMyBots()
       fetchMyFollowData()
       fetchMyCards()
+      fetchMySettings()
     }
-  }, [isLoggedIn, hasFetchedOnce, fetchMyTribes, fetchMyBots, fetchMyFollowData, fetchMyCards])
+  }, [isLoggedIn, hasFetchedOnce, fetchMyTribes, fetchMyBots, fetchMyFollowData, fetchMyCards, fetchMySettings])
 
   // Current user profile
   const { data: myProfile } = useQuery({
@@ -267,6 +312,12 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
     myProfile?.userSettings?.userCapabilities ?? UserCapabilities.Default
   )
   const isPremium = (userCapabilities & UserCapabilities.Premium) === UserCapabilities.Premium
+
+  useEffect(() => {
+    if (isLoggedIn && myProfile) {
+      useThemeStore.getState().validateThemePermission(isPremium)
+    }
+  }, [isLoggedIn, myProfile, isPremium])
 
   // Renk seçici sürüklenirken store'a yazmadan CSS değişkenlerini doğrudan DOM'a
   // rAF ile yazar (en fazla çerçeve başına bir kez); seçim bırakılınca store'a commit edilir.
@@ -347,6 +398,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
 
   const logoutMutation = useMutation({
     mutationFn: () => identityApi.logout(),
+    meta: { showErrorToast: true },
     onSuccess: () => {
       storeLogout()
       clearEntities()
@@ -375,6 +427,10 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
       }
       if (filterRef.current && !filterRef.current.contains(e.target)) {
         setIsFilterOpen(false)
+      }
+      if (topicRef.current && !topicRef.current.contains(e.target)) {
+        setIsTopicOpen(false)
+        setTopicDropdownPos(null)
       }
       if (searchRef.current && !searchRef.current.contains(e.target)) {
         setShowSuggestions(false)
@@ -405,14 +461,14 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
     // Eğer query boş veya çok kısaysa suggestions'ı temizle
     if (!searchQuery || searchQuery.trim().length === 0) {
       setSuggestions(null)
-      setShowSuggestions(false)
       setIsLoadingSuggestions(false)
       return
     }
 
-    // 300ms bekle, sonra API çağrısı yap
+    setIsLoadingSuggestions(true)
+
+    // 500ms bekle, sonra API çağrısı yap
     debounceTimerRef.current = setTimeout(async () => {
-      setIsLoadingSuggestions(true)
       try {
         let result
         switch (searchMode) {
@@ -461,7 +517,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
       } finally {
         setIsLoadingSuggestions(false)
       }
-    }, 300)
+    }, 500)
 
     return () => {
       if (debounceTimerRef.current) {
@@ -472,7 +528,13 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
 
   const handleSearch = (e) => {
     e.preventDefault()
-    if (!searchQuery.trim() && searchMode === 'general') return
+    const trimmed = searchQuery.trim()
+    if (!trimmed && searchMode === 'general') return
+
+    if (trimmed) {
+      saveRecentSearch(trimmed)
+      setRecentSearches(getRecentSearches())
+    }
 
     console.log('handleSearch - filterOrderType:', filterOrderType)
 
@@ -503,16 +565,17 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
   }
 
   const searchModeOptions = [
-    { key: 'general', label: t('search.mode.general', 'Genel') },
-    { key: 'posts', label: t('search.mode.posts', 'Başlıklar') },
-    { key: 'actors', label: t('search.mode.actors', 'Aktörler') },
-    { key: 'tribes', label: t('search.mode.tribes', 'Klanlar') },
+    { key: 'general', label: t('search.mode.general') },
+    { key: 'posts', label: t('search.mode.posts') },
+    { key: 'actors', label: t('search.mode.actors') },
+    { key: 'tribes', label: t('search.mode.tribes') },
   ]
 
   return (
     <header className="layout-topbar">
       {/* ─── Row 1 ─── */}
       <div
+        className="topbar-row topbar-row-1"
         style={{
           height: 56,
           display: 'flex',
@@ -522,11 +585,6 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
           borderBottom: '1px solid var(--color-border-light)',
         }}
       >
-        {/* Hamburger (mobil) */}
-        <button className="btn-icon" onClick={toggleLeftDrawer} style={{ display: 'none' }}>
-          <Menu size={20} />
-        </button>
-
         {/* Bletchly Logo Resized & Season Countdown */}
         <div
           style={{
@@ -536,7 +594,8 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
             flexShrink: 0,
           }}
         >
-          <div
+          <Link
+            to="/"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -547,35 +606,38 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
               zIndex: 3,
               transform: 'scale(0.85)',
               transformOrigin: 'left center',
+              textDecoration: 'none',
             }}
-            onClick={() => navigate('/')}
           >
             <Logo width={36} height={48} fill="var(--color-primary)" />
-            <span
-              style={{
-                fontWeight: 800,
-                fontSize: 26,
-                color: 'var(--color-primary)',
-                marginTop: 4,
-                marginLeft: -2,
-              }}
-            >
-              letchly
-            </span>
-          </div>
+            {!isMobile && (
+              <span
+                className="topbar-brand-text"
+                style={{
+                  fontWeight: 800,
+                  fontSize: 26,
+                  color: 'var(--color-primary)',
+                  marginTop: 4,
+                  marginLeft: -2,
+                }}
+              >
+                letchly
+              </span>
+            )}
+          </Link>
 
           {seasonStatus && typeof seasonStatus.daysRemaining === 'number' && (
-            <button
-              type="button"
+            <Link
+              to="/leaderboard"
               className="season-remaining-badge season-remaining-badge--floating"
-              onClick={() => navigate('/leaderboard')}
+              style={{ textDecoration: 'none' }}
             >
               <span>
                 {seasonStatus.daysRemaining > 0
-                  ? t('common.days_remaining_short', { count: seasonStatus.daysRemaining, defaultValue: `${seasonStatus.daysRemaining} GÜN!` })
-                  : t('common.hours_remaining_short', { count: seasonStatus.hoursRemaining ?? 0, defaultValue: `${seasonStatus.hoursRemaining ?? 0} SAAT!` })}
+                  ? t('common.days_remaining_short', { count: seasonStatus.daysRemaining })
+                  : t('common.hours_remaining_short', { count: seasonStatus.hoursRemaining ?? 0 })}
               </span>
-            </button>
+            </Link>
           )}
         </div>
 
@@ -583,10 +645,20 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
         <form
           className="topbar-search-form"
           onSubmit={handleSearch}
-          style={{ flex: 1, display: 'flex', gap: 6, maxWidth: 600, margin: '0 auto' }}
+          style={{
+            flex: 1,
+            display: 'flex',
+            gap: 6,
+            maxWidth: 540,
+            margin: '0 auto',
+            // transform yerine relative/left: transform stacking context yaratıp
+            // öneri dropdown'ını Klanlar/Botlar dropdown'ının altına düşürüyordu
+            position: 'relative',
+            left: 8,
+          }}
         >
           {/* Mode selector */}
-          <div style={{ position: 'relative' }}>
+          <div className="topbar-search-mode" style={{ position: 'relative' }}>
             <button
               type="button"
               className="btn btn-outline btn-sm"
@@ -665,15 +737,23 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
               style={{ paddingLeft: 32 }}
               placeholder={t('topbar.search')}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                if (!suppressSuggestionsRef.current) setShowSuggestions(true)
+              }}
+              onFocus={() => {
+                if (!suppressSuggestionsRef.current) setShowSuggestions(true)
+              }}
               onClick={() => {
-                if (suggestions && !suppressSuggestionsRef.current) setShowSuggestions(true)
+                if (!suppressSuggestionsRef.current) setShowSuggestions(true)
               }}
             />
 
-            {/* Search Suggestions Dropdown */}
+            {/* Search Suggestions & Recent Searches Dropdown */}
             <AnimatePresence>
-              {showSuggestions && !isFilterOpen && (suggestions || isLoadingSuggestions) && (
+              {showSuggestions && !isFilterOpen && (
+                searchQuery?.trim()?.length > 0 || (recentSearches && recentSearches.length > 0)
+              ) && (
                 <motion.div
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -697,6 +777,113 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                     <div style={{ padding: 16, textAlign: 'center' }}>
                       <div className="spinner spinner-sm" />
                     </div>
+                  ) : (!searchQuery || searchQuery.trim().length === 0) ? (
+                    <div style={{ padding: '6px 8px' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '6px 8px',
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: 'var(--color-text-faint)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                        }}
+                      >
+                        <span>{t('search.recent')}</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        {recentSearches.slice(0, 5).map((item) => (
+                          <div
+                            key={item}
+                            onClick={() => {
+                              setSearchQuery(item)
+                              setShowSuggestions(false)
+                              saveRecentSearch(item)
+                              setRecentSearches(getRecentSearches())
+                              navigate('/search?query=' + encodeURIComponent(item))
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '8px 10px',
+                              borderRadius: 6,
+                              cursor: 'pointer',
+                              transition: 'background 0.15s ease',
+                              fontSize: 13,
+                              color: 'var(--color-text)',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = 'var(--color-surface-2)'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'transparent'
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8,
+                                minWidth: 0,
+                                flex: 1,
+                              }}
+                            >
+                              <Clock
+                                size={14}
+                                style={{ color: 'var(--color-text-muted)', flexShrink: 0 }}
+                              />
+                              <span
+                                style={{
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {item}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              aria-label={t('common.delete')}
+                              title={t('common.delete')}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                removeRecentSearch(item)
+                                setRecentSearches(getRecentSearches())
+                              }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: 20,
+                                height: 20,
+                                border: 'none',
+                                background: 'transparent',
+                                color: 'var(--color-text-faint)',
+                                cursor: 'pointer',
+                                padding: 0,
+                                marginLeft: 8,
+                                flexShrink: 0,
+                                opacity: 0.6,
+                                transition: 'opacity 0.15s ease',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.opacity = '1'
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.opacity = '0.6'
+                              }}
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   ) : suggestions ? (
                     <div style={{ padding: 8 }}>
                       {searchMode === 'general' ? (
@@ -712,9 +899,9 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                                   textTransform: 'uppercase',
                                 }}
                               >
-                                {t('common.actors', 'Aktörler')}
+                                {t('common.actors')}
                               </div>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                              <div className="minimal-card-list">
                                 {suggestions.actors.slice(0, 3).map((actor) => (
                                   <div
                                     key={actor.actorId}
@@ -745,9 +932,9 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                                   textTransform: 'uppercase',
                                 }}
                               >
-                                {t('common.tribes', 'Klanlar')}
+                                {t('common.tribes')}
                               </div>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                              <div className="minimal-card-list">
                                 {suggestions.tribes.slice(0, 3).map((tribe) => (
                                   <div
                                     key={tribe.tribeId}
@@ -774,7 +961,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                                   textTransform: 'uppercase',
                                 }}
                               >
-                                {t('common.posts', 'Başlıklar')}
+                                {t('common.posts')}
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                                 {suggestions.posts.slice(0, 4).map((post) => (
@@ -803,7 +990,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                                   fontSize: 13,
                                 }}
                               >
-                                {t('search.no_results', 'Sonuç bulunamadı')}
+                                {t('search.no_results')}
                               </div>
                             )}
                         </>
@@ -827,7 +1014,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                           )}
 
                           {searchMode === 'actors' && suggestions.actors?.length > 0 && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <div className="minimal-card-list">
                               {suggestions.actors.map((actor) => (
                                 <div
                                   key={actor.actorId}
@@ -847,7 +1034,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                           )}
 
                           {searchMode === 'tribes' && suggestions.tribes?.length > 0 && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <div className="minimal-card-list">
                               {suggestions.tribes.map((tribe) => (
                                 <div
                                   key={tribe.tribeId}
@@ -876,13 +1063,24 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                                 fontSize: 13,
                               }}
                             >
-                              {t('search.no_results', 'Sonuç bulunamadı')}
+                              {t('search.no_results')}
                             </div>
                           )}
                         </>
                       )}
                     </div>
-                  ) : null}
+                  ) : (
+                    <div
+                      style={{
+                        padding: 16,
+                        textAlign: 'center',
+                        color: 'var(--color-text-faint)',
+                        fontSize: 13,
+                      }}
+                    >
+                      {t('search.no_results')}
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -939,7 +1137,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                   setFilterEndDate('')
                   setShowSuggestions(false)
                 }}
-                aria-label={t('common.clear_all', 'Tümünü Temizle')}
+                aria-label={t('common.clear_all')}
                 style={{
                   position: 'absolute',
                   top: -4,
@@ -999,7 +1197,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                       paddingBottom: 6,
                     }}
                   >
-                    <span>{t('search.filters_title', 'Arama Filtreleri')}</span>
+                    <span>{t('search.filters_title')}</span>
                     <X
                       size={14}
                       color="var(--color-text-secondary)"
@@ -1010,7 +1208,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
-                      {t('search.sort_by', 'Sıralama')}
+                      {t('search.sort_by')}
                     </label>
                     <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                       <select
@@ -1019,14 +1217,14 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                         value={filterOrderType}
                         onChange={handleOrderTypeChange}
                       >
-                        <option value="">{t('search.none', 'Yok')}</option>
+                        <option value="">{t('search.none')}</option>
                         {searchMode === 'posts' && (
                           <option value="MostLiked">
-                            {t('topbar.most_liked', 'En Çok Beğenilen')}
+                            {t('topbar.most_liked')}
                           </option>
                         )}
                         <option value="Newest">{t('sort.newest')}</option>
-                        <option value="Oldest">{t('topbar.oldest', 'En Eski')}</option>
+                        <option value="Oldest">{t('topbar.oldest')}</option>
                       </select>
                       {filterOrderType && (
                         <button
@@ -1039,7 +1237,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                             // or just do handleOrderTypeChange({ target: { value: '' } })
                             handleOrderTypeChange({ target: { value: '' } })
                           }}
-                          aria-label={t('common.clear', 'Temizle')}
+                          aria-label={t('common.clear')}
                         >
                           <X size={16} />
                         </button>
@@ -1049,7 +1247,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
-                      {t('search.start_date', 'Başlangıç Tarihi')}
+                      {t('search.start_date')}
                     </label>
                     <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                       <input
@@ -1065,7 +1263,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                           className="btn btn-ghost btn-sm"
                           style={{ padding: 0, width: 32, height: 32, flexShrink: 0 }}
                           onClick={() => setFilterStartDate('')}
-                          aria-label={t('common.clear', 'Temizle')}
+                          aria-label={t('common.clear')}
                         >
                           <X size={16} />
                         </button>
@@ -1075,7 +1273,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
-                      {t('search.end_date', 'Bitiş Tarihi')}
+                      {t('search.end_date')}
                     </label>
                     <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                       <input
@@ -1091,7 +1289,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                           className="btn btn-ghost btn-sm"
                           style={{ padding: 0, width: 32, height: 32, flexShrink: 0 }}
                           onClick={() => setFilterEndDate('')}
-                          aria-label={t('common.clear', 'Temizle')}
+                          aria-label={t('common.clear')}
                         >
                           <X size={16} />
                         </button>
@@ -1105,7 +1303,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                     className="btn btn-primary btn-sm"
                     style={{ width: '100%', marginTop: 4, paddingTop: 7, paddingBottom: 7 }}
                   >
-                    {t('topbar.search_button', 'Ara')}
+                    {t('topbar.search_button')}
                   </button>
                 </motion.div>
               )}
@@ -1113,12 +1311,23 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
           </div>
 
           <button type="submit" className="btn btn-primary btn-sm">
-            {t('topbar.search_button', 'Ara')}
+            {t('topbar.search_button')}
           </button>
         </form>
 
+        {/* Mobil arama ikonu (≤900px) */}
+        <Link
+          to="/search"
+          className="btn-icon topbar-search-icon-btn"
+          style={{ textDecoration: 'none' }}
+          aria-label={t('topbar.search')}
+        >
+          <Search size={20} />
+        </Link>
+
         {/* Right: user info */}
         <div
+          className="topbar-right-group"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -1136,6 +1345,11 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
               gap: 7,
             }}
           >
+            {/* 1355px altında gizlenir */}
+            <div
+              className="hide-under-1355"
+              style={{ display: 'flex', alignItems: 'center', gap: 7 }}
+            >
             <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)' }}>
               Hakan Davdav
             </span>
@@ -1222,29 +1436,17 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                 <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
               </svg>
             </a>
+            </div>
             <div
               style={{ width: 1, height: 28, background: 'var(--color-border)', margin: '0 4px' }}
             />
 
             <div style={{ position: 'relative' }} ref={paletteRef}>
               <button
-                className={`btn-icon ${
-                  isBotShaking
-                    ? isPremium
-                      ? 'theme-toggle-shake'
-                      : isGreenMode
-                        ? 'theme-toggle-to-green'
-                        : 'theme-toggle-to-blue'
-                    : ''
-                }`}
+                className={`btn-icon ${isBotShaking ? 'theme-toggle-shake' : ''}`}
                 onClick={handleBotClick}
-                aria-label={
-                  isPremium
-                    ? t('topbar.premium_palette_title', 'Özel Renk Paleti')
-                    : isGreenMode
-                      ? 'Mavi Tema'
-                      : 'Yeşil Tema'
-                }
+                aria-label={t('topbar.premium_palette_title')}
+                title={t('topbar.premium_palette_title')}
                 style={{ color: 'var(--color-primary)', height: 30, padding: '0 2px' }}
               >
                 <span style={{ display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
@@ -1254,7 +1456,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
               </button>
 
               <AnimatePresence>
-                {isPaletteOpen && isPremium && (
+                {isPaletteOpen && (
                   <motion.div
                     initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -1278,15 +1480,23 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                     >
                       {COLOR_PRESETS.map((preset) => {
                         const activeBase = customColor || (isGreenMode ? '#10b981' : '#3b82f6')
+                        const locked = !isPremium && !preset.isDefault
                         return (
                           <button
                             key={preset.color}
                             type="button"
+                            aria-disabled={locked || undefined}
                             onClick={() => {
+                              if (locked) {
+                                setIsPaletteOpen(false)
+                                navigate('/premium')
+                                return
+                              }
                               cancelColorPreview()
                               applyPaletteColor(preset.color)
                             }}
-                            aria-label={preset.label}
+                            aria-label={t(`colors.${preset.key}`, preset.label)}
+                            title={locked ? `${t(`colors.${preset.key}`, preset.label)} (Pro)` : t(`colors.${preset.key}`, preset.label)}
                             style={{
                               position: 'relative',
                               width: 20,
@@ -1299,42 +1509,35 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                                   : 'transparent'
                               }`,
                               cursor: 'pointer',
+                              opacity: locked ? 0.6 : 1,
                               padding: 0,
                             }}
                           >
-                            {preset.isDefault && (
-                              <span
-                                style={{
-                                  position: 'absolute',
-                                  inset: 0,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  fontSize: 10,
-                                  fontWeight: 800,
-                                  color: '#ffffff',
-                                  lineHeight: 1,
-                                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.45)',
-                                  pointerEvents: 'none',
-                                }}
-                              >
-                                D
-                              </span>
+                            {locked && (
+                              <PaletteLockedSlash strokeWidth={2.2} />
                             )}
                           </button>
                         )
                       })}
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 8 }}>
                       {savedCustomColor && (
                         <button
                           type="button"
-                          aria-label={t('topbar.premium_palette_saved', 'Kayıtlı renk')}
+                          aria-disabled={!isPremium || undefined}
+                          aria-label={t('topbar.premium_palette_saved')}
+                          title={!isPremium ? `${t('topbar.premium_palette_saved')} (Pro)` : t('topbar.premium_palette_saved')}
                           onClick={() => {
+                            if (!isPremium) {
+                              setIsPaletteOpen(false)
+                              navigate('/premium')
+                              return
+                            }
                             cancelColorPreview()
                             applyPaletteColor(savedCustomColor)
                           }}
                           style={{
+                            position: 'relative',
                             width: 24,
                             height: 24,
                             borderRadius: '50%',
@@ -1345,19 +1548,48 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                                 : 'transparent'
                             }`,
                             cursor: 'pointer',
+                            opacity: !isPremium ? 0.6 : 1,
                             padding: 0,
-                            marginRight: 6,
                           }}
-                        />
+                        >
+                          {!isPremium && (
+                            <PaletteLockedSlash strokeWidth={2.2} />
+                          )}
+                        </button>
                       )}
                       <button
                         type="button"
-                        className="actor-chip-hier-btn"
-                        aria-label={t('topbar.premium_palette_custom', 'Custom')}
-                        onClick={() => colorInputRef.current?.click()}
-                        style={{ width: 24, height: 24 }}
+                        aria-disabled={!isPremium || undefined}
+                        aria-label={t('topbar.premium_palette_custom')}
+                        title={!isPremium ? `${t('topbar.premium_palette_custom')} (Pro)` : t('topbar.premium_palette_custom')}
+                        onClick={() => {
+                          if (!isPremium) {
+                            setIsPaletteOpen(false)
+                            navigate('/premium')
+                            return
+                          }
+                          colorInputRef.current?.click()
+                        }}
+                        style={{
+                          position: 'relative',
+                          width: 24,
+                          height: 24,
+                          borderRadius: '50%',
+                          border: '1px solid var(--color-border)',
+                          background: 'var(--color-surface)',
+                          color: 'var(--color-text-secondary)',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          opacity: !isPremium ? 0.65 : 1,
+                          padding: 0,
+                        }}
                       >
-                        <Edit2 size={13} />
+                        <Edit2 size={12} />
+                        {!isPremium && (
+                          <PaletteLockedSlash strokeWidth={2.2} />
+                        )}
                       </button>
                       <input
                         ref={colorInputRef}
@@ -1379,7 +1611,8 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
             <button
               className="btn-icon"
               onClick={toggleTheme}
-              aria-label={isDarkMode ? 'Açık Tema' : 'Koyu Tema'}
+              aria-label={isDarkMode ? t('topbar.light_mode') : t('topbar.dark_mode')}
+              title={isDarkMode ? t('topbar.light_mode') : t('topbar.dark_mode')}
               style={{
                 color: customColor || (isGreenMode ? '#10b981' : '#3b82f6'),
                 width: 30,
@@ -1483,6 +1716,9 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
             />
           </div>
 
+          {/* Mobil: tema (koyu/açık, mavi/yeşil) ve dil kontrolleri avatarın solunda */}
+          {isMobile && <MobileTopbarControls />}
+
           {isLoggedIn ? (
             <>
               <div
@@ -1498,13 +1734,29 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                     : undefined
                 }
               >
-                <ActorMinimalCard
-                  actor={myProfile}
-                  showHierarchyBtn={false}
-                  clickable={location.pathname !== '/init-profile'}
-                  showEditBtn={location.pathname !== '/init-profile'}
-                  chipStyle={{ minWidth: 110, maxWidth: 255, fontSize: 12.5 }}
-                />
+                {isMobile ? (
+                  <ActorAvatar
+                    profileName={myProfile?.profileName}
+                    imageUrl={myProfile?.imageUrl}
+                    discriminator={myProfile?.discriminator}
+                    actorId={myProfile?.actorId || actorId}
+                    size="md"
+                    hideBadge={hasPendingInvitation}
+                    onClick={
+                      location.pathname !== '/init-profile'
+                        ? () => navigate(`/profile?actorId=${myProfile?.actorId || actorId}`)
+                        : undefined
+                    }
+                  />
+                ) : (
+                  <ActorMinimalCard
+                    actor={myProfile}
+                    showHierarchyBtn={false}
+                    clickable={location.pathname !== '/init-profile'}
+                    showEditBtn={location.pathname !== '/init-profile'}
+                    chipStyle={{ minWidth: 110, maxWidth: 255, fontSize: 12.5 }}
+                  />
+                )}
                 {hasPendingInvitation && (
                   <>
                     <span
@@ -1532,20 +1784,20 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
             </>
           ) : (
             <div style={{ display: 'flex', gap: 5 }}>
-              <button
+              <Link
+                to="/login"
                 className="btn btn-ghost btn-sm"
-                onClick={() => navigate('/login')}
-                style={{ fontSize: 12.5, padding: '4px 10px', height: 30 }}
+                style={{ fontSize: 12.5, padding: '4px 10px', height: 30, textDecoration: 'none' }}
               >
                 {t('topbar.login')}
-              </button>
-              <button
+              </Link>
+              <Link
+                to="/register"
                 className="btn btn-primary btn-sm"
-                onClick={() => navigate('/register')}
-                style={{ fontSize: 12.5, padding: '4px 10px', height: 30 }}
+                style={{ fontSize: 12.5, padding: '4px 10px', height: 30, textDecoration: 'none' }}
               >
                 {t('topbar.register')}
-              </button>
+              </Link>
             </div>
           )}
         </div>
@@ -1553,6 +1805,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
 
       {/* ─── Row 2 ─── */}
       <div
+        className="topbar-row topbar-row-2"
         style={{
           height: 56,
           display: 'flex',
@@ -1562,57 +1815,171 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
           overflowX: 'auto',
         }}
       >
-        {/* Cache buttons */}
+        {/* Cache buttons — mobilde sol drawer'a taşındı */}
         <button
-          className={`btn ${activeLeftCacheType === 'trending' ? 'btn-primary' : 'btn-ghost'}`}
+          className={`btn hide-under-900 ${activeLeftCacheType === 'trending' ? 'btn-primary' : 'btn-ghost'}`}
           style={{ padding: '6px 10px', minWidth: '80px', fontSize: 12 }}
-          onClick={() => setActiveLeftCacheType('trending')}
+          onClick={() => {
+            setActiveLeftTopicType(null)
+            setActiveLeftCacheType('trending')
+          }}
         >
-          {t('sort.popular', 'Popüler')}
+          {t('sort.popular')}
         </button>
         <button
-          className={`btn ${activeLeftCacheType === 'recent' ? 'btn-primary' : 'btn-ghost'}`}
+          className={`btn hide-under-900 ${activeLeftCacheType === 'recent' ? 'btn-primary' : 'btn-ghost'}`}
           style={{ padding: '6px 10px', minWidth: '80px', fontSize: 12 }}
-          onClick={() => setActiveLeftCacheType('recent')}
+          onClick={() => {
+            setActiveLeftTopicType(null)
+            setActiveLeftCacheType('recent')
+          }}
         >
           {t('sort.new')}
         </button>
         <button
-          className={`btn ${activeLeftCacheType === 'mostLiked' ? 'btn-primary' : 'btn-ghost'}`}
+          className={`btn hide-under-900 ${activeLeftCacheType === 'mostLiked' ? 'btn-primary' : 'btn-ghost'}`}
           style={{ padding: '6px 10px', minWidth: '80px', fontSize: 12 }}
-          onClick={() => setActiveLeftCacheType('mostLiked')}
+          onClick={() => {
+            setActiveLeftTopicType(null)
+            setActiveLeftCacheType('mostLiked')
+          }}
         >
-          {t('sort.best', 'En İyiler')}
+          {t('sort.best')}
         </button>
         <button
-          className={`btn ${activeLeftCacheType === 'mostDisliked' ? 'btn-primary' : 'btn-ghost'}`}
+          className={`btn hide-under-900 ${activeLeftCacheType === 'mostDisliked' ? 'btn-primary' : 'btn-ghost'}`}
           style={{ padding: '6px 10px', minWidth: '80px', fontSize: 12 }}
-          onClick={() => setActiveLeftCacheType('mostDisliked')}
+          onClick={() => {
+            setActiveLeftTopicType(null)
+            setActiveLeftCacheType('mostDisliked')
+          }}
         >
-          {t('sort.worst', 'En Kötüler')}
+          {t('sort.worst')}
         </button>
 
-        <div style={{ width: 1, height: 32, background: 'var(--color-border)', margin: '0 8px' }} />
+        <div className="hide-under-900" ref={topicRef} style={{ position: 'relative' }}>
+          <button
+            className={`btn ${activeLeftCacheType === 'topicPopular' ? 'btn-primary' : 'btn-ghost'}`}
+            style={{ padding: '6px 10px', minWidth: 42, fontSize: 12 }}
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect()
+              const menuWidth = 320
+              setTopicDropdownPos({
+                top: rect.bottom + 4,
+                left: Math.min(window.innerWidth - menuWidth - 8, Math.max(8, rect.left)),
+              })
+              setIsTopicOpen((value) => !value)
+            }}
+            aria-label={t('sort.topic')}
+            title={t('sort.topic')}
+          >
+            ...
+          </button>
+          <AnimatePresence>
+            {isTopicOpen && topicDropdownPos && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                style={{
+                  position: 'fixed',
+                  top: topicDropdownPos.top,
+                  left: topicDropdownPos.left,
+                  background: 'var(--color-bg)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 12,
+                  boxShadow: 'var(--shadow-lg)',
+                  zIndex: 200,
+                  width: 320,
+                  maxHeight: 360,
+                  overflowY: 'auto',
+                  padding: 10,
+                }}
+              >
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveLeftTopicType(null)
+                      setActiveLeftCacheType('trending')
+                      setIsTopicOpen(false)
+                    }}
+                    style={{
+                      padding: '5px 14px',
+                      borderRadius: 20,
+                      fontSize: 13,
+                      fontWeight: activeLeftTopicType == null ? 600 : 500,
+                      cursor: 'pointer',
+                      background: activeLeftTopicType == null ? 'var(--color-primary)' : 'transparent',
+                      color: activeLeftTopicType == null ? '#fff' : 'var(--color-text-secondary)',
+                      border: `1px solid ${activeLeftTopicType == null ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    {t('sort.all_topics')}
+                  </button>
+                  {TopicTypes.map((topic) => {
+                    const color = TopicColors[topic.value] || 'var(--color-primary)'
+                    const isSelected = activeLeftTopicType === topic.value
+                    return (
+                      <button
+                        key={topic.value}
+                        type="button"
+                        onClick={() => {
+                          setActiveLeftTopicType(topic.value)
+                          setActiveLeftCacheType('topicPopular')
+                          setIsTopicOpen(false)
+                        }}
+                        style={{
+                          padding: '5px 14px',
+                          borderRadius: 20,
+                          fontSize: 13,
+                          fontWeight: isSelected ? 600 : 500,
+                          cursor: 'pointer',
+                          background: isSelected ? color : `${color}18`,
+                          color: isSelected ? '#fff' : color,
+                          border: `1px solid ${isSelected ? color : `${color}55`}`,
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        {t(`topics.${topic.key || topic.enumName?.toLowerCase()}`, topic.label)}
+                      </button>
+                    )
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
-        {/* My Tribes & My Bots dropdowns */}
+        <div
+          className="hide-under-900"
+          style={{ width: 1, height: 32, background: 'var(--color-border)', margin: '0 8px' }}
+        />
+
+        {/* My Tribes & My Bots dropdowns — mobilde de görünür */}
         {isLoggedIn && (
           <>
             <div
-              className="hide-under-900"
+              className="topbar-my-entities"
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
-                marginLeft: 6,
+                marginLeft: isMobile ? 10 : 6,
                 flexShrink: 0,
-                height: 36,
+                height: isMobile ? 32 : 36,
               }}
             >
               {/* My Tribes */}
               <div style={{ position: 'relative' }} ref={myTribesRef}>
                 <button
-                  className="btn btn-outline"
-                  style={{ width: 84, padding: '3px 6px', fontSize: 11 }}
+                  className="btn btn-outline topbar-my-entity-btn"
+                  style={{
+                    width: isMobile ? 104 : 84,
+                    padding: isMobile ? '3px 6px' : '3px 6px',
+                    fontSize: isMobile ? 12.5 : 11,
+                  }}
                   onClick={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect()
                     setTribesDropdownPos({ top: rect.bottom + 4, left: rect.left })
@@ -1621,7 +1988,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                     setBotsDropdownPos(null)
                   }}
                 >
-                  {t('common.tribes', 'Tribes')}{' '}
+                  {t('common.tribes')}{' '}
                   <span
                     style={{
                       fontSize: 9,
@@ -1636,6 +2003,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                 <AnimatePresence>
                   {isMyTribesOpen && tribesDropdownPos && (
                     <motion.div
+                      className="topbar-tribes-dropdown"
                       initial={{ opacity: 0, y: -8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
@@ -1669,30 +2037,31 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                         keepDropdownOpen
                         wrapperStyle={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}
                       />
-                      {visibleMyTribes.map((tData) => (
-                        <div
-                          key={tData.tribeId}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 4,
-                            margin: '4px 0',
-                            cursor: 'pointer',
-                            minWidth: 0,
-                          }}
-                          onClick={() => {
-                            setIsMyTribesOpen(false)
-                            setTribesDropdownPos(null)
-                          }}
-                        >
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <TribeMinimalCard {...tData} />
+                      <div className="minimal-card-list">
+                        {visibleMyTribes.map((tData) => (
+                          <div
+                            key={tData.tribeId}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              cursor: 'pointer',
+                              minWidth: 0,
+                            }}
+                            onClick={() => {
+                              setIsMyTribesOpen(false)
+                              setTribesDropdownPos(null)
+                            }}
+                          >
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <TribeMinimalCard {...tData} />
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                       {(!myTribes || myTribes.length === 0) && (
                         <p className="text-muted" style={{ padding: 8, textAlign: 'center' }}>
-                          {t('topbar.no_tribe')}
+                          {t('common.nothing_here_yet')}
                         </p>
                       )}
                       <div
@@ -1703,9 +2072,9 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                           marginBottom: 4,
                         }}
                       >
-                        <button
+                        <Link
+                          to="/create-tribe"
                           onClick={() => {
-                            navigate('/create-tribe')
                             setIsMyTribesOpen(false)
                             setTribesDropdownPos(null)
                           }}
@@ -1717,11 +2086,12 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
+                            textDecoration: 'none',
                           }}
                           aria-label={t('topbar.new_tribe')}
                         >
                           <CirclePlus size={19} strokeWidth={2.4} />
-                        </button>
+                        </Link>
                       </div>
                     </motion.div>
                   )}
@@ -1731,8 +2101,12 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
               {/* My Bots */}
               <div style={{ position: 'relative' }} ref={myBotsRef}>
                 <button
-                  className="btn btn-outline"
-                  style={{ width: 84, padding: '3px 6px', fontSize: 11 }}
+                  className="btn btn-outline topbar-my-entity-btn"
+                  style={{
+                    width: isMobile ? 104 : 84,
+                    padding: isMobile ? '3px 6px' : '3px 6px',
+                    fontSize: isMobile ? 12.5 : 11,
+                  }}
                   onClick={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect()
                     setBotsDropdownPos({ top: rect.bottom + 4, left: rect.left })
@@ -1741,7 +2115,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                     setTribesDropdownPos(null)
                   }}
                 >
-                  {t('common.bots', 'Bots')}{' '}
+                  {t('common.bots')}{' '}
                   <span
                     style={{
                       fontSize: 9,
@@ -1756,6 +2130,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                 <AnimatePresence>
                   {isMyBotsOpen && botsDropdownPos && (
                     <motion.div
+                      className="topbar-bots-dropdown"
                       initial={{ opacity: 0, y: -8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
@@ -1789,35 +2164,36 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                         keepDropdownOpen
                         wrapperStyle={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}
                       />
-                      {visibleMyBots.map((b) => (
-                        <div
-                          key={b.actorId}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 4,
-                            margin: '4px 0',
-                            cursor: 'pointer',
-                            minWidth: 0,
-                          }}
-                          onClick={() => {
-                            setIsMyBotsOpen(false)
-                            setBotsDropdownPos(null)
-                          }}
-                        >
+                      <div className="minimal-card-list">
+                        {visibleMyBots.map((b) => (
                           <div
-                            className="lb-card"
-                            style={{ flex: 1, padding: '8px 16px', minWidth: 0 }}
+                            key={b.actorId}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              cursor: 'pointer',
+                              minWidth: 0,
+                            }}
+                            onClick={() => {
+                              setIsMyBotsOpen(false)
+                              setBotsDropdownPos(null)
+                            }}
                           >
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <ActorMinimalCard actor={b} clickable={true} />
+                            <div
+                              className="lb-card"
+                              style={{ flex: 1, padding: '8px 16px', minWidth: 0 }}
+                            >
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <ActorMinimalCard actor={b} clickable={true} />
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                       {(!myBots || myBots.length === 0) && (
                         <p className="text-muted" style={{ padding: 8, textAlign: 'center' }}>
-                          {t('topbar.no_bot')}
+                          {t('common.nothing_here_yet')}
                         </p>
                       )}
                       <div
@@ -1828,9 +2204,9 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                           marginBottom: 4,
                         }}
                       >
-                        <button
+                        <Link
+                          to="/create-bot"
                           onClick={() => {
-                            navigate('/create-bot')
                             setIsMyBotsOpen(false)
                             setBotsDropdownPos(null)
                           }}
@@ -1842,33 +2218,57 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
+                            textDecoration: 'none',
                           }}
                           aria-label={t('topbar.new_bot')}
                         >
                           <CirclePlus size={19} strokeWidth={2.4} />
-                        </button>
+                        </Link>
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
 
-              <button
-                className="btn btn-outline"
-                style={{ width: 84, padding: '3px 6px', fontSize: 11 }}
-                onClick={() => navigate('/cards')}
-              >
-                {t('card.cards', 'Cards')}
-              </button>
+              {/* Cards */}
+              <div style={{ position: 'relative' }}>
+                <Link
+                  to="/cards"
+                  className="btn btn-outline topbar-my-entity-btn"
+                  style={{
+                    width: isMobile ? 104 : 84,
+                    padding: isMobile ? '3px 6px' : '3px 6px',
+                    fontSize: isMobile ? 12.5 : 11,
+                    lineHeight: 'normal',
+                    textDecoration: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {t('card.cards')}
+                </Link>
+              </div>
 
               {import.meta.env.VITE_IS_ADMIN_BUILD === 'true' && isAdmin && (
-                <button
-                  className="btn btn-outline"
-                  style={{ width: 84, padding: '3px 6px', fontSize: 11 }}
-                  onClick={() => navigate('/admin/panel')}
-                >
-                  Admin
-                </button>
+                <div style={{ position: 'relative' }}>
+                  <Link
+                    to="/admin/panel"
+                    className="btn btn-outline topbar-my-entity-btn"
+                    style={{
+                      width: isMobile ? 104 : 84,
+                      padding: isMobile ? '3px 6px' : '3px 6px',
+                      fontSize: isMobile ? 12.5 : 11,
+                      lineHeight: 'normal',
+                      textDecoration: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    Admin
+                  </Link>
+                </div>
               )}
             </div>
           </>
@@ -1892,44 +2292,347 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
           }}
         >
           <IconActionButton
-            onClick={() => navigate('/leaderboard?type=user')}
-            title={t('topbar.leaderboard', 'Liderlik Tablosu')}
-            aria-label={t('topbar.leaderboard', 'Liderlik Tablosu')}
+            to="/leaderboard?type=user"
+            title={t('topbar.leaderboard')}
+            aria-label={t('topbar.leaderboard')}
             style={{ width: 38, height: 38, boxSizing: 'border-box' }}
           >
             <Podium size={19} strokeWidth={2.2} />
           </IconActionButton>
 
           <IconActionButton
-            onClick={() => navigate('/tribes')}
-            title={t('topbar.tribes', 'Klanlar')}
-            aria-label={t('topbar.tribes', 'Klanlar')}
+            to="/explore"
+            title={t('explore_page.title')}
+            aria-label={t('explore_page.title')}
             style={{ width: 38, height: 38, boxSizing: 'border-box' }}
           >
-            <Users size={19} strokeWidth={2.2} />
+            <Compass size={19} strokeWidth={2.2} />
           </IconActionButton>
 
           <IconActionButton
-            onClick={() => navigate('/active-debates')}
-            title={t('topbar.active_debates', 'Aktif Meydan Okumalar')}
-            aria-label={t('topbar.active_debates', 'Aktif Meydan Okumalar')}
+            to="/active-debates"
+            title={t('topbar.active_debates')}
+            aria-label={t('topbar.active_debates')}
             style={{ width: 38, height: 38, boxSizing: 'border-box' }}
           >
             <AngryBotWithSwordsIcon size={19} />
           </IconActionButton>
 
           <IconActionButton
-            onClick={() => navigate('/marketplace')}
-            title={t('card.marketplace', 'Kart Marketi')}
-            aria-label={t('card.marketplace', 'Kart Marketi')}
+            to="/marketplace"
+            title={t('card.marketplace')}
+            aria-label={t('card.marketplace')}
             style={{ width: 36, height: 36, boxSizing: 'border-box' }}
           >
             <BotFlashCardsIcon size={19} />
           </IconActionButton>
 
-          <BletchlyGuideModal triggerStyle={{ width: 38, height: 38, boxSizing: 'border-box' }} />
+          {isLoggedIn && (
+            <IconActionButton
+              onClick={handleChatClick}
+              title={t('topbar.chat')}
+              aria-label={t('topbar.chat')}
+              style={{ width: 38, height: 38, boxSizing: 'border-box' }}
+            >
+              <ChatBubbleIcon size={19} />
+            </IconActionButton>
+          )}
+
+          <IconActionButton
+            to="/how-it-works"
+            title={t('bletchly_guide.title')}
+            aria-label={t('bletchly_guide.title')}
+            style={{ width: 38, height: 38, boxSizing: 'border-box' }}
+          >
+            <ShieldQuestion size={20} strokeWidth={2.2} />
+          </IconActionButton>
         </div>
       </div>
     </header>
+  )
+}
+
+/**
+ * Mobil üst bar kontrolleri: koyu/açık tema, mavi/yeşil tema ve dil seçici.
+ * Daha önce sol drawer'ın alt bölümündeydi; avatarın soluna taşındı.
+ */
+function MobileTopbarControls() {
+  const {
+    isDarkMode,
+    toggleTheme,
+    isGreenMode,
+    customColor,
+    selectThemeColor,
+    savedCustomColor,
+    setSavedCustomColor,
+  } = useThemeStore()
+  const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
+  const { actorId, isLoggedIn } = useAuthStore()
+  const [isLangOpen, setIsLangOpen] = useState(false)
+  const [isBotShaking, setIsBotShaking] = useState(false)
+  const [isPaletteOpen, setIsPaletteOpen] = useState(false)
+  const langRef = useRef(null)
+  const paletteRef = useRef(null)
+  const colorInputRef = useRef(null)
+
+  // Premium durumu (masaüstüyle aynı sorgu/anahtar; önbellekten okunur)
+  const { data: myProfile } = useQuery({
+    queryKey: ['actorProfile', actorId],
+    queryFn: () => actorApi.getProfile(actorId).then((r) => r.data?.data ?? null),
+    enabled: !!actorId && isLoggedIn,
+  })
+  const userCapabilities = Number(
+    myProfile?.userSettings?.userCapabilities ?? UserCapabilities.Default
+  )
+  const isPremium = (userCapabilities & UserCapabilities.Premium) === UserCapabilities.Premium
+
+  const langs = [
+    { code: 'tr', label: 'Türkçe', flagUrl: 'https://flagcdn.com/tr.svg' },
+    { code: 'en', label: 'English', flagUrl: 'https://flagcdn.com/us.svg' },
+    { code: 'ja', label: '日本語', flagUrl: 'https://flagcdn.com/jp.svg' },
+    { code: 'hi', label: 'हिन्दी', flagUrl: 'https://flagcdn.com/in.svg' },
+    { code: 'de', label: 'Deutsch', flagUrl: 'https://flagcdn.com/de.svg' },
+    { code: 'fr', label: 'Français', flagUrl: 'https://flagcdn.com/fr.svg' },
+    { code: 'ar', label: 'العربية', flagUrl: 'https://flagcdn.com/sa.svg' },
+  ]
+  const rawLang = (i18n.language || 'en').toLowerCase()
+  const activeLangObj =
+    langs.find((l) => l.code === rawLang || l.code === rawLang.split('-')[0]) || langs[0]
+
+  useEffect(() => {
+    if (!isLangOpen) return undefined
+    const handleClick = (e) => {
+      if (langRef.current && !langRef.current.contains(e.target)) setIsLangOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [isLangOpen])
+
+  useEffect(() => {
+    if (!isPaletteOpen) return undefined
+    const handleClick = (e) => {
+      if (paletteRef.current && !paletteRef.current.contains(e.target)) setIsPaletteOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [isPaletteOpen])
+
+  const applyPaletteColor = useCallback(
+    (color) => {
+      selectThemeColor(color)
+    },
+    [selectThemeColor]
+  )
+
+  const commitCustomColor = (color) => {
+    const normalized = normalizeHex(color)
+    if (!normalized) return
+    if (normalized === '#10b981') {
+      clearCustomColorVars(true)
+    } else if (normalized === '#3b82f6') {
+      clearCustomColorVars(false)
+    } else {
+      applyCustomColorVars(normalized, isDarkMode)
+      setSavedCustomColor(normalized)
+    }
+    applyPaletteColor(normalized)
+  }
+
+  // Palet herkese açılır; premium olmayanlarda yalnızca 3 varsayılan renk.
+  const handleBotClick = () => {
+    setIsBotShaking(true)
+    setTimeout(() => setIsBotShaking(false), 500)
+    setIsPaletteOpen((v) => !v)
+  }
+
+  const themeLabel = isDarkMode
+    ? t('topbar.light_mode')
+    : t('topbar.dark_mode')
+
+  return (
+    <div className="topbar-mobile-controls">
+      <button
+        type="button"
+        className="btn-icon topbar-mobile-controls__btn"
+        onClick={toggleTheme}
+        aria-label={themeLabel}
+        title={themeLabel}
+        style={{ color: customColor || (isGreenMode ? '#10b981' : '#3b82f6') }}
+      >
+        {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+      </button>
+
+      <div className="topbar-mobile-controls__palette" ref={paletteRef}>
+        <button
+          type="button"
+          className={`btn-icon topbar-mobile-controls__btn ${
+            isBotShaking ? 'theme-toggle-shake' : ''
+          }`}
+          onClick={handleBotClick}
+          aria-haspopup="dialog"
+          aria-expanded={isPaletteOpen}
+          aria-label={t('topbar.premium_palette_title')}
+          title={t('topbar.premium_palette_title')}
+        >
+          <span
+            className="mobile-drawer-paint-bot"
+            style={{ color: customColor || (isGreenMode ? '#10b981' : 'var(--color-primary)') }}
+          >
+            <Bot size={18} strokeWidth={2.4} />
+            <PaintbrushVertical size={15} strokeWidth={2.2} style={{ marginLeft: -5 }} />
+          </span>
+        </button>
+
+        {isPaletteOpen && (
+          <div
+            className="topbar-mobile-controls__palette-menu"
+            role="dialog"
+            aria-label={t('topbar.premium_palette_title')}
+          >
+            <div className="topbar-mobile-controls__palette-grid">
+              {COLOR_PRESETS.map((preset) => {
+                const activeBase = customColor || (isGreenMode ? '#10b981' : '#3b82f6')
+                const locked = !isPremium && !preset.isDefault
+                return (
+                  <button
+                    key={preset.color}
+                    type="button"
+                    aria-disabled={locked || undefined}
+                    onClick={() => {
+                      if (locked) {
+                        setIsPaletteOpen(false)
+                        navigate('/premium')
+                        return
+                      }
+                      applyPaletteColor(preset.color)
+                    }}
+                    aria-label={t(`colors.${preset.key}`, preset.label)}
+                    title={locked ? `${t(`colors.${preset.key}`, preset.label)} (Pro)` : t(`colors.${preset.key}`, preset.label)}
+                    className={`topbar-mobile-controls__swatch${
+                      activeBase === preset.color ? ' is-active' : ''
+                    }${locked ? ' is-locked' : ''}`}
+                    style={{ background: preset.color, cursor: 'pointer' }}
+                  >
+                    {locked && (
+                      <PaletteLockedSlash strokeWidth={2.2} />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+            <div className="topbar-mobile-controls__palette-footer">
+              {savedCustomColor && (
+                <button
+                  type="button"
+                  aria-disabled={!isPremium || undefined}
+                  aria-label={t('topbar.premium_palette_saved')}
+                  title={!isPremium ? `${t('topbar.premium_palette_saved')} (Pro)` : t('topbar.premium_palette_saved')}
+                  onClick={() => {
+                    if (!isPremium) {
+                      setIsPaletteOpen(false)
+                      navigate('/premium')
+                      return
+                    }
+                    applyPaletteColor(savedCustomColor)
+                  }}
+                  className={`topbar-mobile-controls__swatch${
+                    customColor === savedCustomColor ? ' is-active' : ''
+                  }${!isPremium ? ' is-locked' : ''}`}
+                  style={{ background: savedCustomColor, cursor: 'pointer' }}
+                >
+                  {!isPremium && (
+                    <PaletteLockedSlash strokeWidth={2.2} />
+                  )}
+                </button>
+              )}
+              <button
+                type="button"
+                aria-disabled={!isPremium || undefined}
+                className={`topbar-mobile-controls__palette-custom${!isPremium ? ' is-locked' : ''}`}
+                aria-label={t('topbar.premium_palette_custom')}
+                title={!isPremium ? `${t('topbar.premium_palette_custom')} (Pro)` : t('topbar.premium_palette_custom')}
+                onClick={() => {
+                  if (!isPremium) {
+                    setIsPaletteOpen(false)
+                    navigate('/premium')
+                    return
+                  }
+                  colorInputRef.current?.click()
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                <Edit2 size={13} />
+                {!isPremium && (
+                  <PaletteLockedSlash strokeWidth={2.2} />
+                )}
+              </button>
+              <input
+                ref={colorInputRef}
+                type="color"
+                value={customColor || (isGreenMode ? '#10b981' : '#3b82f6')}
+                onChange={(e) => {
+                  if (!isPremium) return
+                  commitCustomColor(e.target.value)
+                }}
+                className="topbar-mobile-controls__color-input"
+                aria-label={t('topbar.premium_palette_custom')}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="topbar-mobile-controls__lang" ref={langRef}>
+        <button
+          type="button"
+          className="btn-icon topbar-mobile-controls__btn"
+          onClick={() => setIsLangOpen((v) => !v)}
+          aria-haspopup="listbox"
+          aria-expanded={isLangOpen}
+          aria-label={activeLangObj.label}
+          title={activeLangObj.label}
+        >
+          <img
+            src={activeLangObj.flagUrl}
+            alt={activeLangObj.code}
+            style={{ width: 21, height: 16, borderRadius: 2 }}
+          />
+          <span
+            aria-hidden="true"
+            className={`topbar-mobile-controls__caret${isLangOpen ? ' is-open' : ''}`}
+          >
+            ▼
+          </span>
+        </button>
+
+        {isLangOpen && (
+          <div className="topbar-mobile-controls__lang-menu" role="listbox">
+            {langs.map((l) => (
+              <button
+                key={l.code}
+                type="button"
+                role="option"
+                aria-selected={activeLangObj.code === l.code}
+                className={`topbar-mobile-controls__lang-option${
+                  activeLangObj.code === l.code ? ' is-active' : ''
+                }`}
+                onClick={() => {
+                  i18n.changeLanguage(l.code)
+                  setIsLangOpen(false)
+                }}
+              >
+                <img
+                  src={l.flagUrl}
+                  alt={l.code}
+                  style={{ width: 20, height: 15, borderRadius: 2 }}
+                />
+                <span>{l.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   )
 }

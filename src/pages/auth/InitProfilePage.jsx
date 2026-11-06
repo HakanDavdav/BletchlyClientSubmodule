@@ -10,26 +10,7 @@ import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import AvatarUpload from '../../components/common/AvatarUpload'
 import SelectionMarker from '../../components/common/SelectionMarker'
-
-const TOPIC_TYPES = [
-  { value: 1, enumName: 'Politics', label: 'Politika' },
-  { value: 2, enumName: 'Economy', label: 'Ekonomi' },
-  { value: 4, enumName: 'WorldNews', label: 'Dünya Haberleri' },
-  { value: 8, enumName: 'LocalNews', label: 'Yerel Haberler' },
-  { value: 16, enumName: 'Trending', label: 'Trend Başlıklar' },
-  { value: 32, enumName: 'Technology', label: 'Teknoloji' },
-  { value: 64, enumName: 'Science', label: 'Bilim' },
-  { value: 128, enumName: 'AI', label: 'Yapay Zeka' },
-  { value: 256, enumName: 'Space', label: 'Uzay' },
-  { value: 512, enumName: 'Health', label: 'Sağlık' },
-  { value: 1024, enumName: 'Sports', label: 'Spor' },
-  { value: 2048, enumName: 'Entertainment', label: 'Eğlence' },
-  { value: 4096, enumName: 'Gaming', label: 'Oyun' },
-  { value: 8192, enumName: 'Celebrity', label: 'Ünlüler' },
-  { value: 16384, enumName: 'Lifestyle', label: 'Yaşam Tarzı' },
-  { value: 32768, enumName: 'Education', label: 'Eğitim' },
-  { value: 65536, enumName: 'Relationships', label: 'İlişkiler' },
-]
+import { TopicTypes } from '../../constants/TopicTypes'
 
 export default function InitProfilePage() {
   useDevLog('InitProfilePage', arguments[0] || {})
@@ -60,7 +41,7 @@ export default function InitProfilePage() {
     mutationFn: (data) => actorApi.editUser(data),
     meta: { showErrorToast: true },
     onSuccess: async () => {
-      toast.success(t('common.success', 'Başarılı'), { duration: 3000 })
+      toast.success(t('common.success'), { duration: 3000 })
       try {
         await identityApi.refreshClaims()
       } catch (err) {
@@ -68,7 +49,7 @@ export default function InitProfilePage() {
       }
       setProfileCreated(true)
       queryClient.invalidateQueries()
-      navigate('/', { state: { showGuide: true } })
+      navigate('/how-it-works')
     }
   })
 
@@ -79,17 +60,6 @@ export default function InitProfilePage() {
   }
 
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  const [focused, setFocused] = useState(null)
-
-  const getBorderColor = (fieldName, value, isRequired) => {
-    if (focused === fieldName) return 'var(--color-primary)'
-    if (!hasSubmitted) return 'var(--color-border)'
-    
-    if (isRequired) {
-      return (!value || !value.trim()) ? 'var(--color-error)' : 'var(--color-primary)'
-    }
-    return 'var(--color-border)'
-  }
 
   const canSubmit = profileName.trim() !== '' && !initProfileMutation.isPending
 
@@ -168,21 +138,12 @@ export default function InitProfilePage() {
               value={profileName}
               onChange={(e) => setProfileName(e.target.value)}
               disabled={initProfileMutation.isPending || initProfileMutation.isSuccess}
+              className={`input ${hasSubmitted && !profileName.trim() ? 'error' : ''}`}
               style={{
-                width: '100%',
                 padding: '14px 16px',
                 borderRadius: 12,
-                border: `1.5px solid ${getBorderColor('profileName', profileName, true)}`,
                 background: 'var(--color-surface)',
-                color: 'var(--color-text-primary)',
-                fontSize: 14,
-                fontFamily: 'inherit',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-                boxSizing: 'border-box',
               }}
-              onFocus={() => setFocused('profileName')}
-              onBlur={() => setFocused(null)}
             />
           </div>
         </div>
@@ -218,24 +179,14 @@ export default function InitProfilePage() {
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               rows={4}
+              className="input textarea textarea--autogrow"
               style={{
-                width: '100%',
                 padding: '14px 16px',
                 borderRadius: 12,
-                border: `1.5px solid ${getBorderColor('bio', bio, false)}`,
                 background: 'var(--color-surface)',
-                color: 'var(--color-text-primary)',
-                fontSize: 14,
-                fontFamily: 'inherit',
-                outline: 'none',
-                resize: 'vertical',
                 minHeight: 120,
-                transition: 'border-color 0.2s',
-                boxSizing: 'border-box',
                 lineHeight: 1.5,
               }}
-              onFocus={() => setFocused('bio')}
-              onBlur={() => setFocused(null)}
             />
           </div>
         </div>
@@ -256,8 +207,9 @@ export default function InitProfilePage() {
             {t('profile.interests')}
           </label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 4 }}>
-            {TOPIC_TYPES.map(topic => {
+            {TopicTypes.map(topic => {
               const isSelected = selectedTopics.includes(topic.value);
+              const translationKey = (topic.key || topic.enumName).toLowerCase();
               return (
                 <label key={topic.value} style={{
                   display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
@@ -274,7 +226,7 @@ export default function InitProfilePage() {
                     onChange={() => toggleTopic(topic.value)}
                     style={{ display: 'none' }}
                   />
-                  {t(`topics.${topic.enumName.toLowerCase()}`)}
+                  {t(`topics.${translationKey}`)}
                 </label>
               )
             })}
@@ -290,23 +242,23 @@ export default function InitProfilePage() {
             border: '1px solid var(--color-border)',
             display: 'flex',
             alignItems: 'center',
+            transition: 'border-color 0.2s ease-in-out, background-color 0.2s ease-in-out',
           }}
         >
           <SelectionMarker
             checked={socialEmailPreference}
             disabled={initProfileMutation.isPending || switchNotificationMutation.isPending}
             onChange={(e) => handleToggleEmailPreference(e.target.checked)}
-            label={t('auth.email_notifications', 'E-posta Bildirimleri')}
+            label={t('auth.email_notifications')}
             style={{ alignItems: 'center', width: '100%' }}
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginLeft: 12 }}>
               <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                {t('auth.email_notifications', 'E-posta Bildirimleri')}
+                {t('auth.email_notifications')}
               </span>
               <span style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>
                 {t(
-                  'auth.email_notifications_desc',
-                  'Sosyal etkileşimler, takipler ve güncellemeler hakkında e-posta bildirimleri alın'
+                  'auth.email_notifications_desc'
                 )}
               </span>
             </div>
