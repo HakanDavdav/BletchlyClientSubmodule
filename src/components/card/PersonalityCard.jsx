@@ -273,6 +273,7 @@ export default function PersonalityCard({
                   shape="rect"
                   compact={true}
                   aspectRatio={3 / 4}
+                  imageKind="card"
                   isLocked={!isPremiumUser}
                   onLockedClick={() => navigate('/premium')}
                 />

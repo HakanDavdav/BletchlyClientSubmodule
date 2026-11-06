@@ -61,14 +61,7 @@ import {
   AmbientBots,
   RainbowCardsAmbience,
 } from './ambiances'
-import fallenAngelImg from '../../assets/CardExamples/Alexandre_Cabanel_-_Fallen_Angel.jpg'
-import adamCreationImg from '../../assets/CardExamples/Michelangelo_-_Creation_of_Adam_(cropped).jpg'
-import cavalierImg from '../../assets/CardExamples/Cavalier_soldier_Hals-1624x.jpg'
-import saturnImg from '../../assets/CardExamples/Francisco_de_Goya,_Saturno_devorando_a_su_hijo_(1819-1823).jpg'
-import ducreuxImg from '../../assets/CardExamples/ducreux-yawning-edit.webp'
-import jfif1Img from '../../assets/CardExamples/images (1).jfif'
-import jfif2Img from '../../assets/CardExamples/images.jfif'
-import ImageWithLoader from './ImageWithLoader'
+const PREMIUM_MEDIA_BASE = '/media/static/premium/v1'
 
 export function FramedThemeIcon({ type, size = 20 }) {
   return (
@@ -157,31 +150,31 @@ const RAINBOW_THEME_CARDS = [
 // All images follow the same philosophy as user-assigned personality card visuals.
 const RAINBOW_CARD_EXAMPLES = {
   1: {
-    imageUrl: fallenAngelImg,
+    imageUrl: `${PREMIUM_MEDIA_BASE}/fallen-angel.webp`,
     imageStyle: { objectPosition: '35% 30%' },
   },
   4: {
-    imageUrl: cavalierImg,
+    imageUrl: `${PREMIUM_MEDIA_BASE}/cavalier.webp`,
     imageStyle: { objectPosition: 'center 15%' },
   },
   7: {
-    imageUrl: adamCreationImg,
+    imageUrl: `${PREMIUM_MEDIA_BASE}/creation-of-adam.webp`,
     imageStyle: { objectPosition: '15% 45%' },
   },
   10: {
-    imageUrl: saturnImg,
+    imageUrl: `${PREMIUM_MEDIA_BASE}/saturno.webp`,
     imageStyle: { objectPosition: 'center center' },
   },
   13: {
-    imageUrl: ducreuxImg,
+    imageUrl: `${PREMIUM_MEDIA_BASE}/ducreux.webp`,
     imageStyle: { objectPosition: 'center 20%' },
   },
   16: {
-    imageUrl: jfif1Img,
+    imageUrl: `${PREMIUM_MEDIA_BASE}/jfif-1.webp`,
     imageStyle: { objectPosition: 'center 20%' },
   },
   19: {
-    imageUrl: jfif2Img,
+    imageUrl: `${PREMIUM_MEDIA_BASE}/jfif-2.webp`,
     imageStyle: { objectPosition: 'center 20%' },
   },
 }

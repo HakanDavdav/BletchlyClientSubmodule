@@ -5,55 +5,13 @@ import { ZoomIn, ZoomOut } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 /**
- * Kırpılmış bölgeyi canvas üzerinde çizip Blob olarak döndürür.
- */
-function getCroppedBlob(imageSrc, pixelCrop) {
-  return new Promise((resolve, reject) => {
-    const image = new Image()
-    image.crossOrigin = 'anonymous'
-    image.onload = () => {
-      const canvas = document.createElement('canvas')
-      canvas.width = pixelCrop.width
-      canvas.height = pixelCrop.height
-      const ctx = canvas.getContext('2d')
-
-      ctx.drawImage(
-        image,
-        pixelCrop.x,
-        pixelCrop.y,
-        pixelCrop.width,
-        pixelCrop.height,
-        0,
-        0,
-        pixelCrop.width,
-        pixelCrop.height
-      )
-
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) {
-            reject(new Error('Canvas toBlob failed'))
-            return
-          }
-          resolve(blob)
-        },
-        'image/jpeg',
-        0.92
-      )
-    }
-    image.onerror = (err) => reject(err)
-    image.src = imageSrc
-  })
-}
-
-/**
  * AvatarCropModal — Resim seçildikten sonra daire kırpma modalı.
  *
  * @param {object} props
  * @param {string} props.imageSrc - Kırpılacak resmin data URL'i
  * @param {boolean} props.open - Modal açık mı
  * @param {'round'|'rect'} [props.cropShape='round'] - Kırpma şekli
- * @param {function} props.onConfirm - (blob: Blob) => void — kırpılmış blob
+ * @param {function} props.onConfirm - ({ crop, rotation }) => void — normalize crop bilgisi
  * @param {function} props.onCancel - Modal kapatma
  */
 export default function AvatarCropModal({
@@ -67,7 +25,7 @@ export default function AvatarCropModal({
   const { t } = useTranslation()
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
+  const [croppedAreaPercentages, setCroppedAreaPercentages] = useState(null)
   const [isProcessing, setIsProcessing] = useState(false)
 
   // Modal her açıldığında / yeni resim geldiğinde state'leri sıfırla
@@ -75,25 +33,20 @@ export default function AvatarCropModal({
     if (open && imageSrc) {
       setCrop({ x: 0, y: 0 })
       setZoom(1)
-      setCroppedAreaPixels(null)
+      setCroppedAreaPercentages(null)
       setIsProcessing(false)
     }
   }, [open, imageSrc])
 
-  const onCropComplete = useCallback((_croppedArea, croppedPixels) => {
-    setCroppedAreaPixels(croppedPixels)
+  const onCropComplete = useCallback((croppedArea) => {
+    setCroppedAreaPercentages(croppedArea)
   }, [])
 
-  const handleConfirm = async () => {
-    if (!croppedAreaPixels) return
+  const handleConfirm = () => {
+    if (!croppedAreaPercentages) return
     setIsProcessing(true)
-    try {
-      const blob = await getCroppedBlob(imageSrc, croppedAreaPixels)
-      onConfirm(blob)
-    } catch {
-      // hata durumunda modal açık kalır
-      setIsProcessing(false)
-    }
+    onConfirm({ crop: croppedAreaPercentages, rotation: 0 })
+    setIsProcessing(false)
   }
 
   const handleBackdropClick = (e) => {
@@ -219,7 +172,7 @@ export default function AvatarCropModal({
             type="button"
             className="btn btn-primary"
             onClick={handleConfirm}
-            disabled={isProcessing}
+            disabled={isProcessing || !croppedAreaPercentages}
           >
             {isProcessing
               ? t('upload.processing')

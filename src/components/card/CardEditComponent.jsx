@@ -309,6 +309,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
                   shape="rect"
                   compact={true}
                   aspectRatio={3 / 4}
+                  imageKind="card"
                   isLocked={!isPremiumUser}
                   onLockedClick={() => navigate('/premium')}
                 />

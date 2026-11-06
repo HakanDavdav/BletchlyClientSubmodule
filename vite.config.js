@@ -71,6 +71,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/media': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      },
       '/hubs': {
         target: 'http://localhost:5000',
         changeOrigin: true,
@@ -89,6 +94,11 @@ export default defineConfig({
         secure: false,
       },
       '/avatars': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/media': {
         target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,

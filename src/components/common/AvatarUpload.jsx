@@ -16,6 +16,7 @@ export default function AvatarUpload({
   shape = 'circle',
   compact = false,
   aspectRatio,
+  imageKind = 'avatar',
   isLocked = false,
   onLockedClick,
 }) {
@@ -27,9 +28,10 @@ export default function AvatarUpload({
   // Crop modal state
   const [cropSrc, setCropSrc] = useState(null)
   const [showCrop, setShowCrop] = useState(false)
+  const [pendingFile, setPendingFile] = useState(null)
 
   const uploadMutation = useMutation({
-    mutationFn: (file) => mediaApi.uploadAvatar(file),
+    mutationFn: (payload) => mediaApi.uploadImage(payload),
     meta: { showErrorToast: true },
     onSuccess: (res) => {
       const url = res.data?.data || res.data?.Data || (typeof res.data === 'string' ? res.data : null)
@@ -39,6 +41,7 @@ export default function AvatarUpload({
       }
     },
     onSettled: () => {
+      setPendingFile(null)
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
@@ -73,6 +76,8 @@ export default function AvatarUpload({
       return
     }
 
+    setPendingFile(file)
+
     // Dosyayı data URL'e çevirip crop modal'ı aç
     const reader = new FileReader()
     reader.onload = () => {
@@ -83,19 +88,24 @@ export default function AvatarUpload({
   }
 
   const handleCropConfirm = useCallback(
-    (blob) => {
+    ({ crop, rotation }) => {
+      if (!pendingFile) return
       setShowCrop(false)
       setCropSrc(null)
-      // Blob'u File'a çevirip upload et
-      const croppedFile = new File([blob], 'avatar-cropped.jpg', { type: 'image/jpeg' })
-      uploadMutation.mutate(croppedFile)
+      uploadMutation.mutate({
+        file: pendingFile,
+        kind: imageKind,
+        crop,
+        rotation,
+      })
     },
-    [uploadMutation]
+    [imageKind, pendingFile, uploadMutation]
   )
 
   const handleCropCancel = useCallback(() => {
     setShowCrop(false)
     setCropSrc(null)
+    setPendingFile(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
