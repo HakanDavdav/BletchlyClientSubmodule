@@ -184,7 +184,7 @@ export default function LoginPage() {
       return
     }
 
-    twoFactorMutation.mutate({ userId: tempUserId, twoFactorToken, provider: 'Email' })
+    twoFactorMutation.mutate({ userId: tempUserId, token: twoFactorToken, provider: 'Email' })
   }
 
   const handleBackToLogin = () => {
