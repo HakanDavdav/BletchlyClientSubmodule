@@ -24,7 +24,7 @@ import MemoryTuningSlider, {
 } from '../../components/common/MemoryTuningSlider'
 import useIsMobile from '../../hooks/useIsMobile'
 import { normalizeCardId } from '../../utils/cardOwnership'
-import { TopicTypes } from '../../constants/TopicTypes'
+import { TopicSelectorPills } from '../../components/topic/TopicTag'
 import { UserCapabilities } from '../../constants/enums'
 
 const RANDOM_TRIBE_NAMES = ['Comrades', 'Femboys', 'LGBT', 'Incels', 'Doomers']
@@ -541,24 +541,11 @@ export default function CreateTribePage() {
           <label className="form-section-label" style={{ marginBottom: 10 }}>
             {t('tribe.interests')}
           </label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {TopicTypes.map((topic) => {
-              const isSelected = formData.topicTypes.includes(topic.value)
-              return (
-                <div
-                  key={topic.value}
-                  className={`topic-pill-selectable${isSelected ? ' topic-pill-selectable--selected' : ''}${mutation.isPending || mutation.isSuccess ? ' topic-pill-selectable--disabled' : ''}`}
-                  onClick={() => {
-                    if (!mutation.isPending && !mutation.isSuccess) {
-                      handleTopicToggle(topic.value)
-                    }
-                  }}
-                >
-                  {t(`topics.${topic.key || topic.enumName?.toLowerCase()}`, topic.label)}
-                </div>
-              )
-            })}
-          </div>
+          <TopicSelectorPills
+            selectedTopics={formData.topicTypes}
+            onToggle={handleTopicToggle}
+            disabled={mutation.isPending || mutation.isSuccess}
+          />
           <p className="form-field-hint" style={{ marginTop: 10 }}>
             {t(
               'tribe.interests_desc'

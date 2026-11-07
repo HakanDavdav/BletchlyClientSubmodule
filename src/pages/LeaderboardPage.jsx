@@ -224,22 +224,14 @@ export default function LeaderboardPage() {
 
             {seasonDropdownOpen && (
               <div
-                className="leaderboard-season-panel"
+                className="leaderboard-season-panel dropdown-menu-panel"
                 style={{
                   position: 'absolute',
                   top: '100%',
                   right: 0,
                   marginTop: 6,
                   minWidth: 250,
-                  background: 'var(--color-bg)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 12,
-                  boxShadow: 'var(--shadow-lg)',
-                  padding: 6,
                   zIndex: 50,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 2,
                 }}
               >
                 <div
@@ -276,7 +268,6 @@ export default function LeaderboardPage() {
                       )}
                     </div>
                   </div>
-                  {isCurrentSeason && <Check size={14} color="var(--color-primary)" />}
                 </button>
 
                 {/* Past seasons */}
@@ -303,7 +294,6 @@ export default function LeaderboardPage() {
                             )}
                           </div>
                         </div>
-                        {isSelected && <Check size={14} color="var(--color-primary)" />}
                       </button>
                     )
                   })

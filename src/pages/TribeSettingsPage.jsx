@@ -25,7 +25,7 @@ import { getQueryErrorMessage } from '../utils/errorHelper'
 import useDocumentTitle from '../hooks/useDocumentTitle'
 import toast from 'react-hot-toast'
 import { buildOwnedCardIdSet, normalizeCardId, sortCardsOwnedFirst } from '../utils/cardOwnership'
-import { TopicTypes } from '../constants/TopicTypes'
+import { TopicSelectorPills } from '../components/topic/TopicTag'
 import { TopicTypes as TopicTypesEnum, UserCapabilities } from '../constants/enums'
 
 export default function TribeSettingsPage() {
@@ -618,24 +618,11 @@ export default function TribeSettingsPage() {
 
         <div>
           <label className="form-section-label">{t('tribe.interests')}</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {TopicTypes.map((topic) => {
-              const isSelected = formData.topicTypes.includes(topic.value)
-              return (
-                <div
-                  key={topic.value}
-                  className={`topic-pill-selectable${isSelected ? ' topic-pill-selectable--selected' : ''}${editMutation.isPending ? ' topic-pill-selectable--disabled' : ''}`}
-                  onClick={() => {
-                    if (!editMutation.isPending) {
-                      handleTopicToggle(topic.value)
-                    }
-                  }}
-                >
-                  {t(`topics.${topic.key || topic.enumName?.toLowerCase()}`, topic.label)}
-                </div>
-              )
-            })}
-          </div>
+          <TopicSelectorPills
+            selectedTopics={formData.topicTypes}
+            onToggle={handleTopicToggle}
+            disabled={editMutation.isPending}
+          />
           <p className="form-field-hint" style={{ marginTop: 10 }}>
             {t(
               'tribe.interests_desc'

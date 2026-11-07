@@ -63,7 +63,7 @@ import {
 } from './ambiances'
 const PREMIUM_MEDIA_BASE = '/media/static/premium/v1'
 
-export function FramedThemeIcon({ type, size = 20 }) {
+export function FramedThemeIcon({ type, isLocked = false, size = 20 }) {
   return (
     <svg
       width={size}
@@ -77,7 +77,7 @@ export function FramedThemeIcon({ type, size = 20 }) {
       style={{ display: 'block', overflow: 'visible' }}
     >
       <rect x="1.5" y="1.5" width="21" height="21" rx="4.5" strokeWidth="1.6" />
-      <g transform="translate(3.6, 3.6) scale(0.7)">
+      <g transform="translate(3.6, 3.6) scale(0.7)" opacity={isLocked ? 0.65 : 1}>
         {type === 'brain' && (
           <>
             <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z" />
@@ -118,6 +118,17 @@ export function FramedThemeIcon({ type, size = 20 }) {
           </>
         )}
       </g>
+      {isLocked && (
+        <line
+          x1="2.5"
+          y1="21.5"
+          x2="21.5"
+          y2="2.5"
+          stroke="var(--color-warning)"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+      )}
     </svg>
   )
 }

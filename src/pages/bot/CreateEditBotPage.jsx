@@ -7,7 +7,7 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import BackButton from '../../components/common/BackButton'
 import ConfirmModal from '../../components/common/ConfirmModal'
-import { TopicTypes } from '../../constants/TopicTypes'
+import { TopicSelectorPills } from '../../components/topic/TopicTag'
 import { UserCapabilities } from '../../constants/enums'
 import useAuthStore from '../../store/authStore'
 import useMyEntitiesStore from '../../store/myEntitiesStore'
@@ -923,24 +923,11 @@ export default function CreateEditBotPage() {
             <label className="form-section-label" style={{ marginBottom: 10 }}>
               {t('bot.interests')}
             </label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {TopicTypes.map((topic) => {
-                const isSelected = formData.topicTypes.includes(topic.value)
-                return (
-                  <div
-                    key={topic.value}
-                    className={`topic-pill-selectable${isSelected ? ' topic-pill-selectable--selected' : ''}${mutation.isPending || mutation.isSuccess ? ' topic-pill-selectable--disabled' : ''}`}
-                    onClick={() => {
-                      if (!mutation.isPending && !mutation.isSuccess) {
-                        handleTopicToggle(topic.value)
-                      }
-                    }}
-                  >
-                    {t(`topics.${topic.key || topic.enumName?.toLowerCase()}`, topic.label)}
-                  </div>
-                )
-              })}
-            </div>
+            <TopicSelectorPills
+              selectedTopics={formData.topicTypes}
+              onToggle={handleTopicToggle}
+              disabled={mutation.isPending || mutation.isSuccess}
+            />
             <p className="form-field-hint" style={{ marginTop: 10 }}>
               {t(
                 'bot.interests_desc'

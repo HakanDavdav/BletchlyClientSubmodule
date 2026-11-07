@@ -16,7 +16,7 @@ import {
   CirclePlus,
 } from 'lucide-react'
 import BotFlashCardsIcon from '../components/common/icons/BotFlashCardsIcon'
-import PaginationSelect, { PaginationTotal } from '../components/common/PaginationSelect'
+import { PaginationBar } from '../components/common/PaginationSelect'
 import CardContingencyIcon from '../components/common/icons/CardContingencyIcon'
 import CardContingencyModifierIcon from '../components/common/icons/CardContingencyModifierIcon'
 import FossilIcon from '../components/common/icons/FossilIcon'
@@ -937,44 +937,12 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
       {/* ─── Posts Section ─── */}
       {(() => {
         const paginationControls = (
-          <div className="pagination-controls" style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            <button
-              className="btn btn-outline btn-sm pagination-arrow"
-              disabled={postsPage === 1 || isPostsLoading}
-              onClick={() => setPostsPage((p) => Math.max(1, p - 1))}
-              aria-label={t('common.previous')}
-              title={t('common.previous')}
-            >
-              <ChevronLeft size={14} />
-            </button>
-            <span
-              className="pagination-page-info"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: 13,
-                fontWeight: 500,
-                color: 'var(--color-text-secondary)',
-              }}
-            >
-              <PaginationSelect
-                page={postsPage}
-                totalPages={totalPages}
-                onChange={setPostsPage}
-              />
-              / <PaginationTotal totalPages={totalPages} onChange={setPostsPage} />
-            </span>
-            <button
-              className="btn btn-outline btn-sm pagination-arrow"
-              disabled={postsPage >= totalPages || isPostsLoading}
-              onClick={() => setPostsPage((p) => p + 1)}
-              aria-label={t('common.next')}
-              title={t('common.next')}
-            >
-              <ChevronRight size={14} />
-            </button>
-          </div>
+          <PaginationBar
+            page={postsPage}
+            totalPages={totalPages}
+            disabled={isPostsLoading}
+            onChange={setPostsPage}
+          />
         )
 
         return (

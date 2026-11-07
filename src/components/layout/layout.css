@@ -196,7 +196,7 @@
     padding: 6px;
     background: var(--color-bg);
     border: 1px solid var(--color-border);
-    border-radius: 10px;
+    border-radius: 12px;
     box-shadow: var(--shadow-lg);
     display: flex;
     flex-direction: column;
@@ -207,21 +207,29 @@
     display: flex;
     align-items: center;
     gap: 7px;
-    padding: 6px 8px;
+    padding: 7px 10px;
     border: none;
     border-radius: 8px;
     background: transparent;
-    color: var(--color-text-secondary);
+    color: var(--color-text-primary);
     font-family: inherit;
     font-size: 12.5px;
+    font-weight: 500;
     cursor: pointer;
     text-align: left;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
   }
 
-  .topbar-mobile-controls__lang-option:hover,
-  .topbar-mobile-controls__lang-option.is-active {
+  .topbar-mobile-controls__lang-option:hover {
     background: var(--color-surface-2);
+  }
+
+  .topbar-mobile-controls__lang-option.is-active {
+    background: color-mix(in srgb, var(--color-primary) 12%, transparent);
     color: var(--color-primary);
+    font-weight: 600;
   }
 
   /* Premium özel renk paleti (mobil) */

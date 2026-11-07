@@ -97,11 +97,20 @@ Admin yönetim panellerinde (`ActorManagementPanel`, `ConfigManagementPanel`, `M
 - `.admin-input`, `.admin-input--mono`: Kompakt admin input/select/textarea ve monospace varyantı
 - `.admin-btn`: Kompakt admin aksiyon butonu (`font-size: 11.5px; padding: 4px 10px`)
 
-### 3.6. Hiyerarşi, Arama & Yasal Sayfalar
+### 3.6. Hiyerarşi, Arama, Dropdown & Yasal Sayfalar
+- **Dropdown Menü & Seçenekleri:** `.dropdown-menu-panel` (`border-radius: 12px; padding: 6px; box-shadow: var(--shadow-lg)`) ve `.dropdown-option-btn` / `.season-option-btn` (`border-radius: 8px`, aktif durumda `color-mix(in srgb, var(--color-primary) 12%, transparent)` arka plan + `var(--color-primary)` metin, `<Check />` ikonu olmadan sade standart).
 - **Hiyerarşi Araç Çubuğu:** `.hierarchy-toolbar-divider` (`1×18px` dikey ayraç, mobilde otomatik gizlenir) ve `.hierarchy-zoom-btn` (`26×26px` zoom butonu).
 - **Arama & Filtre:** `.search-suggestion-header` (dropdown kategori başlığı), `.search-suggestion-empty` (boş sonuç mesajı), `.search-filter-chip` (aktif filtre rozeti).
 - **Yasal Sayfalar:** `.legal-page-container` ve `.legal-content-card` (Gizlilik Politikası, Kullanım Koşulları, Çerez Politikası).
 - **Metin Kısaltma:** Tek satırda taşan metinler için `.truncate` (`overflow: hidden; text-overflow: ellipsis; white-space: nowrap`).
+
+### 3.7. Standartlaştırılmış Ortak JSX Bileşenleri
+Tekrarlı JSX yapılarını önlemek için kullanılan merkezi bileşenler:
+- **`TopicSelectorPills` (`src/components/topic/TopicTag.jsx`):** Tüm form ve profil düzenleme sayfalarında (`InitProfilePage`, `ProfilePage`, `CreateEditBotPage`, `CreateTribePage`, `TribeSettingsPage`, `CreateEditPostPage`) çoklu konu/ilgi alanı seçimi için kullanılır.
+- **`PaginationBar` (`src/components/common/PaginationSelect.jsx`):** `< Önceki [1 / N] Sonraki >` sayfalama kontrol çubuğunu (`ProfilePage`, `TribePage` vb.) tek bileşende standartlaştırır.
+- **`SearchSuggestionsDropdown` (`src/components/common/SearchSuggestionsDropdown.jsx`):** Masaüstü (`TopBar`) ve mobil (`SearchPage`) arama kutularındaki son aramalar + canlı öneri (aktör/klan/gönderi) açılır menüsünü tek bileşende birleştirir.
+- **`FramedThemeIcon` (`src/components/common/PremiumContent.jsx`) & `LockedSlash` (`src/components/common/LockedSlash.jsx`):** Çerçeveli tema ikonları (`brain`, `hierarchy`, `bot`, `rainbow`, opsiyonel `isLocked` çizgisiyle) ve kilitli özellik/renk diyagonal çizgisi için tekil bileşenlerdir.
+- **`SelectionMarker` (`src/components/common/SelectionMarker.jsx`) & `ModelGlassToggle` (`src/components/common/ModelGlassToggle.jsx`):** Checkbox/radio seçim işaretçileri ve AI model seçici anahtar için standart bileşenlerdir.
 
 ---
 

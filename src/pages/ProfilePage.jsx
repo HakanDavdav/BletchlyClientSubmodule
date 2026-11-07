@@ -21,7 +21,8 @@ import {
   Users,
 } from 'lucide-react'
 import { MODEL_GLASS_ITEMS } from '../components/common/ModelGlassToggle'
-import PaginationSelect, { PaginationTotal } from '../components/common/PaginationSelect'
+import { PaginationBar } from '../components/common/PaginationSelect'
+import { FramedThemeIcon } from '../components/common/PremiumContent'
 import { getMemoryEmblems } from '../components/common/MemoryEmblems'
 import KingIcon from '../components/common/icons/KingIcon'
 import FossilIcon from '../components/common/icons/FossilIcon'
@@ -48,7 +49,7 @@ import BackButton from '../components/common/BackButton'
 import { PageTopDockRow } from '../components/layout/PageTopDock'
 import ActorAvatar from '../components/actor/ActorAvatar'
 import CardSlots from '../components/card/CardSlots'
-import { TopicTagList } from '../components/topic/TopicTag'
+import { TopicTagList, TopicSelectorPills } from '../components/topic/TopicTag'
 import PostCard from '../components/content/PostCard'
 import EntryCard from '../components/content/EntryCard'
 import ContextualEntryThread from '../components/content/ContextualEntryThread'
@@ -73,81 +74,6 @@ import ModifierArrowSvg from '../assets/FigmaNew/modifierarrow.svg?react'
 import TRexSkullIcon from '../assets/t-rex-skull-svgrepo-com.svg?react'
 import { buildOwnedCardIdSet, sortCardsOwnedFirst } from '../utils/cardOwnership'
 import { TopicTypes } from '../constants/TopicTypes'
-
-function FramedThemeIcon({ type, isLocked, size = 20 }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      style={{ display: 'block', overflow: 'visible' }}
-    >
-      {/* Bütünsel Dış Çerçeve (Integrated Frame) */}
-      <rect x="1.5" y="1.5" width="21" height="21" rx="4.5" strokeWidth="1.6" />
-
-      {/* İkon Vektörü (Brain / Hierarchy (Network) / Bot) */}
-      <g transform="translate(3.6, 3.6) scale(0.7)" opacity={isLocked ? 0.65 : 1}>
-        {type === 'brain' && (
-          <>
-            <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z" />
-            <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z" />
-            <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4" />
-            <path d="M17.599 6.5a3 3 0 0 0 .399-1.375" />
-            <path d="M6.003 5.125A3 3 0 0 0 6.401 6.5" />
-            <path d="M3.477 10.896a4 4 0 0 1 .585-.396" />
-            <path d="M19.938 10.5a4 4 0 0 1 .585.396" />
-            <path d="M6 18a4 4 0 0 1-1.967-.516" />
-            <path d="M19.967 17.484A4 4 0 0 1 18 18" />
-          </>
-        )}
-        {(type === 'hierarchy' || type === 'network') && (
-          <>
-            <rect x="16" y="16" width="6" height="6" rx="1" />
-            <rect x="2" y="16" width="6" height="6" rx="1" />
-            <rect x="9" y="2" width="6" height="6" rx="1" />
-            <path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3" />
-            <path d="M12 12V8" />
-          </>
-        )}
-        {type === 'bot' && (
-          <>
-            <path d="M12 8V4H8" />
-            <rect width="16" height="12" x="4" y="8" rx="2" />
-            <path d="M2 14h2" />
-            <path d="M20 14h2" />
-            <path d="M15 13v2" />
-            <path d="M9 13v2" />
-          </>
-        )}
-        {type === 'rainbow' && (
-          <>
-            <path d="M3 16.5 A 9 9 0 0 1 21 16.5" />
-            <path d="M6.75 16.5 A 5.25 5.25 0 0 1 17.25 16.5" />
-            <path d="M10.25 16.5 A 1.75 1.75 0 0 1 13.75 16.5" />
-          </>
-        )}
-      </g>
-
-      {/* Premium yoksa üstü çizili (1.5px Sarı Çizik) */}
-      {isLocked && (
-        <line
-          x1="2.5"
-          y1="21.5"
-          x2="21.5"
-          y2="2.5"
-          stroke="var(--color-warning)"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-      )}
-    </svg>
-  )
-}
 
 export default function ProfilePage() {
   const [searchParams] = useSearchParams()
@@ -788,63 +714,16 @@ export default function ProfilePage() {
   const isPagingFetching = isPostsFetching || isEntriesFetching || isFavouritesFetching
 
   const renderPaginationControls = () => (
-    <div className="pagination-controls" style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-      <button
-        className="btn btn-outline btn-sm pagination-arrow"
-        disabled={activePage === 1 || isPagingFetching}
-        onClick={() => {
-          if (activeTab === 'posts') setPostsPage((p) => Math.max(1, p - 1))
-          else if (activeTab === 'favourites') setFavouritesPage((p) => Math.max(1, p - 1))
-          else setEntriesPage((p) => Math.max(1, p - 1))
-        }}
-        aria-label={t('common.previous')}
-        title={t('common.previous')}
-      >
-        <ChevronLeft size={14} />
-      </button>
-      <span
-        className="pagination-page-info"
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 6,
-          fontSize: 13,
-          fontWeight: 500,
-          color: 'var(--color-text-secondary)',
-        }}
-      >
-        <PaginationSelect
-          page={activePage}
-          totalPages={totalPages}
-          onChange={(nextPage) => {
-            if (activeTab === 'posts') setPostsPage(nextPage)
-            else if (activeTab === 'favourites') setFavouritesPage(nextPage)
-            else setEntriesPage(nextPage)
-          }}
-        />
-        / <PaginationTotal
-          totalPages={totalPages}
-          onChange={(nextPage) => {
-            if (activeTab === 'posts') setPostsPage(nextPage)
-            else if (activeTab === 'favourites') setFavouritesPage(nextPage)
-            else setEntriesPage(nextPage)
-          }}
-        />
-      </span>
-      <button
-        className="btn btn-outline btn-sm pagination-arrow"
-        disabled={activePage >= totalPages || isPagingFetching}
-        onClick={() => {
-          if (activeTab === 'posts') setPostsPage((p) => p + 1)
-          else if (activeTab === 'favourites') setFavouritesPage((p) => p + 1)
-          else setEntriesPage((p) => p + 1)
-        }}
-        aria-label={t('common.next')}
-        title={t('common.next')}
-      >
-        <ChevronRight size={14} />
-      </button>
-    </div>
+    <PaginationBar
+      page={activePage}
+      totalPages={totalPages}
+      disabled={isPagingFetching}
+      onChange={(nextPage) => {
+        if (activeTab === 'posts') setPostsPage(nextPage)
+        else if (activeTab === 'favourites') setFavouritesPage(nextPage)
+        else setEntriesPage(nextPage)
+      }}
+    />
   )
 
   const isBot = profile.discriminator === 'Bot'
@@ -1071,44 +950,10 @@ export default function ProfilePage() {
                   >
                     {t('profile.interests')}
                   </label>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {TopicTypes.map((topic) => {
-                      const isSelected = editForm.topicTypes.includes(topic.value)
-                      const translationKey = (topic.key || topic.enumName).toLowerCase()
-                      return (
-                        <label
-                          key={topic.value}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 6,
-                            cursor: 'pointer',
-                            padding: '6px 12px',
-                            borderRadius: 20,
-                            fontSize: 12,
-                            fontWeight: 500,
-                            background: isSelected
-                              ? 'var(--color-primary)'
-                              : 'var(--color-surface)',
-                            color: isSelected ? '#fff' : 'var(--color-text-secondary)',
-                            border: isSelected
-                              ? '1px solid var(--color-primary)'
-                              : '1px solid var(--color-border)',
-                            transition: 'all 0.2s ease',
-                            userSelect: 'none',
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleTopic(topic.value)}
-                            style={{ display: 'none' }}
-                          />
-                          {t(`topics.${translationKey}`)}
-                        </label>
-                      )
-                    })}
-                  </div>
+                  <TopicSelectorPills
+                    selectedTopics={editForm.topicTypes}
+                    onToggle={toggleTopic}
+                  />
                 </div>
               </>
             ) : (

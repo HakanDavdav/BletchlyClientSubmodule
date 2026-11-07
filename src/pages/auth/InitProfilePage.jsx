@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import AvatarUpload from '../../components/common/AvatarUpload'
 import SelectionMarker from '../../components/common/SelectionMarker'
-import { TopicTypes } from '../../constants/TopicTypes'
+import { TopicSelectorPills } from '../../components/topic/TopicTag'
 
 export default function InitProfilePage() {
   useDevLog('InitProfilePage', arguments[0] || {})
@@ -161,31 +161,12 @@ export default function InitProfilePage() {
           <label className="form-section-label">
             {t('profile.interests')}
           </label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 4 }}>
-            {TopicTypes.map(topic => {
-              const isSelected = selectedTopics.includes(topic.value);
-              const translationKey = (topic.key || topic.enumName).toLowerCase();
-              return (
-                <label key={topic.value} style={{
-                  display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
-                  padding: '8px 14px', borderRadius: 20, fontSize: 13, fontWeight: 500,
-                  background: isSelected ? 'var(--color-primary)' : 'var(--color-surface)',
-                  color: isSelected ? '#fff' : 'var(--color-text-secondary)',
-                  border: isSelected ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',
-                  transition: 'all 0.2s ease',
-                  userSelect: 'none'
-                }}>
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggleTopic(topic.value)}
-                    style={{ display: 'none' }}
-                  />
-                  {t(`topics.${translationKey}`)}
-                </label>
-              )
-            })}
-          </div>
+          <TopicSelectorPills
+            selectedTopics={selectedTopics}
+            onToggle={toggleTopic}
+            gap={10}
+            style={{ marginTop: 4 }}
+          />
         </div>
 
         {/* Email Notification Preference */}

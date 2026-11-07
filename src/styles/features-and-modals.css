@@ -1053,27 +1053,51 @@ textarea {
   }
 }
 
-/* Season Option Buttons in Dropdown */
-.season-option-btn {
+/* Standardized Dropdown Menu Panel & Option Buttons */
+.dropdown-menu-panel {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.season-option-btn,
+.dropdown-option-btn {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   width: 100%;
-  padding: 8px 10px;
+  padding: 7px 10px;
   border-radius: 8px;
   border: none;
   background: transparent;
   color: var(--color-text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
-.season-option-btn:hover {
+.season-option-btn:hover,
+.dropdown-option-btn:hover {
   background: var(--color-surface-2);
 }
 
-.season-option-btn.active {
+.season-option-btn.active,
+.dropdown-option-btn.active,
+.dropdown-option-btn.is-active {
   background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+  font-weight: 600;
 }
 
 /* ─── TopicTag ────────────────────────────────────────────────────────── */

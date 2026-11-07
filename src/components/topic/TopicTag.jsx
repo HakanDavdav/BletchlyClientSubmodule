@@ -1,7 +1,8 @@
-// TopicTag & TopicTagList
+// TopicTag, TopicTagList & TopicSelectorPills
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { TopicLabels, TopicColors, TopicTypes, TopicEnumNames, parseTopicFlags } from '../../constants/enums'
+import { TopicTypes as TopicTypeOptions } from '../../constants/TopicTypes'
 import useDevLog from '../../utils/useDevLog'
 
 export function TopicTag({ topicType, size = 'sm', onClick, clickable = true }) {
@@ -62,6 +63,34 @@ export function TopicTagList({ topicTypes, max = 5, clickable = true }) {
           +{rest}
         </span>
       )}
+    </div>
+  )
+}
+
+export function TopicSelectorPills({
+  selectedTopics = [],
+  onToggle,
+  disabled = false,
+  gap = 8,
+  style,
+}) {
+  const { t } = useTranslation()
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap, ...style }}>
+      {TopicTypeOptions.map((topic) => {
+        const isSelected = selectedTopics.includes(topic.value)
+        return (
+          <button
+            key={topic.value}
+            type="button"
+            disabled={disabled}
+            onClick={() => !disabled && onToggle?.(topic.value)}
+            className={`topic-pill-selectable${isSelected ? ' topic-pill-selectable--selected' : ''}${disabled ? ' topic-pill-selectable--disabled' : ''}`}
+          >
+            {t(`topics.${topic.key}`, topic.label)}
+          </button>
+        )
+      })}
     </div>
   )
 }
