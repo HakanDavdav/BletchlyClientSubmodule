@@ -118,33 +118,6 @@ export default function RainbowCardsAmbience({
           : undefined,
       }}
     >
-      <style>{`
-        @keyframes rcFloatNW {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(-12px, -9px); }
-        }
-        @keyframes rcFloatNE {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(12px, -9px); }
-        }
-        @keyframes rcFloatSW {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(-12px, 9px); }
-        }
-        @keyframes rcFloatSE {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(12px, 9px); }
-        }
-        @keyframes rcFloatN {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(0, -10px); }
-        }
-        @keyframes rcFloatS {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(0, 10px); }
-        }
-      `}</style>
-
       {/* SVG Mask & Sıvı renk katmanı: Yalnızca showLiquid true olduğunda kart pencerelerinden akar */}
       {showLiquid && (
         <>

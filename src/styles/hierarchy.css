@@ -1,0 +1,387 @@
+/* %%% Vertical Top-Down Hierarchy Tree %%% */
+.hierarchy-tree-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  overflow: visible;
+  padding: 24px 16px;
+  box-sizing: border-box;
+  font-family: inherit;
+  zoom: 0.82;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.hierarchy-tree-container::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+@supports not (zoom: 1) {
+  .hierarchy-tree-container {
+    transform: scale(0.82);
+    transform-origin: top center;
+  }
+}
+
+.vtree-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.vtree-card-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+
+.vtree-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  padding: 0;
+  margin-top: 4px;
+  z-index: 3;
+  transition:
+    transform 0.15s ease,
+    color 0.15s ease;
+}
+
+.vtree-toggle-btn:hover:not(:disabled) {
+  transform: scale(1.18);
+  color: var(--color-primary);
+}
+
+.vtree-children-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  position: relative;
+}
+
+.vtree-stem-down {
+  width: 2px;
+  height: 24px;
+  background: transparent;
+}
+
+.vtree-children-row {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  position: relative;
+}
+
+/* Personality Card Hierarchy: genişletilmiş yatay kart aralığı (-- bağlı durum rozetleri için) */
+.personality-card-tree-container .vtree-children-row {
+  gap: 56px;
+}
+
+.vtree-child-branch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* Horizontal connecting bar between siblings - now handled by SVG overlay */
+.vtree-child-branch::before {
+  display: none !important;
+}
+
+.vtree-branch-line {
+  width: 2px;
+  height: 24px;
+  background: transparent;
+}
+
+/* ── Fossil Hierarchy Nodes & Pills ─────────────────────────────────────────── */
+.vtree-child-branch--fossil-pill,
+.vtree-child-branch--fossil-group,
+.vtree-child-branch--load-more {
+  z-index: 2;
+}
+
+.vtree-fossil-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--color-surface);
+  border: 1px dashed color-mix(in srgb, var(--color-primary) 55%, transparent);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.vtree-fossil-pill--load-more {
+  padding: 6px 14px;
+  border: 1.5px dashed var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+  color: var(--color-primary);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.vtree-fossil-pill--load-more:hover {
+  transform: translateY(-2px) scale(1.05);
+  background: color-mix(in srgb, var(--color-primary) 18%, var(--color-surface));
+  border-style: solid;
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 14px var(--color-primary-shadow);
+}
+
+.vtree-fossil-pill-sub {
+  opacity: 0.7;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.vtree-fossil-pill:hover {
+  transform: translateY(-1px) scale(1.03);
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+  color: var(--color-primary);
+  box-shadow: 0 4px 14px var(--color-primary-shadow);
+}
+
+.vtree-fossil-pill--sm {
+  gap: 4px;
+  padding: 2px 7px;
+  font-size: 10px;
+}
+
+.vtree-fossil-pill--sm .badge-fossil-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.vtree-fossil-pill--expanded {
+  border-style: solid;
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 14%, var(--color-surface));
+  color: var(--color-primary);
+}
+
+.vtree-fossil-pill .badge-fossil-icon {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+.vtree-fossil-pill .badge-fossil-icon path {
+  fill: currentColor;
+}
+
+/* Parent Card Fossil Descendants Badge */
+.badge-fossil-descendant {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+  color: var(--color-primary);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.badge-fossil-descendant .badge-fossil-icon {
+  width: 10px;
+  height: 10px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+.badge-fossil-descendant .badge-fossil-icon path {
+  fill: currentColor;
+}
+
+/* Toolbar Fossil Toggle Button */
+.btn-fossil-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 16px;
+  border-radius: var(--radius-sm, 6px);
+  font-size: var(--font-size-xs, 12px);
+  font-weight: 600;
+  border: none;
+  background: var(--color-primary);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.btn-fossil-toggle:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  color: #fff;
+}
+
+.btn-fossil-toggle--active {
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: 0 0 12px var(--color-primary-shadow);
+}
+
+.btn-fossil-toggle .badge-fossil-icon,
+.btn-primary .badge-fossil-icon {
+  width: 14px;
+  height: 14px;
+  fill: currentColor !important;
+  flex-shrink: 0;
+}
+
+.btn-fossil-toggle .badge-fossil-icon path,
+.btn-primary .badge-fossil-icon path {
+  fill: currentColor !important;
+}
+
+/* Ancestor Bridge Pill on Bypass Nodes */
+.vtree-ancestor-bridge-pill-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 6px;
+  z-index: 4;
+  position: relative;
+}
+
+.vtree-ancestor-bridge-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: var(--color-surface);
+  border: 1px dashed color-mix(in srgb, var(--color-primary) 65%, transparent);
+  color: var(--color-primary);
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 2px 8px var(--color-primary-shadow);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.vtree-ancestor-bridge-pill:hover {
+  transform: translateY(-1px) scale(1.1);
+  background: color-mix(in srgb, var(--color-primary) 16%, var(--color-surface));
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 14px var(--color-primary-shadow);
+}
+
+.vtree-ancestor-bridge-pill--expanded {
+  border-style: solid;
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 14%, var(--color-surface));
+}
+
+.vtree-ancestor-bridge-pill .badge-fossil-icon {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+.vtree-ancestor-bridge-pill .badge-fossil-icon path {
+  fill: currentColor;
+}
+
+/* Global SVG Connection & Card Travel Overlay */
+.hierarchy-connections-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: visible;
+}
+
+.hierarchy-connections-svg {
+  display: block;
+  overflow: visible;
+}
+
+@keyframes heartBeat {
+  0%,
+  30%,
+  60%,
+  100% {
+    transform: scale(1);
+  }
+  15% {
+    transform: scale(1.35);
+  }
+  45% {
+    transform: scale(1.12);
+  }
+}
+
+/* Tribe altındaki bot ikonları (Hiyerarşi Ağacı - Sol dizilimli & Mavi/Yeşil tema uyumlu) */
+.vtree-tribe-bots {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-left: 10px;
+  margin-top: 2px;
+}
+
+.vtree-tribe-bot-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 40px;
+}
+
+.vtree-tribe-bot-stem {
+  width: 2px;
+  height: 10px;
+  background: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
+}
+
+.vtree-tribe-bot-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface));
+  border: 1.5px solid color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
+  color: var(--color-primary);
+  box-shadow: 0 2px 8px var(--color-primary-shadow);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.vtree-tribe-bot-icon:hover {
+  transform: translateY(-2px) scale(1.06);
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 18%, var(--color-surface));
+  box-shadow: 0 4px 14px var(--color-primary-shadow);
+}
+

@@ -285,14 +285,6 @@ export default function ActiveDebatesPage() {
 
   return (
     <>
-      <style>{`
-        @keyframes debatePulse {
-          0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary) 55%, transparent); }
-          70% { box-shadow: 0 0 0 8px transparent; }
-          100% { box-shadow: 0 0 0 0 transparent; }
-        }
-      `}</style>
-
       <div
         className="flex-col gap-4"
         style={{ paddingBottom: 60, maxWidth: 1200, margin: '0 auto', width: '100%' }}
@@ -302,31 +294,14 @@ export default function ActiveDebatesPage() {
           style={{ marginBottom: 16 }}
         />
 
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 14,
-            marginBottom: 32,
-            paddingBottom: 24,
-            borderBottom: '1px solid var(--color-border)',
-          }}
-        >
+        <div className="page-header-row page-header-row--lg">
           <div className="page-header-icon">
             <AngryBotWithSwordsIcon size={24} color="#fff" />
           </div>
-        <div>
-          <h1
-            style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
-          >
-            {t('active_debates.title')}
-          </h1>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
-            {t(
-              'active_debates.subtitle'
-            )}
-          </p>
-        </div>
+          <div>
+            <h1 className="page-header-title">{t('active_debates.title')}</h1>
+            <p className="page-header-subtitle">{t('active_debates.subtitle')}</p>
+          </div>
         <HowItWorksHelp
           title={t('active_debates.how_it_works_title')}
           items={[

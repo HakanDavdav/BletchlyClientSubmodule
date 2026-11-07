@@ -1,0 +1,986 @@
+/* ─── Shared Components ────────────────────────────────────────────── */
+.page-header-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 10%,
+    var(--color-primary-gradient-end) 100%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px var(--color-primary-shadow);
+}
+
+/* Shared info card (guide modal + hierarchy info page) */
+.info-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.info-card:hover,
+.debate-card:hover {
+  background: var(--color-surface-2);
+  border-color: var(--color-primary-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Personality card deck */
+.personality-card-slots {
+  --personality-card-width: clamp(144px, 17vw, 190px);
+  display: flex;
+  align-items: flex-end;
+  min-height: 254px;
+  padding: 34px 20px 20px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1.5px solid color-mix(in srgb, var(--color-primary) 62%, var(--color-border));
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, var(--color-surface-2), var(--color-surface));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--color-primary) 34%, var(--color-border-light)) inset,
+    var(--shadow-sm);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primary-light) transparent;
+}
+
+.personality-card-slot {
+  position: relative;
+  z-index: var(--slot-z);
+  flex: 0 0 var(--personality-card-width);
+  margin-left: clamp(-32px, -3vw, -18px);
+  transform: rotate(var(--slot-rotation));
+  transition:
+    transform var(--transition-base),
+    margin var(--transition-base);
+}
+
+.personality-card-slot:first-child {
+  margin-left: 0;
+}
+
+.personality-card-slot:hover {
+  z-index: calc(var(--card-count) + 2);
+  transform: translateY(-14px) rotate(0deg);
+}
+
+body:has(.modal-overlay) .personality-card-slot,
+body:has(.modal-overlay) .personality-card-slot:hover,
+body:has(.modal-overlay) .personality-card,
+body:has(.modal-overlay) .personality-card:hover {
+  transform: none !important;
+  z-index: auto !important;
+  pointer-events: none !important;
+}
+
+.personality-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: auto;
+  min-height: 240px;
+  gap: 10px;
+  padding: 18px 18px 13px;
+  isolation: isolate;
+  border: 1px solid var(--color-border);
+  border-radius: 14px 14px 10px 10px;
+  background: linear-gradient(145deg, var(--color-surface), var(--color-surface-2));
+  box-shadow:
+    var(--shadow-md),
+    0 0 0 1px rgb(255 255 255 / 0.04) inset;
+  color: var(--color-text);
+  box-sizing: border-box;
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.personality-card__corner-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.personality-card::before {
+  position: absolute;
+  inset: 8px;
+  z-index: -1;
+  border: 1px solid var(--color-border-light);
+  border-radius: 9px 9px 6px 6px;
+  content: '';
+  pointer-events: none;
+}
+
+.personality-card::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 14px;
+  border-radius: 13px 13px 0 0;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-primary) 65%, var(--color-surface)),
+    color-mix(in srgb, var(--color-primary-gradient-end) 65%, var(--color-surface))
+  );
+  -webkit-mask-image: linear-gradient(to bottom, #000 4px, transparent 4px);
+  mask-image: linear-gradient(to bottom, #000 4px, transparent 4px);
+  content: '';
+}
+
+.personality-card--filled::after,
+.personality-card--tribe-assigned::after {
+  border-radius: 12px 12px 0 0;
+}
+
+.personality-card--filled {
+  border-color: var(--color-primary);
+  background: linear-gradient(145deg, var(--color-surface), var(--color-primary-lighter));
+}
+
+.personality-card--filled::before {
+  border-color: var(--color-primary-light);
+}
+
+/* Background Image & Overlay on Personality Cards */
+.personality-card__bg-image-wrap {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.personality-card__bg-image {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: calc(100% + 12px);
+  height: calc(100% + 12px);
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: cover;
+  display: block;
+  filter: blur(1.6px) saturate(1.15);
+  opacity: 0.74;
+  transform: scale(1.02);
+  transition:
+    filter var(--transition-normal, 0.3s ease),
+    transform var(--transition-normal, 0.3s ease),
+    opacity var(--transition-normal, 0.3s ease);
+}
+
+.personality-card:hover .personality-card__bg-image {
+  filter: blur(0.6px) saturate(1.22);
+  opacity: 0.88;
+  transform: scale(1.05);
+}
+
+.personality-card__bg-image-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(
+    --pc-filled-bg,
+    linear-gradient(145deg, var(--color-surface), var(--color-primary-lighter))
+  );
+  opacity: 0.45;
+  transition: opacity var(--transition-normal, 0.3s ease);
+}
+
+.personality-card:hover .personality-card__bg-image-overlay {
+  opacity: 0.36;
+}
+
+/* Rainbow spectrum cards in Premium Modal: always rendered by default in lowered-blur "hovered" state */
+.rainbow-card-wrapper .personality-card__bg-image,
+.rainbow-personality-card .personality-card__bg-image {
+  top: -2px;
+  left: -2px;
+  width: calc(100% + 4px);
+  height: calc(100% + 4px);
+  max-width: none !important;
+  max-height: none !important;
+  filter: blur(0.6px) saturate(1.22);
+  opacity: 0.88;
+  transform: scale(1.02);
+}
+
+.rainbow-card-wrapper .personality-card__bg-image-overlay,
+.rainbow-personality-card .personality-card__bg-image-overlay {
+  opacity: 0.36;
+}
+
+:root.dark .rainbow-card-wrapper .personality-card__bg-image-overlay,
+:root.dark .rainbow-personality-card .personality-card__bg-image-overlay {
+  opacity: 0.32;
+}
+
+.rainbow-card-wrapper:hover .personality-card__bg-image,
+.rainbow-personality-card:hover .personality-card__bg-image {
+  top: -2px;
+  left: -2px;
+  width: calc(100% + 4px);
+  height: calc(100% + 4px);
+  max-width: none !important;
+  max-height: none !important;
+  filter: blur(0.3px) saturate(1.26);
+  opacity: 0.94;
+  transform: scale(1.05);
+}
+
+.rainbow-card-wrapper:hover .personality-card__bg-image-overlay,
+.rainbow-personality-card:hover .personality-card__bg-image-overlay {
+  opacity: 0.28;
+}
+
+:root.dark .rainbow-card-wrapper:hover .personality-card__bg-image-overlay,
+:root.dark .rainbow-personality-card:hover .personality-card__bg-image-overlay {
+  opacity: 0.24;
+}
+
+.personality-card__bg-image-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.32) 100%);
+}
+
+:root.dark .personality-card__bg-image-overlay {
+  opacity: 0.4;
+}
+
+:root.dark .personality-card__bg-image-shade {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.1) 0%, rgba(15, 23, 42, 0.48) 100%);
+}
+
+.personality-card > :not(.personality-card__bg-image-wrap):not(.personality-card__bg-bot) {
+  position: relative;
+  z-index: 1;
+}
+
+.personality-card--empty {
+  border-style: dashed;
+  background: linear-gradient(145deg, var(--color-surface), var(--color-surface-2));
+}
+
+.personality-card--empty::after {
+  opacity: 0.35;
+}
+
+.personality-card:hover {
+  border-color: var(--color-primary);
+  box-shadow:
+    var(--shadow-lg),
+    0 0 0 1px var(--color-primary-light) inset;
+}
+
+.personality-card[role='button'] {
+  cursor: pointer;
+}
+
+.personality-card--selectable {
+  cursor: pointer;
+}
+
+.personality-card--selectable.personality-card--selected {
+  border-color: var(--color-primary);
+  background: linear-gradient(145deg, var(--color-surface), var(--color-primary-lighter));
+  box-shadow:
+    var(--shadow-lg),
+    0 0 0 2px var(--color-primary-light) inset;
+}
+
+.personality-card--selectable.personality-card--selection-disabled:not(
+    .personality-card--selected
+  ) {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.personality-card--selection-readonly {
+  cursor: default;
+}
+
+.personality-card--selection-readonly .selection-marker.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* General Filled card color adjustments - Richer */
+.personality-card--filled {
+  background: var(--pc-filled-bg) !important;
+  border-color: var(--pc-filled-border) !important;
+  border-width: 2px !important;
+  box-shadow: var(--pc-filled-shadow) !important;
+}
+.personality-card--filled .personality-card__eyebrow {
+  color: var(--pc-filled-eyebrow) !important;
+}
+.personality-card--filled .personality-card__type-badge {
+  background: var(--pc-filled-badge-bg) !important;
+  color: var(--pc-filled-badge-text) !important;
+  border-color: var(--pc-filled-badge-border) !important;
+}
+
+/* Tribe-assigned card color adjustments - Darker for Light Mode */
+.personality-card--tribe-assigned {
+  background: var(--pc-tribe-bg) !important;
+  border-color: var(--pc-tribe-border) !important;
+  border-width: 2px !important;
+  box-shadow: var(--pc-tribe-shadow) !important;
+}
+.personality-card--tribe-assigned .personality-card__eyebrow {
+  color: var(--pc-tribe-eyebrow) !important;
+}
+.personality-card--tribe-assigned .personality-card__type-badge {
+  background: var(--pc-tribe-badge-bg) !important;
+  color: var(--pc-tribe-badge-text) !important;
+  border-color: var(--pc-tribe-badge-border) !important;
+}
+
+/* Rainbow Personality Card Preview - Always honors per-card custom variables, scaled down 50% */
+.rainbow-personality-card,
+.rainbow-personality-card.personality-card--filled {
+  min-height: 120px !important;
+  max-height: 120px !important;
+  height: 120px !important;
+  padding: 8px 8px 6px !important;
+  border-radius: 8px 8px 6px 6px !important;
+  gap: 2px !important;
+  overflow: hidden !important;
+  box-shadow: -3px 3px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+.rainbow-personality-card:hover,
+.rainbow-personality-card.personality-card--filled:hover,
+.rainbow-personality-card:focus,
+.rainbow-personality-card.personality-card--filled:focus {
+  box-shadow: -3px 3px 8px rgba(0, 0, 0, 0.35) !important;
+  outline: none !important;
+}
+
+.rainbow-personality-card::before {
+  inset: 4px !important;
+  border-radius: 5px 5px 4px 4px !important;
+}
+
+.rainbow-personality-card::after {
+  height: 2px !important;
+  border-radius: 7px 7px 0 0 !important;
+}
+
+.rainbow-personality-card .personality-card__topline {
+  min-height: 8px !important;
+  gap: 4px !important;
+}
+
+.rainbow-personality-card .personality-card__mark--placeholder {
+  width: 8px !important;
+  height: 8px !important;
+}
+
+.rainbow-personality-card .personality-card__bg-bot svg {
+  width: 50px !important;
+  height: 50px !important;
+}
+
+.rainbow-personality-card .personality-card__footer {
+  display: none !important;
+}
+
+.rainbow-personality-card .personality-card__hierarchy-btn {
+  display: none !important;
+}
+
+.rainbow-personality-card.personality-card--filled {
+  background: var(--pc-filled-bg) !important;
+  border-color: var(--pc-filled-border) !important;
+  border-width: 1.5px !important;
+  box-shadow: -3px 3px 8px rgba(0, 0, 0, 0.3) !important;
+}
+.rainbow-personality-card.personality-card--filled .personality-card__eyebrow {
+  color: var(--pc-filled-eyebrow) !important;
+}
+.rainbow-personality-card.personality-card--filled .personality-card__tag {
+  border-color: var(--pc-filled-badge-border) !important;
+  background: var(--pc-filled-badge-bg) !important;
+  color: var(--color-text) !important;
+}
+
+.card-selection-slots__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.card-selection-slots__count {
+  min-width: 42px;
+  padding: 2px 8px;
+  border: 1px solid var(--color-primary-light);
+  border-radius: var(--radius-full);
+  background: var(--color-primary-lighter);
+  color: var(--color-primary-dark);
+  text-align: center;
+}
+
+.personality-card__edit-btn {
+  background: var(--color-surface-2, rgba(255, 255, 255, 0.08));
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  z-index: 3;
+}
+
+.personality-card__edit-btn:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  transform: scale(1.08);
+}
+
+.personality-card--editor {
+  width: 100%;
+  max-width: none;
+  height: auto;
+  min-height: 400px;
+  margin-right: auto;
+  padding: 22px 24px 16px;
+  gap: 10px;
+  border-radius: 14px 14px 10px 10px;
+  cursor: default;
+}
+
+.personality-card--editor .personality-card__topline {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 2;
+  width: auto;
+  min-height: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.personality-card-editor__body {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+.personality-card--editor .personality-card-editor__name-block,
+.personality-card--editor .personality-card-editor__name {
+  min-height: 30px;
+  padding: 0 4px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 72%, var(--color-text) 18%);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-surface-2) 72%, var(--color-surface-3) 28%);
+  font-family: inherit;
+  outline: none;
+}
+
+.personality-card--editor .personality-card-editor__name {
+  font-weight: 400;
+  text-align: center;
+}
+
+.personality-card--editor .personality-card-editor__name-block {
+  width: calc(100% - 48px);
+  margin-inline: auto;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  text-align: center;
+  white-space: normal;
+}
+
+.personality-card--editor .personality-card-editor__prompt,
+.personality-card--editor .personality-card-editor__preview {
+  flex: 1;
+  min-height: 152px;
+  width: 100%;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 72%, var(--color-text) 18%);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-surface-2) 72%, var(--color-surface-3) 28%);
+  color: var(--color-text-secondary);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  outline: none;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.personality-card--editor .personality-card-editor__prompt {
+  flex: none;
+  min-height: 250px;
+  height: 250px;
+  resize: vertical;
+}
+
+.personality-card--editor-confirmed {
+  gap: 10px;
+}
+
+.personality-card--editor-confirmed .personality-card__topline {
+  position: static;
+  width: 100%;
+  min-height: 16px;
+}
+
+.personality-card--editor-confirmed .personality-card-editor__confirmed-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.personality-card--editor-confirmed .personality-card-editor__preview {
+  display: -webkit-box;
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: calc(1.5em * 12);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 12;
+}
+
+.personality-card--editor-confirmed .personality-card-editor__footer {
+  margin-top: 0;
+  justify-content: center;
+}
+
+.personality-card--editor-confirmed .personality-card-editor__confirmed-stats {
+  margin-top: auto;
+}
+
+.create-entity-form {
+  gap: 36px;
+}
+
+.personality-card--editor .personality-card-editor__name:focus,
+.personality-card--editor .personality-card-editor__prompt:focus {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-surface-2) 72%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 32%, transparent);
+}
+
+.personality-card--editor .personality-card-editor__name.error,
+.personality-card--editor .personality-card-editor__prompt.error {
+  border-color: var(--color-error);
+}
+
+/* Kilit butonu hover'ı, soldaki bulut (görsel yükleme) butonuyla aynı olsun */
+.personality-card--editor .personality-card-editor__body .icon-action-button:hover {
+  --editor-box-border: var(--color-primary);
+  --editor-box-color: var(--color-primary);
+  --editor-box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+
+/* Kartların sağ üstündeki edit butonu da aynı tarz/hover */
+.personality-card__edit-action:hover {
+  --card-box-border: var(--color-primary);
+  --card-box-color: var(--color-primary);
+  --card-box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+
+.personality-card-editor__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  min-height: 26px;
+}
+
+.personality-card-editor__confirm,
+.personality-card-editor__edit {
+  margin-top: 0;
+}
+
+.personality-card--editor .personality-card-editor__confirm {
+  width: 100%;
+  padding: 13px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  justify-content: center;
+  border-radius: 12px;
+}
+
+.personality-card__topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 16px;
+}
+
+.personality-card__eyebrow {
+  color: var(--color-primary);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.personality-card__mark {
+  display: inline-flex;
+}
+
+.personality-card__mark--placeholder {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.personality-card__topline .personality-card__title {
+  min-width: 0;
+  flex: 1;
+  margin: 0;
+  text-align: center;
+}
+
+.selection-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-primary-dark);
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.selection-marker--sm {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+}
+
+.selection-marker--box,
+.selection-marker--44 {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  border: 2px solid var(--color-border);
+  /* Normal kartlardaki seçim kutusu gibi dolu görünsün (token tanımsızsa surface'e düşer) */
+  background: var(--color-surface-raised, var(--color-surface));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
+}
+
+.selection-marker--box:hover:not(.is-disabled),
+.selection-marker--44:hover:not(.is-disabled) {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+.selection-marker--box.is-checked,
+.selection-marker--44.is-checked {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light, rgba(99, 102, 241, 0.12));
+  color: var(--color-primary-dark);
+}
+
+.selection-marker.is-checked {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+
+.selection-marker.is-disabled {
+  opacity: 0.55;
+}
+
+.selection-marker.is-locked {
+  position: relative;
+  cursor: not-allowed;
+}
+
+.selection-marker.is-locked .selection-marker__slash {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 130%;
+  height: 1.5px;
+  background: var(--color-error, #ef4444);
+  transform: translate(-50%, -50%) rotate(45deg);
+  pointer-events: none;
+}
+
+.selection-marker-display {
+  display: inline-flex;
+}
+
+.selection-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.selection-control input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.selection-control:hover .selection-marker {
+  border-color: var(--color-primary);
+}
+
+.selection-control:focus-within .selection-marker {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.selection-control.is-disabled {
+  cursor: not-allowed;
+}
+
+.selection-control__label {
+  font-size: 14px;
+}
+
+.personality-card__title {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.personality-card__type-badge {
+  display: inline-flex;
+  align-self: center;
+  padding: 1.5px 7px;
+  border-radius: var(--radius-full);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: var(--color-surface-3);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  margin-top: 1px;
+  margin-bottom: 3px;
+}
+
+.personality-card--tribe-assigned .personality-card__type-badge {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.personality-card--empty .personality-card__title {
+  color: var(--color-text-faint);
+}
+
+.personality-card__empty-copy {
+  margin-top: auto;
+  color: var(--color-text-faint);
+  font-size: 11px;
+  text-align: center;
+}
+
+.personality-card__hint {
+  display: -webkit-box;
+  flex: 0 1 auto;
+  min-width: 0;
+  min-height: 0;
+  max-height: calc(1.5em * 4);
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  font-size: 12.5px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+}
+
+.personality-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-height: 48px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.personality-card__tag {
+  max-width: 100%;
+  overflow: hidden;
+  padding: 2px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-2);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.personality-card__stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: auto;
+}
+
+.personality-card__stat {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 5px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: default;
+  font-size: 11px;
+}
+
+.personality-card__stat[title] {
+  cursor: pointer;
+}
+
+.personality-card__stat:hover {
+  border-color: var(--color-primary-light);
+  background: var(--color-primary-lighter);
+  color: var(--color-primary-dark);
+}
+
+/* Büyük "Kart Hiyerarşisi" butonu — üstteki küçük butoncuklarla aynı tasarım dili */
+.personality-card__hierarchy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 9px 12px;
+  margin-top: 4px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition:
+    border-color var(--transition-fast) ease,
+    background var(--transition-fast) ease,
+    color var(--transition-fast) ease;
+}
+
+.personality-card__hierarchy-btn:hover {
+  border-color: var(--color-primary-light);
+  background: var(--color-primary-lighter);
+  color: var(--color-primary-dark);
+}
+
+@media (max-width: 640px) {
+  .personality-card-slots {
+    --personality-card-width: min(300px, 84vw);
+    min-height: 290px;
+    padding: 30px 20px 18px;
+  }
+
+  .personality-card-slot {
+    min-width: 0;
+    margin-left: -18px;
+  }
+
+  .personality-card {
+    height: auto;
+    min-height: 240px;
+    padding-inline: 13px;
+  }
+
+  .personality-card-slot .personality-card {
+    min-height: 255px;
+  }
+
+  .personality-card--editor {
+    width: 100%;
+    height: auto;
+    min-height: 310px;
+    padding: 20px 18px 15px;
+  }
+
+  .personality-card--editor .personality-card__topline {
+    top: 22px;
+    right: 18px;
+  }
+
+  .personality-card--editor .personality-card-editor__name {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .personality-card-slot,
+  .personality-card {
+    transition: none;
+  }
+}
+

@@ -365,21 +365,12 @@ export default function LeaderboardPage() {
       />
 
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 14,
-          marginBottom: 16,
-          paddingBottom: 16,
-          borderBottom: '1px solid var(--color-border)',
-        }}
-      >
+      <div className="page-header-row" style={{ paddingBottom: 16 }}>
         <div className="page-header-icon">
           <Podium size={22} color="#fff" />
         </div>
         <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}>
+          <h1 className="page-header-title">
             {type === 'user'
               ? t('leaderboard.user_leaderboard')
               : type === 'bot'
@@ -388,7 +379,7 @@ export default function LeaderboardPage() {
               ? t('leaderboard.tribe_leaderboard')
               : t('leaderboard.card_leaderboard')}
           </h1>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
+          <p className="page-header-subtitle">
             {!isCurrentSeason
               ? t('leaderboard.archive_desc')
               : type === 'user'

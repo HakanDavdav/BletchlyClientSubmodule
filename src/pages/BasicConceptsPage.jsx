@@ -524,89 +524,17 @@ export default function BasicConceptsPage() {
       className="flex-col gap-4"
       style={{ paddingBottom: 60, maxWidth: 1200, margin: '0 auto', width: '100%' }}
     >
-      <style>{`
-        @keyframes heartBeat {
-          0%, 30%, 60%, 100% { transform: scale(1); }
-          15% { transform: scale(1.35); }
-          45% { transform: scale(1.12); }
-        }
-
-        :root {
-          --color-dormant: #000000;
-        }
-        :root.dark {
-          --color-dormant: #64748b;
-        }
-
-        .dormant-tutorial-container #Arrow_3,
-        .dormant-tutorial-container #Arrow_3 *,
-        .dormant-tutorial-container #Bot_3,
-        .dormant-tutorial-container #Bot_3 * {
-          stroke: var(--color-dormant) !important;
-          color: var(--color-dormant) !important;
-        }
-
-        .dormant-tribe-container #Arrow_8,
-        .dormant-tribe-container #Arrow_8 *,
-        .dormant-tribe-container #BotBlock,
-        .dormant-tribe-container #BotBlock *,
-        .dormant-tribe-container #Arrow_9,
-        .dormant-tribe-container #Arrow_9 *,
-        .dormant-tribe-container #BotBlock_2,
-        .dormant-tribe-container #BotBlock_2 *,
-        .dormant-tribe-container #Arrow,
-        .dormant-tribe-container #Arrow *,
-        .dormant-tribe-container #Bot_3,
-        .dormant-tribe-container #Bot_3 *,
-        .dormant-tribe-container #CardInterchange,
-        .dormant-tribe-container #CardInterchange * {
-          stroke: var(--color-dormant) !important;
-          color: var(--color-dormant) !important;
-        }
-
-        .fossil-bot-overlay svg path {
-          fill: var(--color-dormant);
-        }
-
-        .hierarchy-graph-node svg {
-          color: var(--color-primary);
-        }
-        .hierarchy-graph-node .hg-node-1 { fill: #f97316; }
-        .hierarchy-graph-node .hg-node-2 { fill: #eab308; }
-        .hierarchy-graph-node .hg-node-3 { fill: #a855f7; }
-        .hierarchy-graph-node .hg-node-4 { fill: var(--color-primary); }
-        .hierarchy-graph-node .hg-node-5 { fill: #fb923c; }
-        .hierarchy-graph-node .hg-node-6 { fill: #c084fc; }
-      `}</style>
-
       <div className="flex items-center gap-3 px-2" style={{ marginBottom: 12 }}>
         <BackButton style={{ marginBottom: 0 }} />
       </div>
 
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 16,
-          marginBottom: 28,
-          paddingBottom: 24,
-          borderBottom: '1px solid var(--color-border)',
-        }}
-      >
+      <div className="page-header-row" style={{ gap: 16, marginBottom: 28 }}>
         <div className="page-header-icon">
           <ShieldQuestion size={24} color="#fff" />
         </div>
         <div>
-          <h1
-            style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
-          >
-            {t('hierarchy_info.title')}
-          </h1>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
-            {t(
-              'hierarchy_info.subtitle'
-            )}
-          </p>
+          <h1 className="page-header-title">{t('hierarchy_info.title')}</h1>
+          <p className="page-header-subtitle">{t('hierarchy_info.subtitle')}</p>
         </div>
       </div>
 

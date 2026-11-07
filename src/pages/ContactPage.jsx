@@ -57,26 +57,13 @@ export default function ContactPage() {
       </div>
 
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 14,
-          marginBottom: 16,
-          paddingBottom: 24,
-          borderBottom: '1px solid var(--color-border)',
-        }}
-      >
+      <div className="page-header-row">
         <div className="page-header-icon">
           <Mail size={22} color="#fff" />
         </div>
         <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}>
-            {t('footer.contact')}
-          </h1>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
-            {t('contact.desc')}
-          </p>
+          <h1 className="page-header-title">{t('footer.contact')}</h1>
+          <p className="page-header-subtitle">{t('contact.desc')}</p>
         </div>
       </div>
 

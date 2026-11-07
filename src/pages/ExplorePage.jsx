@@ -490,26 +490,13 @@ export default function ExplorePage() {
       />
 
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 14,
-          marginBottom: 24,
-          paddingBottom: 14,
-          borderBottom: '1px solid var(--color-border)',
-        }}
-      >
+      <div className="page-header-row page-header-row--compact">
         <div className="page-header-icon">
           <Compass size={22} color="#fff" />
         </div>
-        <div style={{ minWidth: 0 }}>
-          <h1
-            style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
-          >
-            {t('tribes_page.explore_title')}
-          </h1>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
+        <div className="page-header-body">
+          <h1 className="page-header-title">{t('tribes_page.explore_title')}</h1>
+          <p className="page-header-subtitle">
             {mode === 'persons'
               ? t('explore_page.persons_desc')
               : t('tribes_page.explore_desc')}

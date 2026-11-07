@@ -26,28 +26,13 @@ export default function AdminPage() {
       </div>
 
       {/* Standard Page Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 14,
-          marginBottom: 24,
-          paddingBottom: 20,
-          borderBottom: '1px solid var(--color-border)',
-        }}
-      >
+      <div className="page-header-row page-header-row--md" style={{ paddingBottom: 20 }}>
         <div className="page-header-icon">
           <Logo width={22} height={22} fill="#fff" />
         </div>
         <div>
-          <h1
-            style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
-          >
-            {t('admin.title')}
-          </h1>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
-            {t('admin.desc')}
-          </p>
+          <h1 className="page-header-title">{t('admin.title')}</h1>
+          <p className="page-header-subtitle">{t('admin.desc')}</p>
         </div>
       </div>
 

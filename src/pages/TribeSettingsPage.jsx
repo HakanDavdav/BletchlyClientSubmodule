@@ -367,30 +367,13 @@ export default function TribeSettingsPage() {
       </div>
 
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 14,
-          marginBottom: 32,
-          paddingBottom: 24,
-          borderBottom: '1px solid var(--color-border)',
-        }}
-      >
+      <div className="page-header-row page-header-row--lg">
         <div className="page-header-icon">
           <Users size={22} color="#fff" />
         </div>
         <div>
-          <h1
-            style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
-          >
-            {t('tribe_settings.title')}
-          </h1>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
-            {t(
-              'tribe_settings.title_desc'
-            )}
-          </p>
+          <h1 className="page-header-title">{t('tribe_settings.title')}</h1>
+          <p className="page-header-subtitle">{t('tribe_settings.title_desc')}</p>
         </div>
       </div>
 

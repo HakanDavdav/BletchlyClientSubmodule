@@ -1,0 +1,223 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* â”€â”€â”€ CSS Variables (Design Tokens) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+:root {
+  /* Colors */
+  --color-primary: #3b82f6;
+  --color-primary-light: #dbeafe;
+  --color-primary-lighter: #eff6ff;
+  --color-primary-dark: #1d4ed8;
+  --color-primary-hover: #2563eb;
+  --color-primary-gradient-end: #1d4ed8;
+  --color-primary-shadow: rgba(59, 130, 246, 0.3);
+  --color-synapse-zap: var(--color-primary);
+
+  /* Personality Card Theme Tokens (Premium özel renk ile override edilir) */
+  --pc-filled-bg: linear-gradient(135deg, #93c5fd 0%, #e0f2fe 100%);
+  --pc-filled-border: #2563eb;
+  --pc-filled-eyebrow: #1d4ed8;
+  --pc-filled-badge-bg: rgba(37, 99, 235, 0.08);
+  --pc-filled-badge-text: #1d4ed8;
+  --pc-filled-badge-border: rgba(37, 99, 235, 0.15);
+  --pc-filled-shadow: 0 4px 14px rgba(37, 99, 235, 0.16);
+  --pc-tribe-bg: linear-gradient(135deg, #3b82f6 0%, #8cbffc 100%);
+  --pc-tribe-border: #1d4ed8;
+  --pc-tribe-eyebrow: #1e3a8a;
+  --pc-tribe-badge-bg: rgba(30, 58, 138, 0.12);
+  --pc-tribe-badge-text: #1e3a8a;
+  --pc-tribe-badge-border: rgba(30, 58, 138, 0.25);
+  --pc-tribe-shadow: 0 4px 14px rgba(29, 78, 216, 0.16);
+
+  --color-bg: #ffffff;
+  --color-surface: #f8fafc;
+  --color-surface-2: #f1f5f9;
+  --color-surface-3: #e2e8f0;
+
+  --color-border: #e2e8f0;
+  --color-border-light: #f1f5f9;
+
+  --color-text: #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748b;
+  --color-text-faint: #94a3b8;
+
+  --color-bot: #7c3aed;
+  --color-bot-light: #ede9fe;
+  --color-bot-dark: #5b21b6;
+
+  --color-error: #ef4444;
+  --color-error-light: #fee2e2;
+  --color-success: #22c55e;
+  --color-success-light: #dcfce7;
+  --color-warning: #f59e0b;
+  --color-warning-light: #fef3c7;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-blue: 0 0 0 3px rgb(59 130 246 / 0.15);
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  /* Typography */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-base: 14px;
+  --font-size-md: 15px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 24px;
+
+  /* Layout */
+  --topbar-height: 112px;
+  --footer-height: 48px;
+  --left-width: 300px;
+  --center-width: 1fr;
+  --right-width: clamp(310px, 31%, 360px);
+  --left-min-width: 250px;
+  --right-min-width: 310px;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+
+  /* Dormant / Fossil tutorial color */
+  --color-dormant: #000000;
+}
+
+/* ─── Dark & Theme Overrides ─────────────────────────────────────────────── */
+:root.dark {
+  /* Primary Colors */
+  --color-primary: #1d4ed8;
+  --color-primary-light: #1e3a8a;
+  --color-primary-lighter: #172554;
+  --color-primary-dark: #60a5fa;
+  --color-primary-hover: #1e40af;
+  --color-primary-gradient-end: #60a5fa;
+  --color-primary-shadow: rgba(59, 130, 246, 0.3);
+  --color-synapse-zap: var(--color-primary-dark);
+
+  /* Personality Card Tokens (Dark) */
+  --pc-filled-bg: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+  --pc-filled-border: #3b82f6;
+  --pc-filled-eyebrow: #93c5fd;
+  --pc-filled-badge-bg: rgba(59, 130, 246, 0.12);
+  --pc-filled-badge-text: #93c5fd;
+  --pc-filled-badge-border: rgba(59, 130, 246, 0.2);
+  --pc-filled-shadow: 0 4px 14px rgba(59, 130, 246, 0.22);
+  --pc-tribe-bg: linear-gradient(135deg, #2f6aef 0%, #213d96 100%);
+  --pc-tribe-border: #60a5fa;
+  --pc-tribe-eyebrow: #bfdbfe;
+  --pc-tribe-badge-bg: rgba(96, 165, 250, 0.15);
+  --pc-tribe-badge-text: #bfdbfe;
+  --pc-tribe-badge-border: rgba(96, 165, 250, 0.25);
+  --pc-tribe-shadow: 0 4px 14px rgba(59, 130, 246, 0.16);
+
+  /* Surfaces & Text (Dark) */
+  --color-bg: #09090b;
+  --color-surface: #121214;
+  --color-surface-2: #1c1c20;
+  --color-surface-3: #27272a;
+  --color-border: #1c1c20;
+  --color-border-light: #121214;
+
+  --color-text: #f8fafc;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #94a3b8;
+  --color-text-faint: #64748b;
+
+  --color-bot: #8b5cf6;
+  --color-bot-light: #4c1d95;
+  --color-bot-dark: #a78bfa;
+
+  --color-error: #ef4444;
+  --color-error-light: #7f1d1d;
+  --color-success: #22c55e;
+  --color-success-light: #14532d;
+  --color-warning: #f59e0b;
+  --color-warning-light: #78350f;
+  --color-dormant: #64748b;
+
+  /* Shadows (Dark) */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.6), 0 1px 2px -1px rgb(0 0 0 / 0.5);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.6), 0 2px 4px -2px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.6), 0 4px 6px -4px rgb(0 0 0 / 0.6);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.6);
+  --shadow-blue: 0 0 0 3px rgb(59 130 246 / 0.3);
+}
+
+:root.theme-green {
+  --color-primary: #10b981;
+  --color-primary-light: #d1fae5;
+  --color-primary-lighter: #ecfdf5;
+  --color-primary-dark: #047857;
+  --color-primary-hover: #059669;
+  --color-primary-gradient-end: #06b6d4;
+  --color-primary-shadow: rgba(22, 163, 74, 0.3);
+  --color-synapse-zap: var(--color-primary);
+
+  --pc-filled-bg: linear-gradient(135deg, #6ee7b7 0%, #dcfce7 100%);
+  --pc-filled-border: #059669;
+  --pc-filled-eyebrow: #047857;
+  --pc-filled-badge-bg: rgba(5, 150, 105, 0.08);
+  --pc-filled-badge-text: #047857;
+  --pc-filled-badge-border: rgba(5, 150, 105, 0.15);
+  --pc-filled-shadow: 0 4px 14px rgba(5, 150, 105, 0.16);
+  --pc-tribe-bg: linear-gradient(135deg, #10b981 0%, #6fe8ba 100%);
+  --pc-tribe-border: #047857;
+  --pc-tribe-eyebrow: #022c22;
+  --pc-tribe-badge-bg: rgba(2, 44, 34, 0.12);
+  --pc-tribe-badge-text: #022c22;
+  --pc-tribe-badge-border: rgba(2, 44, 34, 0.25);
+  --pc-tribe-shadow: 0 4px 14px rgba(4, 120, 87, 0.16);
+}
+
+:root.dark.theme-green {
+  --color-primary: #059669;
+  --color-primary-light: #064e3b;
+  --color-primary-lighter: #022c22;
+  --color-primary-dark: #10b981;
+  --color-primary-hover: #047857;
+  --color-primary-gradient-end: #0891b2;
+  --color-primary-shadow: rgba(22, 163, 74, 0.3);
+  --color-synapse-zap: var(--color-primary-dark);
+
+  --pc-filled-bg: linear-gradient(135deg, #047857 0%, #02120e 100%);
+  --pc-filled-border: #10b981;
+  --pc-filled-eyebrow: #a7f3d0;
+  --pc-filled-badge-bg: rgba(16, 185, 129, 0.12);
+  --pc-filled-badge-text: #a7f3d0;
+  --pc-filled-badge-border: rgba(16, 185, 129, 0.2);
+  --pc-filled-shadow: 0 4px 14px rgba(16, 185, 129, 0.22);
+  --pc-tribe-bg: linear-gradient(135deg, #09a473 0%, #044233 100%);
+  --pc-tribe-border: #34d399;
+  --pc-tribe-eyebrow: #a7f3d0;
+  --pc-tribe-badge-bg: rgba(52, 211, 153, 0.15);
+  --pc-tribe-badge-text: #a7f3d0;
+  --pc-tribe-badge-border: rgba(52, 211, 153, 0.25);
+  --pc-tribe-shadow: 0 4px 14px rgba(5, 150, 105, 0.16);
+}

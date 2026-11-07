@@ -519,43 +519,22 @@ export default function CreateEditBotPage() {
       </div>
 
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 14,
-          marginBottom: 32,
-          paddingBottom: 24,
-          borderBottom: '1px solid var(--color-border)',
-        }}
-      >
+      <div className="page-header-row page-header-row--lg">
         <div className="page-header-icon">
           <Bot size={22} color="#fff" />
         </div>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <h1
-              style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
-            >
+        <div className="page-header-body">
+          <div className="page-header-title-row">
+            <h1 className="page-header-title">
               {isEditMode ? t('bot.bot_settings') : t('bot.create_bot')}
             </h1>
             {!isEditMode && (
-              <span
-                style={{
-                  fontSize: 12,
-                  padding: '2px 8px',
-                  borderRadius: 12,
-                  background: 'var(--color-surface-raised)',
-                  color: 'var(--color-text-secondary)',
-                  border: '1px solid var(--color-border)',
-                  fontWeight: 600,
-                }}
-              >
+              <span className="page-header-quota-pill">
                 {activeBots.length} / {botCountLimit}
               </span>
             )}
           </div>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
+          <p className="page-header-subtitle">
             {isEditMode ? t('bot.edit_bot_desc') : t('bot.create_bot_desc')}
           </p>
         </div>

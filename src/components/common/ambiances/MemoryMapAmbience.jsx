@@ -187,37 +187,6 @@ export default function MemoryMapAmbience({ profileName, active }) {
         WebkitMaskImage: 'linear-gradient(to bottom, black 55%, transparent 100%)',
       }}
     >
-      <style>{`
-        @keyframes mindFloatCenter {
-          0%, 100% { transform: translateY(0px) scale(1); }
-          50% { transform: translateY(-7px) scale(1.02); }
-        }
-        @keyframes mindFloatLeftTop {
-          0%, 100% { transform: translate(0px, 0px); }
-          50% { transform: translate(-6px, -8px); }
-        }
-        @keyframes mindFloatLeftBottom {
-          0%, 100% { transform: translate(0px, 0px); }
-          50% { transform: translate(6px, 8px); }
-        }
-        @keyframes mindFloatRightTop {
-          0%, 100% { transform: translate(0px, 0px); }
-          50% { transform: translate(8px, -6px); }
-        }
-        @keyframes mindFloatRightBottom {
-          0%, 100% { transform: translate(0px, 0px); }
-          50% { transform: translate(-7px, 7px); }
-        }
-        @keyframes mindPulseHalo {
-          0%, 100% { opacity: 0.18; transform: scale(1); }
-          50% { opacity: 0.38; transform: scale(1.15); }
-        }
-        @keyframes mindSynapseDash {
-          0% { stroke-dashoffset: 0; }
-          100% { stroke-dashoffset: -40; }
-        }
-      `}</style>
-
       <svg
         viewBox="0 0 1000 260"
         preserveAspectRatio="xMidYMin meet"

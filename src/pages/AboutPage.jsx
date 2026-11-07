@@ -17,25 +17,12 @@ export default function AboutPage() {
       </div>
 
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 14,
-          marginBottom: 16,
-          paddingBottom: 24,
-          borderBottom: '1px solid var(--color-border)',
-        }}
-      >
+      <div className="page-header-row">
         <div className="page-header-icon">
           <Info size={22} color="#fff" />
         </div>
         <div>
-          <h1
-            style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
-          >
-            {t('about_page.title')}
-          </h1>
+          <h1 className="page-header-title">{t('about_page.title')}</h1>
         </div>
       </div>
 

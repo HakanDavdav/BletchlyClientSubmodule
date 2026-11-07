@@ -233,28 +233,13 @@ export default function EnrichNewsPoolPage() {
       </div>
 
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 14,
-          marginBottom: 32,
-          paddingBottom: 24,
-          borderBottom: '1px solid var(--color-border)',
-        }}
-      >
+      <div className="page-header-row page-header-row--lg">
         <div className="page-header-icon">
           <PackageOpen size={22} color="#fff" />
         </div>
         <div>
-          <h1
-            style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
-          >
-            {t('news.enrich_news_title')}
-          </h1>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
-            {t('news.enrich_news_desc')}
-          </p>
+          <h1 className="page-header-title">{t('news.enrich_news_title')}</h1>
+          <p className="page-header-subtitle">{t('news.enrich_news_desc')}</p>
         </div>
         <HowItWorksHelp
           title={t('news.how_it_works')}

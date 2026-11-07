@@ -5,115 +5,22 @@ import LegalContactInfo from '../../components/common/LegalContactInfo'
 
 export default function CookiePolicyPage() {
   return (
-    <div
-      className="flex-col gap-4"
-      style={{ paddingBottom: 60, maxWidth: 980, margin: '0 auto', width: '100%' }}
-    >
+    <div className="flex-col gap-4 legal-page-container">
       <div className="flex items-center gap-3 px-2" style={{ marginBottom: 16 }}>
         <BackButton style={{ marginBottom: 0 }} />
       </div>
 
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 14,
-          marginBottom: 16,
-          paddingBottom: 24,
-          borderBottom: '1px solid var(--color-border)',
-        }}
-      >
+      <div className="page-header-row">
         <div className="page-header-icon">
           <Cookie size={22} color="#fff" />
         </div>
         <div>
-          <h1
-            style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
-          >
-            Cookie Policy
-          </h1>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
-            How we use cookies and similar technologies
-          </p>
+          <h1 className="page-header-title">Cookie Policy</h1>
+          <p className="page-header-subtitle">How we use cookies and similar technologies</p>
         </div>
       </div>
 
-      <div
-        className="cookie-policy-content"
-        style={{
-          backgroundColor: 'var(--color-bg)',
-          border: '1px solid var(--color-border)',
-          borderRadius: 'var(--radius-xl, 16px)',
-          padding: '36px 44px',
-          boxShadow: 'var(--shadow-sm)',
-          overflowX: 'auto',
-          zoom: 0.95,
-        }}
-      >
-        <style>{`
-          .cookie-policy-content { color: var(--color-text-secondary); }
-          .cookie-policy-content h2 {
-            margin: 28px 0 10px;
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--color-text);
-            letter-spacing: -0.01em;
-          }
-          .cookie-policy-content h2:first-of-type { margin-top: 0; }
-          .cookie-policy-content p,
-          .cookie-policy-content li {
-            margin: 0 0 10px;
-            font-size: 14px;
-            line-height: 1.7;
-            color: var(--color-text-secondary);
-          }
-          .cookie-policy-content ul { margin: 0 0 14px; padding-left: 22px; }
-          .cookie-policy-content li { margin-bottom: 6px; }
-          .cookie-policy-content a { color: var(--color-primary); font-weight: 600; text-decoration: none; }
-          .cookie-policy-content a:hover { text-decoration: underline; }
-          .cookie-policy-content .cookie-updated {
-            margin: 0 0 20px;
-            font-size: 16px;
-            font-weight: 500;
-            line-height: 24px;
-            color: var(--color-text-muted);
-          }
-          .cookie-policy-content table {
-            width: 100%;
-            margin: 12px 0 22px;
-            border-collapse: collapse;
-            font-size: 13px;
-            line-height: 1.55;
-          }
-          .cookie-policy-content th,
-          .cookie-policy-content td {
-            padding: 9px 11px;
-            border: 1px solid var(--color-border);
-            text-align: left;
-            vertical-align: top;
-          }
-          .cookie-policy-content th {
-            background: var(--color-surface-2);
-            color: var(--color-text);
-            font-weight: 700;
-          }
-          .cookie-policy-content td { color: var(--color-text-secondary); }
-          .cookie-policy-content code {
-            padding: 1px 5px;
-            border-radius: 5px;
-            background: var(--color-surface-2);
-            color: var(--color-text);
-            font-size: 12px;
-            white-space: nowrap;
-          }
-          @media (max-width: 640px) {
-            .cookie-policy-content { padding: 24px 18px !important; }
-            .cookie-policy-content table { font-size: 12px; }
-            .cookie-policy-content th,
-            .cookie-policy-content td { padding: 7px 8px; }
-          }
-        `}</style>
-
+      <div className="cookie-policy-content legal-content-card">
         <p className="cookie-updated">Last updated October 30, 2026</p>
 
         <p>

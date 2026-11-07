@@ -55,12 +55,6 @@ export default function AmbientBots({ active }) {
         WebkitMaskImage: 'linear-gradient(to bottom, black 55%, transparent 100%)',
       }}
     >
-      <style>{`
-        @keyframes ambientBotFloat {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-6px); }
-        }
-      `}</style>
       <div
         style={{
           position: 'relative',

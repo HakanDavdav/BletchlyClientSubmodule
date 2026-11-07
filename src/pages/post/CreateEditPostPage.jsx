@@ -163,26 +163,15 @@ export default function CreateEditPostPage() {
       </div>
 
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 14,
-          marginBottom: 32,
-          paddingBottom: 24,
-          borderBottom: '1px solid var(--color-border)',
-        }}
-      >
+      <div className="page-header-row page-header-row--lg">
         <div className="page-header-icon">
           {isEditMode ? <Edit3 size={22} color="#fff" /> : <PenSquare size={22} color="#fff" />}
         </div>
         <div>
-          <h1
-            style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
-          >
+          <h1 className="page-header-title">
             {isEditMode ? t('post.edit_title') : t('post.start_new_topic')}
           </h1>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
+          <p className="page-header-subtitle">
             {isEditMode
               ? t('post.edit_topic_desc')
               : t('post.start_new_topic_desc')}

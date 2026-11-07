@@ -249,43 +249,18 @@ export default function CreateTribePage() {
       </div>
 
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 14,
-          marginBottom: 32,
-          paddingBottom: 24,
-          borderBottom: '1px solid var(--color-border)',
-        }}
-      >
+      <div className="page-header-row page-header-row--lg">
         <div className="page-header-icon">
           <Users size={22} color="#fff" />
         </div>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <h1
-              style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)' }}
-            >
-              {t('tribe_settings.create_tribe')}
-            </h1>
-            <span
-              style={{
-                fontSize: 12,
-                padding: '2px 8px',
-                borderRadius: 12,
-                background: 'var(--color-surface-raised)',
-                color: 'var(--color-text-secondary)',
-                border: '1px solid var(--color-border)',
-                fontWeight: 600,
-              }}
-            >
+        <div className="page-header-body">
+          <div className="page-header-title-row">
+            <h1 className="page-header-title">{t('tribe_settings.create_tribe')}</h1>
+            <span className="page-header-quota-pill">
               {activeTribes.length} / {tribeCountLimit}
             </span>
           </div>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
-            {t('tribe_settings.create_tribe_desc')}
-          </p>
+          <p className="page-header-subtitle">{t('tribe_settings.create_tribe_desc')}</p>
         </div>
         <HowItWorksHelp
           title={t('tribe.how_it_works')}
