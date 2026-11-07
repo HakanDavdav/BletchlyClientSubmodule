@@ -560,17 +560,7 @@ export default function CreateEditBotPage() {
         style={{ display: 'flex', flexDirection: 'column' }}
       >
         <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              marginBottom: 8,
-              letterSpacing: '0.02em',
-              textTransform: 'uppercase',
-            }}
-          >
+          <label className="form-section-label">
             {t('bot.bot_name')}
           </label>
           <div style={{ position: 'relative' }}>
@@ -597,17 +587,7 @@ export default function CreateEditBotPage() {
         <div>
           {!formData.autoBio && (
             <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: 'var(--color-text-secondary)',
-                  marginBottom: 8,
-                  letterSpacing: '0.02em',
-                  textTransform: 'uppercase',
-                }}
-              >
+              <label className="form-section-label">
                 {t('bot.bio')}
               </label>
               <div style={{ position: 'relative' }}>
@@ -652,17 +632,7 @@ export default function CreateEditBotPage() {
 
 
         <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              marginBottom: 8,
-              letterSpacing: '0.02em',
-              textTransform: 'uppercase',
-            }}
-          >
+          <label className="form-section-label">
             {t('card.create_personality_optional')}
           </label>
           <PersonalityCard
@@ -684,24 +654,14 @@ export default function CreateEditBotPage() {
               setFormData((current) => ({ ...current, personalityCardConfirmed: false }))
             }
           />
-          <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
+          <p className="form-field-hint">
             {t('bot.primary_personality_desc')}
           </p>
         </div>
 
         {isEditMode && existingBot?.assignedCards?.length > 0 && (
           <div style={{ marginBottom: 24 }}>
-            <label
-              style={{
-                display: 'block',
-                fontSize: 13,
-                fontWeight: 600,
-                color: 'var(--color-text-secondary)',
-                marginBottom: 12,
-                letterSpacing: '0.02em',
-                textTransform: 'uppercase',
-              }}
-            >
+            <label className="form-section-label" style={{ marginBottom: 12 }}>
               {t('bot.current_assigned_cards')}
             </label>
             <div
@@ -760,16 +720,7 @@ export default function CreateEditBotPage() {
               marginBottom: 8,
             }}
           >
-            <label
-              style={{
-                display: 'block',
-                fontSize: 13,
-                fontWeight: 600,
-                color: 'var(--color-text-secondary)',
-                letterSpacing: '0.02em',
-                textTransform: 'uppercase',
-              }}
-            >
+            <label className="form-section-label" style={{ marginBottom: 0 }}>
               {t('bot.select_unassigned_cards')}
             </label>
             {cardLockLimit != null && (
@@ -803,22 +754,12 @@ export default function CreateEditBotPage() {
             assignLockedCardIds={formData.lockedCardIds}
             onToggleAssignLock={toggleLockCardId}
           />
-          <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
+          <p className="form-field-hint">
             {t('bot.additional_personality_cards_desc')}
           </p>
         </div>
         <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              marginBottom: 8,
-              letterSpacing: '0.02em',
-              textTransform: 'uppercase',
-            }}
-          >
+          <label className="form-section-label">
             {t('bot.model_selection')}
           </label>
           <ModelGlassToggle
@@ -832,15 +773,7 @@ export default function CreateEditBotPage() {
             isPremium={isPremiumUser}
           />
           <div style={{ marginTop: 18 }}>
-            <label
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: 'var(--color-text-secondary)',
-                letterSpacing: '0.02em',
-                textTransform: 'uppercase',
-              }}
-            >
+            <label className="form-section-label" style={{ fontSize: 12, marginBottom: 0 }}>
               {t('bot.memory_tuning')}
             </label>
             <div
@@ -1022,17 +955,7 @@ export default function CreateEditBotPage() {
 
         {!formData.autoInterests && (
           <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: 13,
-                fontWeight: 600,
-                color: 'var(--color-text-secondary)',
-                marginBottom: 10,
-                letterSpacing: '0.02em',
-                textTransform: 'uppercase',
-              }}
-            >
+            <label className="form-section-label" style={{ marginBottom: 10 }}>
               {t('bot.interests')}
             </label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>

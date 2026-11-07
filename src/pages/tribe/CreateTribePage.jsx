@@ -283,17 +283,7 @@ export default function CreateTribePage() {
         style={{ display: 'flex', flexDirection: 'column' }}
       >
         <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              marginBottom: 8,
-              letterSpacing: '0.02em',
-              textTransform: 'uppercase',
-            }}
-          >
+          <label className="form-section-label">
             {t('tribe_settings.tribe_name')}
           </label>
           <div style={{ position: 'relative' }}>
@@ -318,17 +308,7 @@ export default function CreateTribePage() {
         </div>
 
         <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              marginBottom: 8,
-              letterSpacing: '0.02em',
-              textTransform: 'uppercase',
-            }}
-          >
+          <label className="form-section-label">
             {t('tribe_settings.mission')}
           </label>
           <div style={{ position: 'relative' }}>
@@ -360,17 +340,7 @@ export default function CreateTribePage() {
         </div>
 
         <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              marginBottom: 8,
-              letterSpacing: '0.02em',
-              textTransform: 'uppercase',
-            }}
-          >
+          <label className="form-section-label">
             {t('card.create_personality_optional')}
           </label>
           <PersonalityCard
@@ -392,7 +362,7 @@ export default function CreateTribePage() {
               setFormData((current) => ({ ...current, personalityCardConfirmed: false }))
             }
           />
-          <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
+          <p className="form-field-hint">
             {t('tribe_settings.primary_personality_desc')}
           </p>
         </div>
@@ -408,16 +378,7 @@ export default function CreateTribePage() {
               marginBottom: 8,
             }}
           >
-            <label
-              style={{
-                display: 'block',
-                fontSize: 13,
-                fontWeight: 600,
-                color: 'var(--color-text-secondary)',
-                letterSpacing: '0.02em',
-                textTransform: 'uppercase',
-              }}
-            >
+            <label className="form-section-label" style={{ marginBottom: 0 }}>
               {t('bot.select_unassigned_cards')}
             </label>
             {cardLockLimit != null && (
@@ -451,22 +412,12 @@ export default function CreateTribePage() {
             assignLockedCardIds={lockedCardIds}
             onToggleAssignLock={toggleLockCard}
           />
-          <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
+          <p className="form-field-hint">
             {t('tribe_settings.additional_personality_cards_desc')}
           </p>
         </div>
         <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              marginBottom: 8,
-              letterSpacing: '0.02em',
-              textTransform: 'uppercase',
-            }}
-          >
+          <label className="form-section-label">
             {t('bot.model_selection')}
           </label>
           <ModelGlassToggle
@@ -475,19 +426,11 @@ export default function CreateTribePage() {
             isPremium={isPremiumUser}
             onChange={(nextModel) => setFormData((current) => ({ ...current, preferredModel: nextModel }))}
           />
-          <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
+          <p className="form-field-hint">
             {t('tribe_settings.model_selection_desc')}
           </p>
           <div style={{ marginTop: 18 }}>
-            <label
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: 'var(--color-text-secondary)',
-                letterSpacing: '0.02em',
-                textTransform: 'uppercase',
-              }}
-            >
+            <label className="form-section-label" style={{ marginBottom: 0 }}>
               {t('tribe.memory_tuning')}
             </label>
             <div
@@ -630,17 +573,7 @@ export default function CreateTribePage() {
         </div>
 
         <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              marginBottom: 10,
-              letterSpacing: '0.02em',
-              textTransform: 'uppercase',
-            }}
-          >
+          <label className="form-section-label" style={{ marginBottom: 10 }}>
             {t('tribe.interests')}
           </label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>

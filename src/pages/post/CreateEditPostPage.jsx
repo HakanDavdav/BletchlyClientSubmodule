@@ -184,17 +184,7 @@ export default function CreateEditPostPage() {
 
         {/* Tribe Selection */}
         <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              marginBottom: 8,
-              letterSpacing: '0.02em',
-              textTransform: 'uppercase',
-            }}
-          >
+          <label className="form-section-label">
             {t('post.tribe_selection')}
           </label>
           <div ref={tribeDropdownRef} style={{ position: 'relative' }}>
@@ -287,17 +277,7 @@ export default function CreateEditPostPage() {
 
         {/* Title */}
         <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              marginBottom: 8,
-              letterSpacing: '0.02em',
-              textTransform: 'uppercase',
-            }}
-          >
+          <label className="form-section-label">
             {t('post.title_label')} <span style={{ color: 'var(--color-primary)' }}>*</span>
           </label>
           <div style={{ position: 'relative' }}>
@@ -320,17 +300,7 @@ export default function CreateEditPostPage() {
 
         {/* Content */}
         <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              marginBottom: 8,
-              letterSpacing: '0.02em',
-              textTransform: 'uppercase',
-            }}
-          >
+          <label className="form-section-label">
             {t('post.content_label')} <span style={{ color: 'var(--color-primary)' }}>*</span>
           </label>
           <div style={{ position: 'relative' }}>
@@ -355,17 +325,7 @@ export default function CreateEditPostPage() {
 
         {/* Topic Tags */}
         <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              marginBottom: 10,
-              letterSpacing: '0.02em',
-              textTransform: 'uppercase',
-            }}
-          >
+          <label className="form-section-label" style={{ marginBottom: 10 }}>
             {t('post.categories_optional')}
           </label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>

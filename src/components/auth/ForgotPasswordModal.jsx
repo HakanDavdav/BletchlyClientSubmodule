@@ -173,34 +173,28 @@ export default function ForgotPasswordModal({ isOpen, onClose }) {
     <ModalPortal>
       <div className="modal-overlay" style={{ zIndex: 1000 }} onClick={handleClose}>
       <div 
-        className="modal-box" 
-        style={{ maxWidth: 460, padding: '40px 36px', textAlign: 'center', position: 'relative' }} 
+        className="modal-box auth-modal-box" 
+        style={{ maxWidth: 460, padding: '40px 36px', textAlign: 'center' }} 
         onClick={(e) => e.stopPropagation()}
       >
         <button 
           type="button"
-          className="btn-icon" 
+          className="btn-icon auth-modal-close" 
           onClick={handleClose} 
-          style={{ position: 'absolute', top: 16, right: 16, color: 'var(--color-text-muted)' }}
         >
           <X size={20} />
         </button>
 
-        <div style={{
-          width: 56, height: 56, borderRadius: '50%',
-          background: 'var(--color-primary-lighter)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 20px',
-        }}>
+        <div className="auth-modal-icon-badge">
           <KeyRound size={26} color="var(--color-primary)" strokeWidth={2} />
         </div>
 
         {step === 'request' && (
           <>
-            <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)', margin: '0 0 20px' }}>
+            <h2 className="auth-modal-title" style={{ marginBottom: 20 }}>
               {t('auth.forgot_password_title')}
             </h2>
-            <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: '12px 0 28px', lineHeight: 1.6 }}>
+            <p className="auth-modal-desc" style={{ margin: '12px 0 28px' }}>
               {t('auth.forgot_password_desc')}
             </p>
             
@@ -229,10 +223,10 @@ export default function ForgotPasswordModal({ isOpen, onClose }) {
 
         {step === 'set_password' && (
           <>
-            <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)', margin: '0 0 20px' }}>
+            <h2 className="auth-modal-title" style={{ marginBottom: 20 }}>
               {t('settings.change_password')}
             </h2>
-            <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: '12px 0 28px', lineHeight: 1.6 }}>
+            <p className="auth-modal-desc" style={{ margin: '12px 0 28px' }}>
               {t('auth.set_new_password')}
             </p>
             
@@ -251,11 +245,7 @@ export default function ForgotPasswordModal({ isOpen, onClose }) {
 
               {/* Geri Sayım */}
               <div style={{ marginTop: 8 }}>
-                <div style={{
-                  height: 3, borderRadius: 99,
-                  background: 'var(--color-border)',
-                  overflow: 'hidden', marginBottom: 6,
-                }}>
+                <div className="auth-modal-progress-track">
                   <div style={{
                     height: '100%',
                     width: `${progressPct}%`,

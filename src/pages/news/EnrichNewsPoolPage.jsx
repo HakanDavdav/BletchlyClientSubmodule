@@ -256,17 +256,7 @@ export default function EnrichNewsPoolPage() {
         style={{ display: 'flex', flexDirection: 'column', gap: 24 }}
       >
         <div style={{ marginBottom: 8 }}>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              marginBottom: 8,
-              letterSpacing: '0.02em',
-              textTransform: 'uppercase',
-            }}
-          >
+          <label className="form-section-label">
             {t('news.content_label')}
           </label>
           <div style={{ position: 'relative' }}>

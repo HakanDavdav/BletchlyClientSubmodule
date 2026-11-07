@@ -89,28 +89,12 @@ export default function MemoryManagementPanel() {
 
       <div className="flex flex-col gap-6 w-full">
         {/* Tribe Memory Block */}
-        <div
-          style={{
-            padding: 16,
-            borderRadius: 'var(--radius-lg)',
-            background: 'var(--color-surface-2)',
-            border: '1px solid var(--color-border-light)',
-          }}
-        >
-          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: 'var(--color-text)' }}>
+        <div className="admin-filter-card">
+          <div className="admin-section-title">
             {t('admin.tribe_memory')}
           </div>
           <div className="form-group">
-            <label
-              className="form-label"
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                marginBottom: 4,
-                display: 'block',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
+            <label className="form-label admin-field-label">
               {t('admin.tribe_id')}
             </label>
             <input
@@ -162,28 +146,12 @@ export default function MemoryManagementPanel() {
         </div>
 
         {/* Bot Actor Memory Block */}
-        <div
-          style={{
-            padding: 16,
-            borderRadius: 'var(--radius-lg)',
-            background: 'var(--color-surface-2)',
-            border: '1px solid var(--color-border-light)',
-          }}
-        >
-          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: 'var(--color-text)' }}>
+        <div className="admin-filter-card">
+          <div className="admin-section-title">
             {t('admin.bot_actor_memory')}
           </div>
           <div className="form-group">
-            <label
-              className="form-label"
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                marginBottom: 4,
-                display: 'block',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
+            <label className="form-label admin-field-label">
               {t('admin.bot_actor_id')}
             </label>
             <input

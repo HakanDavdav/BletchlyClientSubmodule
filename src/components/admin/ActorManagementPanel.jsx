@@ -7,15 +7,8 @@ import ConfirmModal from '../common/ConfirmModal'
 
 function CleanupBlock({ title, description, label, placeholder, value, onChange, onConfirm, loading, buttonLabel, t }) {
   return (
-    <div
-      style={{
-        padding: 16,
-        borderRadius: 'var(--radius-lg)',
-        background: 'var(--color-surface-2)',
-        border: '1px solid var(--color-border-light)',
-      }}
-    >
-      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: 'var(--color-text)' }}>
+    <div className="admin-filter-card">
+      <div className="admin-section-title">
         {title}
       </div>
       <p
@@ -29,16 +22,7 @@ function CleanupBlock({ title, description, label, placeholder, value, onChange,
         {description}
       </p>
       <div className="form-group" style={{ marginBottom: '10px' }}>
-        <label
-          className="form-label"
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            marginBottom: 3,
-            display: 'block',
-            color: 'var(--color-text-secondary)',
-          }}
-        >
+        <label className="form-label admin-field-label">
           {label}
         </label>
         <input
@@ -282,31 +266,13 @@ export default function ActorManagementPanel() {
 
       <div className="flex flex-col gap-6 w-full">
         {/* ─── BLOK 1: KİŞİ PUANI ─── */}
-        <div
-          style={{
-            padding: 16,
-            borderRadius: 'var(--radius-lg)',
-            background: 'var(--color-surface-2)',
-            border: '1px solid var(--color-border-light)',
-          }}
-        >
-          <div
-            style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: 'var(--color-text)' }}
-          >
+        <div className="admin-filter-card">
+          <div className="admin-section-title">
             {t('admin.actor_point_title')}
           </div>
 
           <div className="form-group" style={{ marginBottom: '8px' }}>
-            <label
-              className="form-label"
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                marginBottom: 3,
-                display: 'block',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
+            <label className="form-label admin-field-label">
               {t('admin.actor_id')}
             </label>
             <input
@@ -327,16 +293,7 @@ export default function ActorManagementPanel() {
           </div>
 
           <div className="form-group" style={{ marginBottom: '10px' }}>
-            <label
-              className="form-label"
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                marginBottom: 3,
-                display: 'block',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
+            <label className="form-label admin-field-label">
               {t('admin.new_point')}
             </label>
             <input
@@ -374,31 +331,13 @@ export default function ActorManagementPanel() {
         </div>
 
         {/* ─── BLOK 2: KİŞİ PREMIUM ─── */}
-        <div
-          style={{
-            padding: 16,
-            borderRadius: 'var(--radius-lg)',
-            background: 'var(--color-surface-2)',
-            border: '1px solid var(--color-border-light)',
-          }}
-        >
-          <div
-            style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: 'var(--color-text)' }}
-          >
+        <div className="admin-filter-card">
+          <div className="admin-section-title">
             {t('admin.actor_premium_title')}
           </div>
 
           <div className="form-group" style={{ marginBottom: '10px' }}>
-            <label
-              className="form-label"
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                marginBottom: 3,
-                display: 'block',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
+            <label className="form-label admin-field-label">
               {t('admin.actor_id')}
             </label>
             <input
@@ -450,17 +389,8 @@ export default function ActorManagementPanel() {
         </div>
 
         {/* ─── BLOK 3: SEZON SIFIRLAMA ─── */}
-        <div
-          style={{
-            padding: 16,
-            borderRadius: 'var(--radius-lg)',
-            background: 'var(--color-surface-2)',
-            border: '1px solid var(--color-border-light)',
-          }}
-        >
-          <div
-            style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: 'var(--color-text)' }}
-          >
+        <div className="admin-filter-card">
+          <div className="admin-section-title">
             {t('admin.season_reset_title')}
           </div>
 
@@ -555,15 +485,8 @@ export default function ActorManagementPanel() {
         />
 
         {/* ─── BLOK 8: CONTENT REDUCTION ─── */}
-        <div
-          style={{
-            padding: 16,
-            borderRadius: 'var(--radius-lg)',
-            background: 'var(--color-surface-2)',
-            border: '1px solid var(--color-border-light)',
-          }}
-        >
-          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: 'var(--color-text)' }}>
+        <div className="admin-filter-card">
+          <div className="admin-section-title">
             {t('admin.content_reduce_title')}
           </div>
           <p
@@ -586,16 +509,7 @@ export default function ActorManagementPanel() {
             }}
           >
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label
-                className="form-label"
-                style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  marginBottom: 3,
-                  display: 'block',
-                  color: 'var(--color-text-secondary)',
-                }}
-              >
+              <label className="form-label admin-field-label">
                 {t('admin.keep_ratio')}
               </label>
               <input
@@ -618,16 +532,7 @@ export default function ActorManagementPanel() {
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label
-                className="form-label"
-                style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  marginBottom: 3,
-                  display: 'block',
-                  color: 'var(--color-text-secondary)',
-                }}
-              >
+              <label className="form-label admin-field-label">
                 {t('admin.target_posts')}
               </label>
               <input
@@ -648,16 +553,7 @@ export default function ActorManagementPanel() {
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label
-                className="form-label"
-                style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  marginBottom: 3,
-                  display: 'block',
-                  color: 'var(--color-text-secondary)',
-                }}
-              >
+              <label className="form-label admin-field-label">
                 {t('admin.target_entries')}
               </label>
               <input

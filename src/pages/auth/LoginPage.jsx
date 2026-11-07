@@ -328,52 +328,37 @@ export default function LoginPage() {
               if (e.target.classList.contains('modal-overlay')) handleBackToLogin()
             }}
           >
-            <div className="modal-box" style={{ maxWidth: 440, padding: '36px 32px', textAlign: 'left', position: 'relative' }}>
-              <div
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: '50%',
-                  background: 'var(--color-primary-lighter)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 20px',
-                }}
-              >
+            <div className="modal-box auth-modal-box">
+              <div className="auth-modal-icon-badge">
                 <ShieldCheck size={26} color="var(--color-primary)" strokeWidth={2} />
               </div>
 
-              <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 10px', textAlign: 'center', color: 'var(--color-text-primary)' }}>
+              <h2 className="auth-modal-title">
                 {t('auth.two_factor')}
               </h2>
-              <p style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--color-text-muted)', textAlign: 'center', margin: '0 0 24px' }}>
+              <p className="auth-modal-desc">
                 {t('auth.two_factor_desc')}
               </p>
 
               <form noValidate onSubmit={handleTwoFactorSubmit}>
-                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)' }}>
+                <div className="form-group auth-modal-field">
+                  <label className="auth-modal-label">
                     {t('auth.two_factor_code')}
                   </label>
                   <input
-                    className={`input w-full ${hasSubmitted && !twoFactorToken.trim() ? 'error' : ''}`}
+                    className={`input w-full auth-modal-input ${hasSubmitted && !twoFactorToken.trim() ? 'error' : ''}`}
                     type="text"
                     value={twoFactorToken}
                     onChange={(e) => setTwoFactorToken(e.target.value)}
                     required
                     maxLength={6}
                     autoComplete="one-time-code"
-                    style={{ height: 42, padding: '10px 14px', borderRadius: 10, textAlign: 'center', fontSize: 20, letterSpacing: 4 }}
+                    style={{ textAlign: 'center', fontSize: 20, letterSpacing: 4 }}
                   />
                 </div>
 
                 <div style={{ marginTop: 16 }}>
-                  <div style={{
-                    height: 3, borderRadius: 99,
-                    background: 'var(--color-border)',
-                    overflow: 'hidden', marginBottom: 6,
-                  }}>
+                  <div className="auth-modal-progress-track">
                     <div style={{
                       height: '100%',
                       width: `${twoFactorProgressPct}%`,
@@ -392,16 +377,7 @@ export default function LoginPage() {
                   </p>
                 </div>
 
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    gap: 10,
-                    paddingTop: 20,
-                    marginTop: 24,
-                    borderTop: '1px solid var(--color-border)',
-                  }}
-                >
+                <div className="auth-modal-footer">
                   <button
                     type="button"
                     className="btn btn-outline"

@@ -102,17 +102,7 @@ export default function InitProfilePage() {
       <form noValidate onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         {/* Profile Name */}
         <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              marginBottom: 8,
-              letterSpacing: '0.02em',
-              textTransform: 'uppercase',
-            }}
-          >
+          <label className="form-section-label">
             {t('auth.display_name')} <span style={{ color: 'var(--color-primary)' }}>*</span>
           </label>
           <div style={{ position: 'relative' }}>
@@ -145,17 +135,7 @@ export default function InitProfilePage() {
 
         {/* Bio */}
         <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              marginBottom: 8,
-              letterSpacing: '0.02em',
-              textTransform: 'uppercase',
-            }}
-          >
+          <label className="form-section-label">
             {t('auth.bio')}
           </label>
           <div style={{ position: 'relative' }}>
@@ -178,17 +158,7 @@ export default function InitProfilePage() {
 
         {/* Topics */}
         <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              marginBottom: 8,
-              letterSpacing: '0.02em',
-              textTransform: 'uppercase',
-            }}
-          >
+          <label className="form-section-label">
             {t('profile.interests')}
           </label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 4 }}>

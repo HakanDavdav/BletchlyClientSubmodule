@@ -555,7 +555,7 @@ export default function HierarchyPage() {
               />
             </div>
 
-            <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
+            <div className="hierarchy-toolbar-divider" />
 
             {/* Zoom Level Göstergesi */}
             <span
@@ -577,7 +577,6 @@ export default function HierarchyPage() {
               className="btn btn-ghost btn-sm hierarchy-zoom-btn"
               onClick={() => handleZoom((z) => z + 0.05)}
               aria-label={t('hierarchy.zoom_in')}
-              style={{ flexShrink: 0, width: 26, height: 26, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <Plus size={12} />
             </button>
@@ -586,12 +585,11 @@ export default function HierarchyPage() {
               className="btn btn-ghost btn-sm hierarchy-zoom-btn"
               onClick={() => handleZoom((z) => z - 0.05)}
               aria-label={t('hierarchy.zoom_out')}
-              style={{ flexShrink: 0, width: 26, height: 26, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <Minus size={12} />
             </button>
 
-            <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
+            <div className="hierarchy-toolbar-divider" />
 
             {/* Fosil Düğümleri Göster / Gizle Toggle */}
             <FossilTogglePill
@@ -642,7 +640,7 @@ export default function HierarchyPage() {
               <span>{t('hierarchy.expand_all')}</span>
             </button>
 
-            <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
+            <div className="hierarchy-toolbar-divider" />
 
             {/* Default Görünüm */}
             <button

@@ -77,12 +77,11 @@ export default function ChangePhoneModal({ isOpen, onClose }) {
   return (
     <ModalPortal>
       <div className="modal-overlay" onClick={handleOverlayClick} style={{ zIndex: 100 }}>
-      <div className="modal-box" style={{ maxWidth: 440, padding: '36px 32px', textAlign: 'left', position: 'relative' }}>
+      <div className="modal-box auth-modal-box">
         <button
           type="button"
-          className="btn-icon"
+          className="btn-icon auth-modal-close"
           onClick={onClose}
-          style={{ position: 'absolute', top: 16, right: 16, color: 'var(--color-text-muted)' }}
         >
           <X size={20} />
         </button>
@@ -90,70 +89,37 @@ export default function ChangePhoneModal({ isOpen, onClose }) {
         <AnimatePresence mode="wait">
           <motion.div key="step1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             {/* Top Centered Circular Icon Badge */}
-            <div
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: '50%',
-                background: 'var(--color-primary-lighter)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 20px',
-              }}
-            >
+            <div className="auth-modal-icon-badge">
               <Phone size={26} color="var(--color-primary)" strokeWidth={2} />
             </div>
 
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 10px', color: 'var(--color-text-primary)', textAlign: 'center' }}>
+            <h2 className="auth-modal-title">
               {t('auth.change_phone_title')}
             </h2>
 
             {/* Modal Description */}
-            <p
-              style={{
-                fontSize: 13,
-                lineHeight: 1.6,
-                color: 'var(--color-text-muted)',
-                margin: '0 0 24px 0',
-                textAlign: 'center',
-              }}
-            >
+            <p className="auth-modal-desc">
               {t('auth.change_phone_desc')}
             </p>
 
             {/* Modal Form */}
             <form noValidate onSubmit={handleRequestSubmit}>
-              <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
-                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)' }}>
+              <div className="form-group auth-modal-field" style={{ marginBottom: 20 }}>
+                <label className="auth-modal-label">
                   {t('auth.phone_label')}
                 </label>
                 <input
-                  className={`input ${hasSubmitted && !phoneNumber.trim() ? 'error' : ''}`}
+                  className={`input auth-modal-input ${hasSubmitted && !phoneNumber.trim() ? 'error' : ''}`}
                   type="text"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   placeholder="+905..."
                   required
-                  style={{
-                    height: 42,
-                    padding: '10px 14px',
-                    borderRadius: 10,
-                  }}
                 />
               </div>
 
               {/* Modal Footer with Top Lining */}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  gap: 10,
-                  paddingTop: 20,
-                  marginTop: 24,
-                  borderTop: '1px solid var(--color-border)',
-                }}
-              >
+              <div className="auth-modal-footer">
                 <button
                   type="button"
                   className="btn btn-outline"

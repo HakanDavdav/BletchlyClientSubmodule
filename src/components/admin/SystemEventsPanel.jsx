@@ -245,32 +245,14 @@ export default function SystemEventsPanel() {
 
       <div className="flex flex-col gap-6 w-full">
         {/* Custom Event Section */}
-        <div
-          style={{
-            padding: 16,
-            borderRadius: 'var(--radius-lg)',
-            background: 'var(--color-surface-2)',
-            border: '1px solid var(--color-border-light)',
-          }}
-        >
-          <div
-            style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: 'var(--color-text)' }}
-          >
+        <div className="admin-filter-card">
+          <div className="admin-section-title">
             {t('admin.system_events_title')}
           </div>
 
           {/* Event Category & Type Selector Dropdown */}
           <div className="form-group" style={{ marginBottom: '8px' }}>
-            <label
-              className="form-label"
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                marginBottom: 3,
-                display: 'block',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
+            <label className="form-label admin-field-label">
               {t('admin.event_type')}
             </label>
             <select
@@ -301,16 +283,7 @@ export default function SystemEventsPanel() {
 
           {/* Payload JSON Editor */}
           <div className="form-group" style={{ marginBottom: '10px' }}>
-            <label
-              className="form-label"
-              style={{
-                fontSize: 12,
-                fontWeight: 500,
-                marginBottom: 3,
-                display: 'block',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
+            <label className="form-label admin-field-label">
               {t('admin.payload')}
             </label>
             <textarea

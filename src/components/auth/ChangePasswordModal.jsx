@@ -54,87 +54,56 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
   return (
     <ModalPortal>
       <div className="modal-overlay" onClick={handleOverlayClick} style={{ zIndex: 100 }}>
-      <div className="modal-box" style={{ maxWidth: 440, padding: '36px 32px', textAlign: 'left', position: 'relative' }}>
+      <div className="modal-box auth-modal-box">
         <button
           type="button"
-          className="btn-icon"
+          className="btn-icon auth-modal-close"
           onClick={onClose}
-          style={{ position: 'absolute', top: 16, right: 16, color: 'var(--color-text-muted)' }}
         >
           <X size={20} />
         </button>
 
         {/* Top Centered Circular Icon Badge */}
-        <div
-          style={{
-            width: 56,
-            height: 56,
-            borderRadius: '50%',
-            background: 'var(--color-primary-lighter)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 20px',
-          }}
-        >
+        <div className="auth-modal-icon-badge">
           <Lock size={26} color="var(--color-primary)" strokeWidth={2} />
         </div>
 
-        <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 24px', color: 'var(--color-text-primary)', textAlign: 'center' }}>
+        <h2 className="auth-modal-title auth-modal-title--spaced">
           {t('settings.change_password')}
         </h2>
 
         {/* Modal Form */}
         <form noValidate onSubmit={handleSubmit}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)' }}>
+            <div className="form-group auth-modal-field">
+              <label className="auth-modal-label">
                 {t('auth.current_password')}
               </label>
               <PasswordInput
-                className={`input w-full ${hasSubmitted && !formData.currentPassword.trim() ? 'error' : ''}`}
+                className={`input auth-modal-input w-full ${hasSubmitted && !formData.currentPassword.trim() ? 'error' : ''}`}
                 value={formData.currentPassword}
                 onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
                 placeholder="••••••••"
                 required
-                style={{
-                  height: 42,
-                  padding: '10px 14px',
-                  borderRadius: 10,
-                }}
               />
             </div>
 
-            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)' }}>
+            <div className="form-group auth-modal-field">
+              <label className="auth-modal-label">
                 {t('auth.new_password')}
               </label>
               <PasswordInput
-                className={`input w-full ${hasSubmitted && !formData.newPassword.trim() ? 'error' : ''}`}
+                className={`input auth-modal-input w-full ${hasSubmitted && !formData.newPassword.trim() ? 'error' : ''}`}
                 value={formData.newPassword}
                 onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
                 placeholder="••••••••"
                 required
-                style={{
-                  height: 42,
-                  padding: '10px 14px',
-                  borderRadius: 10,
-                }}
               />
             </div>
           </div>
 
           {/* Modal Footer with Top Lining */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: 10,
-              paddingTop: 20,
-              marginTop: 24,
-              borderTop: '1px solid var(--color-border)',
-            }}
-          >
+          <div className="auth-modal-footer">
             <button
               type="button"
               className="btn btn-outline"

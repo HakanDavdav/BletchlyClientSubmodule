@@ -347,16 +347,6 @@ export default function TribeSettingsPage() {
     setIsDeleteTribeModalOpen(true)
   }
 
-  const labelStyle = {
-    display: 'block',
-    fontSize: 13,
-    fontWeight: 600,
-    color: 'var(--color-text-secondary)',
-    marginBottom: 8,
-    letterSpacing: '0.02em',
-    textTransform: 'uppercase',
-  }
-
   return (
     <div className="flex-col gap-4">
       <div className="flex items-center gap-3 px-2" style={{ marginBottom: 16 }}>
@@ -391,7 +381,7 @@ export default function TribeSettingsPage() {
           />
         </div>
         <div>
-          <label style={labelStyle}>
+          <label className="form-section-label">
             {t('tribe_settings.tribe_name')}{' '}
             <span style={{ color: 'var(--color-primary)' }}>*</span>
           </label>
@@ -408,7 +398,7 @@ export default function TribeSettingsPage() {
         </div>
 
         <div>
-          <label style={labelStyle}>{t('tribe_settings.mission')}</label>
+          <label className="form-section-label">{t('tribe_settings.mission')}</label>
           <div style={{ position: 'relative' }}>
             <textarea
               name="mission"
@@ -423,7 +413,7 @@ export default function TribeSettingsPage() {
         </div>
 
         <div>
-          <label style={labelStyle}>
+          <label className="form-section-label">
             {t('card.create_personality_optional')}
           </label>
           <PersonalityCard
@@ -444,14 +434,14 @@ export default function TribeSettingsPage() {
               setFormData((current) => ({ ...current, personalityCardConfirmed: false }))
             }
           />
-          <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
+          <p className="form-field-hint">
             {t('tribe_settings.primary_personality_desc')}
           </p>
         </div>
 
 
         <div>
-          <label style={labelStyle}>
+          <label className="form-section-label">
             {t('card.personality_cards')}
           </label>
           {tribe.personalityCards?.length > 0 ? (
@@ -486,7 +476,7 @@ export default function TribeSettingsPage() {
               marginBottom: 8,
             }}
           >
-            <label style={{ ...labelStyle, marginBottom: 0 }}>
+            <label className="form-section-label" style={{ marginBottom: 0 }}>
               {t(
                 'bot.select_unassigned_cards'
               )}
@@ -523,23 +513,23 @@ export default function TribeSettingsPage() {
             onToggleAssignLock={toggleLockCard}
             ownedCardIds={myCards}
           />
-          <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
+          <p className="form-field-hint">
             {t('tribe_settings.additional_personality_cards_desc')}
           </p>
         </div>
         <div>
-          <label style={labelStyle}>{t('bot.model_selection')}</label>
+          <label className="form-section-label">{t('bot.model_selection')}</label>
           <ModelGlassToggle
             value={formData.preferredModel}
             disabled={editMutation.isPending}
             isPremium={isPremiumUser}
             onChange={(nextModel) => setFormData((current) => ({ ...current, preferredModel: nextModel }))}
           />
-          <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-faint)' }}>
+          <p className="form-field-hint">
             {t('tribe_settings.model_selection_desc')}
           </p>
           <div style={{ marginTop: 18 }}>
-            <label style={labelStyle}>{t('tribe.memory_tuning')}</label>
+            <label className="form-section-label">{t('tribe.memory_tuning')}</label>
             <div
               style={{
                 marginTop: 12,
@@ -662,7 +652,7 @@ export default function TribeSettingsPage() {
         </div>
 
         <div>
-          <label style={labelStyle}>{t('tribe.interests')}</label>
+          <label className="form-section-label">{t('tribe.interests')}</label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {TopicTypes.map((topic) => {
               const isSelected = formData.topicTypes.includes(topic.value)

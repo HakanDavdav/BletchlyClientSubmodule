@@ -3,29 +3,32 @@
 /* ════════════════════════════════════════════════════════════════════ */
 
 /* Sol drawer cache tipi sekmeleri — masaüstünde üst barda gösterilir */
-.left-cache-tabs-row {
-  display: none;
-}
-
-.left-cache-tabs-wrap {
-  display: contents;
-}
-
-.left-cache-tabs-scrollbar {
-  display: none;
-}
-
+.left-cache-tabs-row,
 .left-cache-tabs {
   display: none;
 }
 
-/* Leaderboard kategori sekmeleri kaydıraç sarmalayıcısı — masaüstünde şeffaf */
+/* Yatay kaydırılabilir sekme şeritlerinin sarmalayıcıları ve 1px üst kaydıraç çizgileri (Ortak) */
+.left-cache-tabs-wrap,
 .leaderboard-types-wrap {
   display: contents;
 }
 
-.leaderboard-types-scrollbar {
+.left-cache-tabs-scrollbar,
+.leaderboard-types-scrollbar,
+.mind-view-scrollbar {
   display: none;
+}
+
+.left-cache-tabs-scrollbar-thumb,
+.leaderboard-types-scrollbar-thumb,
+.mind-view-scrollbar-thumb,
+.profile-tabs-scrollbar-thumb {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--color-primary);
+  transition: left 0.05s linear;
 }
 
 @media (max-width: 900px) {
@@ -37,34 +40,41 @@
     touch-action: pan-x;
   }
 
-  .left-cache-tabs-wrap {
+  .left-cache-tabs-wrap,
+  .leaderboard-controls .leaderboard-types-wrap,
+  .mind-view-toggles-wrap,
+  .profile-tab-group-wrap {
     display: flex;
     flex-direction: column;
-    flex: 1;
+    flex: 1 1 auto;
     min-width: 0;
+  }
+
+  .left-cache-tabs-wrap {
+    flex: 1;
     touch-action: pan-x;
   }
 
-  .left-cache-tabs-wrap .left-cache-tabs {
+  .left-cache-tabs-wrap .left-cache-tabs,
+  .mind-view-toggles-wrap .mind-view-toggles,
+  .profile-tab-group-wrap .profile-tab-group {
     flex: 0 0 auto;
   }
 
-  .left-cache-tabs-scrollbar {
+  .left-cache-tabs-scrollbar,
+  .leaderboard-types-scrollbar,
+  .mind-view-scrollbar,
+  .profile-tabs-scrollbar {
     display: block;
     position: relative;
     height: 1px;
     margin: 0 0 3px;
     background: var(--color-border);
-    touch-action: none;
-    pointer-events: none;
   }
 
-  .left-cache-tabs-scrollbar-thumb {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    background: var(--color-primary);
-    transition: left 0.05s linear;
+  .left-cache-tabs-scrollbar {
+    touch-action: none;
+    pointer-events: none;
   }
 
   .left-cache-tabs {
@@ -241,32 +251,9 @@
     min-width: 0;
   }
 
-  .leaderboard-controls .leaderboard-types-wrap {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
   .leaderboard-controls .leaderboard-types-wrap .leaderboard-types-strip {
     width: 100%;
     flex: 0 0 auto;
-  }
-
-  .leaderboard-types-scrollbar {
-    display: block;
-    position: relative;
-    height: 1px;
-    margin: 0 0 3px;
-    background: var(--color-border);
-  }
-
-  .leaderboard-types-scrollbar-thumb {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    background: var(--color-primary);
-    transition: left 0.05s linear;
   }
 
   .leaderboard-controls .hscroll-strip {
@@ -404,6 +391,7 @@
     margin-left: auto;
   }
 
+  .hierarchy-toolbar-divider,
   .hierarchy-toolbar-main > div[style*='width: 1px'],
   .hierarchy-toolbar-secondary > div[style*='width: 1px'],
   .hierarchy-toolbar > div[style*='width: 1px'] {
@@ -994,34 +982,6 @@
     display: none;
   }
 
-  /* Kaydıraç sarmalayıcısı: anahtarların üstünde ince çizgi */
-  .mind-view-toggles-wrap {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
-  .mind-view-toggles-wrap .mind-view-toggles {
-    flex: 0 0 auto;
-  }
-
-  .mind-view-scrollbar {
-    display: block;
-    position: relative;
-    height: 1px;
-    margin: 0 0 3px;
-    background: var(--color-border);
-  }
-
-  .mind-view-scrollbar-thumb {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    background: var(--color-primary);
-    transition: left 0.05s linear;
-  }
-
   /* Varsayılan butonu mobilde 2. satırda, anahtarların sağında */
   .mind-header .mind-default-desktop {
     order: 2;
@@ -1313,19 +1273,10 @@
 
 
 
-  /* Memory Map düğüm detay modalı: mobilde topbar altı ↔ alt bar üstü arasında sabit kalır */
-  .mind-node-backdrop {
-    align-items: center !important;
-    padding: 12px !important;
-    padding-top: calc(var(--topbar-height) + 12px) !important;
-    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 12px) !important;
-    z-index: 1000 !important;
-  }
-
+  /* Memory Map düğüm detay modalı: mobilde genişlik ve köşe yuvarlatma */
   .mind-node-panel {
     width: 100% !important;
     max-width: calc(100vw - 24px) !important;
-    max-height: 100% !important;
     border-radius: 18px !important;
   }
 
@@ -2131,33 +2082,6 @@
 
   .profile-tab-group::-webkit-scrollbar {
     display: none;
-  }
-
-  .profile-tab-group-wrap {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
-  .profile-tab-group-wrap .profile-tab-group {
-    flex: 0 0 auto;
-  }
-
-  .profile-tabs-scrollbar {
-    display: block;
-    position: relative;
-    height: 1px;
-    margin: 0 0 3px;
-    background: var(--color-border);
-  }
-
-  .profile-tabs-scrollbar-thumb {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    background: var(--color-primary);
-    transition: left 0.05s linear;
   }
 
   .profile-tab-btn {

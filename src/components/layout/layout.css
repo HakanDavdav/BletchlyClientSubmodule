@@ -860,7 +860,8 @@
     grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
   }
 
-  .mobile-drawer-extra-btn {
+  .mobile-drawer-extra-btn,
+  .mobile-drawer-lang-trigger {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -874,6 +875,10 @@
     font-weight: 600;
     cursor: pointer;
     font-family: inherit;
+  }
+
+  .mobile-drawer-lang-trigger {
+    width: 100%;
   }
 
   .mobile-drawer-paint-bot {
@@ -886,23 +891,6 @@
   .mobile-drawer-lang {
     position: relative;
     display: flex;
-  }
-
-  .mobile-drawer-lang-trigger {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 10px 8px;
-    border-radius: 10px;
-    border: 1px solid var(--color-border);
-    background: var(--color-surface);
-    color: var(--color-text-secondary);
-    font-size: 12.5px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: inherit;
   }
 
   .mobile-drawer-lang-caret {

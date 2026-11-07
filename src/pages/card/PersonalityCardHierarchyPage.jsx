@@ -1529,7 +1529,7 @@ export default function PersonalityCardHierarchyPage() {
               <span className="hierarchy-count-badge__text" style={{ fontSize: 11, opacity: 0.7 }}>{t('card.owners')}</span>
             </div>
 
-            <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
+            <div className="hierarchy-toolbar-divider" />
 
             {/* Node Count Badge */}
             <div
@@ -1549,7 +1549,7 @@ export default function PersonalityCardHierarchyPage() {
               <span className="hierarchy-count-badge__text" style={{ fontSize: 11, opacity: 0.7 }}>{t('card.assignees')}</span>
             </div>
 
-            <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
+            <div className="hierarchy-toolbar-divider" />
 
             {/* Zoom Level Indicator */}
             <span
@@ -1571,7 +1571,6 @@ export default function PersonalityCardHierarchyPage() {
               className="btn btn-ghost btn-sm hierarchy-zoom-btn"
               onClick={() => handleZoom((z) => z + 0.1)}
               aria-label={t('hierarchy.zoom_in')}
-              style={{ flexShrink: 0, width: 26, height: 26, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <Plus size={12} />
             </button>
@@ -1580,12 +1579,11 @@ export default function PersonalityCardHierarchyPage() {
               className="btn btn-ghost btn-sm hierarchy-zoom-btn"
               onClick={() => handleZoom((z) => z - 0.1)}
               aria-label={t('hierarchy.zoom_out')}
-              style={{ flexShrink: 0, width: 26, height: 26, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <Minus size={12} />
             </button>
 
-            <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
+            <div className="hierarchy-toolbar-divider" />
 
             {/* Fosil Düğümleri Göster / Gizle Toggle */}
             <FossilTogglePill
@@ -1634,7 +1632,7 @@ export default function PersonalityCardHierarchyPage() {
               <span>{isAllCollapsed ? t('hierarchy.expand_all') : t('hierarchy.collapse_all')}</span>
             </button>
 
-            <div style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
+            <div className="hierarchy-toolbar-divider" />
 
             {/* Default Görünüm */}
             <button
