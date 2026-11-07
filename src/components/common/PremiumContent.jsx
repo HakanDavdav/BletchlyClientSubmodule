@@ -2215,51 +2215,45 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
             /* STANDART CHECKOUT FOOTER (PREMIUM OLMAYANLAR İÇİN)                        */
             /* ========================================================================= */
             <>
-              <button
-                type="button"
-                className="btn"
+              <div
+                title={t('premium.unavailable_right_now')}
                 style={{
                   width: '100%',
-                  padding: '12px 20px',
-                  borderRadius: 12,
-                  fontSize: 15,
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  color: '#FFFFFF',
-                  background:
-                    'linear-gradient(135deg, var(--color-primary-hover) 0%, var(--color-primary) 50%, var(--color-primary-gradient-end) 100%)',
-                  boxShadow: '0 4px 14px 0 var(--color-primary-shadow)',
-                  border: 'none',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                  cursor: 'not-allowed',
                 }}
-                onMouseEnter={(e) => {
-                  if (!isLoading) {
-                    e.currentTarget.style.transform = 'translateY(-1.5px)'
-                    e.currentTarget.style.boxShadow = '0 6px 18px 0 var(--color-primary-shadow)'
-                    e.currentTarget.style.filter = 'brightness(1.05)'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isLoading) {
-                    e.currentTarget.style.transform = 'translateY(0)'
-                    e.currentTarget.style.boxShadow = '0 4px 14px 0 var(--color-primary-shadow)'
-                    e.currentTarget.style.filter = 'none'
-                  }
-                }}
-                disabled={isLoading}
-                onClick={handleCheckout}
               >
-                {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Crown size={18} />}
-                {isLoading
-                  ? t('common.loading')
-                  : billingCycle === 'annual'
+                <button
+                  type="button"
+                  className="btn"
+                  title={t('premium.unavailable_right_now')}
+                  disabled
+                  aria-disabled="true"
+                  style={{
+                    width: '100%',
+                    padding: '12px 20px',
+                    borderRadius: 12,
+                    fontSize: 15,
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    color: '#FFFFFF',
+                    background:
+                      'linear-gradient(135deg, var(--color-primary-hover) 0%, var(--color-primary) 50%, var(--color-primary-gradient-end) 100%)',
+                    boxShadow: 'none',
+                    border: 'none',
+                    opacity: 0.65,
+                    cursor: 'not-allowed',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <Crown size={18} />
+                  {billingCycle === 'annual'
                     ? t('premium.checkout_cta_annual')
                     : t('premium.checkout_cta')}
-              </button>
+                </button>
+              </div>
 
               <div
                 style={{

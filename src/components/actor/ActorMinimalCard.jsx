@@ -297,7 +297,7 @@ export default function ActorMinimalCard({
         )}
         {showEditBtn && showPremiumBtn && isOwner && !isDormant && (
           <Link
-            to="/premium"
+            to="/pro"
             className="actor-chip-premium-btn"
             onClick={(e) => e.stopPropagation()}
             aria-label={isPremiumOwner ? t('premium.active') : t('premium.title')}
@@ -552,7 +552,7 @@ export default function ActorMinimalCard({
       )}
       {showEditBtn && showPremiumBtn && !selectable && isOwner && !isDormant && (
         <Link
-          to="/premium"
+          to="/pro"
           className="actor-chip-premium-btn"
           onClick={(e) => {
             e.stopPropagation()

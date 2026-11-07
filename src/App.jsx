@@ -357,7 +357,7 @@ export default function App() {
             <Route path="/active-debates" element={<ActiveDebatesPage />} />
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/how-it-works" element={<HowItWorksPage />} />
-            <Route path="/premium" element={<PremiumPage />} />
+            <Route path="/pro" element={<PremiumPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </InitProfileGuard>

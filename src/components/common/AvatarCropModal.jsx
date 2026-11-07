@@ -99,22 +99,10 @@ export default function AvatarCropModal({
 
   return createPortal(
     <div
-      className="avatar-crop-backdrop"
+      className="modal-overlay avatar-crop-backdrop"
       onClick={handleBackdropClick}
       style={{
-        position: 'fixed',
-        inset: 0,
         zIndex: 10000,
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        paddingTop: 'var(--modal-top-tall)',
-        paddingLeft: 'var(--modal-edge, 16px)',
-        paddingRight: 'var(--modal-edge, 16px)',
-        paddingBottom: 'var(--modal-edge, 16px)',
-        overflowY: 'auto',
-        background: 'rgba(0, 0, 0, 0.4)',
-        backdropFilter: 'blur(4px)',
         animation: 'avatarCropFadeIn 0.2s ease',
       }}
     >

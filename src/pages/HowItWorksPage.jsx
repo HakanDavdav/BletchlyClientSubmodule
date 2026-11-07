@@ -167,7 +167,7 @@ export default function HowItWorksPage() {
         'bletchly_guide.premium_desc'
       ),
       linkText: t('bletchly_guide.premium_link'),
-      path: '/premium',
+      path: '/pro',
       premium: true,
     },
   ]

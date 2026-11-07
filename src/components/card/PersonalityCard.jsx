@@ -275,7 +275,7 @@ export default function PersonalityCard({
                   aspectRatio={3 / 4}
                   imageKind="card"
                   isLocked={!isPremiumUser}
-                  onLockedClick={() => navigate('/premium')}
+                  onLockedClick={() => navigate('/pro')}
                 />
               </div>
               <input

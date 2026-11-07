@@ -93,6 +93,7 @@
   /* Layout */
   --topbar-height: 112px;
   --footer-height: 48px;
+  --layout-max-width: 1520px;
   --left-width: 300px;
   --center-width: 1fr;
   --right-width: clamp(310px, 31%, 360px);
@@ -106,6 +107,24 @@
 
   /* Dormant / Fossil tutorial color */
   --color-dormant: #000000;
+}
+
+/* Laptop ekranlarında (1201px–1680px) 3 blok bütünsel olarak biraz daralır
+   ve ekranın en sol/sağ kenarlarında dengeli boşluk kalır. */
+@media (min-width: 1201px) and (max-width: 1680px) {
+  :root {
+    --layout-max-width: min(1320px, calc(100vw - 112px));
+    --left-width: clamp(235px, 18.5vw, 275px);
+    --left-min-width: 235px;
+    --right-width: clamp(265px, 21vw, 315px);
+    --right-min-width: 265px;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1200px) {
+  :root {
+    --layout-max-width: min(1080px, calc(100vw - 64px));
+  }
 }
 
 /* ─── Dark & Theme Overrides ─────────────────────────────────────────────── */

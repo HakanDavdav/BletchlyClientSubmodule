@@ -369,7 +369,7 @@ export default function ProfilePage() {
 
   const handleSelectTheme = (targetTheme) => {
     if (!isCurrentUserPremium) {
-      navigate('/premium')
+      navigate('/pro')
       return
     }
 
@@ -383,7 +383,7 @@ export default function ProfilePage() {
   const renderThemeSelector = () => (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
       <Link
-        to="/premium"
+        to="/pro"
         className={
           isCurrentUserPremium ? 'btn btn-sm' : 'btn btn-primary btn-sm profile-premium-btn'
         }

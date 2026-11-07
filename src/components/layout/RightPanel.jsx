@@ -266,9 +266,23 @@ function CacheWidget({ title, items, type, viewAllTo }) {
 
                       <div style={{ flex: 1, minWidth: 0 }}>
                         {type !== 'tribe' ? (
-                          <ActorMinimalCard actor={item} clickable={true} showPoint={true} showPremiumBtn={false} />
+                          <ActorMinimalCard
+                            actor={item}
+                            clickable={true}
+                            showPoint={true}
+                            showHierarchyBtn={false}
+                            showMemoryMapBtn={false}
+                            showEditBtn={false}
+                            showPremiumBtn={false}
+                          />
                         ) : (
-                          <TribeMinimalCard {...item} clickable={true} showPoint={true} />
+                          <TribeMinimalCard
+                            {...item}
+                            clickable={true}
+                            showPoint={true}
+                            showMemoryMapBtn={false}
+                            showEditBtn={false}
+                          />
                         )}
                       </div>
                     </div>

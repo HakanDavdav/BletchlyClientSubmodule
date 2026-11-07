@@ -1194,40 +1194,45 @@
     margin-top: 0 !important;
   }
 
-  /* Sayfa tanıtım başlıkları: başlık ikonun sağında, açıklama alt satırda
-     (ikonun sol hizasından başlar); "?" butonu başlık satırında sağda kalır. */
+  /* Dar mobil (≤640px) sayfa tanıtım başlıkları:
+     Açıklama (subtitle/p) gizlenir; sol ikon + başlık (+ kota rozeti) + sağdaki "?"
+     butonu birlikte ortalanır ve "?" butonu başlığın hemen sağında daha büyük durur. */
   div:has(> .page-header-icon):not(.verdict-banner__content) {
+    justify-content: center !important;
+    align-items: center !important;
     flex-wrap: wrap;
     row-gap: 6px !important;
     column-gap: 8px !important;
   }
 
-  div:has(> .page-header-icon):not(.verdict-banner__content) > div:not(.page-header-icon) {
+  div:has(> .page-header-icon):not(.verdict-banner__content) > div:not(.page-header-icon),
+  div:has(> .page-header-icon):not(.verdict-banner__content) .page-header-title-row {
     display: contents;
   }
 
-  div:has(> .page-header-icon):not(.verdict-banner__content) > .icon-action-button {
+  div:has(> .page-header-icon):not(.verdict-banner__content) > .icon-action-button,
+  .card-page-header .icon-action-button {
     order: 1;
-    margin-left: auto !important;
-    margin-right: 10px !important;
-    width: 26px !important;
-    height: 26px !important;
-    min-width: 26px !important;
-    min-height: 26px !important;
-    border-radius: 7px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    border-radius: 9px !important;
   }
 
-  /* Başlıktaki "?" (hakkında) ikonu butonla dengeli kalsın */
-  div:has(> .page-header-icon):not(.verdict-banner__content) > .icon-action-button > svg {
-    width: 15px !important;
-    height: 15px !important;
+  /* Başlıktaki "?" (hakkında) ikonu büyütülmüş butonla dengeli dursun */
+  div:has(> .page-header-icon):not(.verdict-banner__content) > .icon-action-button > svg,
+  .card-page-header .icon-action-button > svg {
+    width: 19px !important;
+    height: 19px !important;
   }
 
-  /* p, display:contents'li sarmalayıcının çocuğu olduğu için torun seçici */
+  /* Dar mobilde sayfa başlığı altındaki açıklama (description) metinleri gizlenir */
+  .page-header-subtitle,
   div:has(> .page-header-icon):not(.verdict-banner__content) > div:not(.page-header-icon) > p {
-    order: 2;
-    flex-basis: 100%;
-    margin-top: 0 !important;
+    display: none !important;
   }
 
   /* HowItWorksHelp modalı: mobilde "i" ikonları kaldırılır, sadece metin kalır */
@@ -1241,20 +1246,13 @@
 
   /* Kart sayfası başlığı: yardım ikonu sıkıştırmasın */
   .card-page-header {
+    justify-content: center !important;
+    align-items: center !important;
     flex-wrap: wrap;
     column-gap: 8px !important;
     row-gap: 6px !important;
     margin-bottom: 20px !important;
     padding-bottom: 16px !important;
-  }
-
-  .card-page-header .icon-action-button {
-    margin-right: 10px !important;
-    width: 26px !important;
-    height: 26px !important;
-    min-width: 26px !important;
-    min-height: 26px !important;
-    border-radius: 7px !important;
   }
 
   /* Hierarchy üst bloğu (≤640): yalnızca küçük dokunuşlar */

@@ -79,7 +79,7 @@ export default function MemoryTuningSlider({
           onClick={(e) => {
             e.preventDefault()
             e.stopPropagation()
-            navigate('/premium')
+            navigate('/pro')
           }}
           title={title ? `${title} (Pro)` : 'Pro'}
           style={{

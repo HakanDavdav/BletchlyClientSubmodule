@@ -53,6 +53,7 @@ import Logo from '../common/icons/Logo'
 import FossilTogglePill from '../common/FossilTogglePill'
 import LockedSlash from '../common/LockedSlash'
 import SearchSuggestionsDropdown from '../common/SearchSuggestionsDropdown'
+import ModifierArrowSvg from '../../assets/FigmaNew/modifierarrow.svg?react'
 import { applyCustomColorVars, clearCustomColorVars, normalizeHex } from '../../utils/themeColor'
 
 const COLOR_PRESETS = [
@@ -1145,7 +1146,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                             onClick={() => {
                               if (locked) {
                                 setIsPaletteOpen(false)
-                                navigate('/premium')
+                                navigate('/pro')
                                 return
                               }
                               cancelColorPreview()
@@ -1186,7 +1187,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                           onClick={() => {
                             if (!isPremium) {
                               setIsPaletteOpen(false)
-                              navigate('/premium')
+                              navigate('/pro')
                               return
                             }
                             cancelColorPreview()
@@ -1221,7 +1222,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                         onClick={() => {
                           if (!isPremium) {
                             setIsPaletteOpen(false)
-                            navigate('/premium')
+                            navigate('/pro')
                             return
                           }
                           colorInputRef.current?.click()
@@ -1428,7 +1429,21 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
               </button>
             </>
           ) : (
-            <div style={{ display: 'flex', gap: 5 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Link
+                to="/pro"
+                className="actor-chip-premium-btn"
+                aria-label={t('premium.title')}
+                title={t('premium.title')}
+                style={{ textDecoration: 'none', height: 30 }}
+              >
+                <ModifierArrowSvg
+                  width={16}
+                  height={22}
+                  className="modifier-arrow"
+                  style={{ display: 'block' }}
+                />
+              </Link>
               <Link
                 to="/login"
                 className="btn btn-ghost btn-sm"
@@ -2147,7 +2162,7 @@ function MobileTopbarControls() {
                     onClick={() => {
                       if (locked) {
                         setIsPaletteOpen(false)
-                        navigate('/premium')
+                        navigate('/pro')
                         return
                       }
                       applyPaletteColor(preset.color)
@@ -2176,7 +2191,7 @@ function MobileTopbarControls() {
                   onClick={() => {
                     if (!isPremium) {
                       setIsPaletteOpen(false)
-                      navigate('/premium')
+                      navigate('/pro')
                       return
                     }
                     applyPaletteColor(savedCustomColor)
@@ -2200,7 +2215,7 @@ function MobileTopbarControls() {
                 onClick={() => {
                   if (!isPremium) {
                     setIsPaletteOpen(false)
-                    navigate('/premium')
+                    navigate('/pro')
                     return
                   }
                   colorInputRef.current?.click()
