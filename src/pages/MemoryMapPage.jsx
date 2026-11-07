@@ -7,7 +7,7 @@ import ForceGraph3D from 'react-force-graph-3d'
 import * as THREE from 'three'
 import { actorApi } from '../api/actorApi'
 import { tribeApi } from '../api/tribeApi'
-import { ArrowLeft, ArrowRight, Loader2, Brain, Focus, Search, X, Tag, Lock, Unlock, Filter, Move, Type, Timer, BookOpen, CalendarFold } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Brain, Focus, Search, X, Tag, Lock, Unlock, Filter, Move, Type, BookOpen, CalendarFold, Zap } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
@@ -99,8 +99,8 @@ const NEURON_COLORS = {
 // Katman 3 (Dış Metamorfoz / Genesis Shell): Erken geçmiş/köken versiyonlar (v1, v2...)
 // Katman 0 (Dış Uzay / External): Tribe, Person, Thought kavramsal düğümleri
 const BAG_RADIUS = 128 // Katman 1 (İç Çekirdek) taban yarıçapı
-const BAG_RADIUS_MAX = 180 // Core sayısı arttıkça iç torbanın büyüyebileceği üst sınır
-const BAG_RADIUS_CORE_STEP = 3 // Taban üstü her core düğümü için ek yarıçap
+const BAG_RADIUS_MAX = 240 // Core sayısı arttıkça iç torbanın büyüyebileceği üst sınır
+const BAG_RADIUS_CORE_STEP = 4 // Taban üstü her core düğümü için ek yarıçap
 const BAG_RADIUS_FREE_CORES = 6 // Bu sayıya kadar core, taban yarıçapı kullanır
 const CORE_ORBIT_RADIUS = 74 // Core düğümlerinin kök etrafındaki yörünge yarıçapı (taban)
 const CORE_ORBIT_RATIO = CORE_ORBIT_RADIUS / BAG_RADIUS
@@ -126,10 +126,12 @@ const SPACING_PRESETS = [
 const SPACING_OPTIONS = ['auto', ...SPACING_PRESETS.map((p) => p.key)]
 
 // Otomatik aralık: node sayısına göre 4 moddan birini arka planda seç.
+// Eşikler geniş tarafa çekildi; auto artık tipik haritalarda (<=350 node) xwide,
+// orta yoğunlukta wide, yüksek yoğunlukta normal/compact seçer.
 function autoSpacingKey(nodeCount) {
-  if (nodeCount <= 60) return 'xwide'
-  if (nodeCount <= 150) return 'wide'
-  if (nodeCount <= 300) return 'normal'
+  if (nodeCount <= 350) return 'xwide'
+  if (nodeCount <= 700) return 'wide'
+  if (nodeCount <= 1200) return 'normal'
   return 'compact'
 }
 
@@ -155,23 +157,156 @@ function computeCoreOrbitRadius(bagRadius) {
 
 // Katman 2 (Orta Metamorfoz Torbası) yarıçapı — İç orb ile dengeli ara katman (~172)
 function computeMiddleBagRadius(innerBagRadius, layer2Count = 0) {
-  const extra = Math.min(18, Math.max(0, layer2Count - 6) * 1.5)
+  const extra = Math.min(48, Math.max(0, layer2Count - 6) * 2.5)
   const base = Math.round(innerBagRadius * MIDDLE_BAG_RATIO)
-  return Math.min(215, Math.round(base + extra))
+  return Math.min(380, Math.round(base + extra))
 }
 
 // Katman 3 (Dış Metamorfoz / Genesis Torbası) yarıçapı — Orta orbdan daima dengeli mesafede (en az 48 pay) (~222)
 function computeOuterBagRadius(innerBagRadius, middleBagRadius, layer3Count = 0) {
   const midRadius = middleBagRadius || computeMiddleBagRadius(innerBagRadius)
-  const extra = Math.min(22, Math.max(0, layer3Count - 6) * 1.8)
+  const extra = Math.min(64, Math.max(0, layer3Count - 6) * 3.5)
   const base = Math.round(innerBagRadius * OUTER_BAG_RATIO)
   const minFromMiddle = midRadius + 48
-  return Math.min(295, Math.round(Math.max(base, minFromMiddle) + extra))
+  return Math.min(520, Math.round(Math.max(base, minFromMiddle) + extra))
 }
 
 // Dış (kavramsal) düğümlerin en dış torbanın da dışında kalması için minimum yarıçap
-function computeOuterOrbitMin(outerBagRadius) {
-  return Math.max(265, outerBagRadius + 40)
+function computeOuterOrbitMin(outerBagRadius, orbScale = 1) {
+  return Math.max(265 * orbScale, outerBagRadius + 40)
+}
+
+// Katman sayılarına ve seçili aralık moduna göre 3 katmanlı orb yarıçaplarını üret.
+// İç/orta katman coreOrbitScale, dış katman outerOrbitScale ile büyür; böylece
+// "Ekstra Geniş" seçildiğinde sadece fizik kuvvetleri değil orbun kendisi de genişler.
+function computeOrbRadii(layer1Count, layer2Count, layer3Count, preset = SPACING_PRESETS[1]) {
+  const coreScale = preset?.coreOrbitScale ?? 1
+  const outerScale = preset?.outerOrbitScale ?? 1
+
+  const innerBase = computeBagRadius(layer1Count)
+  const middleBase = computeMiddleBagRadius(innerBase, layer2Count)
+  const outerBase = computeOuterBagRadius(innerBase, middleBase, layer3Count)
+
+  const innerBagRadius = Math.round(innerBase * coreScale)
+  const middleBagRadius = Math.max(innerBagRadius + 36, Math.round(middleBase * coreScale))
+  const outerBagRadius = Math.max(middleBagRadius + 48, Math.round(outerBase * outerScale))
+
+  const coreOrbitRadius = computeCoreOrbitRadius(innerBagRadius)
+  const layer2OrbitRadius = Math.round((innerBagRadius + middleBagRadius) / 2)
+  const layer3OrbitRadius = Math.round((middleBagRadius + outerBagRadius) / 2)
+  const outerOrbitMin = computeOuterOrbitMin(outerBagRadius, outerScale)
+
+  return {
+    innerBagRadius,
+    middleBagRadius,
+    outerBagRadius,
+    coreOrbitRadius,
+    layer2OrbitRadius,
+    layer3OrbitRadius,
+    outerOrbitMin,
+  }
+}
+
+// Kabuk içinde düğümleri tek bir yarıçapa değil, kabuk kalınlığına dağıtmak için
+// deterministik altın oran dizilimi (0..1 arası).
+const SHELL_SPREAD_GOLDEN = 0.6180339887498949
+function orbShellSpreadFraction(index, offset = 0) {
+  const value = (index + 1) * SHELL_SPREAD_GOLDEN + offset
+  return value - Math.floor(value)
+}
+
+// Mevcut düğümlere orb yarıçaplarını uygula ve varsa 3D küre görsellerini ölçekle.
+function applyOrbRadii(nodes, preset = SPACING_PRESETS[1]) {
+  if (!nodes || nodes.length === 0) return null
+  const root = nodes.find((n) => n.isRoot)
+  if (!root) return null
+
+  const layer1Count = nodes.filter((n) => n.orbLayer === 1 && !n.isRoot).length
+  const layer2Count = nodes.filter((n) => n.orbLayer === 2).length
+  const layer3Count = nodes.filter((n) => n.orbLayer === 3).length
+
+  const radii = computeOrbRadii(layer1Count, layer2Count, layer3Count, preset)
+
+  root.bagRadius = radii.innerBagRadius
+  root.innerBagRadius = radii.innerBagRadius
+  root.middleBagRadius = radii.middleBagRadius
+  root.outerBagRadius = radii.outerBagRadius
+  root.coreOrbitRadius = radii.coreOrbitRadius
+  root.layer2OrbitRadius = radii.layer2OrbitRadius
+  root.layer3OrbitRadius = radii.layer3OrbitRadius
+  root.historicalOrbitRadius = radii.layer2OrbitRadius
+  root.outerOrbitMin = radii.outerOrbitMin
+
+  // Katman 1/2/3 düğümlerini ince bir küre yüzeyi yerine kabuk kalınlığı boyunca dağıt
+  // ve her düğüme küre üzerinde kendine ait bir Fibonacci yönü ata. Bu yön, containment
+  // force içindeki hafif çapa kuvvetiyle korunur; böylece tüm historical nodelar aynı
+  // yarım kürede kümelenmek yerine kürenin her tarafına dağılır.
+  const l2Min = radii.innerBagRadius + 8
+  const l2Max = radii.middleBagRadius - 10
+  const l3Min = radii.middleBagRadius + 10
+  const l3Max = radii.outerBagRadius - HISTORICAL_NODE_MARGIN
+  const l1Total = Math.max(1, layer1Count)
+  const l2Total = Math.max(1, layer2Count)
+  const l3Total = Math.max(1, layer3Count)
+  let l1Index = 0
+  let l2Index = 0
+  let l3Index = 0
+  for (const node of nodes) {
+    let index = 0
+    let total = 1
+    let targetRadius = 0
+
+    if (node.orbLayer === 2) {
+      index = l2Index++
+      total = l2Total
+      targetRadius = l2Min + orbShellSpreadFraction(index) * Math.max(0, l2Max - l2Min)
+    } else if (node.orbLayer === 3) {
+      index = l3Index++
+      total = l3Total
+      targetRadius =
+        l3Min + orbShellSpreadFraction(index, 0.37) * Math.max(0, l3Max - l3Min)
+    } else if (node.orbLayer === 1 && !node.isRoot) {
+      index = l1Index++
+      total = l1Total
+      targetRadius = radii.coreOrbitRadius
+    }
+
+    if (targetRadius > 0) {
+      const phi = Math.acos(1 - (2 * (index + 0.5)) / total)
+      const theta = Math.PI * (1 + Math.sqrt(5)) * (index + 0.5)
+      node.orbTargetRadius = targetRadius
+      node.orbDirX = Math.sin(phi) * Math.cos(theta)
+      node.orbDirY = Math.cos(phi)
+      node.orbDirZ = Math.sin(phi) * Math.sin(theta)
+      // Başlangıçta düğümü hedef kabuk noktasına yerleştir; fizik sonrası
+      // çapa kuvveti bu dağılımı korur.
+      const rx = root.x || 0
+      const ry = root.y || 0
+      const rz = root.z || 0
+      node.x = rx + node.orbDirX * targetRadius
+      node.y = ry + node.orbDirY * targetRadius
+      node.z = rz + node.orbDirZ * targetRadius
+      node.vx = 0
+      node.vy = 0
+      node.vz = 0
+    } else {
+      delete node.orbTargetRadius
+      delete node.orbDirX
+      delete node.orbDirY
+      delete node.orbDirZ
+    }
+  }
+
+  if (Array.isArray(root.__bagMeshes)) {
+    for (const mesh of root.__bagMeshes) {
+      const key = mesh?.userData?.bagRadiusKey
+      const baseRadius = mesh?.userData?.baseRadius
+      if (!key || !(baseRadius > 0)) continue
+      mesh.scale.setScalar(radii[key] / baseRadius)
+    }
+  }
+
+  return radii
 }
 
 // Düğümün 3 katmanlı metamorfoz torbasındaki ait olduğu katmanı belirler (1, 2, 3 veya 0)
@@ -279,6 +414,8 @@ function installRigidDuplicateConstraint(fg, nodes) {
 function applySpacingForces(fg, preset, nodes) {
   if (!fg || typeof fg.d3Force !== 'function') return
   const p = preset || SPACING_PRESETS[1]
+  // Kök (0,0,0)'da pinli olduğu için forceCenter tüm ağı kaydırmasın.
+  fg.d3Force('center', null)
   const lf = fg.d3Force('link')
   if (lf) {
     lf.distance((link) => {
@@ -291,19 +428,46 @@ function applySpacingForces(fg, preset, nodes) {
       const layer2Orbit = root?.layer2OrbitRadius ?? Math.round((innerBagRadius + middleBagRadius) / 2)
       const layer3Orbit = root?.layer3OrbitRadius ?? Math.round((middleBagRadius + outerBagRadius) / 2)
 
+      const s = typeof link.source === 'object' ? link.source : null
+      const t = typeof link.target === 'object' ? link.target : null
+      const sLayer = s?.orbLayer ?? 0
+      const tLayer = t?.orbLayer ?? 0
+      const hasRoot = Boolean(s?.isRoot || t?.isRoot)
+      const shellTarget = s?.isRoot
+        ? t?.orbTargetRadius
+        : t?.isRoot
+          ? s?.orbTargetRadius
+          : s?.orbTargetRadius && t?.orbTargetRadius
+            ? (s.orbTargetRadius + t.orbTargetRadius) / 2
+            : (s?.orbTargetRadius ?? t?.orbTargetRadius)
+
+      // Orb içi düğümler arası (root yok): kısa yaylarla birbirlerini tek bir
+      // köşeye çekmesinler; mesafe kabuk çapına yakın tutulur, güç zayıflatılır.
+      if (!hasRoot && sLayer >= 1 && tLayer >= 1) {
+        const target = Math.max(
+          s?.orbTargetRadius || layer2Orbit,
+          t?.orbTargetRadius || layer2Orbit
+        )
+        return target * 0.9
+      }
+      // Orb içi <-> dış kavramsal düğüm: dış düğüm historical'ı orb dışına çekmesin.
+      if (!hasRoot && ((sLayer >= 1 && tLayer === 0) || (tLayer >= 1 && sLayer === 0))) {
+        return root?.outerOrbitMin ?? outerBagRadius + 40
+      }
+
       if (link.isCoreLink) {
         // Katman 1 (Aktif core): Persona core'ları çeker, mesafe iç orbun içinde kalır
-        return Math.min(coreOrbit * p.coreOrbitScale, innerBagRadius - CORE_NODE_MARGIN)
+        return Math.min(coreOrbit, innerBagRadius - CORE_NODE_MARGIN)
       }
       if (link.isLayer2Link) {
         // Katman 2 (Orta metamorfoz katmanı)
-        return Math.min(layer2Orbit * p.coreOrbitScale, middleBagRadius - 10)
+        return Math.min(shellTarget ?? layer2Orbit, middleBagRadius - 10)
       }
       if (link.isLayer3Link || link.isHistoricalLink) {
         // Katman 3 (Dış metamorfoz katmanı)
-        return Math.min(layer3Orbit * p.coreOrbitScale, outerBagRadius - 12)
+        return Math.min(shellTarget ?? layer3Orbit, outerBagRadius - 12)
       }
-      if (link.isBagLink) return (root?.outerOrbitMin ?? (outerBagRadius + 40)) * p.outerOrbitScale
+      if (link.isBagLink) return root?.outerOrbitMin ?? outerBagRadius + 40
       return 40 * p.linkScale
     }).strength((link) => {
       const s = typeof link.source === 'object' ? link.source : null
@@ -316,27 +480,82 @@ function applySpacingForces(fg, preset, nodes) {
       ) {
         return 0
       }
+
+      const sLayer = s?.orbLayer ?? 0
+      const tLayer = t?.orbLayer ?? 0
+      const hasRoot = Boolean(s?.isRoot || t?.isRoot)
+      const parallel = Math.max(1, Number(link.parallelCount) || 1)
+
+      // Orb içi bağlar: çok zayıf ve paralel kenar sayısına bölünmüş.
+      // Böylece HAS_CORE / EVOLVED_INTO / EMBODIES gibi çoklu bağlar
+      // historical nodeları tek bir noktaya çekemez.
+      if (!hasRoot && sLayer >= 1 && tLayer >= 1) return 0.012 / parallel
+      // Orb içi <-> dış kavramsal bağlar sadece görsel; fiziksel olarak
+      // historical nodeları orb dışına çekmesinler.
+      if (!hasRoot && ((sLayer >= 1 && tLayer === 0) || (tLayer >= 1 && sLayer === 0))) {
+        return 0
+      }
+
       return link.isCoreLink ? 0.9 : link.isLayer2Link ? 0.8 : link.isLayer3Link || link.isHistoricalLink ? 0.72 : 0.3
     })
   }
   const cf = fg.d3Force('charge')
-  // Katmanlara göre radyal itme gradyanı: Katman 1 (-140), Katman 2 (-200), Katman 3 (-260), Dış kavramsal (-900)
+  // Orb içi düğümler (Katman 1/2/3) global charge'a KATILMAZ; aksi halde dışarıdaki
+  // ~90 GeneralThought/Actor düğümünün asimetrik itmesi tüm orb içeriğini tek bir
+  // yarım küreye sıkıştırır. Orb içi dağılım containment force içindeki Fibonacci
+  // yön çapası ve zayıf iç bağlarla sağlanır. Dış kavramsal düğümler -900 ile itilir.
   if (cf)
     cf.strength((n) => {
-      if (n.isDuplicateFollower) return 0
-      const base = n.isRoot
-        ? 0
-        : n.orbLayer === 1
-          ? -140
-          : n.orbLayer === 2
-            ? -200
-            : n.orbLayer === 3
-              ? -260
-              : -900
-      return base * p.chargeScale
+      if (n.isDuplicateFollower || n.isRoot) return 0
+      if (n.orbLayer >= 1 && n.orbLayer <= 3) return 0
+      return -900 * p.chargeScale
     })
   install3LayerOrbContainmentForce(fg, nodes)
   installRigidDuplicateConstraint(fg, nodes)
+}
+
+// Orb içi düğümleri Fibonacci hedef noktalarına oturt (simülasyon durduğunda).
+// Böylece fizik sırasında kabuk duvarına itilen nodelar, hedef yarıçaplarına
+// ve küre üzerindeki dağılımlarına geri yerleşir.
+function snapOrbNodesToTargets(nodes) {
+  if (!nodes || nodes.length === 0) return
+  const root = nodes.find((n) => n.isRoot)
+  if (!root) return
+  const rx = root.x || 0
+  const ry = root.y || 0
+  const rz = root.z || 0
+  for (const n of nodes) {
+    if (n.isRoot || n.isDuplicateFollower) continue
+    if (
+      n.orbLayer >= 1 &&
+      n.orbLayer <= 3 &&
+      n.orbTargetRadius > 0 &&
+      n.orbDirX != null
+    ) {
+      n.x = rx + n.orbDirX * n.orbTargetRadius
+      n.y = ry + n.orbDirY * n.orbTargetRadius
+      n.z = rz + n.orbDirZ * n.orbTargetRadius
+      n.vx = 0
+      n.vy = 0
+      n.vz = 0
+      if (n.fx != null) {
+        n.fx = n.x
+        n.fy = n.y
+        n.fz = n.z
+      }
+    }
+  }
+}
+
+// Fizik bittiğinde gizlenmiş node/link nesnelerini tekrar görünür yap.
+function setGraphObjectsVisible(fg, visible) {
+  if (!fg || typeof fg.scene !== 'function') return
+  const scene = fg.scene()
+  if (!scene || typeof scene.traverse !== 'function') return
+  scene.traverse((obj) => {
+    const ud = obj.userData
+    if (ud?.isNodeObject || ud?.isLinkObject) obj.visible = visible
+  })
 }
 
 // Düğümleri ait oldukları küre ve kabuk sınırlarına kelepçele (clamping)
@@ -359,6 +578,10 @@ function clampNodesToOrbBoundaries(nodes, rootNode) {
   const l3Min = R2 + 10
   const l3Max = R3 - HISTORICAL_NODE_MARGIN
   const l0Min = R3 + 20
+  const outerCount = nodes.filter(
+    (n) => n.orbLayer === 0 && !n.isRoot && !n.isDuplicateFollower
+  ).length
+  const l0Max = l0Min + Math.max(160, Math.sqrt(Math.max(1, outerCount)) * 26)
 
   const rx = root.x || 0
   const ry = root.y || 0
@@ -430,6 +653,14 @@ function clampNodesToOrbBoundaries(nodes, rootNode) {
         n.vx = (n.vx || 0) * 0.2
         n.vy = (n.vy || 0) * 0.2
         n.vz = (n.vz || 0) * 0.2
+      } else if (d > l0Max) {
+        const s = l0Max / d
+        n.x = rx + dx * s
+        n.y = ry + dy * s
+        n.z = rz + dz * s
+        n.vx = (n.vx || 0) * 0.5
+        n.vy = (n.vy || 0) * 0.5
+        n.vz = (n.vz || 0) * 0.5
       }
     }
   }
@@ -475,6 +706,7 @@ function clampSingleNodeToOrbBoundaries(node, rootNode) {
   const l3Min = R2 + 10
   const l3Max = R3 - HISTORICAL_NODE_MARGIN
   const l0Min = R3 + 20
+  const l0Max = l0Min + 300
 
   const rx = rootNode.x || 0
   const ry = rootNode.y || 0
@@ -525,6 +757,11 @@ function clampSingleNodeToOrbBoundaries(node, rootNode) {
       node.x = rx + dx * s
       node.y = ry + dy * s
       node.z = rz + dz * s
+    } else if (d > l0Max) {
+      const s = l0Max / d
+      node.x = rx + dx * s
+      node.y = ry + dy * s
+      node.z = rz + dz * s
     }
   }
 
@@ -570,6 +807,12 @@ function install3LayerOrbContainmentForce(fg, nodes) {
     const l3Min = R2 + 10
     const l3Max = R3 - HISTORICAL_NODE_MARGIN
     const l0Min = R3 + 20
+    // Dış kavramsal düğümler için üst sınır: düşük dereceli (leaf) nodelar
+    // -900 charge ile çok uzağa savrulup aşırı uzun linkler oluşturmasın.
+    const outerCount = nodes.filter(
+      (n) => n.orbLayer === 0 && !n.isRoot && !n.isDuplicateFollower
+    ).length
+    const l0Max = l0Min + Math.max(160, Math.sqrt(Math.max(1, outerCount)) * 26)
 
     // Alpha azalsa dahi küre sınırlarının delinmemesi için minimum yay kuvveti korunur
     const pushOut = Math.max(0.3, 0.7 * alpha)
@@ -628,7 +871,35 @@ function install3LayerOrbContainmentForce(fg, nodes) {
           n.vx = (n.vx ?? 0) + dx * f
           n.vy = (n.vy ?? 0) + dy * f
           n.vz = (n.vz ?? 0) + dz * f
+        } else if (d > l0Max) {
+          const pull = (d - l0Max) * pullIn * 0.7
+          const f = pull / d
+          n.vx = (n.vx ?? 0) - dx * f
+          n.vy = (n.vy ?? 0) - dy * f
+          n.vz = (n.vz ?? 0) - dz * f
         }
+      }
+
+      // Orb içi (Katman 1/2/3) düğümler için hafif Fibonacci yön çapası:
+      // düğüm, kabuk içindeki kendi hedef yarıçapında ve küre üzerindeki kendi
+      // yönünde tutulur. Link kuvvetleri zayıflatıldığı için bu çapa, tüm
+      // historical nodeların aynı yarım kürede kümelenmesini engeller.
+      if (layer >= 1 && layer <= 3 && n.orbTargetRadius > 0 && n.orbDirX != null) {
+        // Radyal hedef yarıçap yayı: düğümü kabuk duvarına yapışmaktan kurtarır.
+        const radialError = d - n.orbTargetRadius
+        const radialPull = radialError * 0.02 * (0.25 + alpha)
+        n.vx = (n.vx ?? 0) - (dx / d) * radialPull
+        n.vy = (n.vy ?? 0) - (dy / d) * radialPull
+        n.vz = (n.vz ?? 0) - (dz / d) * radialPull
+
+        // Küre üzerindeki Fibonacci yön çapası: nodeları 360°'ye dağıtır.
+        const ax = (root.x ?? 0) + n.orbDirX * n.orbTargetRadius
+        const ay = (root.y ?? 0) + n.orbDirY * n.orbTargetRadius
+        const az = (root.z ?? 0) + n.orbDirZ * n.orbTargetRadius
+        const anchorPull = 0.03 * (0.25 + alpha)
+        n.vx = (n.vx ?? 0) + (ax - (n.x ?? 0)) * anchorPull
+        n.vy = (n.vy ?? 0) + (ay - (n.y ?? 0)) * anchorPull
+        n.vz = (n.vz ?? 0) + (az - (n.z ?? 0)) * anchorPull
       }
     }
   })
@@ -661,7 +932,7 @@ function attachHorizontalScroll(el, setState) {
 // PC görünüm anahtarları: bağlantı/düğüm etiket bloklarını gizle.
 // Three.js nesneleri inşa anında bu bayrakları okur; toggle anında mevcut
 // nesnelerin .visible değeri güncellenir.
-const memoryMapViewFlags = { hideLinkLabels: false, hideNodeLabels: false, lazyRender: false }
+const memoryMapViewFlags = { hideLinkLabels: false, hideNodeLabels: false, optMode: false }
 
 function getActiveNeuronColor() {
   const { isGreenMode, customColor } = useThemeStore.getState()
@@ -972,8 +1243,9 @@ function buildNeuronObject(node) {
   // Biyolüminesans süzülme için alt grup (MemoryMapAmbience mindFloatCenter)
   const visualGroup = new THREE.Group()
   // Three.js Group.renderOrder -> groupOrder: three-forcegraph bağlantı
-  // gruplarını 10 yapar; persona 20 ile her zaman bağlantıların üstünde çizilir.
-  if (isPersona) visualGroup.renderOrder = 20
+  // gruplarını 10 yapar. İstenen öncelik: persona label/görseli (30) ->
+  // non-persona node görselleri/labelları (20) -> link labelları/tüpleri (10).
+  visualGroup.renderOrder = isPersona ? 30 : 20
   visualGroup.userData = {
     isVisualGroup: true,
     isPersonaNode: isPersona,
@@ -1345,9 +1617,39 @@ function buildNeuronObject(node) {
     outerRingMesh.rotation.y = -0.25
     outerRingMesh.userData = { isBag: true, isRing: true, baseOpacity: l3RingOpacity }
     group.add(outerRingMesh)
+
+    // Orb yarıçapı değiştiğinde (Aralık modu) küre/wire/ring görsellerini
+    // yeniden inşa etmeden ölçekleyebilmek için referansları sakla.
+    const bagMeshes = [
+      innerBagMesh,
+      innerWireMesh,
+      innerRingMesh,
+      midBagMesh,
+      midWireMesh,
+      midRingMesh,
+      outerBagMesh,
+      outerWireMesh,
+      outerRingMesh,
+    ]
+    for (const mesh of bagMeshes) {
+      const key = mesh.userData.isOuterBag
+        ? 'outerBagRadius'
+        : mesh.userData.isMidBag
+          ? 'middleBagRadius'
+          : 'innerBagRadius'
+      mesh.userData.bagRadiusKey = key
+      mesh.userData.baseRadius =
+        key === 'outerBagRadius'
+          ? outerBagRadius
+          : key === 'middleBagRadius'
+            ? middleBagRadius
+            : innerBagRadius
+    }
+    node.__bagMeshes = bagMeshes
   }
 
   group.add(visualGroup)
+  group.userData = { ...(group.userData || {}), isNodeObject: true, node }
   return group
 }
 
@@ -1848,6 +2150,7 @@ function buildCapillaryObject(link) {
     g.add(labelMesh)
   }
 
+  g.userData = { ...(g.userData || {}), isLinkObject: true }
   return g
 }
 
@@ -1858,7 +2161,8 @@ function buildCapillaryObject(link) {
 let _tickCount = 0
 let _engineRunning = true
 let _dragging = false
-// Lazy mod: yalnızca ilk oluşum simülasyonu bitene kadar nesneler gizlenir.
+// Fizik hesaplaması sürerken tüm node/link render'ı bastırılır.
+let _suppressRender = false
 let _initialSimDone = false
 const RENDER_CHECKPOINTS = new Set([
   2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50,
@@ -1868,8 +2172,8 @@ const RENDER_CHECKPOINTS = new Set([
 
 // Temiz, organik kavisli sinaps hattı ve seyahat eden darbe küresi oluşturucu (MemoryMapAmbience stili)
 function updateCapillaryPosition(obj, { start, end }, link) {
-  // Lazy mod: ilk oluşum simülasyonu bitene kadar bağlantıları tamamen gizle.
-  if (memoryMapViewFlags.lazyRender && !_initialSimDone && !_dragging) {
+  // Fizik hesaplaması sürerken bağlantıları tamamen gizle.
+  if (_suppressRender && !_dragging) {
     obj.visible = false
     return true
   }
@@ -1971,6 +2275,8 @@ function updateCapillaryPosition(obj, { start, end }, link) {
   const dashGeo = new THREE.TubeGeometry(curve, 36, dashRadius, 8, false)
   const dashMesh = new THREE.Mesh(dashGeo, mats.dashMat)
   dashMesh.renderOrder = isRecalled ? -979 : -999
+  dashMesh.userData = { isDashMesh: true }
+  dashMesh.visible = !memoryMapViewFlags.optMode
   obj.add(dashMesh)
 
   // 3. İç ana omurga yolu (Base track - MemoryMapAmbience stroke="var(--color-border)")
@@ -2022,8 +2328,8 @@ function updateCapillaryPosition(obj, { start, end }, link) {
     obj.add(pulseOrb)
   }
   obj.userData.pulseOrb = pulseOrb
-  // Kademeli render (simülasyon) ve drag sırasında ışık hüzmeleri görünmesin
-  pulseOrb.visible = !(_engineRunning || _dragging)
+  // Kademeli render (simülasyon), drag ve Opt modunda ışık hüzmeleri görünmesin
+  pulseOrb.visible = !memoryMapViewFlags.optMode && !(_engineRunning || _dragging)
   pulseOrb.position.copy(curve.getPoint(0))
 
   return true
@@ -2090,6 +2396,10 @@ function NodeDetailPanel({ node, onClose, isTribeContext = false, relationships 
         'layer3OrbitRadius',
         'historicalOrbitRadius',
         'outerOrbitMin',
+        'orbTargetRadius',
+        'orbDirX',
+        'orbDirY',
+        'orbDirZ',
         'isHistorical',
         'orbLayer',
         'avatarUrl',
@@ -2668,17 +2978,26 @@ export default function MemoryMapPage() {
     const raw = window.localStorage.getItem('memoryMapView.lockGraph')
     return raw === null ? null : raw === '1'
   })
-  const [lazyRender, setLazyRender] = useState(() => {
-    if (typeof window === 'undefined') return null
-    const raw = window.localStorage.getItem('memoryMapView.lazyRender')
-    return raw === null ? null : raw === '1'
-  })
-  // Lazy modda fizik tamamlanana kadar aynı yükleme göstergesi gösterilir.
-  const [initialPhysicsDone, setInitialPhysicsDone] = useState(false)
+  // Fizik hesaplaması sürerken render tamamen durdurulur ve loading gösterilir.
+  const [isPhysicsRunning, setIsPhysicsRunning] = useState(true)
+  const isPhysicsRunningRef = useRef(true)
+  const updatePhysicsRunning = useCallback((running) => {
+    if (isPhysicsRunningRef.current === running) return
+    isPhysicsRunningRef.current = running
+    setIsPhysicsRunning(running)
+  }, [])
   const [spacingSetting, setSpacingSetting] = useState(() => {
     const raw =
       typeof window !== 'undefined' ? window.localStorage.getItem('memoryMapView.spacingSetting') : null
     return SPACING_OPTIONS.includes(raw) ? raw : null
+  })
+  // Opt modu: link üzerindeki hareketli ışık akışlarını kapatır.
+  // Varsayılan herkeste açık; kullanıcı tercihi kalıcıdır.
+  const [optMode, setOptMode] = useState(() => {
+    if (typeof window === 'undefined') return true
+    const raw = window.localStorage.getItem('memoryMapView.optModeV2')
+    if (raw === '0' || raw === '1') return raw === '1'
+    return true
   })
 
   // İlk giriş varsayılanları: düğüm yazıları açık, ağ kilitli, aralık otomatik.
@@ -2689,7 +3008,6 @@ export default function MemoryMapPage() {
     effectiveLockGraphRef.current = effectiveLockGraph
   }, [effectiveLockGraph])
   const effectiveSpacingSetting = spacingSetting ?? 'auto'
-  const effectiveLazyRender = lazyRender ?? false
   // Mobilde yatay kaydırılabilen görünüm anahtarları için kaydıraç durumu
   const viewTogglesRef = useRef(null)
   const [viewScroll, setViewScroll] = useState({ scrollable: false, left: 0, width: 100 })
@@ -2706,16 +3024,17 @@ export default function MemoryMapPage() {
       window.localStorage.setItem('memoryMapView.hideNodeLabels', hideNodeLabels ? '1' : '0')
     if (lockGraph !== null)
       window.localStorage.setItem('memoryMapView.lockGraph', lockGraph ? '1' : '0')
-    if (lazyRender !== null)
-      window.localStorage.setItem('memoryMapView.lazyRender', lazyRender ? '1' : '0')
     if (spacingSetting !== null)
       window.localStorage.setItem('memoryMapView.spacingSetting', spacingSetting)
-  }, [hideLinkLabels, hideNodeLabels, lockGraph, lazyRender, spacingSetting])
+    window.localStorage.setItem('memoryMapView.optModeV2', optMode ? '1' : '0')
+    window.localStorage.removeItem('memoryMapView.optMode')
+  }, [hideLinkLabels, hideNodeLabels, lockGraph, spacingSetting, optMode])
 
   const fgRef = useRef()
   const containerRef = useRef()
   const memBtnRef = useRef(null)
   const isInitialZoomRef = useRef(true)
+  const snapOrbOnStopRef = useRef(true)
   const initialSimDoneRef = useRef(false)
   const simulatedDataRef = useRef(null)
   const hoveredLinkRef = useRef(null)
@@ -2772,17 +3091,34 @@ export default function MemoryMapPage() {
           n.vx = 0
           n.vy = 0
           n.vz = 0
+        } else if (n.isRoot) {
+          // Kök her zaman merkezde kalır; orb ve kamera kaymaz.
+          n.x = 0
+          n.y = 0
+          n.z = 0
+          n.fx = 0
+          n.fy = 0
+          n.fz = 0
+          n.vx = 0
+          n.vy = 0
+          n.vz = 0
         } else {
           n.fx = undefined
           n.fy = undefined
           n.fz = undefined
         }
       }
-      if (!effectiveLockGraph && fg && typeof fg.d3ReheatSimulation === 'function') {
-        fg.d3ReheatSimulation()
+      if (effectiveLockGraph) {
+        _suppressRender = false
+        updatePhysicsRunning(false)
+        setGraphObjectsVisible(fg, true)
+      } else if (fg && typeof fg.d3ReheatSimulation === 'function') {
+        _suppressRender = true
+        updatePhysicsRunning(true)
+        setTimeout(() => fg.d3ReheatSimulation(), 50)
       }
     }
-  }, [effectiveLockGraph])
+  }, [effectiveLockGraph, updatePhysicsRunning])
 
   useEffect(() => () => clearTimeout(cooldownOverrideTimerRef.current), [])
 
@@ -2895,6 +3231,10 @@ export default function MemoryMapPage() {
       if (fgRef.current) {
         const scene = fgRef.current.scene()
         scene.traverse((obj) => {
+          if (obj.userData && obj.userData.isDashMesh) {
+            // Opt modunda akan kesikli ışık tüpünü tamamen kapat.
+            obj.visible = !memoryMapViewFlags.optMode
+          }
           if (obj.userData && obj.userData.isVisualGroup) {
             const speed = obj.userData.isPersonaNode ? 1.3 : 1.1
             const seed = obj.userData.seed || 0
@@ -2924,8 +3264,9 @@ export default function MemoryMapPage() {
           if (obj.userData && obj.userData.curve && obj.userData.pulseOrb) {
             const orb = obj.userData.pulseOrb
             // Kademeli render (simülasyon) ve drag sırasında ışık hüzmeleri gizli kalsın,
-            // motor durduğunda görünür olsun ve akmaya başlasın
-            if (_engineRunning || _dragging) {
+            // motor durduğunda görünür olsun ve akmaya başlasın.
+            // Opt modunda ise hiç görünmesin.
+            if (memoryMapViewFlags.optMode || _engineRunning || _dragging) {
               orb.visible = false
             } else {
               orb.visible = true
@@ -3092,12 +3433,14 @@ export default function MemoryMapPage() {
             const sourceNode = nodesMap.get(sourceId)
             const targetNode = nodesMap.get(targetId)
 
-            // Katman 1 (Aktif çekirdek) bağı: kök ile Katman 1 Core düğümleri arasında
+            // Katman 1 (Aktif çekirdek) bağı: YALNIZCA kök ile Katman 1 Core düğümleri arasında.
+            // HistoricalPersona --HAS_CORE--> HistoricalCore bağları da historical bağ sayılır;
+            // aksi halde tüm historical nodelar 0.9 gücüyle birbirine çekilip kümelenir.
             const isCoreLink =
-              relType === 'HAS_CORE' ||
               Boolean(sourceNode?.isRoot && targetNode?.orbLayer === 1) ||
               Boolean(targetNode?.isRoot && sourceNode?.orbLayer === 1) ||
-              Boolean(sourceNode?.isRoot && targetNode?.isCore && !targetNode?.isHistorical)
+              Boolean(sourceNode?.isRoot && targetNode?.isCore && !targetNode?.isHistorical) ||
+              Boolean(targetNode?.isRoot && sourceNode?.isCore && !sourceNode?.isHistorical)
 
             // Katman 2 (Orta metamorfoz) bağı
             const isLayer2Link =
@@ -3271,21 +3614,29 @@ export default function MemoryMapPage() {
     const layer3Nodes = nodes.filter((n) => n.orbLayer === 3)
     const outerNodes = nodes.filter((n) => n.orbLayer === 0)
 
-    const innerBagRadius = computeBagRadius(layer1Nodes.length)
-    const middleBagRadius = computeMiddleBagRadius(innerBagRadius, layer2Nodes.length)
-    const outerBagRadius = computeOuterBagRadius(innerBagRadius, middleBagRadius, layer3Nodes.length)
-
-    const layer1OrbitRadius = computeCoreOrbitRadius(innerBagRadius)
-    const layer2OrbitRadius = Math.round((innerBagRadius + middleBagRadius) / 2)
-    const layer3OrbitRadius = Math.round((middleBagRadius + outerBagRadius) / 2)
-    const outerOrbitMin = computeOuterOrbitMin(outerBagRadius)
+    const {
+      innerBagRadius,
+      middleBagRadius,
+      outerBagRadius,
+      coreOrbitRadius: layer1OrbitRadius,
+      layer2OrbitRadius,
+      layer3OrbitRadius,
+      outerOrbitMin,
+    } = computeOrbRadii(layer1Nodes.length, layer2Nodes.length, layer3Nodes.length, SPACING_PRESETS[1])
 
     // Kök merkezde sabit; 3 katmanlı orb geometrisi ölçeklenir.
+    // fx/fy/fz = 0 ile kök her zaman (0,0,0)'da pinlenir; orb ve kamera merkezi kaymaz.
     nodes.forEach((node) => {
       if (node.isRoot) {
         node.x = 0
         node.y = 0
         node.z = 0
+        node.vx = 0
+        node.vy = 0
+        node.vz = 0
+        node.fx = 0
+        node.fy = 0
+        node.fz = 0
         node.bagRadius = innerBagRadius
         node.innerBagRadius = innerBagRadius
         node.middleBagRadius = middleBagRadius
@@ -3311,25 +3662,31 @@ export default function MemoryMapPage() {
       node.z = layer1OrbitRadius * Math.sin(phi) * Math.sin(theta)
     })
 
-    // 2. Katman 2 (Orta Metamorfoz): İç ve Orta orb arasındaki kabukta Fibonacci dağılımı
+    // 2. Katman 2 (Orta Metamorfoz): İç ve Orta orb arasındaki kabuk kalınlığına dağıt
     const layer2Leaders = layer2Nodes.filter((n) => !n.isDuplicateFollower)
     const l2Total = layer2Leaders.length || 1
+    const l2SpawnMin = innerBagRadius + 8
+    const l2SpawnMax = middleBagRadius - 10
     layer2Leaders.forEach((node, i) => {
       const phi = Math.acos(1 - (2 * (i + 0.5)) / l2Total)
       const theta = Math.PI * (1 + Math.sqrt(5)) * (i + 0.5)
-      const r = layer2OrbitRadius + (i % 2 === 0 ? -5 : 5)
+      const r =
+        l2SpawnMin + orbShellSpreadFraction(i) * Math.max(0, l2SpawnMax - l2SpawnMin)
       node.x = r * Math.sin(phi) * Math.cos(theta)
       node.y = r * Math.cos(phi)
       node.z = r * Math.sin(phi) * Math.sin(theta)
     })
 
-    // 3. Katman 3 (Dış Metamorfoz / Genesis): Orta ve Dış orb arasındaki kabukta Fibonacci dağılımı
+    // 3. Katman 3 (Dış Metamorfoz / Genesis): Orta ve Dış orb arasındaki kabuk kalınlığına dağıt
     const layer3Leaders = layer3Nodes.filter((n) => !n.isDuplicateFollower)
     const l3Total = layer3Leaders.length || 1
+    const l3SpawnMin = middleBagRadius + 10
+    const l3SpawnMax = outerBagRadius - HISTORICAL_NODE_MARGIN
     layer3Leaders.forEach((node, i) => {
       const phi = Math.acos(1 - (2 * (i + 0.5)) / l3Total)
       const theta = Math.PI * (1 + Math.sqrt(5)) * (i + 0.5)
-      const r = layer3OrbitRadius + (i % 2 === 0 ? -6 : 6)
+      const r =
+        l3SpawnMin + orbShellSpreadFraction(i, 0.37) * Math.max(0, l3SpawnMax - l3SpawnMin)
       node.x = r * Math.sin(phi) * Math.cos(theta)
       node.y = r * Math.cos(phi)
       node.z = r * Math.sin(phi) * Math.sin(theta)
@@ -3371,7 +3728,7 @@ export default function MemoryMapPage() {
   // Three.js inşa fonksiyonları bayrakları render sırasında okur.
   memoryMapViewFlags.hideLinkLabels = effectiveHideLinkLabels
   memoryMapViewFlags.hideNodeLabels = effectiveHideNodeLabels
-  memoryMapViewFlags.lazyRender = effectiveLazyRender
+  memoryMapViewFlags.optMode = optMode
 
   // Görünüm anahtarlarını mevcut Three.js etiket nesnelerine anında uygula
   useEffect(() => {
@@ -3398,6 +3755,10 @@ export default function MemoryMapPage() {
   useEffect(() => {
     const preset = resolveSpacingPreset(effectiveSpacingSetting, graphData.nodes.length)
     spacingRef.current = preset
+    applyOrbRadii(graphData.nodes, preset)
+    snapOrbOnStopRef.current = true
+    _suppressRender = true
+    updatePhysicsRunning(true)
     const fg = fgRef.current
     if (!fg) return
     applySpacingForces(fg, preset, graphData.nodes)
@@ -3414,6 +3775,18 @@ export default function MemoryMapPage() {
       const nodes = graphData.nodes
       if (nodes) {
         for (const n of nodes) {
+          if (n.isRoot) {
+            n.x = 0
+            n.y = 0
+            n.z = 0
+            n.fx = 0
+            n.fy = 0
+            n.fz = 0
+            n.vx = 0
+            n.vy = 0
+            n.vz = 0
+            continue
+          }
           n.fx = undefined
           n.fy = undefined
           n.fz = undefined
@@ -3441,22 +3814,31 @@ export default function MemoryMapPage() {
             n.vz = 0
           }
         }
+        _suppressRender = false
+        updatePhysicsRunning(false)
+        setGraphObjectsVisible(fgRef.current, true)
       }, 2000)
     } else {
       // Kilitli DEĞİLKEN: Düğümler zaten serbest.
       // Yeni kuvvetlerin uygulanıp ekranda render edilmesi için simülasyon 100 tick ısıtılır.
       setCooldownOverride(100)
       if (cooldownOverrideTimerRef.current) clearTimeout(cooldownOverrideTimerRef.current)
-      cooldownOverrideTimerRef.current = setTimeout(() => setCooldownOverride(null), 2000)
+      cooldownOverrideTimerRef.current = setTimeout(() => {
+        setCooldownOverride(null)
+        _suppressRender = false
+        updatePhysicsRunning(false)
+        setGraphObjectsVisible(fgRef.current, true)
+      }, 2000)
     }
 
-    requestAnimationFrame(() => {
+    // Loading göstergesinin boyanmasına fırsat ver, sonra ağır simülasyonu başlat.
+    setTimeout(() => {
       const g = fgRef.current
       if (g && typeof g.d3ReheatSimulation === 'function') {
         g.d3ReheatSimulation()
       }
-    })
-  }, [effectiveSpacingSetting, graphData.nodes.length, effectiveLockGraph])
+    }, 50)
+  }, [effectiveSpacingSetting, graphData.nodes.length, effectiveLockGraph, updatePhysicsRunning])
 
   // ForceGraph'a verilen referans; stabil tutulur ki kilit açıp kapamada grafik sıfırlanmasın
   const graphDataRender = useMemo(
@@ -3543,7 +3925,9 @@ export default function MemoryMapPage() {
     _initialSimDone = false
     initialSimDoneRef.current = false
     simulatedDataRef.current = null
-    setInitialPhysicsDone(false)
+    _suppressRender = true
+    updatePhysicsRunning(true)
+    setGraphObjectsVisible(fgRef.current, false)
   }, [graphData.nodes])
 
   const sortedNodes = useMemo(() => {
@@ -3555,8 +3939,17 @@ export default function MemoryMapPage() {
   }, [graphData.nodes])
 
   const baseDistance = useMemo(() => {
-    return computeOptimalCameraDistance(graphData.nodes, isMobileScreen)
-  }, [graphData.nodes, isMobileScreen])
+    const countDistance = computeOptimalCameraDistance(graphData.nodes, isMobileScreen)
+    const preset = resolveSpacingPreset(effectiveSpacingSetting, graphData.nodes.length)
+    const layer1Count = graphData.nodes.filter((n) => n.orbLayer === 1 && !n.isRoot).length
+    const layer2Count = graphData.nodes.filter((n) => n.orbLayer === 2).length
+    const layer3Count = graphData.nodes.filter((n) => n.orbLayer === 3).length
+    const radii = computeOrbRadii(layer1Count, layer2Count, layer3Count, preset)
+    const orbDistance = Math.round(
+      radii.outerOrbitMin * (isMobileScreen ? 2.3 : 2.1) + (isMobileScreen ? 160 : 120)
+    )
+    return Math.max(countDistance, orbDistance)
+  }, [graphData.nodes, isMobileScreen, effectiveSpacingSetting])
 
   const baseDistanceRef = useRef(baseDistance)
   useEffect(() => {
@@ -3583,6 +3976,7 @@ export default function MemoryMapPage() {
           applyInitialCameraPosition(el)
         }
         if (graphData.nodes.length > 0) {
+          applyOrbRadii(graphData.nodes, spacingRef.current)
           applySpacingForces(el, spacingRef.current, graphData.nodes)
         }
       }
@@ -3731,6 +4125,21 @@ export default function MemoryMapPage() {
   const MAX_DRAG_DIST = 650
   const handleNodeDrag = useCallback((node) => {
     _dragging = true
+    _suppressRender = false
+    updatePhysicsRunning(false)
+    if (node.isRoot) {
+      // Kök sürüklenemez; orb ve kamera merkezi (0,0,0)'da kalır.
+      node.x = 0
+      node.y = 0
+      node.z = 0
+      node.fx = 0
+      node.fy = 0
+      node.fz = 0
+      node.vx = 0
+      node.vy = 0
+      node.vz = 0
+      return
+    }
     const dist = Math.sqrt((node.x || 0) ** 2 + (node.y || 0) ** 2 + (node.z || 0) ** 2)
     if (dist > MAX_DRAG_DIST) {
       const scale = MAX_DRAG_DIST / dist
@@ -3766,7 +4175,7 @@ export default function MemoryMapPage() {
         }
       }
     }
-  }, [graphData.nodes])
+  }, [graphData.nodes, updatePhysicsRunning])
 
   // Drag bırakılınca: yerleşme (settle) için checkpoint takvimini sıfırdan başlat
   const handleNodeDragEnd = useCallback(() => {
@@ -3784,18 +4193,36 @@ export default function MemoryMapPage() {
   // Grafik yüklendiğinde kuvvetleri bağla, serbest başlangıç fiziği uygula
   useEffect(() => {
     if (graphData.nodes.length === 0) return
+    snapOrbOnStopRef.current = true
+    _suppressRender = true
+    updatePhysicsRunning(true)
 
     const fg = fgRef.current
     if (fg) {
+      applyOrbRadii(graphData.nodes, spacingRef.current)
       applySpacingForces(fg, spacingRef.current, graphData.nodes)
-      const optimalDist = computeOptimalCameraDistance(graphData.nodes, window.innerWidth <= 768)
+      const optimalDist =
+        baseDistanceRef.current || computeOptimalCameraDistance(graphData.nodes, window.innerWidth <= 768)
       if (typeof fg.cameraPosition === 'function') {
         fg.cameraPosition({ x: 0, y: 0, z: optimalDist }, { x: 0, y: 0, z: 0 }, 0)
       }
     }
 
-    // Başlangıçta tüm düğümler serbest bırakılır (initial organik fizik hesaplaması için)
+    // Başlangıçta tüm düğümler serbest bırakılır (initial organik fizik hesaplaması için);
+    // kök ise merkezde pinli kalır.
     for (const n of graphData.nodes) {
+      if (n.isRoot) {
+        n.x = 0
+        n.y = 0
+        n.z = 0
+        n.fx = 0
+        n.fy = 0
+        n.fz = 0
+        n.vx = 0
+        n.vy = 0
+        n.vz = 0
+        continue
+      }
       n.fx = undefined
       n.fy = undefined
       n.fz = undefined
@@ -3808,7 +4235,12 @@ export default function MemoryMapPage() {
       _initialSimDone = true
       initialSimDoneRef.current = true
       simulatedDataRef.current = graphData
-      setInitialPhysicsDone(true)
+
+      if (snapOrbOnStopRef.current) {
+        clampNodesToOrbBoundaries(graphData.nodes)
+        snapOrbNodesToTargets(graphData.nodes)
+        snapOrbOnStopRef.current = false
+      }
 
       if (effectiveLockGraphRef.current) {
         clampNodesToOrbBoundaries(graphData.nodes)
@@ -3825,10 +4257,14 @@ export default function MemoryMapPage() {
           n.fz = n.z
         }
       }
+
+      _suppressRender = false
+      updatePhysicsRunning(false)
+      setGraphObjectsVisible(fgRef.current, true)
     }, 2200)
 
     return () => clearTimeout(safetyTimer)
-  }, [graphData])
+  }, [graphData, updatePhysicsRunning])
 
   // Otomatik döndürme — mouse ile etkileşimde durur, 4sn sonra devam eder
   const userInteractingRef = useRef(false)
@@ -3897,8 +4333,8 @@ export default function MemoryMapPage() {
     setIsVersionDropdownOpen(false)
     selectedLinkRef.current = null
     if (fgRef.current && typeof fgRef.current.cameraPosition === 'function') {
-      const internalNodes = graphData.nodes
-      const optimalDist = computeOptimalCameraDistance(internalNodes, window.innerWidth <= 768)
+      const optimalDist =
+        baseDistanceRef.current || computeOptimalCameraDistance(graphData.nodes, window.innerWidth <= 768)
       fgRef.current.cameraPosition({ x: 0, y: 0, z: optimalDist }, { x: 0, y: 0, z: 0 }, 1000)
     }
   }
@@ -4783,10 +5219,10 @@ export default function MemoryMapPage() {
                   icon={<Move size={12} />}
                 />
                 <MemoryMapToggle
-                  active={effectiveLazyRender}
-                  onClick={() => setLazyRender(!effectiveLazyRender)}
-                  label={t('memoryMap.view.lazy')}
-                  icon={<Timer size={12} />}
+                  active={optMode}
+                  onClick={() => setOptMode(!optMode)}
+                  label="Opt"
+                  icon={<Zap size={12} />}
                 />
                 </div>
               </div>
@@ -4884,9 +5320,9 @@ export default function MemoryMapPage() {
                 nodeThreeObject={buildNeuronObject}
                 nodeThreeObjectExtend={false}
                 nodePositionUpdate={(obj, pos, node) => {
-                  // Lazy mod: ilk oluşum simülasyonu bitene kadar düğümleri
-                  // tamamen gizle; motor durunca son pozisyonlarla göster.
-                  if (memoryMapViewFlags.lazyRender && !_initialSimDone && !_dragging) {
+                  // Fizik hesaplaması sürerken düğümleri tamamen gizle;
+                  // motor durunca son pozisyonlarla göster.
+                  if (_suppressRender && !_dragging) {
                     obj.visible = false
                     return true
                   }
@@ -4937,6 +5373,9 @@ export default function MemoryMapPage() {
                     _tickCount = 0
                   }
                   _tickCount++
+                  // Fizik sürerken render'ı durdur; drag sırasında canlı bırak.
+                  _suppressRender = !_dragging
+                  updatePhysicsRunning(!_dragging)
                   const nodes = graphData.nodes
                   if (nodes && nodes.length > 0) {
                     clampNodesToOrbBoundaries(nodes)
@@ -4958,11 +5397,14 @@ export default function MemoryMapPage() {
                   _initialSimDone = true
                   initialSimDoneRef.current = true
                   simulatedDataRef.current = graphData
-                  setInitialPhysicsDone(true)
                   isInitialZoomRef.current = false
 
                   if (nodes && nodes.length > 0) {
                     clampNodesToOrbBoundaries(nodes)
+                    if (snapOrbOnStopRef.current) {
+                      snapOrbNodesToTargets(nodes)
+                      snapOrbOnStopRef.current = false
+                    }
                     for (const n of nodes) {
                       if (n.isDuplicateFollower && n.duplicateLeader) {
                         const leader = n.duplicateLeader
@@ -4978,6 +5420,9 @@ export default function MemoryMapPage() {
                       }
                     }
                   }
+                  _suppressRender = false
+                  updatePhysicsRunning(false)
+                  setGraphObjectsVisible(fgRef.current, true)
                 }}
                 enableNodeDrag={initialSimDoneRef.current ? !effectiveLockGraph : false}
                 onNodeDrag={handleNodeDrag}
@@ -4992,8 +5437,7 @@ export default function MemoryMapPage() {
                 }}
               />
             )}
-            {effectiveLazyRender &&
-              !initialPhysicsDone &&
+            {isPhysicsRunning &&
               dimensions.width > 0 &&
               dimensions.height > 0 &&
               memoryMapLoadingIndicator}

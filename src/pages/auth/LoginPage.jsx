@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { identityApi } from '../../api/identityApi'
 import useAuthStore from '../../store/authStore'
@@ -7,13 +7,18 @@ import ForgotPasswordModal from '../../components/auth/ForgotPasswordModal'
 import useDevLog from '../../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 import { signInWithPopup } from 'firebase/auth'
+import { ShieldCheck } from 'lucide-react'
 import { auth, googleProvider, microsoftProvider } from '../../config/firebase'
 import { trackLogin } from '../../utils/analytics'
+import { triggerConfetti } from '../../utils/confetti'
 
 import Logo from '../../components/common/icons/Logo'
 import SelectionMarker from '../../components/common/SelectionMarker'
 import PasswordInput from '../../components/common/PasswordInput'
+import ModalPortal from '../../components/common/ModalPortal'
 import AuthWelcomeBackground from '../../components/auth/AuthWelcomeBackground'
+
+const TWO_FACTOR_SECONDS = 180
 
 export default function LoginPage() {
   useDevLog('LoginPage', arguments[0] || {})
@@ -31,17 +36,56 @@ export default function LoginPage() {
   const [requiresTwoFactor, setRequiresTwoFactor] = useState(false)
   const [twoFactorToken, setTwoFactorToken] = useState('')
   const [tempUserId, setTempUserId] = useState(null)
+  const [twoFactorCountdown, setTwoFactorCountdown] = useState(TWO_FACTOR_SECONDS)
+  const twoFactorEndTimeRef = useRef(null)
   const { t } = useTranslation()
   const providerRef = useRef('google')
+
+  useEffect(() => {
+    if (!requiresTwoFactor) {
+      twoFactorEndTimeRef.current = null
+      setTwoFactorCountdown(TWO_FACTOR_SECONDS)
+      return
+    }
+
+    if (!twoFactorEndTimeRef.current) {
+      twoFactorEndTimeRef.current = Date.now() + TWO_FACTOR_SECONDS * 1000
+    }
+
+    const updateTimer = () => {
+      if (!twoFactorEndTimeRef.current) return
+      const remaining = Math.max(0, Math.ceil((twoFactorEndTimeRef.current - Date.now()) / 1000))
+      setTwoFactorCountdown(remaining)
+    }
+
+    updateTimer()
+    const timer = setInterval(updateTimer, 1000)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') updateTimer()
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [requiresTwoFactor])
 
   const loginMutation = useMutation({
     mutationFn: (data) => identityApi.login(data),
     meta: { showErrorToast: true },
     onSuccess: (res) => {
-      // Backend'den "RequiresTwoFactor" gelirse state değiştir (backend implementasyonuna bağlı)
-      const actorId = res.data?.data?.actorId
-      const isProfileCreated = res.data?.data?.isProfileCreated
-      const isAdmin = res.data?.data?.isAdmin
+      const data = res.data?.data
+
+      if (data?.requiresTwoFactor) {
+        setRequiresTwoFactor(true)
+        setTempUserId(data.userId)
+        return
+      }
+
+      const actorId = data?.actorId
+      const isProfileCreated = data?.isProfileCreated
+      const isAdmin = data?.isAdmin
 
       if (actorId) {
          trackLogin('password')
@@ -54,10 +98,6 @@ export default function LoginPage() {
          } else {
            navigate('/init-profile')
          }
-      } else {
-         // 2FA senaryosu
-         setRequiresTwoFactor(true)
-         // Not: tempUserId'yi response'dan almak gerekebilir
       }
     }
   })
@@ -72,6 +112,7 @@ export default function LoginPage() {
 
       if (actorId) {
          trackLogin('two_factor')
+         triggerConfetti()
          setAuth(actorId, isProfileCreated, false, isAdmin)
          queryClient.invalidateQueries()
          if (isAdmin && import.meta.env.VITE_IS_ADMIN_BUILD === 'true') {
@@ -146,40 +187,19 @@ export default function LoginPage() {
     twoFactorMutation.mutate({ userId: tempUserId, twoFactorToken, provider: 'Email' })
   }
 
-  if (requiresTwoFactor) {
-    return (
-      <AuthWelcomeBackground>
-        <div className="card-surface" style={{ maxWidth: 400, margin: '60px auto', padding: 32 }}>
-          <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 8, textAlign: 'center' }}>{t('auth.two_factor')}</h2>
-          <p className="text-muted" style={{ textAlign: 'center', marginBottom: 24 }}>
-            {t('auth.two_factor_desc')}
-          </p>
-
-          <form noValidate onSubmit={handleTwoFactorSubmit} className="flex-col gap-4">
-            <div className="form-group">
-              <label className="form-label">{t('auth.two_factor_code')}</label>
-              <input 
-                className={`input ${hasSubmitted && !twoFactorToken.trim() ? 'error' : ''}`}
-                type="text" 
-                value={twoFactorToken}
-                onChange={(e) => setTwoFactorToken(e.target.value)}
-                required 
-                maxLength={6}
-                style={{ textAlign: 'center', fontSize: 24, letterSpacing: 4 }}
-              />
-            </div>
-            <button 
-              type="submit" 
-              className="btn btn-primary w-full"
-              disabled={twoFactorMutation.isPending}
-            >
-              {twoFactorMutation.isPending ? t('auth.verifying') : t('auth.verify')}
-            </button>
-          </form>
-        </div>
-      </AuthWelcomeBackground>
-    )
+  const handleBackToLogin = () => {
+    twoFactorEndTimeRef.current = null
+    setRequiresTwoFactor(false)
+    setTwoFactorToken('')
+    setTempUserId(null)
+    setTwoFactorCountdown(TWO_FACTOR_SECONDS)
+    setHasSubmitted(false)
   }
+
+  const formatTime = (s) =>
+    `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
+  const twoFactorProgressPct = (twoFactorCountdown / TWO_FACTOR_SECONDS) * 100
+  const isTwoFactorLowTime = twoFactorCountdown <= 60
 
   return (
     <>
@@ -298,6 +318,113 @@ export default function LoginPage() {
       </AuthWelcomeBackground>
 
       <ForgotPasswordModal isOpen={isForgotOpen} onClose={() => setIsForgotOpen(false)} />
+
+      {requiresTwoFactor && (
+        <ModalPortal>
+          <div
+            className="modal-overlay"
+            style={{ zIndex: 1000 }}
+            onClick={(e) => {
+              if (e.target.classList.contains('modal-overlay')) handleBackToLogin()
+            }}
+          >
+            <div className="modal-box" style={{ maxWidth: 440, padding: '36px 32px', textAlign: 'left', position: 'relative' }}>
+              <div
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: '50%',
+                  background: 'var(--color-primary-lighter)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 20px',
+                }}
+              >
+                <ShieldCheck size={26} color="var(--color-primary)" strokeWidth={2} />
+              </div>
+
+              <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 10px', textAlign: 'center', color: 'var(--color-text-primary)' }}>
+                {t('auth.two_factor')}
+              </h2>
+              <p style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--color-text-muted)', textAlign: 'center', margin: '0 0 24px' }}>
+                {t('auth.two_factor_desc')}
+              </p>
+
+              <form noValidate onSubmit={handleTwoFactorSubmit}>
+                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)' }}>
+                    {t('auth.two_factor_code')}
+                  </label>
+                  <input
+                    className={`input w-full ${hasSubmitted && !twoFactorToken.trim() ? 'error' : ''}`}
+                    type="text"
+                    value={twoFactorToken}
+                    onChange={(e) => setTwoFactorToken(e.target.value)}
+                    required
+                    maxLength={6}
+                    autoComplete="one-time-code"
+                    style={{ height: 42, padding: '10px 14px', borderRadius: 10, textAlign: 'center', fontSize: 20, letterSpacing: 4 }}
+                  />
+                </div>
+
+                <div style={{ marginTop: 16 }}>
+                  <div style={{
+                    height: 3, borderRadius: 99,
+                    background: 'var(--color-border)',
+                    overflow: 'hidden', marginBottom: 6,
+                  }}>
+                    <div style={{
+                      height: '100%',
+                      width: `${twoFactorProgressPct}%`,
+                      borderRadius: 99,
+                      background: isTwoFactorLowTime ? 'var(--color-error)' : 'var(--color-primary)',
+                      transition: 'width 1s linear, background 0.3s',
+                    }} />
+                  </div>
+                  <p style={{
+                    fontSize: 12, margin: 0,
+                    color: isTwoFactorLowTime ? 'var(--color-error)' : 'var(--color-text-muted)',
+                    fontWeight: isTwoFactorLowTime ? 600 : 400,
+                    transition: 'color 0.3s',
+                  }}>
+                    {t('auth.code_expiry')}: <strong>{formatTime(twoFactorCountdown)}</strong>
+                  </p>
+                </div>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    gap: 10,
+                    paddingTop: 20,
+                    marginTop: 24,
+                    borderTop: '1px solid var(--color-border)',
+                  }}
+                >
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    onClick={handleBackToLogin}
+                    disabled={twoFactorMutation.isPending}
+                    style={{ minWidth: 90 }}
+                  >
+                    {t('common.back')}
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={twoFactorMutation.isPending}
+                    style={{ minWidth: 120 }}
+                  >
+                    {twoFactorMutation.isPending ? t('auth.verifying') : t('auth.verify')}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
     </>
   )
 }

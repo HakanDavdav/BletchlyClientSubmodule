@@ -2303,12 +2303,11 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
 
   return createPortal(
     <div
-      className="modal-overlay"
+      className="modal-overlay modal-overlay--tall"
       onClick={onClose}
       style={{
         zIndex: 1000,
         display: 'flex',
-        alignItems: 'center',
         justifyContent: 'center',
         backdropFilter: 'blur(8px)',
         backgroundColor: 'rgba(0, 0, 0, 0.65)',

@@ -71,7 +71,7 @@ export default function CardActorListModal({ cardId, type, isOpen, onClose }) {
 
   return createPortal(
     <div
-      className="modal-overlay"
+      className="modal-overlay modal-overlay--tall"
       onClick={(e) => {
         e.stopPropagation()
         onClose()

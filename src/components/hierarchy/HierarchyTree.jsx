@@ -204,7 +204,7 @@ function TreeNode({
   const [localFossilExpanded, setLocalFossilExpanded] = useState(false)
   const [fossilVisibleLimit, setFossilVisibleLimit] = useState(5)
   const [isLoadingFossils, setIsLoadingFossils] = useState(false)
-  const [fetchedFossils, setFetchedFossils] = useState(false)
+  const [fetchedModes, setFetchedModes] = useState({ dormant: false, deleted: false })
 
   useEffect(() => {
     if (!showFossils && !showDeleted) {
@@ -222,16 +222,36 @@ function TreeNode({
     }
   }, [expandCounter])
 
-  // Çocukları aktif, enjekte fosil ata, silinmiş ve saf fosil olarak ayrıştır
-  const allTribes = node.tribes || []
-  const allBots = node.bots || []
+  // Çocukları kardeşler düzeyinde tekilleştir (Sibling Deduplication)
+  const uniqueBotsMap = new Map()
+  for (const b of node.bots || []) {
+    const id = b.actorId ? String(b.actorId).toLowerCase() : null
+    if (!id) continue
+    if (!uniqueBotsMap.has(id)) {
+      uniqueBotsMap.set(id, b)
+    }
+  }
+  const allBots = Array.from(uniqueBotsMap.values())
+
+  const uniqueTribesMap = new Map()
+  for (const t of node.tribes || []) {
+    const id = (t.tribeId || t.id) ? String(t.tribeId || t.id).toLowerCase() : null
+    if (!id) continue
+    if (!uniqueTribesMap.has(id)) {
+      uniqueTribesMap.set(id, t)
+    }
+  }
+  const allTribes = Array.from(uniqueTribesMap.values())
 
   const activeTribes = allTribes.filter((t) => !(t.isDormant ?? t.IsDormant ?? false))
   const fossilTribes = allTribes.filter((t) => Boolean(t.isDormant ?? t.IsDormant ?? false))
 
-  const directActiveBots = allBots.filter((b) => !(b.isDormant ?? b.IsDormant ?? false) && !(b.isDeleted ?? b.IsDeleted ?? false))
-  const allFossilBots = allBots.filter((b) => Boolean(b.isDormant ?? b.IsDormant ?? false) && !(b.isDeleted ?? b.IsDeleted ?? false))
-  const allDeletedBots = allBots.filter((b) => Boolean(b.isDeleted ?? b.IsDeleted ?? false))
+  const isBotFossil = (b) => Boolean(b.isDormant ?? b.IsDormant ?? false)
+  const isBotDeleted = (b) => Boolean(b.isDeleted ?? b.IsDeleted ?? false)
+
+  const directActiveBots = allBots.filter((b) => !isBotFossil(b) && !isBotDeleted(b))
+  const allFossilBots = allBots.filter((b) => isBotFossil(b))
+  const allDeletedBots = allBots.filter((b) => isBotDeleted(b))
 
   const pureFossilBots = []
   const fossilAncestorsWithActiveDescendants = []
@@ -272,16 +292,23 @@ function TreeNode({
 
   const hasFossil = hasFossilHint || totalPureFossils > 0
   const hasDeleted = hasDeletedHint || totalDeleted > 0
-  const showArchiveGroup = (showFossils && hasFossil) || (showDeleted && hasDeleted) || totalPureFossils > 0 || totalDeleted > 0
+  const canShowFossils = Boolean(showFossils && hasFossil)
+  const canShowDeleted = Boolean(showDeleted && hasDeleted)
+  const showBoth = canShowFossils && canShowDeleted
+  const showArchiveGroup = canShowFossils || canShowDeleted
 
   const hasChildren = totalActive > 0 || showArchiveGroup
 
   const effectiveFossilExpanded = Boolean(localFossilExpanded)
 
   const allArchiveItems = [
-    ...fossilTribes.map((tribe) => ({ kind: 'tribe', key: `ftribe-${tribe.tribeId || tribe.id}`, data: tribe })),
-    ...pureFossilBots.map((child) => ({ kind: 'fossilBot', key: `fbot-${child.actorId}`, data: child })),
-    ...allDeletedBots.map((child) => ({ kind: 'deletedBot', key: `dbot-${child.actorId}`, data: child })),
+    ...(canShowFossils ? fossilTribes.map((tribe) => ({ kind: 'tribe', key: `ftribe-${tribe.tribeId || tribe.id}`, data: tribe })) : []),
+    ...(canShowFossils ? pureFossilBots.map((child) => ({ kind: 'fossilBot', key: `fbot-${child.actorId}`, data: child })) : []),
+    ...(canShowDeleted
+      ? allDeletedBots
+          .filter((child) => !canShowFossils || !isBotFossil(child))
+          .map((child) => ({ kind: 'deletedBot', key: `dbot-${child.actorId}`, data: child }))
+      : []),
   ]
   const visibleArchiveItems = allArchiveItems.slice(0, fossilVisibleLimit)
   const remainingArchiveCount = Math.max(0, allArchiveItems.length - fossilVisibleLimit)
@@ -293,12 +320,18 @@ function TreeNode({
     const nextCollapsed = !isCollapsed
     setIsCollapsed(nextCollapsed)
 
-    if (!nextCollapsed && (showFossils || showDeleted) && !fetchedFossils && setTreeData && node.actorId) {
+    const needDormant = canShowFossils && !fetchedModes.dormant
+    const needDeleted = canShowDeleted && !fetchedModes.deleted
+
+    if (!nextCollapsed && (needDormant || needDeleted) && setTreeData && node.actorId) {
       setIsExpanding(true)
       try {
-        const res = await actorApi.getNodeChildren(node.actorId, showFossils, showDeleted)
+        const res = await actorApi.getNodeChildren(node.actorId, Boolean(canShowFossils), Boolean(canShowDeleted))
         const children = res.data?.data || []
-        setFetchedFossils(true)
+        setFetchedModes((prev) => ({
+          dormant: prev.dormant || canShowFossils,
+          deleted: prev.deleted || canShowDeleted,
+        }))
         setTreeData((prevTree) =>
           updateNodeInTree(prevTree, node.actorId, (target) => {
             const existingIds = new Set((target.bots || []).map((b) => b.actorId))
@@ -332,14 +365,18 @@ function TreeNode({
       setFossilVisibleLimit(5)
     }
 
-    if (nextExpanded && !fetchedFossils && setTreeData && node.actorId) {
+    const needDormant = canShowFossils && !fetchedModes.dormant
+    const needDeleted = canShowDeleted && !fetchedModes.deleted
+
+    if (nextExpanded && (needDormant || needDeleted) && setTreeData && node.actorId) {
       setIsLoadingFossils(true)
       try {
-        const shouldIncludeDormant = Boolean(hasFossilHint || totalPureFossils > 0 || showFossils)
-        const shouldIncludeDeleted = Boolean(hasDeletedHint || totalDeleted > 0 || showDeleted)
-        const res = await actorApi.getNodeChildren(node.actorId, shouldIncludeDormant, shouldIncludeDeleted)
+        const res = await actorApi.getNodeChildren(node.actorId, Boolean(canShowFossils), Boolean(canShowDeleted))
         const children = res.data?.data || []
-        setFetchedFossils(true)
+        setFetchedModes((prev) => ({
+          dormant: prev.dormant || canShowFossils,
+          deleted: prev.deleted || canShowDeleted,
+        }))
         if (children.length > 0) {
           setTreeData((prevTree) =>
             updateNodeInTree(prevTree, node.actorId, (target) => {
@@ -591,27 +628,27 @@ function TreeNode({
                     onClick={handleToggleFossils}
                     disabled={isLoadingFossils}
                     aria-label={
-                      hasFossil && hasDeleted
+                      showBoth
                         ? (effectiveFossilExpanded ? t('hierarchy.hide_archive') : t('hierarchy.show_archive'))
-                        : hasFossil
+                        : canShowFossils
                           ? (effectiveFossilExpanded ? t('hierarchy.hide_fossils') : t('hierarchy.show_fossils'))
                           : (effectiveFossilExpanded ? t('hierarchy.hide_deleted') : t('hierarchy.show_deleted'))
                     }
                     title={
-                      hasFossil && hasDeleted
+                      showBoth
                         ? (effectiveFossilExpanded ? t('hierarchy.hide_archive') : t('hierarchy.show_archive'))
-                        : hasFossil
+                        : canShowFossils
                           ? (effectiveFossilExpanded ? t('hierarchy.hide_fossils') : t('hierarchy.show_fossils'))
                           : (effectiveFossilExpanded ? t('hierarchy.hide_deleted') : t('hierarchy.show_deleted'))
                     }
                   >
-                    {hasFossil && hasDeleted ? (
+                    {showBoth ? (
                       <>
                         <TRexSkullIcon className="badge-fossil-icon" />
                         <span style={{ opacity: 0.5, fontSize: 11, lineHeight: 1 }}>/</span>
                         <Trash2 size={13} strokeWidth={2.2} style={{ flexShrink: 0 }} />
                       </>
-                    ) : hasFossil ? (
+                    ) : canShowFossils ? (
                       <TRexSkullIcon className="badge-fossil-icon" />
                     ) : (
                       <Trash2 size={13} strokeWidth={2.2} style={{ flexShrink: 0 }} />
@@ -620,7 +657,7 @@ function TreeNode({
                       <div className="spinner spinner-sm" style={{ width: 12, height: 12, borderWidth: 1.5 }} />
                     ) : (
                       effectiveFossilExpanded && (
-                        hasFossil && hasDeleted ? (
+                        showBoth ? (
                           (totalPureFossils > 0 || totalDeleted > 0) && (
                             <span>
                               {totalPureFossils > 0 ? totalPureFossils : 0}
@@ -628,7 +665,7 @@ function TreeNode({
                               {totalDeleted > 0 ? totalDeleted : 0}
                             </span>
                           )
-                        ) : hasFossil ? (
+                        ) : canShowFossils ? (
                           totalPureFossils > 0 && <span>{totalPureFossils}</span>
                         ) : (
                           totalDeleted > 0 && <span>{totalDeleted}</span>

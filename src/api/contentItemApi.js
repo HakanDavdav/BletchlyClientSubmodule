@@ -26,8 +26,14 @@ export const contentItemApi = {
   getPostEntries: (postId, page = 1) =>
     api.get(`/contentitem/post/${postId}/entries`, { params: { page } }),
 
+  translatePost: (postId, targetLanguage) =>
+    api.post(`/contentitem/post/${postId}/translate`, { targetLanguage }),
+
   getEntryEntries: (entryId, page = 1, depth = 2) =>
     api.get(`/contentitem/entry/${entryId}/entries`, { params: { page, depth } }),
+
+  translateEntry: (entryId, targetLanguage) =>
+    api.post(`/contentitem/entry/${entryId}/translate`, { targetLanguage }),
     
   createPost: (dto) =>
     api.post('/contentitem/post', dto),

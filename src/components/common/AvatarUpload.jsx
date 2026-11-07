@@ -1,7 +1,7 @@
 import React, { useRef, useState, useCallback } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { mediaApi } from '../../api/mediaApi'
-import { Loader2, UploadCloud, Camera, Trash2, ImagePlus } from 'lucide-react'
+import { Loader2, Camera, Trash2, Image as ImageIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import AvatarCropModal from './AvatarCropModal'
@@ -50,7 +50,7 @@ export default function AvatarUpload({
 
   const isUploading = uploadMutation.isPending
 
-  const processFile = (file) => {
+  const processFile = useCallback((file) => {
     if (!file) return
 
     const allowedTypes = [
@@ -85,7 +85,48 @@ export default function AvatarUpload({
       setShowCrop(true)
     }
     reader.readAsDataURL(file)
-  }
+  }, [t])
+
+  const openCropModal = useCallback(() => {
+    setCropSrc(null)
+    setPendingFile(null)
+    setShowCrop(true)
+  }, [])
+
+  const readClipboardImages = useCallback(async () => {
+    if (!navigator.clipboard?.read) {
+      toast.error(t('upload.clipboard_error'))
+      return []
+    }
+
+    try {
+      const clipboardItems = await navigator.clipboard.read()
+      const files = []
+      const preferredTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+
+      for (const item of clipboardItems) {
+        const imageTypes = item.types.filter((type) => type.startsWith('image/'))
+        if (!imageTypes.length) continue
+        const imageType =
+          preferredTypes.find((type) => imageTypes.includes(type)) || imageTypes[0]
+        const blob = await item.getType(imageType)
+        const extension = imageType.split('/')[1] || 'png'
+        files.push(
+          new File([blob], `clipboard-image-${files.length + 1}.${extension}`, {
+            type: imageType,
+          })
+        )
+      }
+
+      if (!files.length) {
+        toast.error(t('upload.clipboard_empty'))
+      }
+      return files
+    } catch {
+      toast.error(t('upload.clipboard_error'))
+      return []
+    }
+  }, [t])
 
   const handleCropConfirm = useCallback(
     ({ crop, rotation }) => {
@@ -114,6 +155,7 @@ export default function AvatarUpload({
   const handleFileChange = (e) => {
     const file = e.target.files?.[0]
     if (file) processFile(file)
+    e.target.value = ''
   }
 
   const handleDragOver = (e) => {
@@ -186,7 +228,7 @@ export default function AvatarUpload({
           onLockedClick?.()
           return
         }
-        fileInputRef.current?.click()
+        openCropModal()
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -271,11 +313,7 @@ export default function AvatarUpload({
             padding: size < 60 ? 2 : undefined,
           }}
         >
-          {compact ? (
-            <Camera size={Math.max(20, Math.round(size * 0.2))} />
-          ) : (
-            <UploadCloud size={Math.max(18, Math.round(size * (size < 60 ? 0.42 : 0.28)))} />
-          )}
+          <ImageIcon size={Math.max(18, Math.round(size * (size < 60 ? 0.42 : 0.28)))} />
           {size >= 60 && !compact && (
             <span style={{ fontSize: 11, fontWeight: 500 }}>
               {t('upload.drag_or_click')}
@@ -306,6 +344,9 @@ export default function AvatarUpload({
       aspectRatio={aspectRatio}
       onConfirm={handleCropConfirm}
       onCancel={handleCropCancel}
+      onRequestFile={() => fileInputRef.current?.click()}
+      onPaste={readClipboardImages}
+      onSelectFile={processFile}
     />
   )
 
@@ -371,7 +412,7 @@ export default function AvatarUpload({
                 onLockedClick?.()
                 return
               }
-              fileInputRef.current?.click()
+              openCropModal()
             }}
             style={{
               display: 'inline-flex',
@@ -388,7 +429,7 @@ export default function AvatarUpload({
               transition: 'all 0.2s ease',
             }}
           >
-            {imageUrl ? <Camera size={16} /> : <ImagePlus size={16} />}
+            {imageUrl ? <Camera size={16} /> : <ImageIcon size={16} />}
             {imageUrl
               ? t('upload.change_image')
               : t('upload.select_image')}

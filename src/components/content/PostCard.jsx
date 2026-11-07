@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { getShortTimeAgo } from '../../utils/formatTime'
-import { Pencil, Trash2, MessageSquare, Smile, Brain, Star } from 'lucide-react'
+import { Pencil, Trash2, MessageSquare, Smile, Brain, Star, Loader2 } from 'lucide-react'
+import DeepSeekLogo from '../common/icons/DeepSeekLogo'
 import SynapseBrainIcon from '../common/SynapseBrainIcon'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
 import TribeMinimalCard from '../tribe/TribeMinimalCard'
@@ -51,8 +52,60 @@ export default function PostCard({
   const queryClient = useQueryClient()
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
   const loggedInActorId = useAuthStore((s) => s.actorId)
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { isFavourite, isPending: isFavouritePending, toggleFavourite } = useFavourite(contentItemId)
+
+  const targetLanguage = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0].toLowerCase()
+  const [translatedData, setTranslatedData] = useState(null)
+  const [showOriginal, setShowOriginal] = useState(false)
+  const [isTranslating, setIsTranslating] = useState(false)
+
+  useEffect(() => {
+    setTranslatedData(null)
+    setShowOriginal(false)
+  }, [content, title, targetLanguage])
+
+  const getLanguageName = (code) => {
+    if (!code) return ''
+    try {
+      const locale = i18n.resolvedLanguage || i18n.language || 'en'
+      return new Intl.DisplayNames([locale], { type: 'language' }).of(code) || code
+    } catch {
+      return code
+    }
+  }
+
+  const handleTranslate = async () => {
+    if (isTranslating) return
+    if (translatedData) {
+      setShowOriginal((prev) => !prev)
+      return
+    }
+
+    setIsTranslating(true)
+    try {
+      const res = await contentItemApi.translatePost(contentItemId, targetLanguage)
+      const data = res.data?.data
+      if (!data) {
+        toast.error(t('translation.failed'))
+        return
+      }
+      if (data.detectedLanguage && data.detectedLanguage === targetLanguage) {
+        toast(t('translation.same_language'))
+        return
+      }
+      setTranslatedData(data)
+      setShowOriginal(false)
+    } catch {
+      toast.error(t('translation.failed'))
+    } finally {
+      setIsTranslating(false)
+    }
+  }
+
+  const isTranslatedView = Boolean(translatedData && !showOriginal)
+  const displayTitle = isTranslatedView ? (translatedData.title ?? title) : title
+  const displayContent = isTranslatedView ? (translatedData.content ?? content) : content
 
   const isDeletedPost = title === '[Deleted]' && content === '[Deleted]'
   const isOwnerInternal = !isDeletedPost && (isOwner || (loggedInActorId && actor?.actorId === loggedInActorId))
@@ -175,12 +228,52 @@ export default function PostCard({
           to={'/post?postId=' + contentItemId}
           style={{ color: 'inherit', textDecoration: 'none' }}
         >
-          {title || t('card.untitled')}
+          {displayTitle || t('card.untitled')}
         </Link>
       </h2>
 
+      {!isDeletedPost && (title || content) && (
+        <div className="translation-hint">
+          <DeepSeekLogo size={12} className="translation-hint__icon" aria-hidden="true" />
+          {isTranslatedView ? (
+            <>
+              {translatedData.detectedLanguage && (
+                <span>
+                  {t('translation.translated_from', {
+                    language: getLanguageName(translatedData.detectedLanguage),
+                  })}
+                </span>
+              )}
+              <button
+                type="button"
+                className="translation-hint__action"
+                onClick={handleTranslate}
+              >
+                {t('translation.show_original')}
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="translation-hint__action"
+              onClick={handleTranslate}
+              disabled={isTranslating}
+            >
+              {isTranslating ? (
+                <>
+                  <Loader2 size={12} className="translation-hint__spinner" />
+                  {t('translation.translating')}
+                </>
+              ) : (
+                t('translation.show_translation')
+              )}
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Content */}
-      {content && <p className="post-card-content">{content}</p>}
+      {displayContent && <p className="post-card-content">{displayContent}</p>}
 
       {/* Footer */}
       <div className="post-card-footer">

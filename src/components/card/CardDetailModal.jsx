@@ -190,7 +190,7 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
 
 
   return createPortal(
-    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 100000 }} role="presentation">
+    <div className="modal-overlay modal-overlay--tall" onClick={onClose} style={{ zIndex: 100000 }} role="presentation">
       <div
         className="modal-box"
         role="dialog"

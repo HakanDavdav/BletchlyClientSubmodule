@@ -14,7 +14,7 @@ export default function TokenModal({
   isPending = false,
   onTimeout,
   onClose,
-  totalSeconds = 120
+  totalSeconds = 180
 }) {
   useDevLog('TokenModal', arguments[0] || {})
   const [token, setToken] = useState('')
@@ -92,6 +92,12 @@ export default function TokenModal({
     }
   }
 
+  const handleOverlayClick = (e) => {
+    if (e.target.classList.contains('modal-overlay') && onClose) {
+      onClose()
+    }
+  }
+
   const formatTime = (s) =>
     `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
   const progressPct = (countdown / totalSeconds) * 100
@@ -102,115 +108,153 @@ export default function TokenModal({
 
   return (
     <ModalPortal>
-      <div className="modal-overlay" style={{ zIndex: 1000 }}>
-      <div
-        className="modal-box"
-        style={{ maxWidth: 460, padding: '40px 36px', textAlign: 'center', position: 'relative' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {onClose && (
-          <button 
-            type="button"
-            className="btn-icon" 
-            onClick={onClose} 
-            style={{ position: 'absolute', top: 16, right: 16, color: 'var(--color-text-muted)' }}
+      <div className="modal-overlay" onClick={handleOverlayClick} style={{ zIndex: 1000 }}>
+        <div className="modal-box" style={{ maxWidth: 440, padding: '36px 32px', textAlign: 'left', position: 'relative' }}>
+          {onClose && (
+            <button
+              type="button"
+              className="btn-icon"
+              onClick={onClose}
+              style={{ position: 'absolute', top: 16, right: 16, color: 'var(--color-text-muted)' }}
+            >
+              <X size={20} />
+            </button>
+          )}
+
+          {/* Top Centered Circular Icon Badge */}
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: '50%',
+              background: 'var(--color-primary-lighter)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 20px',
+            }}
           >
-            <X size={20} />
-          </button>
-        )}
+            <KeyRound size={26} color="var(--color-primary)" strokeWidth={2} />
+          </div>
 
-        <div style={{
-          width: 56, height: 56, borderRadius: '50%',
-          background: 'var(--color-primary-lighter)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 20px',
-        }}>
-          <KeyRound size={26} color="var(--color-primary)" strokeWidth={2} />
-        </div>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text-primary)', margin: '0 0 10px', textAlign: 'center' }}>
+            {title || t('auth.email_verification')}
+          </h2>
 
-        <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)', margin: '0 0 20px' }}>
-          {title || t('auth.email_verification')}
-        </h2>
-
-        {displayTarget ? (
-          <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: '12px 0 28px', lineHeight: 1.6 }}>
-            <span style={{ color: 'var(--color-text)', fontWeight: 500 }}>{displayTarget}</span>{t('auth.to_address')}
-            {' '}{description || t('auth.email_verification_desc')}
-          </p>
-        ) : (
-          <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: '12px 0 28px', lineHeight: 1.6 }}>
+          <p
+            style={{
+              fontSize: 13,
+              lineHeight: 1.6,
+              color: 'var(--color-text-muted)',
+              margin: '0 0 24px 0',
+              textAlign: 'center',
+            }}
+          >
+            {displayTarget && (
+              <>
+                <span style={{ color: 'var(--color-text)', fontWeight: 500 }}>{displayTarget}</span>
+                {t('auth.to_address')}{' '}
+              </>
+            )}
             {description || t('auth.email_verification_desc')}
           </p>
-        )}
 
-        <form noValidate onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Token Input */}
-          <div style={{ position: 'relative' }}>
-            <input
-              ref={textareaRef}
-              type="text"
-              className={`input ${hasSubmitted && !token.trim() ? 'error' : ''}`}
-              value={token}
-              onChange={handleChange}
-              placeholder={t('auth.enter_code')}
-              spellCheck={false}
-              autoComplete="off"
-              required
-              style={{
-                textAlign: 'center',
-                padding: '14px',
-                fontSize: 14,
-                letterSpacing: 0.5,
-                paddingRight: hasPasted ? '60px' : '14px',
-              }}
-            />
-            {/* Yapıştırıldı onay etiketi */}
-            {hasPasted && (
-              <span style={{
-                position: 'absolute', top: '50%', right: 14,
-                transform: 'translateY(-50%)',
-                fontSize: 11, color: 'var(--color-primary)',
-                fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3,
-              }}>
-                ✓ {t('common.ready')}
-              </span>
-            )}
-          </div>
-
-          {/* Geri Sayım */}
-          <div>
-            <div style={{
-              height: 3, borderRadius: 99,
-              background: 'var(--color-border)',
-              overflow: 'hidden', marginBottom: 6,
-            }}>
-              <div style={{
-                height: '100%',
-                width: `${progressPct}%`,
-                borderRadius: 99,
-                background: isLowTime ? 'var(--color-error)' : 'var(--color-primary)',
-                transition: 'width 1s linear, background 0.3s',
-              }} />
+          <form noValidate onSubmit={handleSubmit}>
+            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)' }}>
+                {t('auth.two_factor_code')}
+              </label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  ref={textareaRef}
+                  type="text"
+                  className={`input w-full ${hasSubmitted && !token.trim() ? 'error' : ''}`}
+                  value={token}
+                  onChange={handleChange}
+                  placeholder={t('auth.enter_code')}
+                  spellCheck={false}
+                  autoComplete="off"
+                  required
+                  style={{
+                    height: 42,
+                    padding: '10px 14px',
+                    borderRadius: 10,
+                    textAlign: 'center',
+                    letterSpacing: 0.5,
+                    paddingRight: hasPasted ? '60px' : '14px',
+                  }}
+                />
+                {hasPasted && (
+                  <span style={{
+                    position: 'absolute', top: '50%', right: 14,
+                    transform: 'translateY(-50%)',
+                    fontSize: 11, color: 'var(--color-primary)',
+                    fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3,
+                  }}>
+                    ✓ {t('common.ready')}
+                  </span>
+                )}
+              </div>
             </div>
-            <p style={{
-              fontSize: 12, margin: 0,
-              color: isLowTime ? 'var(--color-error)' : 'var(--color-text-muted)',
-              fontWeight: isLowTime ? 600 : 400,
-              transition: 'color 0.3s',
-            }}>
-              {t('auth.code_expiry')}: <strong>{formatTime(countdown)}</strong>
-            </p>
-          </div>
 
-          <button
-            type="submit"
-            className="btn btn-primary w-full"
-            disabled={isPending}
-          >
-            {isPending ? t('common.verifying') : t('action.verify')}
-          </button>
-        </form>
-      </div>
+            {/* Geri Sayım */}
+            <div style={{ marginTop: 16 }}>
+              <div style={{
+                height: 3, borderRadius: 99,
+                background: 'var(--color-border)',
+                overflow: 'hidden', marginBottom: 6,
+              }}>
+                <div style={{
+                  height: '100%',
+                  width: `${progressPct}%`,
+                  borderRadius: 99,
+                  background: isLowTime ? 'var(--color-error)' : 'var(--color-primary)',
+                  transition: 'width 1s linear, background 0.3s',
+                }} />
+              </div>
+              <p style={{
+                fontSize: 12, margin: 0,
+                color: isLowTime ? 'var(--color-error)' : 'var(--color-text-muted)',
+                fontWeight: isLowTime ? 600 : 400,
+                transition: 'color 0.3s',
+              }}>
+                {t('auth.code_expiry')}: <strong>{formatTime(countdown)}</strong>
+              </p>
+            </div>
+
+            {/* Modal Footer with Top Lining */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+                paddingTop: 20,
+                marginTop: 24,
+                borderTop: '1px solid var(--color-border)',
+              }}
+            >
+              {onClose && (
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={onClose}
+                  disabled={isPending}
+                  style={{ minWidth: 90 }}
+                >
+                  {t('common.close')}
+                </button>
+              )}
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={isPending}
+                style={{ minWidth: 120 }}
+              >
+                {isPending ? t('common.verifying') : t('action.verify')}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </ModalPortal>
   )

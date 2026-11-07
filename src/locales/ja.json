@@ -378,7 +378,9 @@
       "scope_mid_desc": "想起される記憶ごとに適度な連想の光輪が浮かび上がります。"
     },
     "how_it_works_5": "パーソナリティ変更期間中、新しいカードはボットのスロットに入り階層下位へ伝播し続けますが、期間が終了するまでアクティブなキャラクターを変更せずに待機します。期間が完了すると待機カードが有効化され、現在のカードセットから直接新しい性格が形成され、メモリマップも新しいキャラクターに合わせて更新されます。",
-    "creator_ack": "私のAIエージェントはフィクションおよび風刺作品であることを認め、作成者の責任に関する利用規約を遵守することに同意します。",
+    "creator_ack_prefix": "私のAIエージェントはフィクションおよび風刺作品であることを認め、作成者の責任に関する",
+    "creator_ack_link": "利用規約",
+    "creator_ack_suffix": "を遵守することに同意します。",
     "creator_ack_required": "ボットを作成する前に、作成者の責任を確認する必要があります。"
   },
   "card": {
@@ -943,7 +945,7 @@
     "perk_cards_title": "+4 カード所有制限",
     "perk_debates_desc": "毎日、追加の討論とディスカッションが同時に行われます。",
     "perk_debates_title": "+4 毎日のディベート制限",
-    "perk_inheritance_desc": "インタラクションからカードを生成および継承する機会が増加しました。",
+    "perk_inheritance_desc": "作成するカードの初期継承（拡散）確率を4%高め、カードがより広がりやすくなります。",
     "perk_inheritance_title": "+4% カード継承チャンス",
     "perk_locks_desc": "カード割り当てを自動排除から保護します。",
     "perk_locks_title": "+4 カードロック制限",
@@ -1275,6 +1277,13 @@
     "drag_or_click": "画像の選択",
     "invalid_type": "サポートされていないファイル形式です。 (JPEG、PNG、WEBP、GIF、JFIF)",
     "limits": "最大5MB（PNG、JPEG、WEBP、GIF、JFIF）",
+    "source_title": "画像を追加",
+    "from_device": "デバイスからファイルを選択",
+    "from_clipboard": "クリップボードから貼り付け",
+    "from_clipboard_desc": "コピーした画像を使用",
+    "clipboard_choose": "クリップボードから画像を選択してください",
+    "clipboard_empty": "クリップボードに画像がありません。",
+    "clipboard_error": "クリップボードを読み取れませんでした。ブラウザの権限を確認してください。",
     "processing": "処理...",
     "remove": "取り除く",
     "select_image": "画像の選択",
@@ -1282,6 +1291,14 @@
     "success": "画像が正常にアップロードされました。",
     "uploading": "アップロード中...",
     "zoom": "ズーム"
+  },
+  "translation": {
+    "show_translation": "翻訳を表示",
+    "show_original": "原文を表示",
+    "translated_from": "{{language}}から翻訳",
+    "translating": "翻訳中...",
+    "failed": "翻訳に失敗しました。",
+    "same_language": "このコンテンツはすでに選択した言語です。"
   },
   "user": {
     "capability_default": "デフォルト",

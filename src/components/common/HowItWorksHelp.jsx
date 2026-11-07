@@ -45,9 +45,9 @@ export default function HowItWorksHelp({
       {isOpen && (
         <ModalPortal>
           <div
-            className="modal-overlay"
+            className="modal-overlay modal-overlay--tall"
           onClick={() => setIsOpen(false)}
-          style={{ zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{ zIndex: 1000, display: 'flex', justifyContent: 'center' }}
           role="presentation"
         >
           <section

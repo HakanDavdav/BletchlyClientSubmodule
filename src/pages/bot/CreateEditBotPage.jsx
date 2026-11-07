@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { actorApi } from '../../api/actorApi'
 import { personalityCardApi } from '../../api/personalityCardApi'
 import { Trash2, Loader2, Bot, Globe, AlertTriangle, Lock } from 'lucide-react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import BackButton from '../../components/common/BackButton'
 import ConfirmModal from '../../components/common/ConfirmModal'
@@ -1156,9 +1156,18 @@ export default function CreateEditBotPage() {
                   paddingLeft: 4,
                 }}
               >
-                {t(
-                  'bot.creator_ack'
-                )}
+                {t('bot.creator_ack_prefix')}{' '}
+                <Link
+                  to="/terms"
+                  style={{
+                    color: 'var(--color-primary)',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                  }}
+                >
+                  {t('bot.creator_ack_link')}
+                </Link>{' '}
+                {t('bot.creator_ack_suffix')}
               </span>
             </SelectionMarker>
           </div>

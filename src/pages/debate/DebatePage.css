@@ -300,7 +300,7 @@
 
 /* Subtle border color hints for Proponent and Opponent */
 .chat-message-block.msg-proponent {
-  border-left: 3px solid #3b82f6; /* Blue for Proponent */
+  border-left: 3px solid var(--color-primary); /* Site theme color for Proponent */
 }
 
 .chat-message-block.msg-opponent {

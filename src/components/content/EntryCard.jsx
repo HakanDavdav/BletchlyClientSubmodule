@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Pencil, Trash2, MessageSquare, Smile, CirclePlus, CircleMinus, Brain, Star } from 'lucide-react'
+import { Pencil, Trash2, MessageSquare, Smile, CirclePlus, CircleMinus, Brain, Star, Loader2 } from 'lucide-react'
+import DeepSeekLogo from '../common/icons/DeepSeekLogo'
 import SynapseBrainIcon from '../common/SynapseBrainIcon'
 import { getShortTimeAgo } from '../../utils/formatTime'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -58,9 +59,60 @@ export default function EntryCard({
   const [isEditing, setIsEditing] = useState(false)
   const [localContent, setLocalContent] = useState(content)
   const queryClient = useQueryClient()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const { isFavourite, isPending: isFavouritePending, toggleFavourite } = useFavourite(contentItemId)
+
+  const targetLanguage = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0].toLowerCase()
+  const [translatedData, setTranslatedData] = useState(null)
+  const [showOriginal, setShowOriginal] = useState(false)
+  const [isTranslating, setIsTranslating] = useState(false)
+
+  useEffect(() => {
+    setTranslatedData(null)
+    setShowOriginal(false)
+  }, [content, localContent, targetLanguage])
+
+  const getLanguageName = (code) => {
+    if (!code) return ''
+    try {
+      const locale = i18n.resolvedLanguage || i18n.language || 'en'
+      return new Intl.DisplayNames([locale], { type: 'language' }).of(code) || code
+    } catch {
+      return code
+    }
+  }
+
+  const handleTranslate = async () => {
+    if (isTranslating) return
+    if (translatedData) {
+      setShowOriginal((prev) => !prev)
+      return
+    }
+
+    setIsTranslating(true)
+    try {
+      const res = await contentItemApi.translateEntry(contentItemId, targetLanguage)
+      const data = res.data?.data
+      if (!data) {
+        toast.error(t('translation.failed'))
+        return
+      }
+      if (data.detectedLanguage && data.detectedLanguage === targetLanguage) {
+        toast(t('translation.same_language'))
+        return
+      }
+      setTranslatedData(data)
+      setShowOriginal(false)
+    } catch {
+      toast.error(t('translation.failed'))
+    } finally {
+      setIsTranslating(false)
+    }
+  }
+
+  const isTranslatedView = Boolean(translatedData && !showOriginal)
+  const displayContent = isTranslatedView ? (translatedData.content ?? localContent) : localContent
 
   useEffect(() => {
     setLocalContent(content)
@@ -173,6 +225,46 @@ export default function EntryCard({
           </span>
         </div>
 
+        {!isEditing && !isDeletedEntry && localContent && (
+          <div className="translation-hint">
+            <DeepSeekLogo size={12} className="translation-hint__icon" aria-hidden="true" />
+            {isTranslatedView ? (
+              <>
+                {translatedData.detectedLanguage && (
+                  <span>
+                    {t('translation.translated_from', {
+                      language: getLanguageName(translatedData.detectedLanguage),
+                    })}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  className="translation-hint__action"
+                  onClick={handleTranslate}
+                >
+                  {t('translation.show_original')}
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                className="translation-hint__action"
+                onClick={handleTranslate}
+                disabled={isTranslating}
+              >
+                {isTranslating ? (
+                  <>
+                    <Loader2 size={12} className="translation-hint__spinner" />
+                    {t('translation.translating')}
+                  </>
+                ) : (
+                  t('translation.show_translation')
+                )}
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Content */}
         {isEditing ? (
           <div style={{ marginTop: 8, marginBottom: 8 }}>
@@ -182,13 +274,15 @@ export default function EntryCard({
               onSuccess={(newContent) => {
                 setIsEditing(false)
                 setLocalContent(newContent)
+                setTranslatedData(null)
+                setShowOriginal(false)
                 if (queryKey) queryClient.invalidateQueries({ queryKey })
               }}
               onCancel={() => setIsEditing(false)}
             />
           </div>
         ) : (
-          <p className="entry-card-content">{localContent || '—'}</p>
+          <p className="entry-card-content">{displayContent || '—'}</p>
         )}
 
         {/* Footer */}

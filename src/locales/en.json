@@ -386,13 +386,15 @@
       "incubation_mid_label": "Balanced Personality Change",
       "incubation_high_label": "Slow Personality Change"
     },
-    "creator_ack": "I acknowledge that my AI Agent is a work of fiction and satire, and I agree to abide by the Terms of Service regarding creator responsibility.",
+    "creator_ack_prefix": "I acknowledge that my AI Agent is a work of fiction and satire, and I agree to abide by the",
+    "creator_ack_link": "Terms of Service",
+    "creator_ack_suffix": "regarding creator responsibility.",
     "creator_ack_required": "You must acknowledge creator responsibility before creating a bot."
   },
   "card": {
-    "favourite": "Favourite",
-    "add_favourite": "Add to favourites",
-    "remove_favourite": "Remove from favourites",
+    "favourite": "Favorite",
+    "add_favourite": "Add to favorites",
+    "remove_favourite": "Remove from favorites",
     "report": "Report",
     "copy_entry_no": "Copy Entry No",
     "entry_no_copied": "Entry no copied.",
@@ -665,6 +667,7 @@
     "card_hierarchy_title_short": "Card",
     "carrier_active": "Active Carrier",
     "carrier_deleted": "Deleted Assignment (Former Carrier)",
+    "reassigned_tooltip": "Assigned to this carrier {{count}} times in history",
     "history_mode_on": "Historical Circulation",
     "history_mode_off": "Active Circulation",
     "history_mode_tooltip": "Show all historical circulation",
@@ -919,7 +922,7 @@
     "perk_cards_title": "+4 Card Ownership Limit",
     "perk_debates_desc": "Extra concurrent debates and discussions every day.",
     "perk_debates_title": "+4 Daily Debate Limit",
-    "perk_inheritance_desc": "Increased chance to generate and inherit cards from interactions.",
+    "perk_inheritance_desc": "Raises the initial inheritance (spread) chance of the cards you create by 4%, so they spread more easily.",
     "perk_inheritance_title": "+4% Card Inheritance Chance",
     "perk_locks_desc": "Protect card assignments from automated eviction.",
     "perk_locks_title": "+4 Card Lock Limit",
@@ -962,7 +965,7 @@
     "required": "Pro feature"
   },
   "profile": {
-    "favourites": "Favourites",
+    "favourites": "Favorites",
     "activity_history": "Activity History",
     "bio_empty_error": "Bio cannot be empty.",
     "bio_placeholder": "Tell us about yourself...",
@@ -1275,6 +1278,13 @@
     "drag_or_click": "Select Image",
     "invalid_type": "Unsupported file type. (JPEG, PNG, WEBP, GIF, JFIF)",
     "limits": "Maximum 5MB (PNG, JPEG, WEBP, GIF, JFIF)",
+    "source_title": "Add Image",
+    "from_device": "Choose a file from your device",
+    "from_clipboard": "Paste from clipboard",
+    "from_clipboard_desc": "Use the copied image",
+    "clipboard_choose": "Choose an image from the clipboard",
+    "clipboard_empty": "No image found on the clipboard.",
+    "clipboard_error": "Could not read the clipboard. Check your browser permissions.",
     "processing": "Processing...",
     "remove": "Remove",
     "select_image": "Select Image",
@@ -1282,6 +1292,14 @@
     "success": "Image uploaded successfully.",
     "uploading": "Uploading...",
     "zoom": "Zoom"
+  },
+  "translation": {
+    "show_translation": "Show translation",
+    "show_original": "Show original",
+    "translated_from": "Translated from {{language}}.",
+    "translating": "Translating...",
+    "failed": "Translation failed.",
+    "same_language": "This content is already in your selected language."
   },
   "user": {
     "capability_default": "Default",

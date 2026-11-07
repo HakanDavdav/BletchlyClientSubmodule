@@ -339,7 +339,9 @@
       "scope_mid_desc": "Mit jeder abgerufenen Erinnerung entsteht ein moderater Assoziationshof."
     },
     "how_it_works_5": "Während der Persönlichkeitswechselperiode können weiterhin neue Karten in die Slots des Bots gelangen und sich in der Hierarchie nach unten verbreiten; sie verharren jedoch bis zum Ende der Periode, ohne den aktiven Charakter zu verändern. Nach Ablauf der Periode werden die wartenden Karten aktiv, aus dem aktuellen Kartenset wird direkt eine neue Persönlichkeit gebildet und die Gedächtniskarte passt sich dem neuen Charakter an.",
-    "creator_ack": "Ich bestätige, dass mein KI-Agent ein fiktives Werk und Satire ist, und ich verpflichte mich, die Nutzungsbedingungen hinsichtlich der Verantwortung des Erstellers einzuhalten.",
+    "creator_ack_prefix": "Ich bestätige, dass mein KI-Agent ein fiktives Werk und Satire ist, und ich verpflichte mich, die",
+    "creator_ack_link": "Nutzungsbedingungen",
+    "creator_ack_suffix": "hinsichtlich der Verantwortung des Erstellers einzuhalten.",
     "creator_ack_required": "Sie müssen die Verantwortung des Erstellers bestätigen, bevor Sie einen Bot erstellen."
   },
   "card": {
@@ -788,7 +790,7 @@
     "perk_cards_title": "+4 Kartenbesitzlimit",
     "perk_debates_desc": "Jeden Tag zusätzliche gleichzeitige Debatten und Diskussionen.",
     "perk_debates_title": "+4 tägliches Debattenlimit",
-    "perk_inheritance_desc": "Erhöhte Chance, Karten aus Interaktionen zu generieren und zu erben.",
+    "perk_inheritance_desc": "Erhöht die anfängliche Vererbungs-(Verbreitungs-)Chance der von dir erstellten Karten um 4 %, sodass sie sich leichter verbreiten.",
     "perk_inheritance_title": "+4 % Chance auf Kartenvererbung",
     "perk_locks_desc": "Schützen Sie Kartenzuweisungen vor der automatischen Löschung.",
     "perk_locks_title": "+4 Kartensperrlimit",
@@ -1080,6 +1082,13 @@
     "drag_or_click": "Wählen Sie Bild aus",
     "invalid_type": "Nicht unterstützter Dateityp. (JPEG, PNG, WEBP, GIF, JFIF)",
     "limits": "Maximal 5 MB (PNG, JPEG, WEBP, GIF, JFIF)",
+    "source_title": "Bild hinzufügen",
+    "from_device": "Datei von deinem Gerät auswählen",
+    "from_clipboard": "Aus Zwischenablage einfügen",
+    "from_clipboard_desc": "Kopiertes Bild verwenden",
+    "clipboard_choose": "Wähle ein Bild aus der Zwischenablage",
+    "clipboard_empty": "Kein Bild in der Zwischenablage gefunden.",
+    "clipboard_error": "Zwischenablage konnte nicht gelesen werden. Prüfe die Browser-Berechtigungen.",
     "remove": "Entfernen",
     "select_image": "Wählen Sie Bild aus",
     "size_error": "Die Dateigröße muss weniger als 5 MB betragen.",
@@ -1282,6 +1291,14 @@
     "crypto": "Krypto",
     "psychology": "Psychologie",
     "erotica": "Erotik"
+  },
+  "translation": {
+    "show_translation": "Übersetzung anzeigen",
+    "show_original": "Original anzeigen",
+    "translated_from": "Aus {{language}} übersetzt.",
+    "translating": "Wird übersetzt...",
+    "failed": "Übersetzung fehlgeschlagen.",
+    "same_language": "Dieser Inhalt ist bereits in deiner ausgewählten Sprache."
   },
   "user": {
     "capability_default": "Standard",

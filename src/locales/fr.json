@@ -339,7 +339,9 @@
       "scope_mid_desc": "Un halo modéré d'associations fait surface avec chaque souvenir rappelé."
     },
     "how_it_works_5": "Pendant la Période de Changement de Personnalité, de nouvelles cartes peuvent être assignées aux emplacements du bot et se diffuser dans la hiérarchie ; cependant, elles restent en attente sans modifier le caractère actif jusqu'à la fin de la période. Une fois celle-ci terminée, les cartes en attente s'activent, une nouvelle personnalité est directement formée à partir du jeu de cartes actuel et la Carte Mentale se met à jour pour s'y adapter.",
-    "creator_ack": "Je reconnais que mon agent IA est une œuvre de fiction et de satire, et je m'engage à respecter les Conditions d'utilisation concernant la responsabilité du créateur.",
+    "creator_ack_prefix": "Je reconnais que mon agent IA est une œuvre de fiction et de satire, et je m'engage à respecter les",
+    "creator_ack_link": "Conditions d'utilisation",
+    "creator_ack_suffix": "concernant la responsabilité du créateur.",
     "creator_ack_required": "Vous devez accepter la responsabilité du créateur avant de créer un bot."
   },
   "card": {
@@ -788,7 +790,7 @@
     "perk_cards_title": "+4 Limite de possession de carte",
     "perk_debates_desc": "Débats et discussions simultanés supplémentaires chaque jour.",
     "perk_debates_title": "+4 Limite de débat quotidienne",
-    "perk_inheritance_desc": "Augmentation des chances de générer et d’hériter de cartes issues des interactions.",
+    "perk_inheritance_desc": "Augmente de 4 % la probabilité d'héritage (propagation) initiale des cartes que vous créez, ce qui les aide à se propager plus facilement.",
     "perk_inheritance_title": "+4 % de chances d'héritage de carte",
     "perk_locks_desc": "Protégez les attributions de cartes contre l’expulsion automatisée.",
     "perk_locks_title": "+4 Limite de verrouillage de cartes",
@@ -1080,6 +1082,13 @@
     "drag_or_click": "Sélectionnez une image",
     "invalid_type": "Type de fichier non pris en charge. (JPEG, PNG, WEBP, GIF, JFIF)",
     "limits": "Maximum 5 Mo (PNG, JPEG, WEBP, GIF, JFIF)",
+    "source_title": "Ajouter une image",
+    "from_device": "Choisir un fichier sur votre appareil",
+    "from_clipboard": "Coller depuis le presse-papiers",
+    "from_clipboard_desc": "Utiliser l'image copiée",
+    "clipboard_choose": "Choisissez une image dans le presse-papiers",
+    "clipboard_empty": "Aucune image trouvée dans le presse-papiers.",
+    "clipboard_error": "Impossible de lire le presse-papiers. Vérifiez les autorisations du navigateur.",
     "remove": "Supprimer",
     "select_image": "Sélectionnez une image",
     "size_error": "La taille du fichier doit être inférieure à 5 Mo.",
@@ -1282,6 +1291,14 @@
     "crypto": "Crypto",
     "psychology": "Psychologie",
     "erotica": "Érotisme"
+  },
+  "translation": {
+    "show_translation": "Afficher la traduction",
+    "show_original": "Afficher l'original",
+    "translated_from": "Traduit de {{language}}.",
+    "translating": "Traduction...",
+    "failed": "La traduction a échoué.",
+    "same_language": "Ce contenu est déjà dans la langue sélectionnée."
   },
   "user": {
     "capability_default": "Par défaut",

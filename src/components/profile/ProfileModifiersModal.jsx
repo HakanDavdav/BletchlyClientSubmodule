@@ -237,7 +237,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
 
   return (
     <ModalPortal>
-      <div className="modal-overlay" onClick={onClose} style={{ zIndex: 100 }}>
+      <div className="modal-overlay modal-overlay--tall" onClick={onClose} style={{ zIndex: 100 }}>
       <div
         className="modal-box"
         onClick={(e) => e.stopPropagation()}

@@ -45,27 +45,32 @@ function isNodeFossil(child) {
   )
 }
 
-function hasActiveDescendantsCard(node) {
+function hasActiveDescendantsCard(node, visited = new Set()) {
   if (!node || !node.children || node.children.length === 0) return false
+  if (visited.has(node.id)) return false
+  visited.add(node.id)
   for (const child of node.children) {
-    if (!isNodeFossil(child)) return true
-    if (hasActiveDescendantsCard(child)) return true
+    if (!isNodeFossil(child) && !child.isDeleted && !child.IsDeleted) return true
+    if (hasActiveDescendantsCard(child, visited)) return true
   }
   return false
 }
 
-function collectPromotedActiveCardChildren(fossilNode, ancestorsSoFar = [], expandedAncestorIds = new Set()) {
+function collectPromotedActiveCardChildren(fossilNode, ancestorsSoFar = [], expandedAncestorIds = new Set(), visited = new Set()) {
+  if (!fossilNode || visited.has(fossilNode.id)) return []
+  visited.add(fossilNode.id)
   const currentAncestors = [...ancestorsSoFar, fossilNode]
   const promoted = []
 
   if (fossilNode.children && fossilNode.children.length > 0) {
     for (const child of fossilNode.children) {
-      if (!isNodeFossil(child)) {
+      if (visited.has(child.id)) continue
+      if (!isNodeFossil(child) && !child.isDeleted && !child.IsDeleted) {
         promoted.push({
           ...child,
           _fossilAncestors: currentAncestors,
         })
-      } else if (hasActiveDescendantsCard(child)) {
+      } else if (hasActiveDescendantsCard(child, visited)) {
         if (expandedAncestorIds.has(child.id)) {
           promoted.push({
             ...child,
@@ -73,7 +78,7 @@ function collectPromotedActiveCardChildren(fossilNode, ancestorsSoFar = [], expa
             _fossilAncestors: currentAncestors,
           })
         } else {
-          promoted.push(...collectPromotedActiveCardChildren(child, currentAncestors, expandedAncestorIds))
+          promoted.push(...collectPromotedActiveCardChildren(child, currentAncestors, expandedAncestorIds, visited))
         }
       }
     }
@@ -83,7 +88,18 @@ function collectPromotedActiveCardChildren(fossilNode, ancestorsSoFar = [], expa
 }
 
 // ── Tree Builder Algorithm ──────────────────────────────────────────────────
-function buildCardHierarchyTree(card, includeHistory = false) {
+function wouldCreateCycle(parent, child) {
+  let curr = parent
+  while (curr) {
+    if (curr === child || curr.id === child.id || (curr.targetId && curr.targetId === child.targetId)) {
+      return true
+    }
+    curr = curr._parent
+  }
+  return false
+}
+
+function buildCardHierarchyTree(card, includeHistory = false, showFossils = false) {
   if (!card) return null
 
   const root = {
@@ -95,9 +111,23 @@ function buildCardHierarchyTree(card, includeHistory = false) {
     children: [],
   }
 
+  const isAssignmentFossil = (ass) => {
+    const isBot = Boolean(ass.botId || ass.bot)
+    if (isBot) {
+      return Boolean(ass.bot?.isDormant ?? ass.bot?.IsDormant ?? ass.isDormant ?? false)
+    }
+    return Boolean(ass.tribe?.isDormant ?? ass.tribe?.IsDormant ?? ass.isDormant ?? false)
+  }
+
   const rawOwners = Array.isArray(card.owners) ? card.owners : []
   const rawAssignments = Array.isArray(card.assignments)
-    ? (includeHistory ? card.assignments : card.assignments.filter((ass) => !ass.isDeleted && !ass.IsDeleted))
+    ? card.assignments.filter((ass) => {
+        const isDel = Boolean(ass.isDeleted || ass.IsDeleted)
+        if (!isDel) return true
+        if (includeHistory) return true
+        if (showFossils && isAssignmentFossil(ass)) return true
+        return false
+      })
     : []
 
   const ownerNodesByOwnershipId = new Map()
@@ -121,6 +151,7 @@ function buildCardHierarchyTree(card, includeHistory = false) {
       hasFossilChildren: Boolean(owner.hasFossilChildren ?? owner.HasFossilChildren),
       hasDeletedChildren: Boolean(owner.hasDeletedChildren ?? owner.HasDeletedChildren),
       children: [],
+      _parent: root,
     }
     if (node.ownershipId) ownerNodesByOwnershipId.set(node.ownershipId, node)
     if (node.actorId) ownerNodesByActorId.set(node.actorId, node)
@@ -131,72 +162,134 @@ function buildCardHierarchyTree(card, includeHistory = false) {
     root.children.push(ownerNode)
   }
 
-  const assignmentNodes = rawAssignments.map((ass, idx) => {
+  // 1. Group assignments by (parentSourceId, targetId) to deduplicate multiple assignments
+  // to the SAME target under the SAME parent (sibling deduplication).
+  const assignmentsByParentAndTarget = new Map()
+  for (const ass of rawAssignments) {
     const isBot = Boolean(ass.botId || ass.bot)
-    const targetId = isBot ? ass.botId : ass.tribeId
-    const targetData = isBot ? ass.bot : ass.tribe
+    const rawTargetId = isBot ? ass.botId : ass.tribeId
+    const targetId = rawTargetId ? String(rawTargetId).toLowerCase() : null
+    if (!targetId) continue
 
-    return {
-      id: `assignment_${ass.assignmentId || idx}`,
-      assignmentId: ass.assignmentId,
-      ownershipId: ass.ownershipId ? String(ass.ownershipId).toLowerCase() : null,
+    const sourceId = (ass.sourceActorId || ass.sourceTribeId || ass.ownershipId || 'root').toLowerCase()
+    const groupKey = `${sourceId}___${targetId}`
+
+    if (!assignmentsByParentAndTarget.has(groupKey)) {
+      assignmentsByParentAndTarget.set(groupKey, [ass])
+    } else {
+      assignmentsByParentAndTarget.get(groupKey).push(ass)
+    }
+  }
+
+  // 2. Build deduplicated canonical assignment nodes per (parent, target)
+  const assignmentNodes = []
+  for (const [groupKey, list] of assignmentsByParentAndTarget.entries()) {
+    // Sort logic:
+    // a. Active assignments (!isDeleted) come before deleted assignments
+    // b. More recent assignedAt comes first
+    list.sort((a, b) => {
+      const aDeleted = Boolean(a.isDeleted || a.IsDeleted)
+      const bDeleted = Boolean(b.isDeleted || b.IsDeleted)
+      if (!aDeleted && bDeleted) return -1
+      if (aDeleted && !bDeleted) return 1
+      const aDate = a.assignedAt ? new Date(a.assignedAt).getTime() : 0
+      const bDate = b.assignedAt ? new Date(b.assignedAt).getTime() : 0
+      return bDate - aDate
+    })
+
+    const canonical = list[0]
+    const isBot = Boolean(canonical.botId || canonical.bot)
+    const rawTargetId = isBot ? canonical.botId : canonical.tribeId
+    const targetId = rawTargetId ? String(rawTargetId).toLowerCase() : null
+    const targetData =
+      (isBot ? canonical.bot : canonical.tribe) ||
+      list.find((a) => (isBot ? a.bot : a.tribe))?.[isBot ? 'bot' : 'tribe']
+
+    const hasFossilChildren = list.some((a) => Boolean(a.hasFossilChildren ?? a.HasFossilChildren))
+    const hasDeletedChildren = list.some((a) => Boolean(a.hasDeletedChildren ?? a.HasDeletedChildren))
+    const isLocked = list.some((a) => Boolean(a.isLocked))
+    const isDeleted = list.every((a) => Boolean(a.isDeleted || a.IsDeleted))
+
+    assignmentNodes.push({
+      id: `assignment_${canonical.assignmentId || groupKey}`,
+      assignmentId: canonical.assignmentId,
+      ownershipId: canonical.ownershipId ? String(canonical.ownershipId).toLowerCase() : null,
       nodeType: isBot ? 'bot' : 'tribe',
-      targetId: targetId ? String(targetId).toLowerCase() : null,
-      sourceActorId: ass.sourceActorId ? String(ass.sourceActorId).toLowerCase() : null,
-      sourceTribeId: ass.sourceTribeId ? String(ass.sourceTribeId).toLowerCase() : null,
+      targetId: targetId,
+      sourceActorId: canonical.sourceActorId ? String(canonical.sourceActorId).toLowerCase() : null,
+      sourceTribeId: canonical.sourceTribeId ? String(canonical.sourceTribeId).toLowerCase() : null,
       data:
         targetData ||
         (isBot
           ? { actorId: targetId, profileName: 'Bilinmeyen Bot' }
           : { tribeId: targetId, tribeName: 'Bilinmeyen Klan' }),
-      bot: ass.bot,
-      tribe: ass.tribe,
-      isDeleted: Boolean(ass.isDeleted || ass.IsDeleted),
-      isLocked: Boolean(ass.isLocked),
-      assignedAt: ass.assignedAt,
-      hasFossilChildren: Boolean(ass.hasFossilChildren ?? ass.HasFossilChildren),
-      hasDeletedChildren: Boolean(ass.hasDeletedChildren ?? ass.HasDeletedChildren),
+      bot: isBot ? targetData : null,
+      tribe: !isBot ? targetData : null,
+      isDeleted: isDeleted,
+      isLocked: isLocked,
+      assignedAt: canonical.assignedAt,
+      hasFossilChildren: hasFossilChildren,
+      hasDeletedChildren: hasDeletedChildren,
       children: [],
-    }
-  })
+      allAssignmentIds: list.map((a) => a.assignmentId),
+      reassignmentCount: list.length,
+      _parent: null,
+    })
+  }
 
-  // Index assignment nodes by targetId
+  // 3. Index assignment nodes by targetId for child lookups
   const nodesByTargetId = new Map()
   for (const node of assignmentNodes) {
     if (node.targetId) {
       if (!nodesByTargetId.has(node.targetId)) {
-        nodesByTargetId.set(node.targetId, [])
+        nodesByTargetId.set(node.targetId, [node])
+      } else {
+        nodesByTargetId.get(node.targetId).push(node)
       }
-      nodesByTargetId.get(node.targetId).push(node)
     }
   }
 
-  // Connect assignments:
-  // 1. If sourceTribeId matches another assignment's targetId -> child of that assignment
-  // 2. Else if sourceActorId matches another assignment's targetId -> child of that assignment
-  // 3. Else if ownershipId matches an owner node -> child of that owner node
-  // 4. Else if sourceActorId matches an owner's actorId -> child of that owner node
-  // 5. Else child of root (card)
+  // 4. Connect assignments to their parents:
+  // - Prefer sourceActorId if it matches an existing assignment node in the tree
+  // - Else if sourceTribeId matches an existing assignment node in the tree
+  // - Else if ownershipId matches an owner node
+  // - Else if sourceActorId matches an owner's actorId
+  // - Else child of root (card)
   for (const node of assignmentNodes) {
     let attached = false
 
-    if (node.sourceTribeId) {
-      const parentList = nodesByTargetId.get(node.sourceTribeId)
-      if (parentList && parentList.length > 0) {
-        parentList[0].children.push(node)
-        attached = true
+    if (node.sourceActorId) {
+      const parentNodes = nodesByTargetId.get(node.sourceActorId)
+      if (parentNodes && parentNodes.length > 0) {
+        for (const parentNode of parentNodes) {
+          if (parentNode !== node && !wouldCreateCycle(parentNode, node)) {
+            node._parent = parentNode
+            parentNode.children.push(node)
+            attached = true
+            break
+          }
+        }
       }
-    } else if (node.sourceActorId) {
-      const parentList = nodesByTargetId.get(node.sourceActorId)
-      if (parentList && parentList.length > 0) {
-        parentList[0].children.push(node)
-        attached = true
+    }
+
+    if (!attached && node.sourceTribeId) {
+      const parentNodes = nodesByTargetId.get(node.sourceTribeId)
+      if (parentNodes && parentNodes.length > 0) {
+        for (const parentNode of parentNodes) {
+          if (parentNode !== node && !wouldCreateCycle(parentNode, node)) {
+            node._parent = parentNode
+            parentNode.children.push(node)
+            attached = true
+            break
+          }
+        }
       }
     }
 
     if (!attached && node.ownershipId) {
       const ownerNode = ownerNodesByOwnershipId.get(node.ownershipId)
-      if (ownerNode) {
+      if (ownerNode && !wouldCreateCycle(ownerNode, node)) {
+        node._parent = ownerNode
         ownerNode.children.push(node)
         attached = true
       }
@@ -204,13 +297,15 @@ function buildCardHierarchyTree(card, includeHistory = false) {
 
     if (!attached && node.sourceActorId) {
       const ownerNode = ownerNodesByActorId.get(node.sourceActorId)
-      if (ownerNode) {
+      if (ownerNode && !wouldCreateCycle(ownerNode, node)) {
+        node._parent = ownerNode
         ownerNode.children.push(node)
         attached = true
       }
     }
 
     if (!attached) {
+      node._parent = root
       root.children.push(node)
     }
   }
@@ -238,7 +333,7 @@ function CardTreeNode({
   const [localFossilExpanded, setLocalFossilExpanded] = useState(false)
   const [fossilVisibleLimit, setFossilVisibleLimit] = useState(5)
   const [isLoadingFossils, setIsLoadingFossils] = useState(false)
-  const [fetchedNodeFossils, setFetchedNodeFossils] = useState(false)
+  const [fetchedModes, setFetchedModes] = useState({ dormant: false, history: false })
 
   const sourceActorId =
     node.nodeType === 'owner'
@@ -265,7 +360,8 @@ function CardTreeNode({
 
   const allChildren = node.children || []
   const directActiveChildren = allChildren.filter((c) => !isNodeFossil(c) && !c.isDeleted && !c.IsDeleted)
-  const allFossilChildren = allChildren.filter((c) => isNodeFossil(c) && !c.isDeleted && !c.IsDeleted)
+  // Fosil devirler: hedef bot/klan fosil ise silinmiş olsa bile fosil olarak kabul edilir
+  const allFossilChildren = allChildren.filter((c) => isNodeFossil(c))
   const allDeletedChildren = allChildren.filter((c) => Boolean(c.isDeleted || c.IsDeleted))
 
   const pureFossilChildren = []
@@ -304,12 +400,19 @@ function CardTreeNode({
 
   const hasFossil = hasFossilHint || totalPureFossils > 0
   const hasDeleted = hasDeletedHint || totalDeleted > 0
-  const showArchiveGroup = (showFossils && hasFossil) || (includeHistory && hasDeleted) || totalPureFossils > 0 || totalDeleted > 0
+  const canShowFossils = Boolean(showFossils && hasFossil)
+  const canShowDeleted = Boolean(includeHistory && hasDeleted)
+  const showBoth = canShowFossils && canShowDeleted
+  const showArchiveGroup = canShowFossils || canShowDeleted
   const hasChildren = totalActive > 0 || showArchiveGroup
 
   const allArchiveChildren = [
-    ...pureFossilChildren.map((child) => ({ kind: 'fossil', key: `fossil-${child.id}`, data: child })),
-    ...allDeletedChildren.map((child) => ({ kind: 'deleted', key: `deleted-${child.id}`, data: child })),
+    ...(canShowFossils ? pureFossilChildren.map((child) => ({ kind: 'fossil', key: `fossil-${child.id}`, data: child })) : []),
+    ...(canShowDeleted
+      ? allDeletedChildren
+          .filter((child) => !canShowFossils || !isNodeFossil(child))
+          .map((child) => ({ kind: 'deleted', key: `deleted-${child.id}`, data: child }))
+      : []),
   ]
   const visibleArchiveChildren = allArchiveChildren.slice(0, fossilVisibleLimit)
   const remainingArchiveCount = Math.max(0, allArchiveChildren.length - fossilVisibleLimit)
@@ -326,13 +429,19 @@ function CardTreeNode({
       setFossilVisibleLimit(5)
     }
 
-    if (nextState && !fetchedNodeFossils && onLoadNodeAssignments && sourceActorId) {
+    const needDormant = canShowFossils && !fetchedModes.dormant
+    const needHistory = canShowDeleted && !fetchedModes.history
+
+    if (nextState && (needDormant || needHistory) && onLoadNodeAssignments && sourceActorId) {
       setIsLoadingFossils(true)
       try {
-        const fetchDormant = Boolean(hasFossilHint || totalPureFossils > 0 || showFossils)
-        const fetchHistory = Boolean(hasDeletedHint || totalDeleted > 0 || includeHistory)
+        const fetchDormant = Boolean(canShowFossils)
+        const fetchHistory = Boolean(canShowDeleted)
         await onLoadNodeAssignments(sourceActorId, fetchDormant, fetchHistory)
-        setFetchedNodeFossils(true)
+        setFetchedModes((prev) => ({
+          dormant: prev.dormant || canShowFossils,
+          history: prev.history || canShowDeleted,
+        }))
       } finally {
         setIsLoadingFossils(false)
       }
@@ -465,6 +574,48 @@ function CardTreeNode({
                 flexShrink: 0,
               }}
             />
+          </div>
+        )}
+
+        {/* Kavisli Döngü Yayı (Self-Loop Curve) - Tekrar atanan birimler için */}
+        {node.reassignmentCount > 1 && (
+          <div
+            className="vtree-self-loop-indicator"
+            title={t('hierarchy.reassigned_tooltip', { count: node.reassignmentCount })}
+            style={{
+              position: 'absolute',
+              top: -16,
+              right: 14,
+              display: 'inline-flex',
+              alignItems: 'center',
+              zIndex: 5,
+              pointerEvents: 'auto',
+              cursor: 'help',
+            }}
+          >
+            <svg
+              width="32"
+              height="20"
+              viewBox="0 0 32 20"
+              fill="none"
+              style={{ overflow: 'visible' }}
+            >
+              {/* Kavisli yay yolu: Düğümün üst kenarından çıkıp yarım daireyle dönerek tekrar düğüme saplanan ok */}
+              <path
+                d="M 5 19 C 2 3, 30 3, 26 16"
+                stroke={node.isDeleted ? 'var(--color-error)' : 'var(--color-primary)'}
+                strokeWidth="1.5"
+                strokeDasharray="2.5 1.5"
+                strokeLinecap="round"
+                style={{ opacity: 0.65 }}
+              />
+              {/* Ok ucu (aşağıya/karta doğru yönelen) */}
+              <polygon
+                points="23,13 29,13 26,18"
+                fill={node.isDeleted ? 'var(--color-error)' : 'var(--color-primary)'}
+                style={{ opacity: 0.85 }}
+              />
+            </svg>
           </div>
         )}
 
@@ -608,10 +759,15 @@ function CardTreeNode({
               e.stopPropagation()
               const nextCollapsed = !isCollapsed
               setIsCollapsed(nextCollapsed)
-              if (!nextCollapsed && (showFossils || includeHistory) && !fetchedNodeFossils && onLoadNodeAssignments && sourceActorId) {
+              const needDormant = canShowFossils && !fetchedModes.dormant
+              const needHistory = canShowDeleted && !fetchedModes.history
+              if (!nextCollapsed && (needDormant || needHistory) && onLoadNodeAssignments && sourceActorId) {
                 try {
-                  await onLoadNodeAssignments(sourceActorId, showFossils, includeHistory)
-                  setFetchedNodeFossils(true)
+                  await onLoadNodeAssignments(sourceActorId, Boolean(canShowFossils), Boolean(canShowDeleted))
+                  setFetchedModes((prev) => ({
+                    dormant: prev.dormant || canShowFossils,
+                    history: prev.history || canShowDeleted,
+                  }))
                 } catch (err) {
                   console.error('Failed to expand node assignments:', err)
                 }
@@ -689,27 +845,27 @@ function CardTreeNode({
                     onClick={handleToggleFossils}
                     disabled={isLoadingFossils}
                     aria-label={
-                      hasFossil && hasDeleted
+                      showBoth
                         ? (effectiveFossilExpanded ? t('hierarchy.hide_archive') : t('hierarchy.show_archive'))
-                        : hasFossil
+                        : canShowFossils
                           ? (effectiveFossilExpanded ? t('hierarchy.hide_fossils') : t('hierarchy.show_fossils'))
                           : (effectiveFossilExpanded ? t('hierarchy.hide_deleted') : t('hierarchy.show_deleted'))
                     }
                     title={
-                      hasFossil && hasDeleted
+                      showBoth
                         ? (effectiveFossilExpanded ? t('hierarchy.hide_archive') : t('hierarchy.show_archive'))
-                        : hasFossil
+                        : canShowFossils
                           ? (effectiveFossilExpanded ? t('hierarchy.hide_fossils') : t('hierarchy.show_fossils'))
                           : (effectiveFossilExpanded ? t('hierarchy.hide_deleted') : t('hierarchy.show_deleted'))
                     }
                   >
-                    {hasFossil && hasDeleted ? (
+                    {showBoth ? (
                       <>
                         <TRexSkullIcon className="badge-fossil-icon" />
                         <span style={{ opacity: 0.5, fontSize: 11, lineHeight: 1 }}>/</span>
                         <Trash2 size={13} strokeWidth={2.2} style={{ flexShrink: 0 }} />
                       </>
-                    ) : hasFossil ? (
+                    ) : canShowFossils ? (
                       <TRexSkullIcon className="badge-fossil-icon" />
                     ) : (
                       <Trash2 size={13} strokeWidth={2.2} style={{ flexShrink: 0 }} />
@@ -718,7 +874,7 @@ function CardTreeNode({
                       <div className="spinner spinner-sm" style={{ width: 12, height: 12, borderWidth: 1.5 }} />
                     ) : (
                       effectiveFossilExpanded && (
-                        hasFossil && hasDeleted ? (
+                        showBoth ? (
                           (totalPureFossils > 0 || totalDeleted > 0) && (
                             <span>
                               {totalPureFossils > 0 ? totalPureFossils : 0}
@@ -726,7 +882,7 @@ function CardTreeNode({
                               {totalDeleted > 0 ? totalDeleted : 0}
                             </span>
                           )
-                        ) : hasFossil ? (
+                        ) : canShowFossils ? (
                           totalPureFossils > 0 && <span>{totalPureFossils}</span>
                         ) : (
                           totalDeleted > 0 && <span>{totalDeleted}</span>
@@ -915,7 +1071,7 @@ export default function PersonalityCardHierarchyPage() {
   }, [cardData, extraAssignments])
 
   const handleLoadNodeAssignments = useCallback(async (sourceActorId, fetchFossils = false, fetchHistory = false) => {
-    if (!cardId || !sourceActorId) return
+    if (!cardId || !sourceActorId) return 0
     try {
       const res = await personalityCardApi.getNodeAssignments(cardId, sourceActorId, fetchFossils, fetchHistory)
       const assignments = res.data?.data || []
@@ -926,14 +1082,16 @@ export default function PersonalityCardHierarchyPage() {
           return [...prev, ...newlyFound]
         })
       }
+      return assignments.length
     } catch (err) {
       console.error('Failed to load node assignments:', err)
+      return 0
     }
   }, [cardId])
 
   const treeRoot = useMemo(() => {
-    return buildCardHierarchyTree(mergedCardData, includeHistory)
-  }, [mergedCardData, includeHistory])
+    return buildCardHierarchyTree(mergedCardData, includeHistory, showFossils)
+  }, [mergedCardData, includeHistory, showFossils])
 
   const fossilCount = useMemo(() => {
     const countFossils = (node) => {
@@ -947,9 +1105,15 @@ export default function PersonalityCardHierarchyPage() {
   }, [treeRoot])
 
   const deletedAssignmentCount = useMemo(() => {
-    if (!mergedCardData || !Array.isArray(mergedCardData.assignments)) return 0
-    return mergedCardData.assignments.filter((ass) => ass.isDeleted || ass.IsDeleted).length
-  }, [mergedCardData])
+    const countDeleted = (node) => {
+      if (!node || !node.children) return 0
+      return node.children.reduce(
+        (sum, child) => sum + (Boolean(child.isDeleted) ? 1 : 0) + countDeleted(child),
+        0
+      )
+    }
+    return countDeleted(treeRoot)
+  }, [treeRoot])
 
   // İlk giriş (oto-zoom) ile Default butonunun birebir aynı görünümü üretmesi için ortak rutin:
   // içeriğe sığacak zoom hesapla → yatayda ortala (pan) → dikeyde başlangıcı en üstte tut.
