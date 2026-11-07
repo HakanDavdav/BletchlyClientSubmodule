@@ -223,17 +223,10 @@ export default function InitProfilePage() {
         <button
           type="submit"
           disabled={initProfileMutation.isPending || initProfileMutation.isSuccess}
-          className="btn btn-primary"
+          className="btn btn-primary btn-form-submit"
           style={{
-            width: '100%',
-            padding: '13px 24px',
-            fontSize: 14,
-            fontWeight: 600,
-            gap: 8,
-            borderRadius: 12,
             opacity: (initProfileMutation.isPending || initProfileMutation.isSuccess) ? 0.7 : 1,
             cursor: (initProfileMutation.isPending || initProfileMutation.isSuccess) ? 'not-allowed' : 'pointer',
-            justifyContent: 'center',
             marginTop: 8,
           }}
         >

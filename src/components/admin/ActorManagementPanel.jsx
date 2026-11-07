@@ -26,31 +26,16 @@ function CleanupBlock({ title, description, label, placeholder, value, onChange,
           {label}
         </label>
         <input
-          className="input w-full"
+          className="input w-full admin-input admin-input--mono"
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          style={{
-            padding: '8px 12px',
-            fontSize: 13,
-            borderRadius: 'var(--radius-md)',
-            background: 'var(--color-surface)',
-            borderColor: 'var(--color-border)',
-            color: 'var(--color-text)',
-            fontFamily: 'monospace',
-          }}
         />
       </div>
       <button
-        className="btn btn-danger"
+        className="btn btn-danger admin-btn"
         onClick={onConfirm}
         disabled={loading}
-        style={{
-          fontSize: 11.5,
-          fontWeight: 500,
-          padding: '4px 10px',
-          borderRadius: 'var(--radius-md)',
-        }}
       >
         {loading ? t('admin.processing') : buttonLabel}
       </button>
@@ -242,24 +227,13 @@ export default function ActorManagementPanel() {
   const isReduceLoading = reduceContentMutation.isPending
 
   return (
-    <div
-      className="card-surface"
-      style={{
-        padding: 24,
-        borderRadius: 'var(--radius-xl)',
-        background: 'var(--color-surface)',
-        border: '1px solid var(--color-border)',
-      }}
-    >
+    <div className="card-surface admin-panel-card">
       {/* Header */}
-      <div
-        className="border-b"
-        style={{ borderColor: 'var(--color-border)', marginBottom: '12px', paddingBottom: '8px' }}
-      >
-        <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: 'var(--color-text)' }}>
+      <div className="admin-panel-header">
+        <h2 className="admin-panel-title">
           {t('admin.actor_management_title')}
         </h2>
-        <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: '2px 0 0' }}>
+        <p className="admin-panel-subtitle">
           {t('admin.actor_management_desc')}
         </p>
       </div>
@@ -276,19 +250,10 @@ export default function ActorManagementPanel() {
               {t('admin.actor_id')}
             </label>
             <input
-              className="input w-full"
+              className="input w-full admin-input admin-input--mono"
               placeholder="e.g. 1847c130-aef0-4d9a-858f-0a02baf45dfd"
               value={pointActorId}
               onChange={(e) => setPointActorId(e.target.value)}
-              style={{
-                padding: '8px 12px',
-                fontSize: 13,
-                borderRadius: 'var(--radius-md)',
-                background: 'var(--color-surface)',
-                borderColor: 'var(--color-border)',
-                color: 'var(--color-text)',
-                fontFamily: 'monospace',
-              }}
             />
           </div>
 
@@ -298,32 +263,18 @@ export default function ActorManagementPanel() {
             </label>
             <input
               type="number"
-              className="input w-full"
+              className="input w-full admin-input"
               placeholder="e.g. 1500"
               value={points}
               onChange={(e) => setPoints(e.target.value)}
-              style={{
-                padding: '8px 12px',
-                fontSize: 13,
-                borderRadius: 'var(--radius-md)',
-                background: 'var(--color-surface)',
-                borderColor: 'var(--color-border)',
-                color: 'var(--color-text)',
-              }}
             />
           </div>
 
           <div className="flex">
             <button
-              className="btn btn-primary"
+              className="btn btn-primary admin-btn"
               onClick={handleSetPoints}
               disabled={isPointsLoading}
-              style={{
-                fontSize: 11.5,
-                fontWeight: 500,
-                padding: '4px 10px',
-                borderRadius: 'var(--radius-md)',
-              }}
             >
               {isPointsLoading ? t('admin.updating') : t('admin.update_point')}
             </button>
@@ -341,47 +292,26 @@ export default function ActorManagementPanel() {
               {t('admin.actor_id')}
             </label>
             <input
-              className="input w-full"
+              className="input w-full admin-input admin-input--mono"
               placeholder="e.g. 1847c130-aef0-4d9a-858f-0a02baf45dfd"
               value={premiumActorId}
               onChange={(e) => setPremiumActorId(e.target.value)}
-              style={{
-                padding: '8px 12px',
-                fontSize: 13,
-                borderRadius: 'var(--radius-md)',
-                background: 'var(--color-surface)',
-                borderColor: 'var(--color-border)',
-                color: 'var(--color-text)',
-                fontFamily: 'monospace',
-              }}
             />
           </div>
 
           <div className="flex gap-2">
             <button
-              className="btn btn-primary"
+              className="btn btn-primary admin-btn"
               onClick={() => handleSetPremium(true)}
               disabled={isPremiumLoading}
-              style={{
-                fontSize: 11.5,
-                fontWeight: 500,
-                padding: '4px 10px',
-                borderRadius: 'var(--radius-md)',
-              }}
             >
               {isPremiumLoading ? t('admin.updating') : t('admin.make_premium')}
             </button>
 
             <button
-              className="btn btn-secondary"
+              className="btn btn-secondary admin-btn"
               onClick={() => handleSetPremium(false)}
               disabled={isPremiumLoading}
-              style={{
-                fontSize: 11.5,
-                fontWeight: 500,
-                padding: '4px 10px',
-                borderRadius: 'var(--radius-md)',
-              }}
             >
               {t('admin.revoke_premium')}
             </button>
@@ -411,15 +341,9 @@ export default function ActorManagementPanel() {
 
           <div className="flex">
             <button
-              className="btn btn-primary"
+              className="btn btn-primary admin-btn"
               onClick={handleSeasonReset}
               disabled={isResetLoading}
-              style={{
-                fontSize: 11.5,
-                fontWeight: 500,
-                padding: '4px 10px',
-                borderRadius: 'var(--radius-md)',
-              }}
             >
               {isResetLoading
                 ? t('admin.season_reset_in_progress')
@@ -517,17 +441,9 @@ export default function ActorManagementPanel() {
                 min="0.01"
                 max="1"
                 step="0.01"
-                className="input w-full"
+                className="input w-full admin-input"
                 value={reduceKeepRatio}
                 onChange={(e) => setReduceKeepRatio(e.target.value)}
-                style={{
-                  padding: '8px 12px',
-                  fontSize: 13,
-                  borderRadius: 'var(--radius-md)',
-                  background: 'var(--color-surface)',
-                  borderColor: 'var(--color-border)',
-                  color: 'var(--color-text)',
-                }}
               />
             </div>
 
@@ -538,17 +454,9 @@ export default function ActorManagementPanel() {
               <input
                 type="number"
                 min="0"
-                className="input w-full"
+                className="input w-full admin-input"
                 value={reduceTargetPosts}
                 onChange={(e) => setReduceTargetPosts(e.target.value)}
-                style={{
-                  padding: '8px 12px',
-                  fontSize: 13,
-                  borderRadius: 'var(--radius-md)',
-                  background: 'var(--color-surface)',
-                  borderColor: 'var(--color-border)',
-                  color: 'var(--color-text)',
-                }}
               />
             </div>
 
@@ -559,46 +467,26 @@ export default function ActorManagementPanel() {
               <input
                 type="number"
                 min="0"
-                className="input w-full"
+                className="input w-full admin-input"
                 value={reduceTargetEntries}
                 onChange={(e) => setReduceTargetEntries(e.target.value)}
-                style={{
-                  padding: '8px 12px',
-                  fontSize: 13,
-                  borderRadius: 'var(--radius-md)',
-                  background: 'var(--color-surface)',
-                  borderColor: 'var(--color-border)',
-                  color: 'var(--color-text)',
-                }}
               />
             </div>
           </div>
 
           <div className="flex gap-2.5 flex-wrap">
             <button
-              className="btn btn-secondary"
+              className="btn btn-secondary admin-btn"
               onClick={() => runReduction(true)}
               disabled={isReduceLoading}
-              style={{
-                fontSize: 11.5,
-                fontWeight: 500,
-                padding: '4px 10px',
-                borderRadius: 'var(--radius-md)',
-              }}
             >
               {isReduceLoading ? t('admin.processing') : t('admin.preview')}
             </button>
 
             <button
-              className="btn btn-danger"
+              className="btn btn-danger admin-btn"
               onClick={() => setIsReduceConfirmOpen(true)}
               disabled={isReduceLoading}
-              style={{
-                fontSize: 11.5,
-                fontWeight: 500,
-                padding: '4px 10px',
-                borderRadius: 'var(--radius-md)',
-              }}
             >
               {isReduceLoading ? t('admin.reduction_running') : t('admin.run_reduction')}
             </button>

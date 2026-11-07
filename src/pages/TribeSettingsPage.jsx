@@ -484,18 +484,7 @@ export default function TribeSettingsPage() {
             {cardLockLimit != null && (
               <span
                 title={t('profile.card_assignment_lock_limit')}
-                style={{
-                  fontSize: 12,
-                  padding: '2px 8px',
-                  borderRadius: 12,
-                  background: 'var(--color-surface-raised)',
-                  color: 'var(--color-text-secondary)',
-                  border: '1px solid var(--color-border)',
-                  fontWeight: 600,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                }}
+                className="card-allowance-pill"
               >
                 <Lock size={12} style={{ opacity: 0.8 }} />
                 {t('card.total_lock_allowance')}: {cardLockLimit}
@@ -530,15 +519,7 @@ export default function TribeSettingsPage() {
           </p>
           <div style={{ marginTop: 18 }}>
             <label className="form-section-label">{t('tribe.memory_tuning')}</label>
-            <div
-              style={{
-                marginTop: 12,
-                display: 'flex',
-                flexDirection: isMobileScreen ? 'column' : 'row',
-                gap: 12,
-                alignItems: 'stretch',
-              }}
-            >
+            <div className="memory-tuning-row">
               <MemoryTuningSlider
                 title={t('tribe.incubation_title')}
                 description={t(
@@ -556,15 +537,7 @@ export default function TribeSettingsPage() {
                 style={sliderRowStyle}
               />
             </div>
-            <div
-              style={{
-                marginTop: 12,
-                display: 'flex',
-                flexDirection: isMobileScreen ? 'column' : 'row',
-                gap: 12,
-                alignItems: 'stretch',
-              }}
-            >
+            <div className="memory-tuning-row">
               <MemoryTuningSlider
                 title={t('tribe.affinity_bias_title')}
                 description={t(
@@ -598,15 +571,7 @@ export default function TribeSettingsPage() {
                 style={sliderRowStyle}
               />
             </div>
-            <div
-              style={{
-                marginTop: 12,
-                display: 'flex',
-                flexDirection: isMobileScreen ? 'column' : 'row',
-                gap: 12,
-                alignItems: 'stretch',
-              }}
-            >
+            <div className="memory-tuning-row">
               <MemoryTuningSlider
                 title={t('tribe.associative_scope_title')}
                 description={t(
@@ -659,26 +624,11 @@ export default function TribeSettingsPage() {
               return (
                 <div
                   key={topic.value}
+                  className={`topic-pill-selectable${isSelected ? ' topic-pill-selectable--selected' : ''}${editMutation.isPending ? ' topic-pill-selectable--disabled' : ''}`}
                   onClick={() => {
                     if (!editMutation.isPending) {
                       handleTopicToggle(topic.value)
                     }
-                  }}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: 20,
-                    fontSize: 13,
-                    fontWeight: 500,
-                    cursor: editMutation.isPending ? 'default' : 'pointer',
-                    background: isSelected
-                      ? 'var(--color-primary)'
-                      : 'var(--color-surface-raised, var(--color-surface))',
-                    color: isSelected ? '#fff' : 'var(--color-text-secondary)',
-                    border: `1px solid ${isSelected ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                    transition: 'all 0.2s',
-                    boxShadow: isSelected
-                      ? '0 2px 8px rgba(var(--color-primary-rgb, 99,102,241), 0.25)'
-                      : 'none',
                   }}
                 >
                   {t(`topics.${topic.key || topic.enumName?.toLowerCase()}`, topic.label)}
@@ -686,7 +636,7 @@ export default function TribeSettingsPage() {
               )
             })}
           </div>
-          <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--color-text-faint)' }}>
+          <p className="form-field-hint" style={{ marginTop: 10 }}>
             {t(
               'tribe.interests_desc'
             )}
@@ -714,15 +664,9 @@ export default function TribeSettingsPage() {
         <div style={{ marginTop: 16 }}>
           <button
             type="submit"
-            className="btn btn-primary"
+            className="btn btn-primary btn-form-submit"
             disabled={editMutation.isPending}
             style={{
-              width: '100%',
-              padding: '13px 24px',
-              fontSize: 14,
-              fontWeight: 600,
-              gap: 8,
-              borderRadius: 12,
               opacity: !canSubmit ? 0.5 : 1,
               cursor: !canSubmit ? 'not-allowed' : 'pointer',
             }}
@@ -854,45 +798,20 @@ export default function TribeSettingsPage() {
 
       {/* Danger Zone — yalnızca TribeLeader (backend DeleteTribe eşiği) */}
       {isLeader && (
-        <div
-          style={{
-            marginTop: 48,
-            padding: '24px',
-            borderRadius: 16,
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            background: 'rgba(239, 68, 68, 0.04)',
-          }}
-        >
-        <h2 style={{ fontSize: 16, fontWeight: 700, color: '#ef4444', margin: '0 0 8px 0' }}>
-          {t('tribe_settings.danger_zone')}
-        </h2>
-        <p
-          style={{
-            fontSize: 13,
-            color: 'var(--color-text-secondary)',
-            margin: '0 0 20px 0',
-            lineHeight: 1.5,
-          }}
-        >
-          {t('tribe_settings.danger_zone_desc')}
-        </p>
-        <button
-          className="btn btn-primary"
-          style={{
-            background: '#ef4444',
-            borderColor: '#ef4444',
-            width: '100%',
-            gap: 8,
-            padding: '13px 24px',
-            fontSize: 14,
-            fontWeight: 600,
-            borderRadius: 12,
-          }}
-          onClick={handleDeleteTribe}
-          disabled={deleteMutation.isPending}
-        >
-          <Trash2 size={16} /> {t('tribe_settings.delete_tribe')}
-        </button>
+        <div className="danger-zone-card">
+          <h2 className="danger-zone-title">
+            {t('tribe_settings.danger_zone')}
+          </h2>
+          <p className="danger-zone-desc" style={{ marginBottom: 20 }}>
+            {t('tribe_settings.danger_zone_desc')}
+          </p>
+          <button
+            className="btn btn-primary danger-zone-btn"
+            onClick={handleDeleteTribe}
+            disabled={deleteMutation.isPending}
+          >
+            <Trash2 size={16} /> {t('tribe_settings.delete_tribe')}
+          </button>
         </div>
       )}
       <ConfirmModal

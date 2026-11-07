@@ -358,14 +358,8 @@ export default function EnrichNewsPoolPage() {
           id="enrich-news-submit-btn"
           type="submit"
           disabled={mutation.isPending}
-          className="btn btn-primary"
+          className="btn btn-primary btn-form-submit"
           style={{
-            width: '100%',
-            padding: '13px 24px',
-            fontSize: 14,
-            fontWeight: 600,
-            gap: 8,
-            borderRadius: 12,
             opacity: mutation.isPending ? 0.5 : 1,
             cursor: mutation.isPending ? 'not-allowed' : 'pointer',
           }}

@@ -79,18 +79,8 @@ export default function CardActorListModal({ cardId, type, isOpen, onClose }) {
       style={{ zIndex: 100000 }}
     >
       <div
-        className="modal-box"
+        className="modal-box list-modal-box list-modal-box--md"
         onClick={(e) => e.stopPropagation()}
-        style={{
-          maxWidth: 560,
-          height: '75vh',
-          display: 'flex',
-          flexDirection: 'column',
-          padding: '24px 20px 20px',
-          borderRadius: 16,
-          background: 'var(--color-bg)',
-          border: '1px solid var(--color-border)',
-        }}
       >
         <ModalHeader
           title={type === 'owners' ? t('card.owners') : t('card.assignees')}
@@ -106,7 +96,7 @@ export default function CardActorListModal({ cardId, type, isOpen, onClose }) {
           style={{ padding: '0 0 12px 0', marginBottom: 14 }}
         />
 
-        <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}>
+        <div ref={scrollRef} className="list-modal-scroll">
           {isLoading ? (
             <div style={{ textAlign: 'center', padding: 24 }}>
               <div className="spinner spinner-md" />

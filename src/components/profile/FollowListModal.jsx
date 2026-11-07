@@ -69,18 +69,8 @@ export default function FollowListModal({ actorId, type, isOpen, onClose }) {
     <ModalPortal>
       <div className="modal-overlay" onClick={onClose} style={{ zIndex: 100 }}>
       <div 
-        className="modal-box" 
+        className="modal-box list-modal-box" 
         onClick={(e) => e.stopPropagation()} 
-        style={{
-          maxWidth: 420,
-          height: '65vh',
-          display: 'flex',
-          flexDirection: 'column',
-          padding: '24px 20px 20px',
-          borderRadius: 16,
-          background: 'var(--color-bg)',
-          border: '1px solid var(--color-border)',
-        }}
       >
         <ModalHeader
           title={type === 'followers' ? t('profile.followers') : t('profile.following')}
@@ -98,7 +88,7 @@ export default function FollowListModal({ actorId, type, isOpen, onClose }) {
 
         <div
           ref={scrollRef}
-          style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}
+          className="list-modal-scroll"
         >
           {isLoading ? (
             <div style={{ textAlign: 'center', padding: 24 }}>

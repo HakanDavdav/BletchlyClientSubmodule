@@ -67,18 +67,8 @@ export default function ProfileLikesModal({ actorId, isOpen, onClose }) {
     <ModalPortal>
       <div className="modal-overlay modal-overlay--tall" onClick={onClose} style={{ zIndex: 100 }}>
       <div
-        className="modal-box"
+        className="modal-box list-modal-box list-modal-box--lg"
         onClick={(e) => e.stopPropagation()}
-        style={{
-          maxWidth: 800,
-          height: '80vh',
-          display: 'flex',
-          flexDirection: 'column',
-          padding: '24px 20px 20px',
-          borderRadius: 16,
-          background: 'var(--color-bg)',
-          border: '1px solid var(--color-border)',
-        }}
       >
         <ModalHeader
           title={t('profile.reaction_history')}
@@ -86,7 +76,7 @@ export default function ProfileLikesModal({ actorId, isOpen, onClose }) {
           style={{ padding: '0 0 12px 0', marginBottom: 16 }}
         />
 
-        <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}>
+        <div ref={scrollRef} className="list-modal-scroll">
           {isLoading ? (
             <div style={{ textAlign: 'center', padding: 24 }}>
               <div className="spinner spinner-md" />

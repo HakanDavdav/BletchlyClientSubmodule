@@ -738,52 +738,31 @@ export default function ConfigManagementPanel() {
   const topSections = config ? Object.keys(config) : []
 
   return (
-    <div
-      className="card-surface"
-      style={{
-        padding: 24,
-        borderRadius: 'var(--radius-xl)',
-        background: 'var(--color-surface)',
-        border: '1px solid var(--color-border)',
-      }}
-    >
+    <div className="card-surface admin-panel-card">
       {/* Header */}
-      <div
-        className="flex justify-between items-center border-b shrink-0 flex-wrap gap-3"
-        style={{ borderColor: 'var(--color-border)', marginBottom: '12px', paddingBottom: '8px' }}
-      >
+      <div className="flex justify-between items-center shrink-0 flex-wrap gap-3 admin-panel-header">
         <div>
-          <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: 'var(--color-text)' }}>
+          <h2 className="admin-panel-title">
             {t('admin.bg_services_config')}
           </h2>
-          <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: '2px 0 0' }}>
+          <p className="admin-panel-subtitle">
             {t('admin.bg_services_config_desc')}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
-            className="btn btn-primary"
+            className="btn btn-primary admin-btn"
             onClick={handleRefresh}
             disabled={isBusy}
-            style={{
-              fontSize: 11.5,
-              fontWeight: 500,
-              padding: '4px 10px',
-              borderRadius: 'var(--radius-md)',
-            }}
           >
             {isFetching ? t('admin.loading') : t('admin.refresh')}
           </button>
           <button
-            className="btn btn-primary"
+            className="btn btn-primary admin-btn"
             onClick={handleSave}
             disabled={isBusy}
             style={{
-              fontSize: 11.5,
-              fontWeight: 500,
-              padding: '4px 10px',
-              borderRadius: 'var(--radius-md)',
               position: 'relative',
               ...(isDirty && !isSaving
                 ? {

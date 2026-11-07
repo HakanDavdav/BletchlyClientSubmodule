@@ -89,18 +89,8 @@ export default function LikeListModal({ contentItemId, isOpen, onClose, initialT
   return createPortal(
     <div className="modal-overlay" onClick={onClose} style={{ zIndex: 200 }}>
       <div
-        className="modal-box"
+        className="modal-box list-modal-box"
         onClick={(e) => e.stopPropagation()}
-        style={{
-          maxWidth: 420,
-          height: '65vh',
-          display: 'flex',
-          flexDirection: 'column',
-          padding: '24px 20px 20px',
-          borderRadius: 16,
-          background: 'var(--color-bg)',
-          border: '1px solid var(--color-border)',
-        }}
       >
         <ModalHeader
           title={getTitle()}
@@ -116,7 +106,7 @@ export default function LikeListModal({ contentItemId, isOpen, onClose, initialT
           style={{ padding: '0 0 12px 0', marginBottom: 14 }}
         />
 
-        <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}>
+        <div ref={scrollRef} className="list-modal-scroll">
           {isLoading ? (
             <div style={{ textAlign: 'center', padding: 24 }}>
               <div className="spinner spinner-md" />

@@ -237,31 +237,13 @@ export default function SearchPage() {
       <div style={{ paddingBottom: 16, borderBottom: '1px solid var(--color-border)' }}>
         <BackButton />
         <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-                      <span
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                padding: '4px 8px',
-                borderRadius: 16,
-                background: 'var(--color-bg-alt)',
-                border: '1px solid var(--color-border)',
-              }}
-            >
-              {t('search.search_label')}{query || t('search.none')}
-            </span>
+          <span className="search-filter-chip">
+            {t('search.search_label')}{query || t('search.none')}
+          </span>
           
           {mode !== 'general' && (
             <>
-              <span
-                style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  padding: '4px 8px',
-                  borderRadius: 16,
-                  background: 'var(--color-bg-alt)',
-                  border: '1px solid var(--color-border)',
-                }}
-              >
+              <span className="search-filter-chip">
                 {t('search.order')}
                 {orderType && orderType !== 'None'
                   ? orderType === 'Oldest'
@@ -273,29 +255,11 @@ export default function SearchPage() {
                         : orderType
                   : t('search.none')}
               </span>
-              <span
-                style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  padding: '4px 8px',
-                  borderRadius: 16,
-                  background: 'var(--color-bg-alt)',
-                  border: '1px solid var(--color-border)',
-                }}
-              >
+              <span className="search-filter-chip">
                 {t('search.start_date')}
                 {startDate ? <span className="date-text">{formatDate(startDate)}</span> : t('search.none')}
               </span>
-              <span
-                style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  padding: '4px 8px',
-                  borderRadius: 16,
-                  background: 'var(--color-bg-alt)',
-                  border: '1px solid var(--color-border)',
-                }}
-              >
+              <span className="search-filter-chip">
                 {t('search.end_date')}
                 {endDate ? <span className="date-text">{formatDate(endDate)}</span> : t('search.none')}
               </span>
@@ -542,7 +506,7 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
                           <Clock size={14} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <span className="truncate">
                             {item}
                           </span>
                         </div>
@@ -590,15 +554,7 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
                     <>
                       {suggestions.actors?.length > 0 && (
                         <div style={{ marginBottom: 8 }}>
-                          <div
-                            style={{
-                              fontSize: 11,
-                              fontWeight: 700,
-                              color: 'var(--color-text-faint)',
-                              padding: '4px 8px',
-                              textTransform: 'uppercase',
-                            }}
-                          >
+                          <div className="search-suggestion-header">
                             {t('common.actors')}
                           </div>
                           <div className="minimal-card-list">
@@ -620,15 +576,7 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
 
                       {suggestions.tribes?.length > 0 && (
                         <div style={{ marginBottom: 8 }}>
-                          <div
-                            style={{
-                              fontSize: 11,
-                              fontWeight: 700,
-                              color: 'var(--color-text-faint)',
-                              padding: '4px 8px',
-                              textTransform: 'uppercase',
-                            }}
-                          >
+                          <div className="search-suggestion-header">
                             {t('common.tribes')}
                           </div>
                           <div className="minimal-card-list">
@@ -646,15 +594,7 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
 
                       {suggestions.posts?.length > 0 && (
                         <div>
-                          <div
-                            style={{
-                              fontSize: 11,
-                              fontWeight: 700,
-                              color: 'var(--color-text-faint)',
-                              padding: '4px 8px',
-                              textTransform: 'uppercase',
-                            }}
-                          >
+                          <div className="search-suggestion-header">
                             {t('common.posts')}
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -673,14 +613,7 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
                       {(!suggestions.posts || suggestions.posts.length === 0) &&
                         (!suggestions.actors || suggestions.actors.length === 0) &&
                         (!suggestions.tribes || suggestions.tribes.length === 0) && (
-                          <div
-                            style={{
-                              padding: 16,
-                              textAlign: 'center',
-                              color: 'var(--color-text-faint)',
-                              fontSize: 13,
-                            }}
-                          >
+                          <div className="search-suggestion-empty">
                             {t('search.no_results')}
                           </div>
                         )}
@@ -733,14 +666,7 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
                       {((mode === 'posts' && (!suggestions.posts || suggestions.posts.length === 0)) ||
                         (mode === 'actors' && (!suggestions.actors || suggestions.actors.length === 0)) ||
                         (mode === 'tribes' && (!suggestions.tribes || suggestions.tribes.length === 0))) && (
-                        <div
-                          style={{
-                            padding: 16,
-                            textAlign: 'center',
-                            color: 'var(--color-text-faint)',
-                            fontSize: 13,
-                          }}
-                        >
+                        <div className="search-suggestion-empty">
                           {t('search.no_results')}
                         </div>
                       )}
@@ -748,14 +674,7 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
                   )}
                 </div>
               ) : (
-                <div
-                  style={{
-                    padding: 16,
-                    textAlign: 'center',
-                    color: 'var(--color-text-faint)',
-                    fontSize: 13,
-                  }}
-                >
+                <div className="search-suggestion-empty">
                   {t('search.no_results')}
                 </div>
               )}

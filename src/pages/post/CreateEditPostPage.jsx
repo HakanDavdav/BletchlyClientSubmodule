@@ -334,26 +334,11 @@ export default function CreateEditPostPage() {
               return (
                 <div
                   key={topic.value}
+                  className={`topic-pill-selectable${isSelected ? ' topic-pill-selectable--selected' : ''}${mutation.isPending || mutation.isSuccess ? ' topic-pill-selectable--disabled' : ''}`}
                   onClick={() => {
                     if (!mutation.isPending && !mutation.isSuccess) {
                       handleTopicToggle(topic.value)
                     }
-                  }}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: 20,
-                    fontSize: 13,
-                    fontWeight: 500,
-                    cursor: mutation.isPending || mutation.isSuccess ? 'default' : 'pointer',
-                    background: isSelected
-                      ? 'var(--color-primary)'
-                      : 'var(--color-surface-raised, var(--color-surface))',
-                    color: isSelected ? '#fff' : 'var(--color-text-secondary)',
-                    border: `1px solid ${isSelected ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                    transition: 'all 0.2s',
-                    boxShadow: isSelected
-                      ? '0 2px 8px rgba(var(--color-primary-rgb, 99,102,241), 0.25)'
-                      : 'none',
                   }}
                 >
                   {t(`topics.${topic.key || topic.enumName?.toLowerCase()}`, topic.label)}
@@ -369,15 +354,9 @@ export default function CreateEditPostPage() {
         <div style={{ marginTop: 32 }}>
           <button
             type="submit"
-            className="btn btn-primary"
+            className="btn btn-primary btn-form-submit"
             disabled={mutation.isPending}
             style={{
-              width: '100%',
-              padding: '13px 24px',
-              fontSize: 14,
-              fontWeight: 600,
-              gap: 8,
-              borderRadius: 12,
               opacity: mutation.isPending ? 0.5 : 1,
               cursor: mutation.isPending ? 'not-allowed' : 'pointer',
             }}

@@ -726,18 +726,7 @@ export default function CreateEditBotPage() {
             {cardLockLimit != null && (
               <span
                 title={t('profile.card_assignment_lock_limit')}
-                style={{
-                  fontSize: 12,
-                  padding: '2px 8px',
-                  borderRadius: 12,
-                  background: 'var(--color-surface-raised)',
-                  color: 'var(--color-text-secondary)',
-                  border: '1px solid var(--color-border)',
-                  fontWeight: 600,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                }}
+                className="card-allowance-pill"
               >
                 <Lock size={12} style={{ opacity: 0.8 }} />
                 {t('card.total_lock_allowance')}: {cardLockLimit}
@@ -776,15 +765,7 @@ export default function CreateEditBotPage() {
             <label className="form-section-label" style={{ fontSize: 12, marginBottom: 0 }}>
               {t('bot.memory_tuning')}
             </label>
-            <div
-              style={{
-                marginTop: 12,
-                display: 'flex',
-                flexDirection: isMobileScreen ? 'column' : 'row',
-                gap: 12,
-                alignItems: 'stretch',
-              }}
-            >
+            <div className="memory-tuning-row">
               <MemoryTuningSlider
                 title={t('bot.incubation_title')}
                 description={t(
@@ -806,15 +787,7 @@ export default function CreateEditBotPage() {
                 style={sliderRowStyle}
               />
             </div>
-            <div
-              style={{
-                marginTop: 12,
-                display: 'flex',
-                flexDirection: isMobileScreen ? 'column' : 'row',
-                gap: 12,
-                alignItems: 'stretch',
-              }}
-            >
+            <div className="memory-tuning-row">
               <MemoryTuningSlider
                 title={t('bot.affinity_bias_title')}
                 description={t(
@@ -856,15 +829,7 @@ export default function CreateEditBotPage() {
                 style={sliderRowStyle}
               />
             </div>
-            <div
-              style={{
-                marginTop: 12,
-                display: 'flex',
-                flexDirection: isMobileScreen ? 'column' : 'row',
-                gap: 12,
-                alignItems: 'stretch',
-              }}
-            >
+            <div className="memory-tuning-row">
               <MemoryTuningSlider
                 title={t('bot.associative_scope_title')}
                 description={t(
@@ -964,26 +929,11 @@ export default function CreateEditBotPage() {
                 return (
                   <div
                     key={topic.value}
+                    className={`topic-pill-selectable${isSelected ? ' topic-pill-selectable--selected' : ''}${mutation.isPending || mutation.isSuccess ? ' topic-pill-selectable--disabled' : ''}`}
                     onClick={() => {
                       if (!mutation.isPending && !mutation.isSuccess) {
                         handleTopicToggle(topic.value)
                       }
-                    }}
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: 20,
-                      fontSize: 13,
-                      fontWeight: 500,
-                      cursor: mutation.isPending || mutation.isSuccess ? 'default' : 'pointer',
-                      background: isSelected
-                        ? 'var(--color-primary)'
-                        : 'var(--color-surface-raised, var(--color-surface))',
-                      color: isSelected ? '#fff' : 'var(--color-text-secondary)',
-                      border: `1px solid ${isSelected ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                      transition: 'all 0.2s',
-                      boxShadow: isSelected
-                        ? '0 2px 8px rgba(var(--color-primary-rgb, 99,102,241), 0.25)'
-                        : 'none',
                     }}
                   >
                     {t(`topics.${topic.key || topic.enumName?.toLowerCase()}`, topic.label)}
@@ -991,7 +941,7 @@ export default function CreateEditBotPage() {
                 )
               })}
             </div>
-            <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--color-text-faint)' }}>
+            <p className="form-field-hint" style={{ marginTop: 10 }}>
               {t(
                 'bot.interests_desc'
               )}
@@ -1079,15 +1029,9 @@ export default function CreateEditBotPage() {
         <div style={{ marginTop: 0 }}>
           <button
             type="submit"
-            className="btn btn-primary"
+            className="btn btn-primary btn-form-submit"
             disabled={mutation.isPending}
             style={{
-              width: '100%',
-              padding: '13px 24px',
-              fontSize: 14,
-              fontWeight: 600,
-              gap: 8,
-              borderRadius: 12,
               opacity: mutation.isPending ? 0.5 : 1,
               cursor: mutation.isPending ? 'not-allowed' : 'pointer',
             }}
@@ -1107,31 +1051,15 @@ export default function CreateEditBotPage() {
 
       {/* Delete button section */}
       {isEditMode && (
-        <div
-          style={{
-            marginTop: 48,
-            padding: '20px',
-            borderRadius: 12,
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            background: 'rgba(239, 68, 68, 0.04)',
-          }}
-        >
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#ef4444', margin: '0 0 8px 0' }}>
+        <div className="danger-zone-card">
+          <h2 className="danger-zone-title">
             {t('tribe_settings.danger_zone')}
           </h2>
-          <p
-            style={{
-              fontSize: 13,
-              color: 'var(--color-text-secondary)',
-              margin: '0 0 16px 0',
-              lineHeight: 1.5,
-            }}
-          >
+          <p className="danger-zone-desc">
             {t('bot.danger_zone_desc')}
           </p>
           <button
-            className="btn btn-primary"
-            style={{ background: '#ef4444', borderColor: '#ef4444', width: '100%', gap: 8 }}
+            className="btn btn-primary danger-zone-btn"
             onClick={handleDeleteBot}
             disabled={deleteMutation.isPending}
           >

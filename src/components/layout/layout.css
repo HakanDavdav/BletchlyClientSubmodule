@@ -1043,3 +1043,52 @@
     overflow-x: clip;
   }
 }
+
+/* ─── Login/Register masaüstü: orta bloğu kaplayan form yüzeyi ───────────── */
+@media (min-width: 901px) {
+  .layout-root:has(.auth-welcome-bg) .layout-footer {
+    display: none !important;
+  }
+
+  .layout-center-inner:has(.auth-welcome-bg) {
+    padding: 0 !important;
+    overflow-x: clip;
+  }
+
+  .auth-welcome-bg {
+    min-height: calc(100dvh - var(--topbar-height));
+  }
+
+  .auth-welcome-bg .card-surface {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: calc(100dvh - var(--topbar-height));
+    margin: 0 !important;
+    padding: 40px 24px !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: color-mix(in srgb, var(--color-surface) 42%, transparent) !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .auth-welcome-bg .card-surface > * {
+    width: 100%;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .auth-welcome-bg__layer {
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin-left: 0 !important;
+    transform: none !important;
+  }
+}

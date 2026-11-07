@@ -217,28 +217,13 @@ export default function SystemEventsPanel() {
   const isLoading = triggerSystemEventMutation.isPending || triggerBotEventMutation.isPending
 
   return (
-    <div
-      className="card-surface"
-      style={{
-        padding: 24,
-        borderRadius: 'var(--radius-xl)',
-        background: 'var(--color-surface)',
-        border: '1px solid var(--color-border)',
-      }}
-    >
+    <div className="card-surface admin-panel-card">
       {/* Header */}
-      <div
-        className="border-b"
-        style={{
-          borderColor: 'var(--color-border)',
-          marginBottom: '12px',
-          paddingBottom: '8px',
-        }}
-      >
-        <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: 'var(--color-text)' }}>
+      <div className="admin-panel-header">
+        <h2 className="admin-panel-title">
           {t('admin.system_events_title')}
         </h2>
-        <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: '2px 0 0' }}>
+        <p className="admin-panel-subtitle">
           {t('admin.system_events_desc')}
         </p>
       </div>
@@ -256,16 +241,12 @@ export default function SystemEventsPanel() {
               {t('admin.event_type')}
             </label>
             <select
-              className="input w-full"
+              className="input w-full admin-input"
               value={selectedEventName}
               onChange={(e) => handleSelectEvent(e.target.value)}
               style={{
                 padding: '7px 10px',
                 fontSize: 12.5,
-                borderRadius: 'var(--radius-md)',
-                background: 'var(--color-surface)',
-                borderColor: 'var(--color-border)',
-                color: 'var(--color-text)',
                 cursor: 'pointer',
               }}
             >
@@ -287,22 +268,17 @@ export default function SystemEventsPanel() {
               {t('admin.payload')}
             </label>
             <textarea
-              className="input w-full"
+              className="input w-full admin-input admin-input--mono"
               value={payload}
               onChange={(e) => {
                 setPayload(e.target.value)
               }}
               spellCheck={false}
               style={{
-                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
                 fontSize: 12,
                 minHeight: 120,
                 lineHeight: 1.5,
                 padding: '8px 10px',
-                borderRadius: 'var(--radius-md)',
-                background: 'var(--color-surface)',
-                borderColor: 'var(--color-border)',
-                color: 'var(--color-text)',
                 whiteSpace: 'pre',
                 resize: 'vertical',
               }}
@@ -310,15 +286,9 @@ export default function SystemEventsPanel() {
           </div>
 
           <button
-            className="btn btn-primary"
+            className="btn btn-primary admin-btn"
             onClick={handleTriggerEvent}
             disabled={isLoading}
-            style={{
-              fontSize: 11.5,
-              fontWeight: 500,
-              padding: '4px 10px',
-              borderRadius: 'var(--radius-md)',
-            }}
           >
             {isLoading ? t('admin.processing') : t('admin.trigger_event')}
           </button>

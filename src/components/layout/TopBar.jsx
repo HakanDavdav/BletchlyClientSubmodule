@@ -836,13 +836,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                                 size={14}
                                 style={{ color: 'var(--color-text-muted)', flexShrink: 0 }}
                               />
-                              <span
-                                style={{
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
+                              <span className="truncate">
                                 {item}
                               </span>
                             </div>
@@ -890,15 +884,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                         <>
                           {suggestions.actors?.length > 0 && (
                             <div style={{ marginBottom: 8 }}>
-                              <div
-                                style={{
-                                  fontSize: 11,
-                                  fontWeight: 700,
-                                  color: 'var(--color-text-faint)',
-                                  padding: '4px 8px',
-                                  textTransform: 'uppercase',
-                                }}
-                              >
+                              <div className="search-suggestion-header">
                                 {t('common.actors')}
                               </div>
                               <div className="minimal-card-list">
@@ -923,15 +909,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
 
                           {suggestions.tribes?.length > 0 && (
                             <div style={{ marginBottom: 8 }}>
-                              <div
-                                style={{
-                                  fontSize: 11,
-                                  fontWeight: 700,
-                                  color: 'var(--color-text-faint)',
-                                  padding: '4px 8px',
-                                  textTransform: 'uppercase',
-                                }}
-                              >
+                              <div className="search-suggestion-header">
                                 {t('common.tribes')}
                               </div>
                               <div className="minimal-card-list">
@@ -952,15 +930,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
 
                           {suggestions.posts?.length > 0 && (
                             <div>
-                              <div
-                                style={{
-                                  fontSize: 11,
-                                  fontWeight: 700,
-                                  color: 'var(--color-text-faint)',
-                                  padding: '4px 8px',
-                                  textTransform: 'uppercase',
-                                }}
-                              >
+                              <div className="search-suggestion-header">
                                 {t('common.posts')}
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -982,14 +952,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                           {(!suggestions.posts || suggestions.posts.length === 0) &&
                             (!suggestions.actors || suggestions.actors.length === 0) &&
                             (!suggestions.tribes || suggestions.tribes.length === 0) && (
-                              <div
-                                style={{
-                                  padding: 16,
-                                  textAlign: 'center',
-                                  color: 'var(--color-text-faint)',
-                                  fontSize: 13,
-                                }}
-                              >
+                              <div className="search-suggestion-empty">
                                 {t('search.no_results')}
                               </div>
                             )}
@@ -1055,14 +1018,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                               (!suggestions.actors || suggestions.actors.length === 0)) ||
                             (searchMode === 'tribes' &&
                               (!suggestions.tribes || suggestions.tribes.length === 0))) && (
-                            <div
-                              style={{
-                                padding: 16,
-                                textAlign: 'center',
-                                color: 'var(--color-text-faint)',
-                                fontSize: 13,
-                              }}
-                            >
+                            <div className="search-suggestion-empty">
                               {t('search.no_results')}
                             </div>
                           )}
@@ -1070,14 +1026,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                       )}
                     </div>
                   ) : (
-                    <div
-                      style={{
-                        padding: 16,
-                        textAlign: 'center',
-                        color: 'var(--color-text-faint)',
-                        fontSize: 13,
-                      }}
-                    >
+                    <div className="search-suggestion-empty">
                       {t('search.no_results')}
                     </div>
                   )}
