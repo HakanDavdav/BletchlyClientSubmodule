@@ -62,7 +62,15 @@ export default function SearchFilterBar({
       <SearchInput
         value={searchInput}
         onChange={(e) => setSearchInput(e.target.value)}
-        onClear={() => setSearchInput('')}
+        onClear={() => {
+          setSearchInput('')
+          onSearch?.({
+            query: '',
+            orderType: filterOrderType || 'None',
+            startDate: filterStartDate || null,
+            endDate: filterEndDate || null,
+          })
+        }}
         clearLabel={t('common.clear')}
         placeholder={placeholder || t('topbar.search')}
       />
@@ -255,7 +263,7 @@ export default function SearchFilterBar({
         </AnimatePresence>
       </div>
 
-      <button type="submit" className="btn btn-primary btn-sm">
+      <button type="submit" className="btn btn-primary btn-sm hide-under-900">
         {t('topbar.search_button')}
       </button>
     </form>

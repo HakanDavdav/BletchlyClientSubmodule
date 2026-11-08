@@ -4,9 +4,11 @@ import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import ChatEmojiPicker from './ChatEmojiPicker'
 import TwemojiText from '../common/TwemojiText'
+import useIsMobile from '../../hooks/useIsMobile'
 
 export default function ChatComposer({ targetActorId, onSend, disabled, replyTo, onCancelReply }) {
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
   const [value, setValue] = useState('')
   const [focused, setFocused] = useState(false)
   const [sending, setSending] = useState(false)
@@ -18,8 +20,8 @@ export default function ChatComposer({ targetActorId, onSend, disabled, replyTo,
     setValue('')
     setSending(false)
     setEmojiOpen(false)
-    if (textareaRef.current) textareaRef.current.focus()
-  }, [targetActorId])
+    if (!isMobile && textareaRef.current) textareaRef.current.focus()
+  }, [targetActorId, isMobile])
 
   useEffect(() => {
     if (replyTo && textareaRef.current) textareaRef.current.focus()

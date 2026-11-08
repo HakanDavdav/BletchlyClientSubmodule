@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { Search } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import { getRecentSearches, saveRecentSearch, removeRecentSearch } from '../utils/recentSearches'
 import { searchApi } from '../api/searchApi'
 import PostCard from '../components/content/PostCard'
@@ -422,8 +422,40 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
               setShowSuggestions(true)
             }}
           />
+          {query && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              style={{
+                position: 'absolute',
+                right: 8,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                padding: 0,
+                width: 24,
+                height: 24,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '50%',
+              }}
+              onClick={() => {
+                onQueryChange('')
+                setShowSuggestions(false)
+              }}
+              aria-label={t('common.clear')}
+            >
+              <X size={15} />
+            </button>
+          )}
         </div>
-        <button type="submit" className="btn btn-primary btn-sm">
+        <button
+          type="submit"
+          className="btn btn-primary btn-sm hide-under-900"
+          style={{ display: 'none' }}
+          aria-hidden="true"
+          tabIndex={-1}
+        >
           {t('topbar.search_button')}
         </button>
 

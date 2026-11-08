@@ -111,6 +111,16 @@ export default function ChatConversationList({
           })
         )}
       </div>
+
+      <button
+        type="button"
+        className="chat-fab-btn"
+        onClick={onNewChat}
+        aria-label={t('chat.new_chat')}
+        title={t('chat.new_chat')}
+      >
+        <Plus size={24} strokeWidth={2.4} />
+      </button>
     </aside>
   )
 }

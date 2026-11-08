@@ -43,6 +43,19 @@ export default function MobileTabBar() {
 
   const goBack = () => {
     closeDrawers()
+
+    // Sayfa-içi özel geri yöneticisi varsa (örneğin ChatPage: chat odası -> actor listesi)
+    const event = new CustomEvent('app-back-navigation', { cancelable: true })
+    const handled = !window.dispatchEvent(event)
+    if (handled) return
+
+    // Güvenlik yedeği: Chat sayfasında query'de actorId varken doğrudan actor listesine geç
+    const searchActorId = new URLSearchParams(location.search).get('actorId')
+    if (path === '/chat' && searchActorId) {
+      navigate('/chat', { replace: true })
+      return
+    }
+
     if (location.key !== 'default') {
       navigate(-1)
     } else if (path !== '/') {

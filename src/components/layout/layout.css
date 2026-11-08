@@ -681,12 +681,12 @@
 
   .mobile-search-form__input-wrap .input {
     padding-left: 34px;
+    padding-right: 34px;
     height: 40px;
   }
 
-  .mobile-search-form__input-row .btn {
-    height: 40px;
-    padding-inline: 14px;
+  .mobile-search-form__input-row > .btn {
+    display: none !important;
   }
 
   .mobile-search-form__modes {
@@ -992,34 +992,26 @@
 
 /* ─── Login/Register mobil tam-ekran form yüzeyi ─────────────────────────── */
 @media (max-width: 900px) {
-  /* Auth sayfalarında mobilde topbar/tabbar ve kenar tutamacı gizlenir;
-     yarı saydam form yüzeyi tüm viewport'u kaplar */
-  .layout-root:has(.auth-welcome-bg) .layout-topbar,
-  .layout-root:has(.auth-welcome-bg) .mobile-tab-bar,
-  .layout-root:has(.auth-welcome-bg) .mobile-drawer-handle {
-    display: none !important;
-  }
-
   .layout-root:has(.auth-welcome-bg) .layout-body {
-    min-height: 100dvh;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
+    min-height: calc(100dvh - var(--topbar-height));
+    padding-top: var(--topbar-height) !important;
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   .layout-center-inner:has(.auth-welcome-bg) {
-    padding: 0 !important;
+    padding: 0 0 0 24px !important;
   }
 
   .auth-welcome-bg {
-    min-height: 100dvh;
+    min-height: calc(100dvh - var(--topbar-height) - calc(56px + env(safe-area-inset-bottom, 0px)));
   }
 
   .auth-welcome-bg .card-surface {
     width: 100% !important;
     max-width: none !important;
-    min-height: 100dvh;
+    min-height: calc(100dvh - var(--topbar-height) - calc(56px + env(safe-area-inset-bottom, 0px)));
     margin: 0 !important;
-    padding: calc(28px + env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-left)) calc(28px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: calc(20px + env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-left)) calc(20px + env(safe-area-inset-bottom, 0px)) !important;
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;

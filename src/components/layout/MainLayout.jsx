@@ -33,7 +33,8 @@ export default function MainLayout({ children, pendingInvitation = null, onOpenI
     location.pathname.startsWith('/card-hierarchy') ||
     location.pathname.startsWith('/explore') ||
     location.pathname.startsWith('/how-it-works') ||
-    location.pathname.startsWith('/pro')
+    location.pathname === '/pro' ||
+    location.pathname.startsWith('/pro/')
   const drawerRef = useRef(null)
   const drawerOverlayRef = useRef(null)
   const drawerHandleRef = useRef(null)

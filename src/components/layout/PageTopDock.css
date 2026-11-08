@@ -118,3 +118,11 @@
   justify-content: center;
   min-width: 0;
 }
+
+@media (max-width: 900px) {
+  /* Mobilde geri butonları gizlendiğinde, merkez ve sağda görünür içerik yoksa
+     satır tamamen gizlenir; Profile, Tribe vb. sayfalarda üstte boşluk kalmaz */
+  .page-top-dock-row-fallback:not(:has(.page-top-dock-row-fallback__right > *)):not(:has(.page-top-dock-row-fallback__center > *)):not(:has(.page-top-dock-row-fallback__left > *:not(.page-back-button))) {
+    display: none !important;
+  }
+}

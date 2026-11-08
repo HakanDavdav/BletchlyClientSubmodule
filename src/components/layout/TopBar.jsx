@@ -1432,7 +1432,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <Link
                 to="/pro"
-                className="actor-chip-premium-btn"
+                className="actor-chip-premium-btn hide-under-900"
                 aria-label={t('premium.title')}
                 title={t('premium.title')}
                 style={{ textDecoration: 'none', height: 30 }}

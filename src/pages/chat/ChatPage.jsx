@@ -46,7 +46,7 @@ export default function ChatPage({ embedded = false, initialTargetActorId = null
 
   useEffect(() => {
     const queryActorId = initialTargetActorId || (!embedded ? searchParams.get('actorId') : null) || null
-    if (queryActorId) setSelectedActorId(queryActorId)
+    setSelectedActorId(queryActorId)
   }, [initialTargetActorId, searchParams, embedded])
 
   useEffect(() => {
@@ -153,12 +153,31 @@ export default function ChatPage({ embedded = false, initialTargetActorId = null
     }
   }
 
-  const handleThreadBack = () => {
+  const handleThreadBack = useCallback(() => {
     setSelectedActorId(null)
     if (!embedded) {
-      setSearchParams({})
+      setSearchParams({}, { replace: true })
     }
-  }
+  }, [embedded, setSearchParams])
+
+  // Bottom bar ve sistem geri aksiyonunu yakala:
+  // Chat odasındayken geri basılırsa actor listesine dön; actor listesindeyken chat'ten çık
+  useEffect(() => {
+    const handleBackNav = (e) => {
+      if (newChatOpen) {
+        e.preventDefault()
+        setNewChatOpen(false)
+        return
+      }
+      if (selectedActorId) {
+        e.preventDefault()
+        handleThreadBack()
+      }
+    }
+
+    window.addEventListener('app-back-navigation', handleBackNav)
+    return () => window.removeEventListener('app-back-navigation', handleBackNav)
+  }, [newChatOpen, selectedActorId, handleThreadBack])
 
   const handleSend = async (content, replyToChatMessageId = null) => {
     const result = await sendMessage(selectedActorId, content, replyToChatMessageId)

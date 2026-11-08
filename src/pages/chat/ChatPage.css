@@ -47,6 +47,7 @@
 }
 
 .chat-list {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -84,6 +85,10 @@
   padding-bottom: 6px;
 }
 
+.chat-fab-btn {
+  display: none;
+}
+
 .chat-list__search {
   position: relative;
   display: flex;
@@ -96,6 +101,9 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
   /* İlk kartın hover'daki yukarı hareketi üst kenarda kırpılmasın */
   padding: 4px 8px 10px;
 }
@@ -269,6 +277,8 @@
   padding: 8px 14px;
   border-bottom: 1px solid var(--chat-accent);
   background: var(--color-bg);
+  flex-shrink: 0;
+  z-index: 5;
 }
 
 .chat-thread__back {
@@ -325,9 +335,12 @@
 }
 
 .chat-thread__messages {
-  flex: 1;
+  flex: 1 1 0%;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -614,6 +627,8 @@
   border-top: 1px solid var(--chat-accent);
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 3%, var(--color-bg)), var(--color-bg));
+  flex-shrink: 0;
+  z-index: 5;
 }
 
 .chat-composer__row {
@@ -952,18 +967,58 @@
 }
 
 @media (max-width: 900px) {
+  /* Mobilde chat sayfası açıkken pencerenin (window/body) kaymasını engelle */
+  html:has(.chat-page:not(.chat-page--embedded)),
+  body:has(.chat-page:not(.chat-page--embedded)) {
+    overflow: hidden !important;
+    height: 100% !important;
+    overscroll-behavior: none !important;
+  }
+
+  .layout-root:has(.chat-page:not(.chat-page--embedded)) {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+  }
+
   .layout-body:has(.chat-page:not(.chat-page--embedded)) {
+    height: calc(100dvh - var(--topbar-height)) !important;
+    max-height: calc(100dvh - var(--topbar-height)) !important;
+    overflow: hidden !important;
+    padding-top: var(--topbar-height) !important;
     padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
+  .layout-center:has(.chat-page:not(.chat-page--embedded)) {
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+  }
+
   .layout-center-inner:has(> .chat-page:not(.chat-page--embedded)) {
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
     padding: 0 0 0 18px !important;
   }
 
+  /* Mobilde chat sayfası topbar ve bottom bar arasında tam sabit viewport olarak oturur */
   .chat-page:not(.chat-page--embedded) {
-    gap: 0;
-    height: calc(100vh - var(--topbar-height) - 56px - env(safe-area-inset-bottom, 0px));
-    height: calc(100dvh - var(--topbar-height) - 56px - env(safe-area-inset-bottom, 0px));
+    position: fixed !important;
+    top: var(--topbar-height) !important;
+    bottom: calc(56px + env(safe-area-inset-bottom, 0px)) !important;
+    left: 18px !important;
+    right: 0 !important;
+    z-index: 90 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .chat-page__header-row {
@@ -972,24 +1027,61 @@
 
   .chat-shell {
     grid-template-columns: 1fr;
-    flex: 1;
-    height: 100%;
-    min-height: 0;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 0% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
     border: none;
     border-radius: 0;
     box-shadow: none;
+    overflow: hidden !important;
   }
 
   .chat-page--embedded .chat-shell {
-    height: auto;
+    height: auto !important;
   }
 
   .chat-shell.has-selection .chat-list {
-    display: none;
+    display: none !important;
   }
 
   .chat-shell:not(.has-selection) .chat-thread {
-    display: none;
+    display: none !important;
+  }
+
+  .chat-thread {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 0% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Üstte konuşulan kişinin kartı her zaman sabit kalır */
+  .chat-thread__header {
+    flex-shrink: 0 !important;
+    z-index: 5 !important;
+  }
+
+  /* Sadece ortadaki mesaj alanı bağımsız kaydırılabilir */
+  .chat-thread__messages {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    overscroll-behavior-y: contain !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+  }
+
+  /* Alttaki mesaj yazma kutusu alt tab bar'ın üstünde her zaman sabittir */
+  .chat-composer {
+    flex-shrink: 0 !important;
+    z-index: 5 !important;
   }
 
   .chat-thread__back {
@@ -997,7 +1089,62 @@
   }
 
   .chat-list {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 0% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
     border-right: none;
+  }
+
+  .chat-list__items {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    overscroll-behavior-y: contain !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+  }
+
+  /* Mobilde liste başlığı (Sohbetler / Özel Mesajlar / + Yeni) gizlenir */
+  .chat-list__header {
+    display: none !important;
+  }
+
+  .chat-list__search {
+    margin: 16px 12px 10px;
+  }
+
+  /* WhatsApp tarzı sağ alt yüzen buton (Floating Action Button) — Standart tema butonu */
+  .chat-fab-btn {
+    position: absolute;
+    right: 18px;
+    bottom: 18px;
+    z-index: 20;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: none;
+    background: var(--color-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+    transition: background-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+  }
+
+  .chat-fab-btn:hover {
+    background: var(--color-primary-hover);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .chat-fab-btn:active {
+    transform: scale(0.92);
   }
 
   .chat-message__bubble-wrap {
@@ -1015,7 +1162,7 @@
   }
 
   .chat-list__search {
-    margin: 0 10px 8px;
+    margin: 16px 10px 10px;
   }
 
   .chat-thread__header {
