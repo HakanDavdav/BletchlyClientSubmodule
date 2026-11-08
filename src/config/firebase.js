@@ -15,5 +15,11 @@ const auth = getAuth(app);
 
 const googleProvider = new GoogleAuthProvider();
 const microsoftProvider = new OAuthProvider('microsoft.com');
+microsoftProvider.addScope('openid');
+microsoftProvider.addScope('email');
+microsoftProvider.addScope('profile');
+microsoftProvider.setCustomParameters({
+  prompt: 'select_account'
+});
 
 export { auth, googleProvider, microsoftProvider };

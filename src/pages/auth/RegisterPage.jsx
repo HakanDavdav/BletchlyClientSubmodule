@@ -64,8 +64,15 @@ export default function RegisterPage() {
   })
 
   const handleProviderLogin = async (provider, providerName = 'google') => {
+    const toastStyle = {
+      borderRadius: '10px',
+      background: 'var(--color-surface)',
+      color: 'var(--color-text)',
+      border: '1px solid var(--color-border)',
+    }
+
     if (!agreedToTerms) {
-      toast.error(t('auth.must_agree_terms'))
+      toast.error(t('auth.must_agree_terms'), { style: toastStyle })
       setHasTermsError(true)
       return
     }
@@ -77,6 +84,15 @@ export default function RegisterPage() {
       firebaseLoginMutation.mutate({ idToken })
     } catch (err) {
       console.error(err)
+      if (err.code === 'auth/popup-closed-by-user') {
+        toast.error(t('auth.popup_closed'), { style: toastStyle })
+      } else if (err.code === 'auth/popup-blocked') {
+        toast.error(t('auth.popup_blocked'), { style: toastStyle })
+      } else if (err.code === 'auth/account-exists-with-different-credential') {
+        toast.error(t('auth.account_exists_different_credential'), { style: toastStyle })
+      } else {
+        toast.error(err.message || t('auth.login_failed'), { style: toastStyle })
+      }
     }
   }
 
