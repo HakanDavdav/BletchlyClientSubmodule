@@ -32,6 +32,17 @@
 }
 
 @media (max-width: 900px) {
+  /* Mobilde sayfa içi başlık satırı gizlenir; mini başlık doğrudan TopBar Row 3 içinde gösterilir */
+  .page-header-row:not(.verdict-banner__content),
+  div:has(> .page-header-icon):not(.verdict-banner__content) {
+    display: none !important;
+  }
+
+  /* Yalnızca gizli geri butonu içeren boş sarmalayıcıları mobilde gizle */
+  div:has(> .page-back-button:only-child) {
+    display: none !important;
+  }
+
   .left-cache-tabs-row {
     display: flex;
     align-items: center;

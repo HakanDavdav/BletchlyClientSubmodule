@@ -55,6 +55,9 @@ import LockedSlash from '../common/LockedSlash'
 import SearchSuggestionsDropdown from '../common/SearchSuggestionsDropdown'
 import ModifierArrowSvg from '../../assets/FigmaNew/modifierarrow.svg?react'
 import { applyCustomColorVars, clearCustomColorVars, normalizeHex } from '../../utils/themeColor'
+import HowItWorksHelp from '../common/HowItWorksHelp'
+import { resolveMobilePageHeader } from '../../config/mobilePageHeaders'
+import { useMobileHeaderStore } from '../../store/mobileHeaderStore'
 
 const COLOR_PRESETS = [
   { key: 'green', color: '#10b981', label: 'Yeşil', isDefault: true },
@@ -144,6 +147,11 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
 
   const { isDarkMode, toggleTheme, isGreenMode, customColor, selectThemeColor, savedCustomColor, setSavedCustomColor } =
     useThemeStore()
+  const customHeader = useMobileHeaderStore((s) => s.customHeader)
+  const mobileHeader = useMemo(() => {
+    if (customHeader) return customHeader
+    return resolveMobilePageHeader(location.pathname, t)
+  }, [customHeader, location.pathname, t])
   const [isBotShaking, setIsBotShaking] = useState(false)
   const [isPaletteOpen, setIsPaletteOpen] = useState(false)
   const [isLangOpen, setIsLangOpen] = useState(false)
@@ -2008,6 +2016,85 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
           </IconActionButton>
         </div>
       </div>
+
+      {/* ─── Row 3 (Mobil Dinamik Mini Başlık Satırı) ─── */}
+      {isMobile && (
+        <AnimatePresence initial={false}>
+          {mobileHeader && (
+            <motion.div
+              key="topbar-row-3-slot"
+              className="topbar-row topbar-row-3"
+              initial={{ opacity: 0, x: '-100%' }}
+              animate={{
+                opacity: 1,
+                x: 0,
+                transition: {
+                  x: { duration: 0.38, ease: [0.22, 1, 0.36, 1] },
+                  opacity: { duration: 0.26, ease: 'easeOut' },
+                },
+              }}
+              exit={{
+                opacity: 0,
+                x: '100%',
+                transition: {
+                  x: { duration: 0.38, ease: [0.22, 1, 0.36, 1] },
+                  opacity: { duration: 0.38, ease: [0.65, 0, 1, 0.5] },
+                },
+              }}
+            >
+              <AnimatePresence initial={false} mode="sync">
+                <motion.div
+                  key={mobileHeader.key || location.pathname}
+                  className="topbar-row-3__content"
+                  initial={{ opacity: 0, x: '-100%' }}
+                  animate={{
+                    opacity: 1,
+                    x: 0,
+                    transition: {
+                      x: { duration: 0.38, ease: [0.22, 1, 0.36, 1] },
+                      opacity: { duration: 0.26, ease: 'easeOut' },
+                    },
+                  }}
+                  exit={{
+                    opacity: 0,
+                    x: '100%',
+                    pointerEvents: 'none',
+                    transition: {
+                      x: { duration: 0.38, ease: [0.22, 1, 0.36, 1] },
+                      opacity: { duration: 0.38, ease: [0.65, 0, 1, 0.5] },
+                    },
+                  }}
+                >
+                  <div className="topbar-row-3__center">
+                    {mobileHeader.Icon && (
+                      <div className="topbar-row-3__icon">
+                        <mobileHeader.Icon size={14} color="#fff" />
+                      </div>
+                    )}
+                    <span className="topbar-row-3__title">{mobileHeader.title}</span>
+
+                    {mobileHeader.help && (
+                      <div className="topbar-row-3__help">
+                        <HowItWorksHelp
+                          title={mobileHeader.help.title}
+                          items={mobileHeader.help.items}
+                          triggerStyle={{
+                            width: 24,
+                            height: 24,
+                            minWidth: 24,
+                            minHeight: 24,
+                            borderRadius: 6,
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
     </header>
   )
 }

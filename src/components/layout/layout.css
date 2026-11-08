@@ -56,6 +56,11 @@
   display: none !important;
 }
 
+/* Mobil dinamik 3. row (sayfa başlığı) — masaüstünde asla gösterilmez */
+.topbar-row-3 {
+  display: none;
+}
+
 /* Sol kenar drawer tutamacı — yalnızca mobilde görünür */
 .mobile-drawer-handle {
   display: none;
@@ -92,6 +97,27 @@
     --topbar-height: 76px;
   }
 
+  /* Mobil dinamik Row 3 (sayfa başlığı) eklendiğinde topbar yüksekliği artar */
+  :root:has(.topbar-row-3),
+  :root:has(.has-topbar-row-3),
+  .layout-root.has-topbar-row-3 {
+    --topbar-height: 78px;
+  }
+
+  :root:has(.topbar-my-entities):has(.topbar-row-3),
+  :root:has(.topbar-my-entities):has(.has-topbar-row-3),
+  .layout-root.has-topbar-row-3:has(.topbar-my-entities) {
+    --topbar-height: 110px;
+  }
+
+  .layout-topbar {
+    transition: height 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .layout-body {
+    transition: padding-top 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
   /* Topbar mobil düzen */
   .topbar-row-1 {
     height: 44px !important;
@@ -116,6 +142,82 @@
     padding: 0 10px !important;
     gap: 4px !important;
     justify-content: center;
+  }
+
+  /* Mobil dinamik Row 3: ortalı küme ve eşzamanlı geçiş slotu */
+  .topbar-row-3 {
+    display: block !important;
+    height: 34px !important;
+    position: relative !important;
+    overflow: hidden !important;
+    border-top: 1px solid var(--color-border-light);
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg);
+    z-index: 10;
+  }
+
+  .topbar-row-3__content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+  }
+
+  .topbar-row-3__center {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .topbar-row-3__icon {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
+    border-radius: 6px;
+    background: var(--color-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .topbar-row-3__title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+    min-width: 0;
+  }
+
+  .topbar-row-3__help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .topbar-row-3__help .icon-action-button {
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+    border-radius: 6px !important;
+    padding: 0 !important;
+  }
+
+  .topbar-row-3__help .icon-action-button svg {
+    width: 15px !important;
+    height: 15px !important;
   }
 
   /* Klanlar/Botlar/Kartlar: satırı doldurup yatayda genişler (eşit pay) */
@@ -453,7 +555,7 @@
     opacity: 0.45;
     cursor: grab;
     touch-action: none;
-    transition: opacity var(--transition-fast), color var(--transition-fast), top 0.28s cubic-bezier(0.22, 1, 0.36, 1), bottom 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: opacity var(--transition-fast), color var(--transition-fast), top 0.38s cubic-bezier(0.22, 1, 0.36, 1), bottom 0.28s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   /* Drawer açıkken tutamaç drawer'ın dış sağ sınırında durur (ok sola döner);
@@ -464,6 +566,10 @@
     bottom: 0;
     z-index: 102;
     opacity: 0.75;
+  }
+
+  .mobile-drawer-handle.has-topbar-row-3:not(.is-open) {
+    top: var(--topbar-height);
   }
 
   .mobile-drawer-handle:hover,

@@ -14,6 +14,9 @@ import useDevLog from '../../utils/useDevLog'
 import { useQuery } from '@tanstack/react-query'
 import { searchApi } from '../../api/searchApi'
 import { isChatDeckEligible } from '../../utils/chatDeck'
+import useIsMobile from '../../hooks/useIsMobile'
+import { resolveMobilePageHeader } from '../../config/mobilePageHeaders'
+import { useMobileHeaderStore } from '../../store/mobileHeaderStore'
 
 /**
  * MainLayout — 3 kolonlu ana iskelet.
@@ -39,6 +42,10 @@ export default function MainLayout({ children, pendingInvitation = null, onOpenI
   const drawerOverlayRef = useRef(null)
   const drawerHandleRef = useRef(null)
   const closeAnimRef = useRef(false)
+
+  const isMobile = useIsMobile()
+  const customHeader = useMobileHeaderStore((s) => s.customHeader)
+  const hasMobileTitleRow = isMobile && Boolean(customHeader || resolveMobilePageHeader(location.pathname, t))
 
   const { data: seasonStatus } = useQuery({
     queryKey: ['seasonStatus'],
@@ -159,7 +166,7 @@ export default function MainLayout({ children, pendingInvitation = null, onOpenI
   }, [location, animateClose])
 
   return (
-    <div className="layout-root">
+    <div className={`layout-root${hasMobileTitleRow ? ' has-topbar-row-3' : ''}`}>
       <TopBar pendingInvitation={pendingInvitation} onOpenInvitation={onOpenInvitation} />
 
       <div className="layout-body">
@@ -186,7 +193,7 @@ export default function MainLayout({ children, pendingInvitation = null, onOpenI
           <button
             type="button"
             ref={drawerHandleRef}
-            className={`mobile-drawer-handle${isLeftDrawerOpen ? ' is-open' : ''}`}
+            className={`mobile-drawer-handle${isLeftDrawerOpen ? ' is-open' : ''}${hasMobileTitleRow ? ' has-topbar-row-3' : ''}`}
             onClick={isLeftDrawerOpen ? animateClose : openLeftDrawer}
             aria-label={
               isLeftDrawerOpen ? t('common.close') : t('common.open_menu')
