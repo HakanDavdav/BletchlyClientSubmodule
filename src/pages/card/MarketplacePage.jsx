@@ -197,17 +197,7 @@ export default function MarketplacePage() {
                     borderTop: '1px solid var(--color-border)',
                   }}
                 >
-                  <span
-                    style={{
-                      display: 'block',
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: 'var(--color-text-secondary)',
-                      textTransform: 'uppercase',
-                      letterSpacing: 0.5,
-                      marginBottom: 8,
-                    }}
-                  >
+                  <span className="section-divider-title">
                     {t('card.seller')}
                   </span>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, zoom: 0.75 }}>

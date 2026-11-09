@@ -1455,14 +1455,14 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
               </Link>
               <Link
                 to="/login"
-                className="btn btn-ghost btn-sm"
+                className="btn btn-ghost btn-sm topbar-auth-btn"
                 style={{ fontSize: 12.5, padding: '4px 10px', height: 30, textDecoration: 'none' }}
               >
                 {t('topbar.login')}
               </Link>
               <Link
                 to="/register"
-                className="btn btn-primary btn-sm"
+                className="btn btn-primary btn-sm topbar-auth-btn"
                 style={{ fontSize: 12.5, padding: '4px 10px', height: 30, textDecoration: 'none' }}
               >
                 {t('topbar.register')}
@@ -2144,11 +2144,22 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                   </AnimatePresence>
                 </div>
 
-                {/* Sağ: Standardize küçük tarih (Statik) */}
+                {/* Sağ: Mobil Chat Butonu (PC Dock ile uyumlu dikdörtgen tasarım) */}
                 <div className="topbar-row-3__right">
-                  <span className="topbar-row-3__date">
-                    {formatDate(new Date())}
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/chat')}
+                    className="topbar-row-3__chat-btn"
+                    aria-label={t('chat.title', 'Chat')}
+                    title={t('chat.title', 'Chat')}
+                  >
+                    <ChatBubbleIcon size={14} />
+                    {totalChatUnreadCount > 0 && (
+                      <span className="topbar-row-3__chat-badge">
+                        {totalChatUnreadCount > 99 ? '99+' : totalChatUnreadCount}
+                      </span>
+                    )}
+                  </button>
                 </div>
               </div>
             </motion.div>

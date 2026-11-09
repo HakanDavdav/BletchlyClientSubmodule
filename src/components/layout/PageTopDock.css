@@ -79,10 +79,26 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   color: var(--color-primary);
-  opacity: 0.75;
+  opacity: 0.85;
   pointer-events: none;
   transition: opacity 0.18s ease;
+}
+
+.page-top-dock__chat-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background-color: var(--color-primary);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .page-top-dock:hover:not(:has(.page-top-dock__item:hover)) .page-top-dock__chat-hint {

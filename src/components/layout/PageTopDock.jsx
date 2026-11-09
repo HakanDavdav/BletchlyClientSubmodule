@@ -1,6 +1,7 @@
 import { useContext, useLayoutEffect, useMemo, useRef, useSyncExternalStore } from 'react'
 import { PageTopDockContext, PageTopDockSlotContext } from './PageTopDockContext'
 import ChatBubbleIcon from '../common/icons/ChatBubbleIcon'
+import useChatDeckStore from '../../store/chatDeckStore'
 import './PageTopDock.css'
 
 export function PageTopDockProvider({ children }) {
@@ -39,6 +40,7 @@ export function PageTopDock({
   handleTabIndex,
   inset = false,
 }) {
+  const totalChatUnreadCount = useChatDeckStore((s) => s.totalChatUnreadCount)
   const context = useContext(PageTopDockContext)
   const store = context?.store
   const slots = useSyncExternalStore(
@@ -68,6 +70,11 @@ export function PageTopDock({
             <div className="page-top-dock__item page-top-dock__item--hint">
               <span className="page-top-dock__chat-hint" aria-hidden="true">
                 <ChatBubbleIcon size={17} />
+                {totalChatUnreadCount > 0 && (
+                  <span className="page-top-dock__chat-badge">
+                    {totalChatUnreadCount > 99 ? '99+' : totalChatUnreadCount}
+                  </span>
+                )}
               </span>
             </div>
           ) : null)}

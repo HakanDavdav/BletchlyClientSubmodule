@@ -125,6 +125,12 @@
     gap: 8px !important;
   }
 
+  /* Mobilde login / register butonlarını yatayda ~3px kısaltma */
+  .topbar-auth-btn {
+    padding-left: 8.5px !important;
+    padding-right: 8.5px !important;
+  }
+
   /* Marka logosu daraltılan satıra oranlanır */
   .topbar-row-1 > div:first-child > div {
     transform: scale(0.78) !important;
@@ -207,14 +213,18 @@
   }
 
   .topbar-row-3__center-slot {
-    flex: 1;
-    min-width: 0;
-    height: 100%;
-    position: relative;
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: calc(100% - 170px);
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
+    pointer-events: none;
+    z-index: 1;
   }
 
   .topbar-row-3__content {
@@ -226,6 +236,7 @@
     width: 100%;
     height: 100%;
     padding: 0 4px;
+    pointer-events: none;
   }
 
   .topbar-row-3__center {
@@ -235,6 +246,7 @@
     gap: 6px;
     max-width: 100%;
     min-width: 0;
+    pointer-events: auto;
   }
 
   .topbar-row-3__icon {
@@ -275,6 +287,49 @@
     justify-content: flex-end;
     flex-shrink: 0;
     z-index: 2;
+  }
+
+  /* Mobil TopBar Chat Butonu (PC Dock ile aynı tasarım dili) */
+  .topbar-row-3__chat-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 24px;
+    min-width: 60px;
+    padding: 0 16px;
+    border-radius: 6px;
+    border: 1px solid color-mix(in srgb, var(--color-primary) 18%, var(--color-border));
+    background-color: color-mix(in srgb, var(--color-primary) 10%, var(--color-bg));
+    color: var(--color-primary);
+    box-shadow: var(--shadow-xs);
+    cursor: pointer;
+    transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .topbar-row-3__chat-btn:hover {
+    background-color: color-mix(in srgb, var(--color-primary) 14%, var(--color-bg));
+    border-color: color-mix(in srgb, var(--color-primary) 28%, var(--color-border));
+  }
+
+  .topbar-row-3__chat-btn:active {
+    transform: scale(0.96);
+    background-color: color-mix(in srgb, var(--color-primary) 18%, var(--color-bg));
+  }
+
+  .topbar-row-3__chat-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 3.5px;
+    border-radius: 999px;
+    background-color: var(--color-primary);
+    color: #fff;
+    font-size: 9.5px;
+    font-weight: 700;
+    line-height: 1;
   }
 
   .topbar-row-3__date {

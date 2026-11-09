@@ -694,14 +694,7 @@ export default function TribeSettingsPage() {
             <Users size={18} color="var(--color-primary)" />
           </div>
           <div>
-            <h2
-              style={{
-                fontSize: 18,
-                fontWeight: 700,
-                margin: 0,
-                color: 'var(--color-text-primary)',
-              }}
-            >
+            <h2 className="section-divider-title" style={{ margin: 0 }}>
               {t('tribe_settings.member_management')}
             </h2>
           </div>

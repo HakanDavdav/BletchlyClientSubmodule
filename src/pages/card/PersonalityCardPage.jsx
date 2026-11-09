@@ -267,16 +267,7 @@ export default function PersonalityCardPage() {
       {/* Slots Section */}
       <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div>
-          <h3
-            style={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              marginBottom: 8,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-            }}
-          >
+          <h3 className="section-divider-title">
             {t('card.ownership_slots')} ({myCards.length} / {cardOwnershipLimit} {t('card.slots_label')})
           </h3>
           <CardSlots

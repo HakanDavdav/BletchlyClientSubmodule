@@ -205,7 +205,7 @@ export default function PostDetailPage() {
             borderBottom: '1px solid var(--color-border)',
           }}
         >
-          <h3 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>
+          <h3 className="section-divider-title" style={{ margin: 0 }}>
             {t('post.comments')} ({postData.entryCount ?? 0})
           </h3>
           {paginationControls}

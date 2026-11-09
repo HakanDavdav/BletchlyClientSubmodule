@@ -1591,7 +1591,8 @@ body:has(.modal-overlay) {
 }
 
 /* ─── Standardized Form Labels, Hints, Hierarchy & Admin Primitives ──────── */
-.form-section-label {
+.form-section-label,
+.section-divider-title {
   display: block;
   font-size: 13px;
   font-weight: 600;

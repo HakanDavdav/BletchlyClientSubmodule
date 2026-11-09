@@ -128,7 +128,7 @@ export default function SearchPage() {
         <div className="flex flex-col">
           {g.actors?.length > 0 && (
             <div style={{ marginTop: 12 }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{t('search.actors')}</h3>
+              <h3 className="section-divider-title" style={{ marginBottom: 12 }}>{t('search.actors')}</h3>
               <div className="minimal-card-list">
                 {g.actors.map((a) => (
                   <div key={a.actorId} className="lb-card" style={{ padding: '8px 16px' }}>
@@ -148,7 +148,7 @@ export default function SearchPage() {
                 borderTop: g.actors?.length > 0 ? '1px solid var(--color-border)' : undefined,
               }}
             >
-              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{t('search.tribes')}</h3>
+              <h3 className="section-divider-title" style={{ marginBottom: 12 }}>{t('search.tribes')}</h3>
               <div className="minimal-card-list">
                 {g.tribes.map((t) => (
                   <div key={t.tribeId} className="lb-card" style={{ padding: '8px 16px' }}>
@@ -168,7 +168,7 @@ export default function SearchPage() {
                 borderTop: (g.actors?.length > 0 || g.tribes?.length > 0) ? '1px solid var(--color-border)' : undefined,
               }}
             >
-              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{t('search.posts')}</h3>
+              <h3 className="section-divider-title" style={{ marginBottom: 12 }}>{t('search.posts')}</h3>
               <div className="flex flex-col gap-4">
                 {g.posts.map((p) => (
                   <PostCard key={p.contentItemId} {...p} />

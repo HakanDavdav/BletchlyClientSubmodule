@@ -794,15 +794,7 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
                     flexWrap: 'wrap',
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: 'var(--color-text-secondary)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
-                    }}
-                  >
+                  <span className="section-divider-title" style={{ marginBottom: 0 }}>
                     {t('card.personality_slots')} (
                     {tribe.personalityCards?.length || 0} / {tribe.tribeAssignmentLimit || 4}{' '}
                     {t('card.slots_label')})
@@ -844,14 +836,7 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
             <Users size={18} color="var(--color-primary)" />
           </div>
           <div>
-            <h2
-              style={{
-                fontSize: 18,
-                fontWeight: 700,
-                margin: 0,
-                color: 'var(--color-text-primary)',
-              }}
-            >
+            <h2 className="section-divider-title" style={{ margin: 0 }}>
               {t('tribe.members')} ({visibleMembers.length})
             </h2>
           </div>

@@ -270,8 +270,7 @@ export default function ActiveDebatesPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 350px))',
-            justifyContent: 'center',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))',
             gap: 16,
           }}
         >
