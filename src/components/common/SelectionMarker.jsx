@@ -12,7 +12,7 @@ export default function SelectionMarker({
   style,
   markerStyle,
 }) {
-  const isBox = size === 'box' || size === '44'
+  const isBox = size === 'box' || size === '44' || size === 'box-sm'
 
   const marker = (
     <span
@@ -21,7 +21,7 @@ export default function SelectionMarker({
       style={markerStyle}
     >
       {checked && (
-        <Check size={isBox ? 20 : size === 'sm' ? 12 : 13} strokeWidth={isBox ? 2.6 : 3} />
+        <Check size={size === 'box-sm' ? 14 : isBox ? 20 : size === 'sm' ? 12 : 13} strokeWidth={isBox ? 2.6 : 3} />
       )}
       {locked && <span className="selection-marker__slash" aria-hidden="true" />}
     </span>

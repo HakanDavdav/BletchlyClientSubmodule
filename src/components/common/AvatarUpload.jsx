@@ -19,6 +19,7 @@ export default function AvatarUpload({
   imageKind = 'avatar',
   isLocked = false,
   onLockedClick,
+  avatarRadius,
 }) {
   const { t } = useTranslation()
   const fileInputRef = useRef(null)
@@ -191,12 +192,20 @@ export default function AvatarUpload({
     }
   }
 
-  const borderRadius = shape === 'circle' ? '50%' : '14px'
+  const borderRadius =
+    avatarRadius !== undefined
+      ? typeof avatarRadius === 'number'
+        ? `${avatarRadius}px`
+        : avatarRadius
+      : shape === 'circle'
+        ? '50%'
+        : '14px'
   const borderWidth = shape === 'circle' ? 2.5 : 2
   const cropShape = shape === 'circle' ? 'round' : 'rect'
 
   const previewBox = (
     <div
+      className="avatar-upload__preview"
       style={{
         position: 'relative',
         width: size,
@@ -285,7 +294,7 @@ export default function AvatarUpload({
               backdropFilter: compact && !isHovered ? 'blur(0.5px)' : 'none',
             }}
           >
-            <Camera size={Math.max(20, Math.round(size * 0.2))} />
+            <Camera size={Math.max(size < 40 ? 13 : 20, Math.round(size * 0.2))} />
             {!compact && (
               <span
                 style={{
@@ -313,7 +322,7 @@ export default function AvatarUpload({
             padding: size < 60 ? 2 : undefined,
           }}
         >
-          <ImageIcon size={Math.max(18, Math.round(size * (size < 60 ? 0.42 : 0.28)))} />
+          <ImageIcon size={Math.max(size < 40 ? 14 : 18, Math.round(size * (size < 60 ? 0.46 : 0.28)))} />
           {size >= 60 && !compact && (
             <span style={{ fontSize: 11, fontWeight: 500 }}>
               {t('upload.drag_or_click')}
@@ -396,13 +405,13 @@ export default function AvatarUpload({
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+    <div className="avatar-upload avatar-upload--standard">
       {hiddenFileInput}
       {previewBox}
 
       {/* Control Actions & Info */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 200, flex: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+      <div className="avatar-upload__controls">
+        <div className="avatar-upload__buttons">
           <button
             type="button"
             className="btn"
@@ -454,11 +463,11 @@ export default function AvatarUpload({
           )}
         </div>
 
-        <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>
+        <div className="avatar-upload__hint">
           {t(
             'upload.drag_hint'
           )}
-          <div style={{ fontSize: 11, color: 'var(--color-text-faint)', marginTop: 2 }}>
+          <div className="avatar-upload__limits">
             {t('upload.limits')}
           </div>
         </div>

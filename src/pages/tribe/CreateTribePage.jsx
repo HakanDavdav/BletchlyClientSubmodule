@@ -85,7 +85,7 @@ export default function CreateTribePage() {
     UserCapabilities.Premium
   const isMobileScreen = useIsMobile()
   const sliderRowStyle = isMobileScreen
-    ? undefined
+    ? { width: '100%', maxWidth: 'none' }
     : { flex: 1, minWidth: 0, maxWidth: 'none' }
 
   const [formData, setFormData] = useState({

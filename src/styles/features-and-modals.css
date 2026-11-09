@@ -133,7 +133,7 @@
   opacity: 0.9;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .rainbow-cards-ambience {
     --rc-card-w: 28px;
     --rc-card-h: 54px;
@@ -1472,7 +1472,7 @@ textarea {
   height: 100% !important;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .card-detail-modal-body {
     padding: 8px 16px 20px;
   }
@@ -1983,7 +1983,7 @@ textarea {
   white-space: nowrap;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .cookie-policy-content {
     padding: 24px 18px !important;
   }
@@ -2032,3 +2032,100 @@ textarea {
 .hierarchy-graph-node .hg-node-4 { fill: var(--color-primary); }
 .hierarchy-graph-node .hg-node-5 { fill: #fb923c; }
 .hierarchy-graph-node .hg-node-6 { fill: #c084fc; }
+
+/* ─── HowItWorksHelp ("?") Info Modal (Desktop Base) ─────────────────── */
+.how-it-works-modal-box {
+  max-width: 700px;
+  max-height: calc(100vh - var(--modal-top-tall) - var(--modal-edge));
+  padding: 24px 20px 20px;
+  border-radius: 16px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.how-it-works-modal-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.how-it-works-items-scroll {
+  flex: 0 0 80%;
+  min-width: 0;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.how-it-works-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.how-it-works-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  transition: all 0.2s ease;
+}
+
+.how-it-works-item:hover {
+  background: var(--color-surface-2);
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.how-it-works-item-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.how-it-works-item-text {
+  flex: 1;
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.how-it-works-guide-wrap {
+  flex: 1 1 20%;
+  min-width: 56px;
+  display: flex;
+  padding: 12px 12px 12px 0;
+}
+
+.how-it-works-guide-btn {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.how-it-works-guide-btn:hover {
+  background: var(--color-primary-lighter);
+  border-color: var(--color-primary);
+}
+

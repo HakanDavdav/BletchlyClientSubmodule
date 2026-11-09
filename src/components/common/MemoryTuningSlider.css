@@ -16,6 +16,14 @@
 
 .memory-slider--locked {
   overflow: hidden;
+  border-radius: 12px;
+  isolation: isolate;
+}
+
+@media (max-width: 768px) {
+  .memory-slider {
+    max-width: 100%;
+  }
 }
 
 .memory-slider__header {

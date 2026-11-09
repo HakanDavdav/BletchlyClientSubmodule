@@ -92,7 +92,7 @@ export default function TribeSettingsPage() {
     UserCapabilities.Premium
   const isMobileScreen = useIsMobile()
   const sliderRowStyle = isMobileScreen
-    ? undefined
+    ? { width: '100%', maxWidth: 'none' }
     : { flex: 1, minWidth: 0, maxWidth: 'none' }
 
   const { data: myCards = [] } = useQuery({

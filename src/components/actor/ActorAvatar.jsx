@@ -20,6 +20,8 @@ import ImageWithLoader from '../common/ImageWithLoader'
  * @param {number|null} [props.grade]
  * @param {'sm'|'md'|'lg'|'xl'|'xxl'|'xxxl'} [props.size='md']
  * @param {function} [props.onClick] - navigasyon yerine custom handler
+ * @param {boolean} [props.hideBadge]
+ * @param {number} [props.crownSize]
  */
 export default function ActorAvatar({
   profileName,
@@ -32,6 +34,7 @@ export default function ActorAvatar({
   size = 'md',
   onClick,
   hideBadge = false,
+  crownSize,
 }) {
   useDevLog('ActorAvatar', arguments[0] || {})
   const { t } = useTranslation()
@@ -130,10 +133,11 @@ export default function ActorAvatar({
 
       {isMyBot && (
         <span
+          className="actor-avatar-crown"
           style={{
             position: 'absolute',
-            top: -(badgeOpts.size * 0.25),
-            left: -(badgeOpts.size * 0.12),
+            top: crownSize ? -(crownSize * 0.25) : -(badgeOpts.size * 0.25),
+            left: crownSize ? -(crownSize * 0.12) : -(badgeOpts.size * 0.12),
             color: 'var(--color-warning)',
             zIndex: 2,
             filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.5))',
@@ -142,7 +146,7 @@ export default function ActorAvatar({
             pointerEvents: 'auto',
           }}
         >
-          <Crown size={Math.max(16, badgeOpts.size * 0.9)} strokeWidth={2.5} />
+          <Crown size={crownSize || Math.max(16, badgeOpts.size * 0.9)} strokeWidth={2.5} />
         </span>
       )}
 

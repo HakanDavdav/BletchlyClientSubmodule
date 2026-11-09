@@ -47,27 +47,16 @@ export default function HowItWorksHelp({
           <div
             className="modal-overlay modal-overlay--tall"
           onClick={() => setIsOpen(false)}
-          style={{ zIndex: 1000, display: 'flex', justifyContent: 'center' }}
+          style={{ zIndex: 100000, display: 'flex', justifyContent: 'center' }}
           role="presentation"
         >
           <section
-            className="modal-box"
+            className="modal-box how-it-works-modal-box"
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
             onClick={(event) => event.stopPropagation()}
-            style={{
-              width: modalWidth,
-              maxWidth: 'none',
-              maxHeight: '90vh',
-              padding: '24px 20px 20px',
-              borderRadius: 16,
-              background: 'var(--color-bg)',
-              border: '1px solid var(--color-border)',
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column'
-            }}
+            style={{ width: modalWidth }}
           >
             {/* Header */}
             <ModalHeader
@@ -79,44 +68,18 @@ export default function HowItWorksHelp({
             />
 
             {/* Body */}
-            <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-              <div style={{ flex: '0 0 80%', minWidth: 0, padding: '24px', overflowY: 'auto' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div className="how-it-works-modal-body">
+              <div className="how-it-works-items-scroll">
+                <div className="how-it-works-items-list">
                   {items.map((item, index) => (
                     <div
                       key={`${titleId}-${index}`}
                       className="how-it-works-item"
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 16,
-                        padding: 20,
-                        borderRadius: 12,
-                        border: '1px solid var(--color-border)',
-                        background: 'var(--color-surface)',
-                        transition: 'all 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'var(--color-surface-2)'
-                        e.currentTarget.style.borderColor = 'var(--color-primary)'
-                        e.currentTarget.style.transform = 'translateY(-2px)'
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'var(--color-surface)'
-                        e.currentTarget.style.borderColor = 'var(--color-border)'
-                        e.currentTarget.style.transform = 'none'
-                        e.currentTarget.style.boxShadow = 'none'
-                      }}
                     >
-                      <div style={{
-                        width: 32, height: 32, borderRadius: 8, background: 'var(--color-surface-2)',
-                        border: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        flexShrink: 0,
-                      }}>
+                      <div className="how-it-works-item-icon">
                         <Info size={16} color="var(--color-primary)" />
                       </div>
-                      <div style={{ flex: 1, margin: 0, fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
+                      <div className="how-it-works-item-text">
                         {item}
                       </div>
                     </div>
@@ -124,36 +87,16 @@ export default function HowItWorksHelp({
                 </div>
               </div>
 
-              <div style={{ flex: '1 1 20%', minWidth: 56, display: 'flex', padding: '12px 12px 12px 0' }}>
+              <div className="how-it-works-guide-wrap">
                 <button
                   type="button"
+                  className="how-it-works-guide-btn"
                   onClick={() => {
                     setIsOpen(false)
                     navigate('/basic-concepts')
                   }}
                   aria-label={t('bletchly_guide.hierarchy_link')}
                   title={t('bletchly_guide.hierarchy_link')}
-                  style={{
-                    flex: 1,
-                    width: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: 12,
-                    border: '1px solid var(--color-border)',
-                    background: 'var(--color-surface)',
-                    color: 'var(--color-primary)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'var(--color-primary-lighter)'
-                    e.currentTarget.style.borderColor = 'var(--color-primary)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'var(--color-surface)'
-                    e.currentTarget.style.borderColor = 'var(--color-border)'
-                  }}
                 >
                   <ShieldQuestion size={22} strokeWidth={2.2} />
                 </button>

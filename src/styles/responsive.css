@@ -467,6 +467,38 @@
     font-size: 16px !important;
   }
 
+  input::placeholder,
+  textarea::placeholder {
+    font-size: 12.5px;
+    letter-spacing: 0.01em;
+  }
+
+  .form-section-label {
+    font-size: 11.5px;
+    margin-bottom: 6px;
+    letter-spacing: 0.025em;
+  }
+
+  /* AvatarUpload mobil ortalama: önizleme, butonlar ve bilgilendirme yazısı ortalanır */
+  .avatar-upload--standard {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 14px;
+    width: 100%;
+  }
+
+  .avatar-upload__controls {
+    align-items: center;
+    text-align: center;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .avatar-upload__buttons {
+    justify-content: center;
+  }
+
   .layout-center-inner {
     padding: 10px 10px 12px !important;
   }
@@ -702,14 +734,23 @@
   display: none;
 }
 
-/* Memory Map: görünüm anahtarları sarmalayıcısı masaüstünde şeffaf; kaydıraç yalnızca mobilde */
-.mind-view-toggles-wrap,
-.mind-legend-items-wrap {
-  display: contents;
-}
+/* Memory Map & Profil aksiyonları: sarmalayıcı masaüstünde şeffaf; kaydıraç yalnızca mobilde */
+@media (min-width: 901px) {
+  .mind-view-toggles-wrap,
+  .mind-legend-items-wrap {
+    display: contents;
+  }
 
-.mind-view-scrollbar {
-  display: none;
+  .mind-view-scrollbar {
+    display: none;
+  }
+
+  .profile-actions-wrap {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-top: 12px;
+  }
 }
 
 /* Memory Map: mobil "Anılar" tetikleyicisi yalnızca mobilde görünür */
@@ -724,7 +765,15 @@
 
 /* Memory Map: görünüm anahtarları + Varsayılan hizası (mobilde flex-end'e ezilir) */
 .mind-actions {
+  display: flex;
   align-items: center;
+  gap: 8px;
+}
+
+.mind-view-toggles {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 /* Memory Map: kimlik pili + altında bağımsız bağlam başlığı */
@@ -959,10 +1008,43 @@
     order: 1;
     flex: 1 1 100%;
     min-width: 0;
-    display: flex;
-    align-items: flex-end;
+    display: flex !important;
+    align-items: flex-end !important;
     gap: 8px;
-    flex-wrap: nowrap;
+    flex-wrap: nowrap !important;
+  }
+
+  /* Sarmalayıcı: kalan alanı alır ve kaydırma göstergesini içerir */
+  .mind-header .mind-view-toggles-wrap {
+    order: 1;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    overflow: hidden;
+    touch-action: pan-x;
+  }
+
+  .mind-header .mind-view-scrollbar {
+    display: block !important;
+    position: relative;
+    height: 1.5px;
+    margin: 0 0 3px;
+    background: var(--color-border);
+    border-radius: 999px;
+    overflow: hidden;
+    pointer-events: none;
+    touch-action: none;
+    width: 100%;
+  }
+
+  .mind-header .mind-view-scrollbar-thumb {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: var(--color-primary);
+    border-radius: 999px;
+    transition: left 0.05s linear;
   }
 
   /* Mobilde anahtarlar ve Varsayılan butonu daha ince (dikey uzunluk azaltılır) */
@@ -979,30 +1061,81 @@
 
   /* Anahtarlar mobilde tam etiketli kalır ve yatay kaydırılır */
   .mind-header .mind-view-toggles {
-    order: 1;
     display: flex !important;
+    align-items: center;
     gap: 4px !important;
-    flex: 1 1 auto;
-    min-width: 0;
-    overflow-x: auto;
-    scrollbar-width: none;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
     -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    overscroll-behavior-x: contain;
+    flex: 0 0 auto;
+  }
+
+  .mind-header .mind-view-toggles > * {
+    flex-shrink: 0 !important;
   }
 
   .mind-header .mind-view-toggles::-webkit-scrollbar {
     display: none;
   }
 
-  /* Varsayılan butonu mobilde 2. satırda, anahtarların sağında */
+  /* Dikey ayırıcı mobilde gizlenir */
+  .mind-header .mind-actions-divider {
+    display: none !important;
+  }
+
+  /* Varsayılan butonu mobilde 2. satırda, anahtarların sağında her zaman görünür */
   .mind-header .mind-default-desktop {
     order: 2;
     display: flex !important;
-    flex-shrink: 0;
+    flex-shrink: 0 !important;
+    margin-left: auto;
+    z-index: 2;
   }
 
   /* Üst satırdaki mobil kopya artık kullanılmıyor (2. satırda gösteriliyor) */
   .mind-default-mobile {
     display: none !important;
+  }
+
+  /* Profil başlığı aksiyon butonları: mobilde tek sıra yatay kaydırılabilir */
+  .profile-actions-wrap {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin-top: 12px !important;
+    touch-action: pan-x;
+  }
+
+  .profile-actions-wrap .profile-tabs-scrollbar {
+    height: 1.5px !important;
+    margin: 0 0 3px !important;
+    border-radius: 999px !important;
+    overflow: hidden !important;
+  }
+
+  .profile-header-actions {
+    display: flex !important;
+    gap: 8px !important;
+    flex-wrap: nowrap !important;
+    padding-top: 0 !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    overscroll-behavior-x: contain;
+    width: 100% !important;
+    min-width: 0 !important;
+    justify-content: flex-start !important;
+  }
+
+  .profile-header-actions > * {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
   }
 
   /* Anılar tetikleyicisi: legend satırının sağında küçük pill */
@@ -1052,16 +1185,22 @@
 /* Memory Map düğüm detay modalı (mobil/tablet): başlangıç topbar altında,
    bitiş mobil alt barın üstünde sabitlenir; modal hiçbir zaman barların altına kaymaz */
 @media (max-width: 900px) {
+  .mind-node-modal-overlay {
+    z-index: 100000 !important;
+    padding-top: var(--modal-top-tall) !important;
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 12px) !important;
+  }
+
   .mind-node-backdrop {
     align-items: center !important;
     padding: 12px !important;
     padding-top: calc(var(--topbar-height) + 12px) !important;
     padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 12px) !important;
-    z-index: 1000 !important;
+    z-index: 100000 !important;
   }
 
   .mind-node-panel {
-    max-height: 100% !important;
+    max-height: calc(100vh - var(--modal-top-tall) - 56px - env(safe-area-inset-bottom, 0px) - 24px) !important;
   }
 }
 
@@ -1152,10 +1291,9 @@
     margin-left: 72px;
   }
 
-  /* Entry kartlarda +/- butonu en solda kalsın; yanındaki "2 more"
-     yazısı biraz daha yaklaşıp hafifçe büyüsün */
+  /* Entry kartlarda +/- butonu ile yanındaki yanıt sayısı yazısı arasında standart mesafe */
   .entry-replies-count {
-    margin-left: -7px;
+    margin-left: 0;
     font-size: 11.5px;
   }
 
@@ -1246,13 +1384,94 @@
     display: none !important;
   }
 
-  /* HowItWorksHelp modalı: mobilde "i" ikonları kaldırılır, sadece metin kalır */
-  .how-it-works-item {
-    display: block !important;
+  /* HowItWorksHelp ("?") Info Modalı: mobilde en altta yatay "?" rehber butonu, kompakt boşluklar ve ferah okuma alanı */
+  .how-it-works-modal-box {
+    width: 100% !important;
+    max-width: calc(100vw - 20px) !important;
+    max-height: calc(100vh - var(--modal-top-tall) - 56px - env(safe-area-inset-bottom, 0px) - 16px) !important;
+    padding: 14px 10px 12px !important;
+    border-radius: 14px !important;
   }
 
-  .how-it-works-item > div:first-child {
-    display: none !important;
+  .how-it-works-modal-box .modal-header {
+    margin-bottom: 10px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .how-it-works-modal-body {
+    flex-direction: column !important;
+    display: flex !important;
+    min-height: 0 !important;
+    flex: 1 1 auto !important;
+    gap: 8px !important;
+  }
+
+  .how-it-works-items-scroll {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    padding: 2px 2px 4px !important;
+    overflow-y: auto !important;
+  }
+
+  .how-it-works-items-list {
+    gap: 8px !important;
+  }
+
+  .how-it-works-item {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    padding: 9px 10px !important;
+    border-radius: 10px !important;
+  }
+
+  .how-it-works-item-icon {
+    display: flex !important;
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 6px !important;
+    flex-shrink: 0 !important;
+    margin-top: 1px !important;
+  }
+
+  .how-it-works-item-icon svg {
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  .how-it-works-item-text {
+    font-size: 12px !important;
+    line-height: 1.45 !important;
+  }
+
+  .how-it-works-guide-wrap {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    display: flex !important;
+    padding: 4px 0 0 !important;
+    margin-top: auto !important;
+    border-top: none !important;
+  }
+
+  .how-it-works-guide-btn {
+    width: 100% !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 10px !important;
+    padding: 0 !important;
+    border: 1px solid var(--color-border) !important;
+    background: var(--color-surface) !important;
+    color: var(--color-primary) !important;
+  }
+
+  .how-it-works-guide-btn:active {
+    background: var(--color-primary-lighter) !important;
+    border-color: var(--color-primary) !important;
   }
 
   /* Kart sayfası başlığı: yardım ikonu sıkıştırmasın */
@@ -1287,6 +1506,14 @@
     width: 100% !important;
     max-width: calc(100vw - 24px) !important;
     border-radius: 18px !important;
+  }
+
+  .mind-node-panel-header {
+    padding: 16px 14px 14px 14px !important;
+  }
+
+  .mind-node-scroll {
+    margin: 12px 14px 16px !important;
   }
 
   /* Panel, içeri alınmış grafik alanının dışına taşmasın */

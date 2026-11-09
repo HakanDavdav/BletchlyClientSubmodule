@@ -601,6 +601,13 @@ body:has(.modal-overlay) .personality-card:hover {
   border-color: var(--color-error);
 }
 
+.personality-card .icon-action-button,
+.personality-card-editor .icon-action-button,
+.card-edit-component .icon-action-button {
+  min-width: 0 !important;
+  min-height: 0 !important;
+}
+
 /* Kilit butonu hover'ı, soldaki bulut (görsel yükleme) butonuyla aynı olsun */
 .personality-card--editor .personality-card-editor__body .icon-action-button:hover {
   --editor-box-border: var(--color-primary);
@@ -711,14 +718,38 @@ body:has(.modal-overlay) .personality-card:hover {
   box-sizing: border-box;
 }
 
+.selection-marker--box-sm {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 2px solid var(--color-border);
+  background: var(--color-surface-raised, var(--color-surface));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .personality-card .selection-marker--sm {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+  }
+}
+
 .selection-marker--box:hover:not(.is-disabled),
-.selection-marker--44:hover:not(.is-disabled) {
+.selection-marker--44:hover:not(.is-disabled),
+.selection-marker--box-sm:hover:not(.is-disabled) {
   border-color: var(--color-primary);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
 }
 
 .selection-marker--box.is-checked,
-.selection-marker--44.is-checked {
+.selection-marker--44.is-checked,
+.selection-marker--box-sm.is-checked {
   border-color: var(--color-primary);
   background: var(--color-primary-light, rgba(99, 102, 241, 0.12));
   color: var(--color-primary-dark);

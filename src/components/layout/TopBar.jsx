@@ -23,6 +23,7 @@ import {
   Clock,
 } from 'lucide-react'
 import { getRecentSearches, saveRecentSearch, removeRecentSearch } from '../../utils/recentSearches'
+import { formatDate } from '../../utils/formatDate'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -2042,55 +2043,89 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                 },
               }}
             >
-              <AnimatePresence initial={false} mode="sync">
-                <motion.div
-                  key={mobileHeader.key || location.pathname}
-                  className="topbar-row-3__content"
-                  initial={{ opacity: 0, x: '-100%' }}
-                  animate={{
-                    opacity: 1,
-                    x: 0,
-                    transition: {
-                      x: { duration: 0.38, ease: [0.22, 1, 0.36, 1] },
-                      opacity: { duration: 0.26, ease: 'easeOut' },
-                    },
-                  }}
-                  exit={{
-                    opacity: 0,
-                    x: '100%',
-                    pointerEvents: 'none',
-                    transition: {
-                      x: { duration: 0.38, ease: [0.22, 1, 0.36, 1] },
-                      opacity: { duration: 0.38, ease: [0.65, 0, 1, 0.5] },
-                    },
-                  }}
-                >
-                  <div className="topbar-row-3__center">
-                    {mobileHeader.Icon && (
-                      <div className="topbar-row-3__icon">
-                        <mobileHeader.Icon size={14} color="#fff" />
-                      </div>
-                    )}
-                    <span className="topbar-row-3__title">{mobileHeader.title}</span>
+              <div className="topbar-row-3__container">
+                {/* Sol: 3 bot avatarı (Statik) */}
+                <div className="topbar-row-3__left">
+                  {isLoggedIn && myBots && myBots.length > 0 && myBots.slice(0, 3).map((bot) => (
+                    <Link
+                      key={bot.actorId}
+                      to={'/profile?actorId=' + bot.actorId}
+                      style={{ cursor: 'pointer', textDecoration: 'none', display: 'inline-flex' }}
+                    >
+                      <ActorAvatar
+                        profileName={bot.profileName}
+                        imageUrl={bot.imageUrl}
+                        discriminator={bot.discriminator}
+                        actorId={bot.actorId}
+                        size="sm"
+                        crownSize={11}
+                        hideBadge
+                        clickable={false}
+                      />
+                    </Link>
+                  ))}
+                </div>
 
-                    {mobileHeader.help && (
-                      <div className="topbar-row-3__help">
-                        <HowItWorksHelp
-                          title={mobileHeader.help.title}
-                          items={mobileHeader.help.items}
-                          triggerStyle={{
-                            width: 24,
-                            height: 24,
-                            minWidth: 24,
-                            minHeight: 24,
-                            borderRadius: 6,
-                          }}
-                        />
+                {/* Orta: Sayfa Başlığı (Sayfa değişimlerinde soldan gelip sağa kayar) */}
+                <div className="topbar-row-3__center-slot">
+                  <AnimatePresence initial={false} mode="sync">
+                    <motion.div
+                      key={mobileHeader.key || location.pathname}
+                      className="topbar-row-3__content"
+                      initial={{ opacity: 0, x: '-100%' }}
+                      animate={{
+                        opacity: 1,
+                        x: 0,
+                        transition: {
+                          x: { duration: 0.38, ease: [0.22, 1, 0.36, 1] },
+                          opacity: { duration: 0.26, ease: 'easeOut' },
+                        },
+                      }}
+                      exit={{
+                        opacity: 0,
+                        x: '100%',
+                        pointerEvents: 'none',
+                        transition: {
+                          x: { duration: 0.38, ease: [0.22, 1, 0.36, 1] },
+                          opacity: { duration: 0.38, ease: [0.65, 0, 1, 0.5] },
+                        },
+                      }}
+                    >
+                      <div className="topbar-row-3__center">
+                        {mobileHeader.Icon && (
+                          <div className="topbar-row-3__icon">
+                            <mobileHeader.Icon size={14} color="#fff" />
+                          </div>
+                        )}
+                        <span className="topbar-row-3__title">{mobileHeader.title}</span>
+
+                        {mobileHeader.help && (
+                          <div className="topbar-row-3__help">
+                            <HowItWorksHelp
+                              title={mobileHeader.help.title}
+                              items={mobileHeader.help.items}
+                              triggerStyle={{
+                                width: 24,
+                                height: 24,
+                                minWidth: 24,
+                                minHeight: 24,
+                                borderRadius: 6,
+                              }}
+                            />
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </motion.div>
-              </AnimatePresence>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+
+                {/* Sağ: Standardize küçük tarih (Statik) */}
+                <div className="topbar-row-3__right">
+                  <span className="topbar-row-3__date">
+                    {formatDate(new Date())}
+                  </span>
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

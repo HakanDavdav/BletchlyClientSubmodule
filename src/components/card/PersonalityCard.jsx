@@ -31,6 +31,7 @@ import ConfirmModal from '../common/ConfirmModal'
 import PremiumModal from '../common/PremiumModal'
 import useMyEntitiesStore from '../../store/myEntitiesStore'
 import useAuthStore from '../../store/authStore'
+import useIsMobile from '../../hooks/useIsMobile'
 import { UserCapabilities } from '../../constants/enums'
 
 export default function PersonalityCard({
@@ -73,6 +74,7 @@ export default function PersonalityCard({
 }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
   const myOwnedCards = useMyEntitiesStore((s) => s.myCards)
   const currentActorId = useAuthStore((s) => s.actorId)
   const isAdmin = useAuthStore((s) => s.isAdmin)
@@ -263,13 +265,14 @@ export default function PersonalityCard({
 
         <div className="personality-card-editor__body" style={{ position: 'relative', zIndex: 2 }}>
           {/* Onaylandıktan sonra da düzen yeri değişmez; alanlar sadece kilitlenir */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 7 : 10, width: '100%' }}>
               <div style={{ flexShrink: 0 }}>
                 <AvatarUpload
                   imageUrl={editorImageUrl}
                   onImageUploaded={(url) => onEditorChange?.('imageUrl', url)}
                   disabled={disabled || editorConfirmed}
-                  size={44}
+                  size={isMobile ? 28 : 44}
+                  avatarRadius={isMobile ? 8 : 14}
                   shape="rect"
                   compact={true}
                   aspectRatio={3 / 4}
@@ -300,6 +303,7 @@ export default function PersonalityCard({
               />
               {typeof onToggleEditorLock === 'function' && (
                 <IconActionButton
+                  className="personality-card-editor__lock-btn"
                   onClick={(e) => {
                     e.stopPropagation()
                     onToggleEditorLock(!editorLocked)
@@ -310,13 +314,16 @@ export default function PersonalityCard({
                       : t('card.lock_assignment')
                   }
                   style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 14,
-                    // Hover'da bulut butonuyla aynı efekt için CSS değişkenleriyle geçersiz kılınabilir
-                    border: '2px solid var(--editor-box-border, var(--color-border))',
+                    width: isMobile ? 28 : 44,
+                    height: isMobile ? 28 : 44,
+                    minWidth: isMobile ? 28 : 44,
+                    minHeight: isMobile ? 28 : 44,
+                    borderRadius: isMobile ? 8 : 14,
+                    border: editorLocked
+                      ? '2px solid var(--color-primary)'
+                      : '2px solid var(--editor-box-border, var(--color-border))',
                     background: editorLocked
-                      ? 'var(--color-primary-light, rgba(99, 102, 241, 0.12))'
+                      ? 'var(--color-primary)'
                       : 'var(--color-surface-raised)',
                     zIndex: 3,
                     flexShrink: 0,
@@ -324,16 +331,16 @@ export default function PersonalityCard({
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: editorLocked
-                      ? 'var(--color-primary)'
+                      ? '#ffffff'
                       : 'var(--editor-box-color, var(--color-text-secondary))',
                     transition: 'all 0.25s ease',
                     boxShadow: 'var(--editor-box-shadow, 0 2px 8px rgba(0, 0, 0, 0.06))',
                   }}
                 >
                   {editorLocked ? (
-                    <Lock size={18} strokeWidth={2.2} />
+                    <Lock size={isMobile ? 13 : 18} strokeWidth={2.4} />
                   ) : (
-                    <LockOpen size={18} strokeWidth={2.2} />
+                    <LockOpen size={isMobile ? 13 : 18} strokeWidth={2.4} />
                   )}
                 </IconActionButton>
               )}
@@ -348,7 +355,7 @@ export default function PersonalityCard({
                         : undefined
                   }
                   disabled={disabled}
-                  size="box"
+                  size={isMobile ? 'box-sm' : 'box'}
                   label={
                     editorConfirmed
                       ? t('card.personality_confirmed')
@@ -954,6 +961,7 @@ export default function PersonalityCard({
         </span>
         {showLockToggle && filled && (
           <IconActionButton
+            className="personality-card__lock-toggle"
             onClick={(e) => {
               e.stopPropagation()
               onToggleLock(personalityCardId ?? card)
@@ -964,24 +972,26 @@ export default function PersonalityCard({
                 : t('card.lock_assignment')
             }
             style={{
-              width: 26,
-              height: 26,
-              borderRadius: 6,
+              width: isMobile ? 22 : 26,
+              height: isMobile ? 22 : 26,
+              minWidth: isMobile ? 22 : 26,
+              minHeight: isMobile ? 22 : 26,
+              borderRadius: isMobile ? 5 : 6,
               zIndex: 3,
               flexShrink: 0,
               border: lockToggleActive
                 ? '1px solid var(--color-primary)'
                 : '1px solid var(--color-border)',
               background: lockToggleActive
-                ? 'var(--color-primary-light, rgba(99, 102, 241, 0.12))'
+                ? 'var(--color-primary)'
                 : 'var(--color-surface-raised)',
-              color: lockToggleActive ? 'var(--color-primary-dark)' : 'var(--color-text-muted)',
+              color: lockToggleActive ? '#ffffff' : 'var(--color-text-muted)',
             }}
           >
             {lockToggleActive ? (
-              <Lock size={13} strokeWidth={2.2} />
+              <Lock size={isMobile ? 11 : 13} strokeWidth={2.4} />
             ) : (
-              <LockOpen size={13} strokeWidth={2.2} />
+              <LockOpen size={isMobile ? 11 : 13} strokeWidth={2.4} />
             )}
           </IconActionButton>
         )}
@@ -1004,9 +1014,11 @@ export default function PersonalityCard({
             }}
             aria-label={t('action.edit')}
             style={{
-              width: 44,
-              height: 44,
-              borderRadius: 14,
+              width: isMobile ? 28 : 44,
+              height: isMobile ? 28 : 44,
+              minWidth: isMobile ? 28 : 44,
+              minHeight: isMobile ? 28 : 44,
+              borderRadius: isMobile ? 8 : 14,
               // Bulut/kilit butonlarıyla aynı tarz (hover için CSS değişkenleri)
               border: '2px solid var(--card-box-border, var(--color-border))',
               background: 'var(--color-surface-raised)',
@@ -1017,7 +1029,7 @@ export default function PersonalityCard({
               flexShrink: 0,
             }}
           >
-            <Edit2 size={18} strokeWidth={2.2} />
+            <Edit2 size={isMobile ? 13 : 18} strokeWidth={2.2} />
           </IconActionButton>
         ) : showMark ? (
           <span className="personality-card__mark">

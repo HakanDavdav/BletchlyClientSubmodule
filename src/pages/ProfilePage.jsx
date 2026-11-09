@@ -97,6 +97,9 @@ export default function ProfilePage() {
   // Profil sekmeleri: mobilde yatay kaydırma göstergesi (kaydıraç) durumu
   const profileTabGroupRef = useRef(null)
   const [tabScroll, setTabScroll] = useState({ scrollable: false, left: 0, width: 100 })
+  // Profil aksiyon butonları: mobilde yatay kaydırma göstergesi durumu
+  const profileActionsRef = useRef(null)
+  const [actionsScroll, setActionsScroll] = useState({ scrollable: false, left: 0, width: 100 })
   const { t } = useTranslation()
   // Limitler & Miras paneli açma/kapama durumu (TribePage ile ORTAK global state)
   const { isLimitsExpanded, toggleLimits } = useUIStore()
@@ -321,6 +324,31 @@ export default function ProfilePage() {
     visibleProfileBots.length,
     visibleProfileTribes.length,
   ])
+
+  // Mobilde yatay kaydırılabilen aksiyon butonları için kaydıraç konumunu takip et
+  useEffect(() => {
+    const el = profileActionsRef.current
+    if (!el) return undefined
+    const update = () => {
+      const sw = el.scrollWidth
+      const cw = el.clientWidth
+      const scrollable = sw > cw + 1
+      const width = scrollable ? Math.max(14, (cw / sw) * 100 * 0.8) : 100
+      const maxScroll = sw - cw
+      const left = scrollable && maxScroll > 0 ? (el.scrollLeft / maxScroll) * (100 - width) : 0
+      setActionsScroll({ scrollable, left, width })
+    }
+    update()
+    el.addEventListener('scroll', update, { passive: true })
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(update) : null
+    if (ro) ro.observe(el)
+    window.addEventListener('resize', update)
+    return () => {
+      el.removeEventListener('scroll', update)
+      if (ro) ro.disconnect()
+      window.removeEventListener('resize', update)
+    }
+  }, [profile?.discriminator, isLoggedIn, isOwnProfile])
 
   const isMyBot =
     profile?.discriminator === 'Bot' &&
@@ -1074,50 +1102,64 @@ export default function ProfilePage() {
 
             <div style={{ flexGrow: 1 }} />
 
-            <div className="flex flex-wrap gap-2 hscroll-strip profile-header-actions" style={{ paddingTop: 12, paddingBottom: 0 }}>
-              {profile.discriminator === 'Bot' && (
-                <button
-                  className="btn btn-outline btn-sm"
-                  onClick={() =>
-                    navigate('/memory-map?actorId=' + actorId, {
-                      state: { profileName: profile.profileName },
-                    })
-                  }
-                >
-                  <Brain size={14} /> {t('profile.memories')}
-                </button>
+            <div className="profile-actions-wrap" style={{ marginTop: 12 }}>
+              {actionsScroll.scrollable && (
+                <div className="profile-tabs-scrollbar" aria-hidden="true">
+                  <div
+                    className="profile-tabs-scrollbar-thumb"
+                    style={{ width: `${actionsScroll.width}%`, left: `${actionsScroll.left}%` }}
+                  />
+                </div>
               )}
-              <button
-                className="btn btn-outline btn-sm"
-                onClick={() => navigate('/hierarchy?actorId=' + actorId)}
+              <div
+                className="flex gap-2 hscroll-strip profile-header-actions"
+                ref={profileActionsRef}
+                style={{ paddingBottom: 0 }}
               >
-                <Network size={14} /> {t('profile.hierarchy')}
-              </button>
-              {isLoggedIn && !isOwnProfile && (
-                <button
-                  className="btn btn-outline btn-sm"
-                  onClick={isDormant ? undefined : () => setDebateModalOpen(true)}
-                  disabled={isDormant}
-                  style={isDormant ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
-                  title={isDormant ? t('profile.dormant_cannot_debate') : undefined}
-                >
-                  <AngryBotWithSwordsIcon size={14} /> {t('profile.trigger_debate')}
-                </button>
-              )}
-              {isLoggedIn && !isOwnProfile && profile.discriminator === 'User' && (
-                <button
-                  className="btn btn-outline btn-sm"
-                  onClick={() => {
-                    if (!isMobile && isChatDeckEligible(location.pathname)) {
-                      openChatDeck(actorId)
-                      return
+                {profile.discriminator === 'Bot' && (
+                  <button
+                    className="btn btn-outline btn-sm"
+                    onClick={() =>
+                      navigate('/memory-map?actorId=' + actorId, {
+                        state: { profileName: profile.profileName },
+                      })
                     }
-                    navigate('/chat?actorId=' + actorId)
-                  }}
+                  >
+                    <Brain size={14} /> {t('profile.memories')}
+                  </button>
+                )}
+                <button
+                  className="btn btn-outline btn-sm"
+                  onClick={() => navigate('/hierarchy?actorId=' + actorId)}
                 >
-                  <ChatBubbleIcon size={14} /> {t('profile.chat')}
+                  <Network size={14} /> {t('profile.hierarchy')}
                 </button>
-              )}
+                {isLoggedIn && !isOwnProfile && (
+                  <button
+                    className="btn btn-outline btn-sm"
+                    onClick={isDormant ? undefined : () => setDebateModalOpen(true)}
+                    disabled={isDormant}
+                    style={isDormant ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
+                    title={isDormant ? t('profile.dormant_cannot_debate') : undefined}
+                  >
+                    <AngryBotWithSwordsIcon size={14} /> {t('profile.trigger_debate')}
+                  </button>
+                )}
+                {isLoggedIn && !isOwnProfile && profile.discriminator === 'User' && (
+                  <button
+                    className="btn btn-outline btn-sm"
+                    onClick={() => {
+                      if (!isMobile && isChatDeckEligible(location.pathname)) {
+                        openChatDeck(actorId)
+                        return
+                      }
+                      navigate('/chat?actorId=' + actorId)
+                    }}
+                  >
+                    <ChatBubbleIcon size={14} /> {t('profile.chat')}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

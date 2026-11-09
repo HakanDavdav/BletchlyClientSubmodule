@@ -14,12 +14,14 @@ import ImageWithLoader from '../common/ImageWithLoader'
 import ConfirmModal from '../common/ConfirmModal'
 import PremiumModal from '../common/PremiumModal'
 import useAuthStore from '../../store/authStore'
+import useIsMobile from '../../hooks/useIsMobile'
 import { UserCapabilities } from '../../constants/enums'
 
 export default function CardEditComponent({ card, myBots = [], onClose, onSaved }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const isMobile = useIsMobile()
 
   const cardData = card?.card || card?.originalCard || card
   const isCreator =
@@ -163,16 +165,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
           marginBottom: 4,
         }}
       >
-        <label
-          style={{
-            display: 'block',
-            fontSize: 13,
-            fontWeight: 600,
-            color: 'var(--color-text-secondary)',
-            letterSpacing: '0.02em',
-            textTransform: 'uppercase',
-          }}
-        >
+        <label className="form-section-label" style={{ marginBottom: 0 }}>
           {t('card.edit_personality_card')}
         </label>
         <button
@@ -296,7 +289,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
 
         {/* Card Body: Name and Prompt/Hint */}
         <div className="personality-card-editor__body" style={{ position: 'relative', zIndex: 2 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 7 : 10, width: '100%' }}>
             {isCreator && (
               <div style={{ flexShrink: 0 }}>
                 <AvatarUpload
@@ -305,7 +298,8 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
                     setEditFormData((prev) => ({ ...prev, imageUrl: url }))
                   }
                   disabled={editMutation.isPending || deleteMutation.isPending || isConfirmed}
-                  size={44}
+                  size={isMobile ? 28 : 44}
+                  avatarRadius={isMobile ? 8 : 14}
                   shape="rect"
                   compact={true}
                   aspectRatio={3 / 4}
@@ -349,7 +343,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
                       : undefined
                 }
                 disabled={editMutation.isPending || deleteMutation.isPending}
-                size="box"
+                size={isMobile ? 'box-sm' : 'box'}
                 label={
                   isConfirmed
                     ? t('card.personality_confirmed')
@@ -554,15 +548,12 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
             }}
           >
             <label
+              className="form-section-label"
               style={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: 'var(--color-text-primary)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
-                textTransform: 'uppercase',
-                letterSpacing: '0.03em',
+                marginBottom: 0,
               }}
             >
               <Bot size={15} color="var(--color-primary)" />

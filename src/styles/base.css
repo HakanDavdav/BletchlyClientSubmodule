@@ -518,6 +518,41 @@ select {
   flex-wrap: wrap;
 }
 
+/* ─── Standard Avatar Upload (CreateBot, CreateTribe, InitProfile, etc.) ──── */
+.avatar-upload--standard {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.avatar-upload__controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 200px;
+  flex: 1;
+}
+
+.avatar-upload__buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.avatar-upload__hint {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.avatar-upload__limits {
+  font-size: 11px;
+  color: var(--color-text-faint);
+  margin-top: 2px;
+}
+
 .bot-capability-emblem {
   display: inline-flex;
   align-items: center;

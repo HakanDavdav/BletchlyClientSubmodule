@@ -43,14 +43,6 @@ export const MOBILE_PAGE_HEADERS = [
     key: 'explore',
     title: (t) => t('tribes_page.explore_title'),
     Icon: Users,
-    help: (t) => ({
-      title: t('tribes_page.how_it_works_title'),
-      items: [
-        t('tribes_page.how_it_works_1'),
-        t('tribes_page.how_it_works_2'),
-        t('tribes_page.how_it_works_3'),
-      ],
-    }),
   },
   {
     pattern: /^\/tribes$/,

@@ -144,7 +144,7 @@
     justify-content: center;
   }
 
-  /* Mobil dinamik Row 3: ortalı küme ve eşzamanlı geçiş slotu */
+  /* Mobil dinamik Row 3: sol sabit avatarlar, sağ sabit tarih, orta eşzamanlı geçiş slotu */
   .topbar-row-3 {
     display: block !important;
     height: 34px !important;
@@ -156,29 +156,92 @@
     z-index: 10;
   }
 
+  .topbar-row-3__container {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+    gap: 6px;
+    position: relative;
+  }
+
+  .topbar-row-3__left {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    z-index: 2;
+  }
+
+  .topbar-row-3__left .actor-avatar-wrap,
+  .topbar-row-3__left .avatar-sm,
+  .topbar-row-3__left .avatar-fallback {
+    width: 22px !important;
+    height: 22px !important;
+    min-width: 22px !important;
+    min-height: 22px !important;
+    font-size: 10px !important;
+    border-radius: 50% !important;
+  }
+
+  .topbar-row-3__left .actor-avatar-crown {
+    top: -2.5px !important;
+    left: -2px !important;
+  }
+
+  .topbar-row-3__left .actor-avatar-crown svg,
+  .topbar-row-3__left .actor-avatar-wrap svg.lucide-crown {
+    width: 11px !important;
+    height: 11px !important;
+  }
+
+  .topbar-row-3__left a {
+    transition: transform 0.15s ease, opacity 0.15s ease;
+    display: inline-flex;
+  }
+
+  .topbar-row-3__left a:hover {
+    transform: scale(1.08);
+    opacity: 0.85;
+  }
+
+  .topbar-row-3__center-slot {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .topbar-row-3__content {
     position: absolute;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 12px;
+    width: 100%;
+    height: 100%;
+    padding: 0 4px;
   }
 
   .topbar-row-3__center {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     max-width: 100%;
     min-width: 0;
   }
 
   .topbar-row-3__icon {
-    width: 22px;
-    height: 22px;
-    min-width: 22px;
-    min-height: 22px;
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    min-height: 20px;
     border-radius: 6px;
     background: var(--color-primary);
     color: #fff;
@@ -189,7 +252,7 @@
   }
 
   .topbar-row-3__title {
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 700;
     color: var(--color-text);
     white-space: nowrap;
@@ -204,6 +267,24 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+  }
+
+  .topbar-row-3__right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    z-index: 2;
+  }
+
+  .topbar-row-3__date {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-text-faint);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    opacity: 0.88;
   }
 
   .topbar-row-3__help .icon-action-button {

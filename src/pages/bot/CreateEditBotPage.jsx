@@ -127,7 +127,7 @@ export default function CreateEditBotPage() {
     UserCapabilities.Premium
   const isMobileScreen = useIsMobile()
   const sliderRowStyle = isMobileScreen
-    ? undefined
+    ? { width: '100%', maxWidth: 'none' }
     : { flex: 1, minWidth: 0, maxWidth: 'none' }
 
   // Fetch existing data if in Edit Mode
@@ -762,7 +762,7 @@ export default function CreateEditBotPage() {
             isPremium={isPremiumUser}
           />
           <div style={{ marginTop: 18 }}>
-            <label className="form-section-label" style={{ fontSize: 12, marginBottom: 0 }}>
+            <label className="form-section-label" style={{ marginBottom: 0 }}>
               {t('bot.memory_tuning')}
             </label>
             <div className="memory-tuning-row">

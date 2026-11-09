@@ -16,6 +16,7 @@ import { getMemoryEmblems } from '../components/common/MemoryEmblems'
 import { formatMultiplier } from '../components/common/MemoryTuningSlider'
 import { formatDateTime } from '../utils/formatDate'
 import { RotateCcwClock } from '../components/common/icons'
+import ModalPortal from '../components/common/ModalPortal'
 
 export function getNodeLabelText(label, isRoot = false, isTribeContext = false) {
   if (isRoot) {
@@ -2417,51 +2418,40 @@ function NodeDetailPanel({ node, onClose, isTribeContext = false, relationships 
   })
 
   return (
-    <div
-      className="mind-node-backdrop"
-      onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 1000,
-        background: 'rgba(0, 0, 0, 0.58)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingTop: 'calc(var(--topbar-height, 112px) + 16px)',
-        paddingBottom: '16px',
-        paddingLeft: '16px',
-        paddingRight: '16px',
-        animation: 'fadeIn 0.15s ease',
-      }}
-    >
+    <ModalPortal>
       <div
-        className="mind-node-panel"
-        onClick={(e) => e.stopPropagation()}
+        className="modal-overlay modal-overlay--tall mind-node-modal-overlay"
+        onClick={onClose}
         style={{
-          width: '100%',
-          maxWidth: 540,
-          maxHeight: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          background: isDarkMode ? 'rgba(9, 9, 11, 0.96)' : 'rgba(255, 255, 255, 0.96)',
-          backdropFilter: 'blur(36px)',
-          WebkitBackdropFilter: 'blur(36px)',
-          border: isDarkMode
-            ? '1px solid rgba(255, 255, 255, 0.08)'
-            : '1px solid rgba(0, 0, 0, 0.12)',
-          borderTop: `4px solid ${core}`,
-          borderRadius: 20,
-          boxShadow: isDarkMode
-            ? '0 24px 64px rgba(0, 0, 0, 0.85)'
-            : '0 24px 64px rgba(0, 0, 0, 0.15)',
-          overflow: 'hidden',
-          fontFamily: 'Inter, sans-serif',
-          color: isDarkMode ? '#f8fafc' : '#111827',
+          zIndex: 100000,
+          animation: 'fadeIn 0.15s ease',
         }}
       >
+        <div
+          className="mind-node-panel"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            width: '100%',
+            maxWidth: 540,
+            maxHeight: 'calc(100vh - var(--modal-top-tall) - var(--modal-edge))',
+            display: 'flex',
+            flexDirection: 'column',
+            background: isDarkMode ? 'rgba(9, 9, 11, 0.96)' : 'rgba(255, 255, 255, 0.96)',
+            backdropFilter: 'blur(36px)',
+            WebkitBackdropFilter: 'blur(36px)',
+            border: isDarkMode
+              ? '1px solid rgba(255, 255, 255, 0.08)'
+              : '1px solid rgba(0, 0, 0, 0.12)',
+            borderTop: `4px solid ${core}`,
+            borderRadius: 20,
+            boxShadow: isDarkMode
+              ? '0 24px 64px rgba(0, 0, 0, 0.85)'
+              : '0 24px 64px rgba(0, 0, 0, 0.15)',
+            overflow: 'hidden',
+            fontFamily: 'Inter, sans-serif',
+            color: isDarkMode ? '#f8fafc' : '#111827',
+          }}
+        >
         {/* Modal Başlığı */}
         <div
           className="mind-node-panel-header"
@@ -2548,6 +2538,7 @@ function NodeDetailPanel({ node, onClose, isTribeContext = false, relationships 
 
         {/* Kaydırılabilir İçerik */}
         <div
+          className="mind-node-scroll"
           style={{
             flex: 1,
             overflowY: 'auto',
@@ -2596,11 +2587,11 @@ function NodeDetailPanel({ node, onClose, isTribeContext = false, relationships 
                   key === 'lastUpdated' && typeof value === 'number'
                     ? <span className="date-text">{formatDateTime(value)}</span>
                     : key === 'embeddingPreview' && Array.isArray(value)
-                      ? `${value.map((v) => Number(v).toFixed(3)).join(', ')}, ...`
+                      ? <span style={{ fontFamily: 'monospace', fontSize: 11.5, wordBreak: 'break-all', opacity: 0.9 }}>{value.map((v) => Number(v).toFixed(3)).join(', ')}, ...</span>
                       : String(value)
                 return (
-                  <div key={key} className="card-detail-row" style={{ gridTemplateColumns: 'minmax(165px, auto) minmax(0, 1fr)' }}>
-                    <div className="card-detail-row__label" style={{ whiteSpace: 'nowrap' }}>
+                  <div key={key} className="card-detail-row">
+                    <div className="card-detail-row__label">
                       {Icon && <Icon size={14} className="card-detail-row__icon" style={{ flexShrink: 0 }} />}
                       <span>{label}</span>
                     </div>
@@ -2730,6 +2721,7 @@ function NodeDetailPanel({ node, onClose, isTribeContext = false, relationships 
         </div>
       </div>
     </div>
+  </ModalPortal>
   )
 }
 
@@ -5155,10 +5147,7 @@ export default function MemoryMapPage() {
               </div>
 
               {/* Görünüm anahtarları + Varsayılan (mobilde tek satırda, gerekirse yatay kaydırılır) */}
-              <div
-                className="mind-actions"
-                style={{ display: 'flex', gap: 8, flexShrink: 0 }}
-              >
+              <div className="mind-actions">
               {/* PC: Görünüm anahtarları (bağlantı yazıları / düğüm yazıları / ağı kilitle / aralık) */}
               <div className="mind-view-toggles-wrap">
                 {viewScroll.scrollable && (
@@ -5170,9 +5159,8 @@ export default function MemoryMapPage() {
                   </div>
                 )}
                 <div
-                  className="mind-view-toggles"
+                  className="mind-view-toggles hscroll-strip"
                   ref={viewTogglesRef}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}
                 >
                 <MemoryMapToggle
                   active={effectiveHideLinkLabels}
@@ -5227,7 +5215,7 @@ export default function MemoryMapPage() {
                 </div>
               </div>
 
-              <span style={{ width: 1, height: 20, background: 'var(--color-border)' }} />
+              <span className="mind-actions-divider" style={{ width: 1, height: 20, background: 'var(--color-border)' }} />
 
               <button
                 type="button"
@@ -5241,6 +5229,7 @@ export default function MemoryMapPage() {
                   gap: 6,
                   padding: '0 12px',
                   height: 26,
+                  flexShrink: 0,
                 }}
               >
                 <Focus size={12} />

@@ -11,7 +11,8 @@ export default function LockedSlash({ strokeWidth = 2.2, stretch = false, style 
         position: 'absolute',
         inset: 0,
         pointerEvents: 'none',
-        overflow: 'visible',
+        overflow: isStretch ? 'hidden' : 'visible',
+        borderRadius: isStretch ? 'inherit' : undefined,
         filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55))',
         ...style,
       }}
