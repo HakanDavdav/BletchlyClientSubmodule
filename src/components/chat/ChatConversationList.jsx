@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
 import SearchInput from '../common/SearchInput'
 import TwemojiText from '../common/TwemojiText'
+import useChatDeckStore from '../../store/chatDeckStore'
 import { getShortTimeAgo } from '../../utils/formatTime'
 
 export default function ChatConversationList({
@@ -15,6 +16,7 @@ export default function ChatConversationList({
 }) {
   const { t } = useTranslation()
   const [search, setSearch] = useState('')
+  const unreadByConversation = useChatDeckStore((state) => state.unreadByConversation)
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -101,9 +103,13 @@ export default function ChatConversationList({
                     <span className="chat-list__item-time date-text">
                       {getShortTimeAgo(conversation.lastMessageAt)}
                     </span>
-                    {conversation.unreadCount > 0 && (
-                      <span className="chat-list__unread">{conversation.unreadCount}</span>
-                    )}
+                    {(() => {
+                      const count =
+                        unreadByConversation[conversation.chatConversationId] !== undefined
+                          ? unreadByConversation[conversation.chatConversationId]
+                          : conversation.unreadCount
+                      return count > 0 ? <span className="chat-list__unread">{count}</span> : null
+                    })()}
                   </span>
                 </ActorMinimalCard>
               </button>

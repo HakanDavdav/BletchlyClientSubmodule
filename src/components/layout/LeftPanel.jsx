@@ -36,7 +36,6 @@ export default function LeftPanel() {
   } = useUIStore()
   const queryClient = useQueryClient()
   const { t } = useTranslation()
-  const lastCountRef = useRef(-1)
   const [isMobileTopicOpen, setIsMobileTopicOpen] = useState(false)
   const [mobileTopicPos, setMobileTopicPos] = useState(null)
   const mobileTopicBtnRef = useRef(null)
@@ -148,15 +147,42 @@ export default function LeftPanel() {
     queryKey: ['activities-unread'],
     queryFn: () => actorApi.getUnreadActivityCount().then((r) => r.data?.data ?? 0),
     enabled: isLoggedIn,
-    refetchInterval: 60_000,
+    staleTime: Infinity,
   })
+
+  // Okunmamış aktivite sayısına göre gerekli sayfa sayısını (her sayfada 10 eleman) paralel çeker
+  const syncActivities = React.useCallback(
+    async (count = unreadCount) => {
+      if (!actorId) return
+      const targetPages = Math.max(1, Math.min(5, Math.ceil((count || 0) / 10)))
+      const pageNumbers = Array.from({ length: targetPages }, (_, i) => i + 1)
+      const responses = await Promise.all(
+        pageNumbers.map((p) => actorApi.getActivities(actorId, p))
+      )
+      const pages = responses.map((res) => res.data?.data || [])
+      queryClient.setQueryData(['activities', actorId], {
+        pages,
+        pageParams: pageNumbers,
+      })
+    },
+    [actorId, unreadCount, queryClient]
+  )
 
   const markReadMutation = useMutation({
     mutationFn: (ids) => actorApi.markActivitiesRead(ids),
     meta: { showErrorToast: true },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['activities'])
-      queryClient.invalidateQueries(['activities-unread'])
+    onSuccess: (_, ids) => {
+      queryClient.setQueryData(['activities', actorId], (oldData) => {
+        if (!oldData?.pages) return oldData
+        const idSet = new Set(ids || [])
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) =>
+            page.map((item) => (idSet.has(item.activityId) ? { ...item, isRead: true } : item))
+          ),
+        }
+      })
+      queryClient.setQueryData(['activities-unread'], 0)
     },
   })
 
@@ -164,21 +190,36 @@ export default function LeftPanel() {
     mutationFn: () => actorApi.markAllActivitiesRead(),
     meta: { showErrorToast: true },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['activities'] })
-      queryClient.invalidateQueries({ queryKey: ['activities-unread'] })
+      queryClient.setQueryData(['activities', actorId], (oldData) => {
+        if (!oldData?.pages) return oldData
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) =>
+            page.map((item) => ({ ...item, isRead: true }))
+          ),
+        }
+      })
+      queryClient.setQueryData(['activities-unread'], 0)
     },
   })
 
+  // Dropdown açıkken yeni okunmamış aktivite gelirse sayfaları güncelle
+  useEffect(() => {
+    if (isActivitiesExpanded && (unreadCount ?? 0) > 0) {
+      syncActivities(unreadCount)
+    }
+  }, [isActivitiesExpanded, unreadCount, syncActivities])
+
   // Panel açıldığında veya yeni veri yüklendiğinde, ekrandaki tüm okumadığımız aktiviteleri otomatik okundu işaretle
   useEffect(() => {
-    if (isActivitiesExpanded && activities?.length > 0) {
+    if (isActivitiesExpanded && activities?.length > 0 && !markReadMutation.isPending) {
       const unreadIds = activities.filter((a) => !a.isRead).map((a) => a.activityId)
 
       if (unreadIds.length > 0) {
         markReadMutation.mutate(unreadIds)
       }
     }
-  }, [isActivitiesExpanded, activities])
+  }, [isActivitiesExpanded, activities, markReadMutation.isPending])
 
   const activeTopicLabel = React.useMemo(() => {
     const topic = TopicTypes.find((item) => item.value === activeLeftTopicType)
@@ -202,13 +243,8 @@ export default function LeftPanel() {
 
   const handleToggleActivities = () => {
     if (!isActivitiesExpanded) {
-      if (lastCountRef.current !== unreadCount) {
-        queryClient.invalidateQueries({ queryKey: ['activities'] })
-        lastCountRef.current = unreadCount
-      }
-    } else {
-      // Menü kapanırken güncel sayıyı (genelde 0 olur okunduğu için) kaydedelim
-      lastCountRef.current = unreadCount
+      // Dropdown açılırken her zaman güncel verileri ve gerekiyorsa unreadCount kadar sayfayı yükle
+      syncActivities(unreadCount)
     }
     toggleActivities()
   }

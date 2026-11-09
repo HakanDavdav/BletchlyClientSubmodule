@@ -7,6 +7,7 @@ export const chatApi = {
   loadUsers: (query = '', page = 1) =>
     api.get('/chat/users', { params: { query, page } }),
   markRead: (targetActorId) => api.post(`/chat/read/${targetActorId}`),
+  getUnreadCount: () => api.get('/chat/unread-count'),
   toggleFavorite: (messageId) => api.post(`/chat/messages/${messageId}/favorite`),
   deleteMessage: (messageId) => api.delete(`/chat/messages/${messageId}`),
   pinMessage: (messageId) => api.post(`/chat/messages/${messageId}/pin`),

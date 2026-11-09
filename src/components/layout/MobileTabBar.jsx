@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import BotFlashCardsIcon from '../common/icons/BotFlashCardsIcon'
 import AngryBotWithSwordsIcon from '../common/icons/AngryBotWithSwordsIcon'
 import ChatBubbleIcon from '../common/icons/ChatBubbleIcon'
+import useChatDeckStore from '../../store/chatDeckStore'
 import MobilBottomMiddleBotSvg from '../../assets/FigmaNew/MobilBottomMiddleBot.svg?react'
 
 /**
@@ -21,6 +22,7 @@ export default function MobileTabBar() {
   const location = useLocation()
   const { isLoggedIn, actorId } = useAuthStore()
   const { closeDrawers } = useUIStore()
+  const totalChatUnreadCount = useChatDeckStore((state) => state.totalChatUnreadCount)
   const { t } = useTranslation()
   const path = location.pathname
   const [isQuickOpen, setIsQuickOpen] = useState(false)
@@ -95,7 +97,34 @@ export default function MobileTabBar() {
       ? [{
           key: 'chat',
           label: t('topbar.chat'),
-          icon: <ChatBubbleIcon size={23} />,
+          icon: (
+            <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ChatBubbleIcon size={23} />
+              {totalChatUnreadCount > 0 && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: -4,
+                    right: -7,
+                    background: 'var(--color-primary, #6366f1)',
+                    color: '#fff',
+                    borderRadius: '999px',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    minWidth: '16px',
+                    height: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0 3px',
+                    lineHeight: 1,
+                  }}
+                >
+                  {totalChatUnreadCount > 99 ? '99+' : totalChatUnreadCount}
+                </span>
+              )}
+            </span>
+          ),
           to: '/chat',
         }]
       : []),
@@ -170,6 +199,7 @@ export default function MobileTabBar() {
           onClick={() => setIsQuickOpen((v) => !v)}
           aria-label={t('topbar.quick_links')}
           aria-expanded={isQuickOpen}
+          style={{ position: 'relative' }}
         >
           {/* Bütünleşik bot ikonu: yön ve renk layout.css ile yönetilir */}
           <span className="mobile-tab-bar__quick-bot" aria-hidden="true">
@@ -179,6 +209,20 @@ export default function MobileTabBar() {
               style={{ display: 'block' }}
             />
           </span>
+          {totalChatUnreadCount > 0 && !isQuickOpen && (
+            <span
+              style={{
+                position: 'absolute',
+                top: 4,
+                right: 4,
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: 'var(--color-primary, #6366f1)',
+                boxShadow: '0 0 0 2px var(--bg-surface, #1e293b)',
+              }}
+            />
+          )}
         </button>
         <AnimatePresence>
           {isQuickOpen && (

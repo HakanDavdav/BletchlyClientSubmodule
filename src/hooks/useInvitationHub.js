@@ -1,12 +1,15 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import * as signalR from '@microsoft/signalr'
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import useAuthStore from '../store/authStore'
+import useChatDeckStore from '../store/chatDeckStore'
 
 export function useInvitationHub() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { t } = useTranslation()
   const tRef = useRef(t)
   tRef.current = t
@@ -49,7 +52,7 @@ export function useInvitationHub() {
     }
 
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl('/hubs/invitation', {
+      .withUrl('/hubs/user-alerts', {
         withCredentials: true,
       })
       .withAutomaticReconnect()
@@ -89,13 +92,33 @@ export function useInvitationHub() {
       }
     })
 
+    connection.on('ReceiveUserAlert', (rawMessage) => {
+      try {
+        const data = typeof rawMessage === 'string' ? JSON.parse(rawMessage) : rawMessage
+        if (!data) return
+
+        if (data.alertKind === 'chat_unread') {
+          useChatDeckStore.getState().applyUserAlert(data)
+          queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] })
+        } else if (data.alertKind === 'activity_unread') {
+          if (typeof data.activityUnreadCount === 'number') {
+            queryClient.setQueryData(['activities-unread'], data.activityUnreadCount)
+          }
+          queryClient.invalidateQueries({ queryKey: ['activities'] })
+        }
+      } catch (err) {
+        console.error('Error handling user alert signal:', err)
+      }
+    })
+
     connection
       .start()
       .then(() => {
         connection.invoke('JoinUserRoom', actorId.toString()).catch(() => {})
+        useChatDeckStore.getState().fetchInitialUnreadCount()
       })
       .catch((err) => {
-        console.warn('Could not connect to InvitationHub:', err.message)
+        console.warn('Could not connect to UserAlertsHub:', err.message)
       })
 
     return () => {
@@ -120,3 +143,6 @@ export function useInvitationHub() {
     },
   }
 }
+
+export { useInvitationHub as useUserAlertsHub }
+export default useInvitationHub

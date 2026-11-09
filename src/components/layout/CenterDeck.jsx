@@ -65,6 +65,7 @@ export default function CenterDeck({ children, enabled }) {
             {chatMounted && (
               <ChatPage
                 embedded
+                isOpen={isOpen}
                 initialTargetActorId={targetActorId}
                 onBack={closeChatDeck}
               />

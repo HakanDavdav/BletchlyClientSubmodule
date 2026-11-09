@@ -30,7 +30,12 @@ function normalizeSignalMessage(signal) {
   }
 }
 
-export default function ChatPage({ embedded = false, initialTargetActorId = null, onBack }) {
+export default function ChatPage({
+  embedded = false,
+  isOpen = true,
+  initialTargetActorId = null,
+  onBack,
+}) {
   const { t } = useTranslation()
   const { isLoggedIn, actorId } = useAuthStore()
   const queryClient = useQueryClient()
@@ -43,11 +48,23 @@ export default function ChatPage({ embedded = false, initialTargetActorId = null
   const [debouncedUserQuery, setDebouncedUserQuery] = useState('')
   const selectedActorIdRef = useRef(selectedActorId)
   selectedActorIdRef.current = selectedActorId
+  const isOpenRef = useRef(isOpen)
+  isOpenRef.current = isOpen
 
   useEffect(() => {
     const queryActorId = initialTargetActorId || (!embedded ? searchParams.get('actorId') : null) || null
     setSelectedActorId(queryActorId)
   }, [initialTargetActorId, searchParams, embedded])
+
+  // Embedded (PC CenterDeck) modunda deck kapandığında seçili sohbeti sıfırla
+  useEffect(() => {
+    if (embedded && !isOpen) {
+      const timer = setTimeout(() => {
+        setSelectedActorId(null)
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [embedded, isOpen])
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedUserQuery(userQuery.trim()), 300)
@@ -100,10 +117,10 @@ export default function ChatPage({ embedded = false, initialTargetActorId = null
   )
 
   useEffect(() => {
-    if (selectedActorId && threadQuery.data?.pages?.[0]?.chatConversationId) {
+    if (isOpen && selectedActorId && threadQuery.data?.pages?.[0]?.chatConversationId) {
       markRead(selectedActorId)
     }
-  }, [selectedActorId, threadQuery.data?.pages, markRead])
+  }, [isOpen, selectedActorId, threadQuery.data?.pages, markRead])
 
   const appendMessage = useCallback(
     (message, otherActorId) => {
@@ -133,10 +150,13 @@ export default function ChatPage({ embedded = false, initialTargetActorId = null
 
       const otherActorId = signal.senderId === actorId ? signal.recipientId : signal.senderId
       const message = normalizeSignalMessage(signal)
-      if (selectedActorIdRef.current === otherActorId) {
+      if (isOpenRef.current && selectedActorIdRef.current === otherActorId) {
         appendMessage(message, otherActorId)
         if (signal.senderId !== actorId) markRead(otherActorId)
       } else {
+        if (selectedActorIdRef.current === otherActorId) {
+          appendMessage(message, otherActorId)
+        }
         queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] })
       }
     },

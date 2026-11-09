@@ -131,7 +131,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
 
   const { t, i18n } = useTranslation()
   const isMobile = useIsMobile()
-  const { isOpen: isChatDeckOpen, openChatDeck, closeChatDeck } = useChatDeckStore()
+  const { isOpen: isChatDeckOpen, openChatDeck, closeChatDeck, totalChatUnreadCount } = useChatDeckStore()
   const handleChatClick = () => {
     if (!isMobile && isChatDeckEligible(location.pathname)) {
       if (isChatDeckOpen) closeChatDeck()
@@ -2001,9 +2001,34 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
               onClick={handleChatClick}
               title={t('topbar.chat')}
               aria-label={t('topbar.chat')}
-              style={{ width: 38, height: 38, boxSizing: 'border-box' }}
+              style={{ width: 38, height: 38, boxSizing: 'border-box', position: 'relative' }}
             >
               <ChatBubbleIcon size={19} />
+              {totalChatUnreadCount > 0 && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: 2,
+                    right: 2,
+                    background: 'var(--color-primary, #6366f1)',
+                    color: '#fff',
+                    borderRadius: '999px',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    minWidth: '16px',
+                    height: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0 3px',
+                    lineHeight: 1,
+                    pointerEvents: 'none',
+                    boxShadow: '0 0 0 1.5px var(--bg-surface, #1e293b)',
+                  }}
+                >
+                  {totalChatUnreadCount > 99 ? '99+' : totalChatUnreadCount}
+                </span>
+              )}
             </IconActionButton>
           )}
 
