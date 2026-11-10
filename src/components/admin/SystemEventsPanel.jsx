@@ -24,6 +24,14 @@ export const EVENT_CATEGORIES = [
           CreatedAt: new Date().toISOString(),
         },
       },
+      {
+        name: 'SeedPersonalityEvent',
+        defaultPayload: {
+          TribeId: '',
+          BotId: null,
+          CreatedAt: new Date().toISOString(),
+        },
+      },
     ],
   },
   {

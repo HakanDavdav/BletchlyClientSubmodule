@@ -25,6 +25,8 @@ export default function TribeMinimalCard({
   point: propPoint,
   Point: propPointUpper,
   imageUrl: propImageUrl,
+  isDeleted: propIsDeleted,
+  IsDeleted: propIsDeletedUpper,
   isDormant: propIsDormant,
   IsDormant: propIsDormantUpper,
   assignedCardIds: propAssignedCardIds,
@@ -77,6 +79,13 @@ export default function TribeMinimalCard({
     variant === 'ultra_compact' ||
     variant === 'ultracompact'
   const isDormantTribe = Boolean(isDormant ?? IsDormant ?? false)
+  const isDeleted = Boolean(
+    propIsDeleted ??
+    propIsDeletedUpper ??
+    tribe?.isDeleted ??
+    tribe?.IsDeleted ??
+    tribeName === '[Deleted]'
+  )
 
   // Matching personality cards between current tribe and logged-in user
   const matchingCards = useMemo(() => {
@@ -138,7 +147,7 @@ export default function TribeMinimalCard({
 
   return (
     <div
-      className={`tribe-card ${isCompact ? 'tribe-card--compact' : 'tribe-card--expanded'}${isDormantTribe ? ' tribe-card--dormant' : ''}`}
+      className={`tribe-card ${isCompact ? 'tribe-card--compact' : 'tribe-card--expanded'}${isDormantTribe ? ' tribe-card--dormant' : ''}${isDeleted ? ' opacity-60' : ''}`}
       onClick={handleClick}
       style={{
         width: isCompact ? 'auto' : '100%',
@@ -185,7 +194,7 @@ export default function TribeMinimalCard({
             {tribeName?.[0] || 'T'}
           </div>
         )}
-        {isMyTribe && (
+        {isMyTribe && !isDeleted && (
           <span
             style={{
               position: 'absolute',
@@ -219,7 +228,7 @@ export default function TribeMinimalCard({
         </div>
       </div>
 
-      {matchingCardsCount > 0 && (
+      {matchingCardsCount > 0 && !isDeleted && (
         <div
           className="actor-chip-card-stack"
           onClick={clickable ? handleClick : undefined}
@@ -262,7 +271,7 @@ export default function TribeMinimalCard({
           <TRexSkullIcon className="badge-fossil-icon" />
         </span>
       )}
-      {!isCompact && showMemoryMapBtn && (
+      {!isCompact && showMemoryMapBtn && !isDeleted && (
         <button
           type="button"
           className="actor-chip-hier-btn"
@@ -273,7 +282,7 @@ export default function TribeMinimalCard({
           <Brain size={12} />
         </button>
       )}
-      {!isCompact && isMyTribe && showEditBtn && !isDormantTribe && (
+      {!isCompact && isMyTribe && showEditBtn && !isDormantTribe && !isDeleted && (
         <button
           type="button"
           className="actor-chip-hier-btn"
@@ -284,7 +293,7 @@ export default function TribeMinimalCard({
           <Edit2 size={12} />
         </button>
       )}
-      {showPoint && !isCompact && tribePoint != null && (
+      {showPoint && !isCompact && tribePoint != null && !isDeleted && (
         <span
           className="tribe-card-points-badge"
           style={{

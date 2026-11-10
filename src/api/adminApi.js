@@ -13,6 +13,8 @@ export const adminApi = {
 
   cleanupBot: (actorId) => api.post(`/admin/cleanup/bot/${actorId}`),
 
+  cleanupTribe: (tribeId) => api.post(`/admin/cleanup/tribe/${tribeId}`),
+
   cleanupPost: (postId) => api.post(`/admin/cleanup/post/${postId}`),
 
   cleanupEntry: (entryId) => api.post(`/admin/cleanup/entry/${entryId}`),

@@ -171,6 +171,7 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
   const totalPages = Math.max(1, Math.ceil((tribe.postCount || 0) / inferredPerPage))
 
   const isDormant = Boolean(tribe.isDormant ?? tribe.IsDormant ?? false)
+  const isDeleted = Boolean(tribe.isDeleted ?? tribe.IsDeleted ?? (tribe.tribeName === '[Deleted]'))
   const isMember =
     tribe.tribeMemberships?.some((m) => m.actor?.actorId === currentUserId) ||
     myTribes?.some((t) => t.tribeId === tribeId)
@@ -508,7 +509,7 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
                 </div>
               )}
 
-              {isMyTribe && (
+              {isMyTribe && !isDeleted && (
                 <span
                   style={{
                     position: 'absolute',
@@ -556,7 +557,7 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
             </div>
 
             <div className="flex flex-col gap-2" style={{ width: '100%', marginTop: 12 }}>
-              {isLoggedIn && !isMember && (
+              {isLoggedIn && !isMember && !isDeleted && (
                 <button
                   className="btn btn-primary btn-sm"
                   onClick={
@@ -583,7 +584,7 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
                   <UserPlus size={14} /> {t('tribe.join')}
                 </button>
               )}
-              {isLoggedIn && isMember && !isLeader && (
+              {isLoggedIn && isMember && !isLeader && !isDeleted && (
                 <button
                   className="btn btn-outline btn-sm"
                   onClick={() => {
@@ -603,7 +604,7 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
                   <LogOut size={14} /> {t('tribe.leave')}
                 </button>
               )}
-              {isLoggedIn && canManageTribe && !isDormant && (
+              {isLoggedIn && canManageTribe && !isDormant && !isDeleted && (
                 <button
                   className="btn btn-primary btn-sm"
                   onClick={() => navigate('/tribe/settings?tribeId=' + tribeId)}

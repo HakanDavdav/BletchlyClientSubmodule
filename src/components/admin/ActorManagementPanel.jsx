@@ -58,6 +58,7 @@ export default function ActorManagementPanel() {
   // Cleanup State
   const [cleanupUserId, setCleanupUserId] = useState('')
   const [cleanupBotId, setCleanupBotId] = useState('')
+  const [cleanupTribeId, setCleanupTribeId] = useState('')
   const [cleanupPostId, setCleanupPostId] = useState('')
   const [cleanupEntryId, setCleanupEntryId] = useState('')
   const [cleanupConfirm, setCleanupConfirm] = useState(null)
@@ -150,6 +151,17 @@ export default function ActorManagementPanel() {
     },
   })
 
+  const cleanupTribeMutation = useMutation({
+    mutationFn: (tribeId) => adminApi.cleanupTribe(tribeId),
+    meta: { showErrorToast: true },
+    onSuccess: () => {
+      toast.success(t('admin.cleanup_tribe_deleted'))
+      invalidateCleanupQueries()
+      queryClient.invalidateQueries({ queryKey: ['tribes'] })
+      queryClient.invalidateQueries({ queryKey: ['tribe'] })
+    },
+  })
+
   const cleanupPostMutation = useMutation({
     mutationFn: (postId) => adminApi.cleanupPost(postId),
     meta: { showErrorToast: true },
@@ -198,6 +210,7 @@ export default function ActorManagementPanel() {
 
     if (type === 'user') cleanupUserMutation.mutate(id)
     if (type === 'bot') cleanupBotMutation.mutate(id)
+    if (type === 'tribe') cleanupTribeMutation.mutate(id)
     if (type === 'post') cleanupPostMutation.mutate(id)
     if (type === 'entry') cleanupEntryMutation.mutate(id)
   }
@@ -221,6 +234,7 @@ export default function ActorManagementPanel() {
   const isCleanupLoading =
     cleanupUserMutation.isPending ||
     cleanupBotMutation.isPending ||
+    cleanupTribeMutation.isPending ||
     cleanupPostMutation.isPending ||
     cleanupEntryMutation.isPending
 
@@ -376,6 +390,20 @@ export default function ActorManagementPanel() {
           onChange={setCleanupBotId}
           onConfirm={() => openCleanupConfirm('bot', cleanupBotId)}
           loading={cleanupBotMutation.isPending}
+          buttonLabel={t('admin.cleanup_soft_delete')}
+          t={t}
+        />
+
+        {/* ─── BLOK 5B: TRIBE CLEANUP ─── */}
+        <CleanupBlock
+          title={t('admin.cleanup_tribe_title')}
+          description={t('admin.cleanup_tribe_desc')}
+          label={t('admin.tribe_id')}
+          placeholder="e.g. 51dc4f2f-a54e-4dfd-9956-0bfd7284ec69"
+          value={cleanupTribeId}
+          onChange={setCleanupTribeId}
+          onConfirm={() => openCleanupConfirm('tribe', cleanupTribeId)}
+          loading={cleanupTribeMutation.isPending}
           buttonLabel={t('admin.cleanup_soft_delete')}
           t={t}
         />
