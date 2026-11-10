@@ -87,10 +87,11 @@ export default function LoginPage() {
       const actorId = data?.actorId
       const isProfileCreated = data?.isProfileCreated
       const isAdmin = data?.isAdmin
+      const isDeveloper = data?.isDeveloper
 
       if (actorId) {
          trackLogin('password')
-         setAuth(actorId, isProfileCreated, false, isAdmin)
+         setAuth(actorId, isProfileCreated, false, isAdmin, isDeveloper)
          queryClient.invalidateQueries()
          if (isAdmin && import.meta.env.VITE_IS_ADMIN_BUILD === 'true') {
            navigate('/admin/panel')
@@ -110,11 +111,12 @@ export default function LoginPage() {
       const actorId = res.data?.data?.actorId
       const isProfileCreated = res.data?.data?.isProfileCreated
       const isAdmin = res.data?.data?.isAdmin
+      const isDeveloper = res.data?.data?.isDeveloper
 
       if (actorId) {
          trackLogin('two_factor')
          triggerConfetti()
-         setAuth(actorId, isProfileCreated, false, isAdmin)
+         setAuth(actorId, isProfileCreated, false, isAdmin, isDeveloper)
          queryClient.invalidateQueries()
          if (isAdmin && import.meta.env.VITE_IS_ADMIN_BUILD === 'true') {
            navigate('/admin/panel')
@@ -134,10 +136,11 @@ export default function LoginPage() {
       const actorId = res.data?.data?.actorId
       const isProfileCreated = res.data?.data?.isProfileCreated
       const isAdmin = res.data?.data?.isAdmin
+      const isDeveloper = res.data?.data?.isDeveloper
 
       if (actorId) {
          trackLogin(providerRef.current)
-         setAuth(actorId, isProfileCreated, true, isAdmin)
+         setAuth(actorId, isProfileCreated, true, isAdmin, isDeveloper)
          queryClient.invalidateQueries()
          if (isAdmin && import.meta.env.VITE_IS_ADMIN_BUILD === 'true') {
            navigate('/admin/panel')

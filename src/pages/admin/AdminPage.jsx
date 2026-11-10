@@ -6,17 +6,21 @@ import ConfigManagementPanel from '../../components/admin/ConfigManagementPanel'
 import Logo from '../../components/common/icons/Logo'
 import BackButton from '../../components/common/BackButton'
 import { useTranslation } from 'react-i18next'
+import useAuthStore from '../../store/authStore'
 
 export default function AdminPage() {
   const { t } = useTranslation()
-  const [activeTab, setActiveTab] = useState('config')
+  const isDeveloper = useAuthStore((state) => state.isDeveloper)
+  const [activeTab, setActiveTab] = useState(isDeveloper ? 'config' : 'events')
 
-  const tabs = [
-    { id: 'config', label: t('admin.bg_services_config') },
+  const allTabs = [
+    { id: 'config', label: t('admin.bg_services_config'), developerOnly: true },
     { id: 'events', label: t('admin.system_events_title') },
     { id: 'memory', label: t('admin.memory_management_title') },
     { id: 'actor', label: t('admin.actor_management_title') },
   ]
+
+  const tabs = allTabs.filter(tab => !tab.developerOnly || isDeveloper)
 
   return (
     <div className="flex-col gap-4">
@@ -74,7 +78,7 @@ export default function AdminPage() {
 
       {/* Content Area */}
       <div className="flex-1 flex flex-col w-full">
-        {activeTab === 'config' && <ConfigManagementPanel />}
+        {activeTab === 'config' && isDeveloper && <ConfigManagementPanel />}
         {activeTab === 'events' && <SystemEventsPanel />}
         {activeTab === 'memory' && <MemoryManagementPanel />}
         {activeTab === 'actor' && <ActorManagementPanel />}

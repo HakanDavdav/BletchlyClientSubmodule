@@ -250,9 +250,9 @@ export const PromotionType = {
 
 
 export const StandardRoles = {
-  TempUser: 0,
-  StandardUser: 1,
-  Admin: 2,
+  StandardUser: 0,
+  Admin: 1,
+  Developer: 2,
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

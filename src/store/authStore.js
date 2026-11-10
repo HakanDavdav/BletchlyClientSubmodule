@@ -18,6 +18,7 @@ const useAuthStore = create(
       isProfileCreated: false,
       isExternalAuth: false, // Dış sağlayıcı (Google, Microsoft vb.) ile mi giriş yapıldı?
       isAdmin: false,      // Kullanıcı Admin mi?
+      isDeveloper: false,  // Kullanıcı Developer mı?
 
       /**
        * Login başarılı olunca çağrılır.
@@ -25,12 +26,14 @@ const useAuthStore = create(
        * @param {boolean} isProfileCreated - profil oluşturulmuş mu?
        * @param {boolean} isExternalAuth - dış sağlayıcı ile mi login olundu?
        * @param {boolean} isAdmin - kullanıcı admin rolüne sahip mi?
+       * @param {boolean} isDeveloper - kullanıcı developer rolüne sahip mi?
        */
-      setAuth: (actorId, isProfileCreated, isExternalAuth = false, isAdmin = false) => set({
+      setAuth: (actorId, isProfileCreated, isExternalAuth = false, isAdmin = false, isDeveloper = false) => set({
         actorId,
         isProfileCreated,
         isExternalAuth,
         isAdmin,
+        isDeveloper,
         isLoggedIn: true,
       }),
 
@@ -47,6 +50,7 @@ const useAuthStore = create(
         isProfileCreated: false,
         isExternalAuth: false,
         isAdmin: false,
+        isDeveloper: false,
         isLoggedIn: false,
       }),
     }),
@@ -57,6 +61,7 @@ const useAuthStore = create(
         isProfileCreated: state.isProfileCreated,
         isExternalAuth: state.isExternalAuth,
         isAdmin: state.isAdmin,
+        isDeveloper: state.isDeveloper,
         isLoggedIn: state.isLoggedIn,
       }),
     }

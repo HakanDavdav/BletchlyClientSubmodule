@@ -4,6 +4,7 @@ import { adminApi } from '../../api/adminApi'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import ConfirmModal from '../common/ConfirmModal'
+import useAuthStore from '../../store/authStore'
 
 function CleanupBlock({ title, description, label, placeholder, value, onChange, onConfirm, loading, buttonLabel, t }) {
   return (
@@ -46,6 +47,7 @@ function CleanupBlock({ title, description, label, placeholder, value, onChange,
 export default function ActorManagementPanel() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const isDeveloper = useAuthStore((state) => state.isDeveloper)
 
   // Point Management State
   const [pointActorId, setPointActorId] = useState('')
@@ -332,39 +334,41 @@ export default function ActorManagementPanel() {
           </div>
         </div>
 
-        {/* ─── BLOK 3: SEZON SIFIRLAMA ─── */}
-        <div className="admin-filter-card">
-          <div className="admin-section-title">
-            {t('admin.season_reset_title')}
-          </div>
+        {/* ─── BLOK 3: SEZON SIFIRLAMA (Developer Only) ─── */}
+        {isDeveloper && (
+          <div className="admin-filter-card">
+            <div className="admin-section-title">
+              {t('admin.season_reset_title')}
+            </div>
 
-          <div className="form-group" style={{ marginBottom: '10px' }}>
-            <p
-              style={{
-                fontSize: 12,
-                color: 'var(--color-text-secondary)',
-                margin: 0,
-                lineHeight: 1.5,
-              }}
-            >
-              {t(
-                'admin.season_reset_desc'
-              )}
-            </p>
-          </div>
+            <div className="form-group" style={{ marginBottom: '10px' }}>
+              <p
+                style={{
+                  fontSize: 12,
+                  color: 'var(--color-text-secondary)',
+                  margin: 0,
+                  lineHeight: 1.5,
+                }}
+              >
+                {t(
+                  'admin.season_reset_desc'
+                )}
+              </p>
+            </div>
 
-          <div className="flex">
-            <button
-              className="btn btn-primary admin-btn"
-              onClick={handleSeasonReset}
-              disabled={isResetLoading}
-            >
-              {isResetLoading
-                ? t('admin.season_reset_in_progress')
-                : t('admin.trigger_season_reset_btn')}
-            </button>
+            <div className="flex">
+              <button
+                className="btn btn-primary admin-btn"
+                onClick={handleSeasonReset}
+                disabled={isResetLoading}
+              >
+                {isResetLoading
+                  ? t('admin.season_reset_in_progress')
+                  : t('admin.trigger_season_reset_btn')}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ─── BLOK 4: USER CLEANUP ─── */}
         <CleanupBlock
@@ -436,148 +440,150 @@ export default function ActorManagementPanel() {
           t={t}
         />
 
-        {/* ─── BLOK 8: CONTENT REDUCTION ─── */}
-        <div className="admin-filter-card">
-          <div className="admin-section-title">
-            {t('admin.content_reduce_title')}
-          </div>
-          <p
-            style={{
-              fontSize: 12,
-              color: 'var(--color-text-secondary)',
-              margin: '0 0 10px',
-              lineHeight: 1.5,
-            }}
-          >
-            {t('admin.content_reduce_desc')}
-          </p>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-              gap: 10,
-              marginBottom: 10,
-            }}
-          >
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label admin-field-label">
-                {t('admin.keep_ratio')}
-              </label>
-              <input
-                type="number"
-                min="0.01"
-                max="1"
-                step="0.01"
-                className="input w-full admin-input"
-                value={reduceKeepRatio}
-                onChange={(e) => setReduceKeepRatio(e.target.value)}
-              />
+        {/* ─── BLOK 8: CONTENT REDUCTION (Developer Only) ─── */}
+        {isDeveloper && (
+          <div className="admin-filter-card">
+            <div className="admin-section-title">
+              {t('admin.content_reduce_title')}
             </div>
-
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label admin-field-label">
-                {t('admin.target_posts')}
-              </label>
-              <input
-                type="number"
-                min="0"
-                className="input w-full admin-input"
-                value={reduceTargetPosts}
-                onChange={(e) => setReduceTargetPosts(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label admin-field-label">
-                {t('admin.target_entries')}
-              </label>
-              <input
-                type="number"
-                min="0"
-                className="input w-full admin-input"
-                value={reduceTargetEntries}
-                onChange={(e) => setReduceTargetEntries(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="flex gap-2.5 flex-wrap">
-            <button
-              className="btn btn-secondary admin-btn"
-              onClick={() => runReduction(true)}
-              disabled={isReduceLoading}
-            >
-              {isReduceLoading ? t('admin.processing') : t('admin.preview')}
-            </button>
-
-            <button
-              className="btn btn-danger admin-btn"
-              onClick={() => setIsReduceConfirmOpen(true)}
-              disabled={isReduceLoading}
-            >
-              {isReduceLoading ? t('admin.reduction_running') : t('admin.run_reduction')}
-            </button>
-          </div>
-
-          {reduceResult && (
-            <div
+            <p
               style={{
-                marginTop: 12,
-                padding: '10px 12px',
-                borderRadius: 'var(--radius-md)',
-                background: 'var(--color-surface)',
-                border: '1px solid var(--color-border)',
+                fontSize: 12,
+                color: 'var(--color-text-secondary)',
+                margin: '0 0 10px',
+                lineHeight: 1.5,
               }}
             >
-              <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: 'var(--color-text-secondary)',
-                  marginBottom: 6,
-                }}
-              >
-                {t('admin.reduction_result_title')}
+              {t('admin.content_reduce_desc')}
+            </p>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                gap: 10,
+                marginBottom: 10,
+              }}
+            >
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label admin-field-label">
+                  {t('admin.keep_ratio')}
+                </label>
+                <input
+                  type="number"
+                  min="0.01"
+                  max="1"
+                  step="0.01"
+                  className="input w-full admin-input"
+                  value={reduceKeepRatio}
+                  onChange={(e) => setReduceKeepRatio(e.target.value)}
+                />
               </div>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                  gap: 6,
-                }}
-              >
-                {[
-                  [t('admin.active_posts'), reduceResult.activePosts],
-                  [t('admin.active_entries'), reduceResult.activeEntries],
-                  [t('admin.keep_posts'), reduceResult.keepPosts],
-                  [t('admin.keep_entries'), reduceResult.keepEntries],
-                  [
-                    t('admin.delete_posts'),
-                    reduceResult.deletePosts ?? reduceResult.deletedPosts,
-                  ],
-                  [
-                    t('admin.delete_entries'),
-                    reduceResult.deleteEntries ?? reduceResult.deletedEntries,
-                  ],
-                ].map(([label, value]) => (
-                  <div
-                    key={label}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      gap: 8,
-                      fontSize: 12,
-                    }}
-                  >
-                    <span style={{ color: 'var(--color-text-secondary)' }}>{label}</span>
-                    <strong style={{ color: 'var(--color-text)' }}>{value ?? '-'}</strong>
-                  </div>
-                ))}
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label admin-field-label">
+                  {t('admin.target_posts')}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  className="input w-full admin-input"
+                  value={reduceTargetPosts}
+                  onChange={(e) => setReduceTargetPosts(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label admin-field-label">
+                  {t('admin.target_entries')}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  className="input w-full admin-input"
+                  value={reduceTargetEntries}
+                  onChange={(e) => setReduceTargetEntries(e.target.value)}
+                />
               </div>
             </div>
-          )}
-        </div>
+
+            <div className="flex gap-2.5 flex-wrap">
+              <button
+                className="btn btn-secondary admin-btn"
+                onClick={() => runReduction(true)}
+                disabled={isReduceLoading}
+              >
+                {isReduceLoading ? t('admin.processing') : t('admin.preview')}
+              </button>
+
+              <button
+                className="btn btn-danger admin-btn"
+                onClick={() => setIsReduceConfirmOpen(true)}
+                disabled={isReduceLoading}
+              >
+                {isReduceLoading ? t('admin.reduction_running') : t('admin.run_reduction')}
+              </button>
+            </div>
+
+            {reduceResult && (
+              <div
+                style={{
+                  marginTop: 12,
+                  padding: '10px 12px',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--color-surface)',
+                  border: '1px solid var(--color-border)',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: 'var(--color-text-secondary)',
+                    marginBottom: 6,
+                  }}
+                >
+                  {t('admin.reduction_result_title')}
+                </div>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                    gap: 6,
+                  }}
+                >
+                  {[
+                    [t('admin.active_posts'), reduceResult.activePosts],
+                    [t('admin.active_entries'), reduceResult.activeEntries],
+                    [t('admin.keep_posts'), reduceResult.keepPosts],
+                    [t('admin.keep_entries'), reduceResult.keepEntries],
+                    [
+                      t('admin.delete_posts'),
+                      reduceResult.deletePosts ?? reduceResult.deletedPosts,
+                    ],
+                    [
+                      t('admin.delete_entries'),
+                      reduceResult.deleteEntries ?? reduceResult.deletedEntries,
+                    ],
+                  ].map(([label, value]) => (
+                    <div
+                      key={label}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        gap: 8,
+                        fontSize: 12,
+                      }}
+                    >
+                      <span style={{ color: 'var(--color-text-secondary)' }}>{label}</span>
+                      <strong style={{ color: 'var(--color-text)' }}>{value ?? '-'}</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <ConfirmModal
@@ -592,7 +598,7 @@ export default function ActorManagementPanel() {
       />
 
       <ConfirmModal
-        isOpen={isReduceConfirmOpen}
+        isOpen={isDeveloper && isReduceConfirmOpen}
         onClose={() => setIsReduceConfirmOpen(false)}
         onConfirm={() => {
           setIsReduceConfirmOpen(false)
@@ -606,7 +612,7 @@ export default function ActorManagementPanel() {
       />
 
       <ConfirmModal
-        isOpen={isSeasonResetModalOpen}
+        isOpen={isDeveloper && isSeasonResetModalOpen}
         onClose={() => setIsSeasonResetModalOpen(false)}
         onConfirm={() => {
           setIsSeasonResetModalOpen(false)
