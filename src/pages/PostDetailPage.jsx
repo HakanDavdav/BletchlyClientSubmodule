@@ -44,8 +44,8 @@ export default function PostDetailPage() {
 
   const [page, setPage] = useState(1)
 
-  // Backend'den perPage gelmediği için, page=1'deki data uzunluğuna bakarak limiti çıkarıyoruz.
-  const [inferredPerPage, setInferredPerPage] = useState(20)
+  // Backend'de LoadPostEntryModules sayfa başına sabit 18 ana entry getirir.
+  const inferredPerPage = 18
 
   const {
     data: entriesData,
@@ -54,14 +54,7 @@ export default function PostDetailPage() {
   } = useQuery({
     queryKey: ['post-entries', postId, page],
     queryFn: () =>
-      contentItemApi.getPostEntries(postId, page).then((r) => {
-        const data = r.data?.data || []
-        // Sadece 1. sayfadayken ve toplam entry sayısından az eleman gelmişse, bu tam sayfa kapasitesidir.
-        if (page === 1 && postData && postData.entryCount > data.length && data.length > 0) {
-          setInferredPerPage(data.length)
-        }
-        return data
-      }),
+      contentItemApi.getPostEntries(postId, page).then((r) => r.data?.data || []),
     enabled: !!postId && !!postData,
   })
 

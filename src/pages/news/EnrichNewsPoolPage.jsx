@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next'
 const FEED_SOURCES = [
   {
     name: 'Reddit',
-    category: 'Community',
+    category: 'Community & Discussions',
     url: 'https://www.reddit.com',
     color: '#FF4500',
     icon: (
@@ -33,119 +33,9 @@ const FEED_SOURCES = [
     ),
   },
   {
-    name: 'NewsAPI',
-    category: 'Global Headlines',
-    url: 'https://newsapi.org',
-    color: '#1E88E5',
-    icon: (
-      <svg viewBox="0 0 24 24" width="24" height="24">
-        <rect width="24" height="24" rx="4" fill="#1E88E5" />
-        <path d="M6 6h3.4c2.3 0 3.8 1.4 3.8 3.5 0 1.4-.6 2.4-1.8 2.9l2.1 4.1h-2.3l-1.8-3.7H8.2V17H6V6zm2.2 2v2.8h1.2c1 0 1.6-.5 1.6-1.4s-.6-1.4-1.6-1.4H8.2z" fill="#FFF" />
-        <circle cx="18" cy="15" r="1.6" fill="#FFF" />
-      </svg>
-    ),
-  },
-  {
-    name: 'The Verge',
-    category: 'Technology',
-    url: 'https://www.theverge.com',
-    color: '#E0004D',
-    icon: (
-      <svg viewBox="0 0 24 24" width="24" height="24">
-        <path d="M12 2L1 21h4.6l6.4-11.4L18.4 21H23L12 2z" fill="#E0004D" />
-      </svg>
-    ),
-  },
-  {
-    name: 'Ars Technica',
-    category: 'Tech & Policy',
-    url: 'https://arstechnica.com',
-    color: '#FF4E00',
-    icon: (
-      <svg viewBox="0 0 24 24" width="24" height="24">
-        <circle cx="12" cy="12" r="10" fill="#FF4E00" />
-        <path d="M8 17h2.2l1.1-3h3.4l1.1 3H18L13.2 6h-2.4L8 17zm3.8-5l1.2-3.6 1.2 3.6h-2.4z" fill="#FFF" />
-      </svg>
-    ),
-  },
-  {
-    name: 'TechCrunch',
-    category: 'Startups & VC',
-    url: 'https://techcrunch.com',
-    color: '#00A562',
-    icon: (
-      <svg viewBox="0 0 24 24" width="24" height="24">
-        <rect width="24" height="24" rx="4" fill="#00A562" />
-        <path d="M5 8h4v2H7v6H5V8zm6 0h5v2h-3v1h3v2h-3v1h3v2h-5V8z" fill="#FFF" />
-      </svg>
-    ),
-  },
-  {
-    name: 'ScienceDaily',
-    category: 'Research & Science',
-    url: 'https://www.sciencedaily.com',
-    color: '#007791',
-    icon: (
-      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" strokeWidth="1.8">
-        <ellipse cx="12" cy="12" rx="9" ry="3.5" transform="rotate(30 12 12)" stroke="#007791" />
-        <ellipse cx="12" cy="12" rx="9" ry="3.5" transform="rotate(-30 12 12)" stroke="#00A896" />
-        <circle cx="12" cy="12" r="2.5" fill="#007791" />
-      </svg>
-    ),
-  },
-  {
-    name: 'NASA',
-    category: 'Space & Astronomy',
-    url: 'https://www.nasa.gov',
-    color: '#0B3D91',
-    icon: (
-      <svg viewBox="0 0 24 24" width="24" height="24">
-        <circle cx="12" cy="12" r="11" fill="#0B3D91" />
-        <path d="M5 14c2.5-5 8-8 14-7-3 5-8 8-14 7z" fill="#FC3D21" opacity="0.85" />
-        <text x="12" y="14.5" fontSize="6.5" fontWeight="900" textAnchor="middle" fill="#FFF" fontFamily="Arial, sans-serif">NASA</text>
-      </svg>
-    ),
-  },
-  {
-    name: 'phys.org',
-    category: 'Science & Space',
-    url: 'https://phys.org',
-    color: '#2E7D32',
-    icon: (
-      <svg viewBox="0 0 24 24" width="24" height="24">
-        <rect width="24" height="24" rx="4" fill="#2E7D32" />
-        <text x="12" y="16.5" fontSize="8" fontWeight="800" textAnchor="middle" fill="#FFF" fontFamily="Arial, sans-serif">phys</text>
-      </svg>
-    ),
-  },
-  {
-    name: 'arXiv',
-    category: 'AI Papers & CS',
-    url: 'https://arxiv.org',
-    color: '#B31B1B',
-    icon: (
-      <svg viewBox="0 0 24 24" width="24" height="24">
-        <rect width="24" height="24" rx="4" fill="#B31B1B" />
-        <text x="12" y="16.5" fontSize="9" fontWeight="900" fontStyle="italic" textAnchor="middle" fill="#FFF" fontFamily="Georgia, serif">arX</text>
-      </svg>
-    ),
-  },
-  {
-    name: 'MIT Tech Review',
-    category: 'AI & Innovation',
-    url: 'https://www.technologyreview.com',
-    color: '#E01B22',
-    icon: (
-      <svg viewBox="0 0 24 24" width="24" height="24">
-        <rect width="24" height="24" rx="4" fill="#E01B22" />
-        <text x="12" y="16.5" fontSize="8.5" fontWeight="900" textAnchor="middle" fill="#FFF" fontFamily="Arial, sans-serif">MIT</text>
-      </svg>
-    ),
-  },
-  {
-    name: 'BBC News',
-    category: 'World & Society',
-    url: 'https://www.bbc.com/news',
+    name: 'BBC World',
+    category: 'World & Geopolitics',
+    url: 'https://www.bbc.com/news/world',
     color: '#BB1919',
     icon: (
       <svg viewBox="0 0 24 24" width="24" height="24">
@@ -159,26 +49,108 @@ const FEED_SOURCES = [
     ),
   },
   {
-    name: 'NY Times',
-    category: 'Global Journalism',
-    url: 'https://www.nytimes.com',
-    color: '#64748B',
+    name: 'BBC Sport',
+    category: 'Sports & Athletics',
+    url: 'https://www.bbc.com/sport',
+    color: '#FFD230',
     icon: (
       <svg viewBox="0 0 24 24" width="24" height="24">
-        <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.12" />
-        <text x="12" y="17" fontSize="13" fontWeight="900" textAnchor="middle" fill="currentColor" fontFamily="Georgia, serif">T</text>
+        <rect width="24" height="24" rx="4" fill="#FFD230" />
+        <rect x="3" y="8" width="5.5" height="8" rx="1" fill="#181818" />
+        <rect x="9.25" y="8" width="5.5" height="8" rx="1" fill="#181818" />
+        <rect x="15.5" y="8" width="5.5" height="8" rx="1" fill="#181818" />
+        <text x="5.75" y="14.5" fontSize="5.5" fontWeight="900" textAnchor="middle" fill="#FFF" fontFamily="Arial">B</text>
+        <text x="12" y="14.5" fontSize="5.5" fontWeight="900" textAnchor="middle" fill="#FFF" fontFamily="Arial">B</text>
+        <text x="18.25" y="14.5" fontSize="5.5" fontWeight="900" textAnchor="middle" fill="#FFF" fontFamily="Arial">C</text>
       </svg>
     ),
   },
   {
-    name: 'Al Jazeera',
-    category: 'World & Society',
-    url: 'https://www.aljazeera.com',
-    color: '#FA9000',
+    name: 'The Verge',
+    category: 'Technology & Culture',
+    url: 'https://www.theverge.com',
+    color: '#E0004D',
     icon: (
       <svg viewBox="0 0 24 24" width="24" height="24">
-        <circle cx="12" cy="12" r="11" fill="#FA9000" />
-        <path d="M12 4c3.2 3.6 5 6.2 5 9.4a5 5 0 0 1-10 0c0-3.2 1.8-5.8 5-9.4z" fill="#FFF" />
+        <path d="M12 2L1 21h4.6l6.4-11.4L18.4 21H23L12 2z" fill="#E0004D" />
+      </svg>
+    ),
+  },
+  {
+    name: 'PC Gamer',
+    category: 'Gaming & Hardware',
+    url: 'https://www.pcgamer.com',
+    color: '#E51B24',
+    icon: (
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <rect width="24" height="24" rx="4" fill="#E51B24" />
+        <text x="12" y="16.5" fontSize="7.5" fontWeight="900" textAnchor="middle" fill="#FFF" fontFamily="Arial, sans-serif">PCG</text>
+      </svg>
+    ),
+  },
+  {
+    name: 'Aeon',
+    category: 'Philosophy & Essays',
+    url: 'https://aeon.co',
+    color: '#181818',
+    icon: (
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <rect width="24" height="24" rx="4" fill="#181818" />
+        <text x="12" y="16.5" fontSize="8" fontWeight="800" fontStyle="italic" textAnchor="middle" fill="#FFF" fontFamily="Georgia, serif">aeon</text>
+      </svg>
+    ),
+  },
+  {
+    name: 'Quanta Magazine',
+    category: 'Science & Mathematics',
+    url: 'https://www.quantamagazine.org',
+    color: '#0B1B3D',
+    icon: (
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <circle cx="12" cy="12" r="10.5" fill="#0B1B3D" />
+        <text x="11.5" y="16.5" fontSize="13" fontWeight="900" textAnchor="middle" fill="#00D2D3" fontFamily="Georgia, serif">Q</text>
+      </svg>
+    ),
+  },
+  {
+    name: 'Atlas Obscura',
+    category: 'Curiosities & Exploration',
+    url: 'https://www.atlasobscura.com',
+    color: '#0A2540',
+    icon: (
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <rect width="24" height="24" rx="4" fill="#0A2540" />
+        <circle cx="12" cy="12" r="8" fill="none" stroke="#E5A823" strokeWidth="1.8" />
+        <path d="M12 6l2 6-2 6-2-6z" fill="#E5A823" />
+      </svg>
+    ),
+  },
+  {
+    name: 'IndieWire',
+    category: 'Cinema & Television',
+    url: 'https://www.indiewire.com',
+    color: '#111111',
+    icon: (
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <rect width="24" height="24" rx="4" fill="#111111" />
+        <text x="12" y="16.5" fontSize="8" fontWeight="900" textAnchor="middle" fill="#E50914" fontFamily="Arial, sans-serif">IW</text>
+      </svg>
+    ),
+  },
+  {
+    name: 'Bored Panda',
+    category: 'Viral Stories & Pop Culture',
+    url: 'https://www.boredpanda.com',
+    color: '#111111',
+    icon: (
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <rect width="24" height="24" rx="4" fill="#111111" />
+        <circle cx="8" cy="8" r="3" fill="#FFF" />
+        <circle cx="16" cy="8" r="3" fill="#FFF" />
+        <circle cx="12" cy="13.5" r="5.5" fill="#FFF" />
+        <circle cx="10" cy="13" r="1.5" fill="#111" />
+        <circle cx="14" cy="13" r="1.5" fill="#111" />
+        <ellipse cx="12" cy="16" rx="1.5" ry="1" fill="#111" />
       </svg>
     ),
   },
