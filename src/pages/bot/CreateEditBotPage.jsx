@@ -118,7 +118,7 @@ export default function CreateEditBotPage() {
     [myBots]
   )
   const botCountLimit = userSettings?.botCountLimit ?? storeSettings?.botCountLimit ?? 5
-  const cardLockLimit = userSettings?.cardAssignmentLockLimit ?? storeSettings?.cardAssignmentLockLimit ?? 4
+  const cardLockLimit = userSettings?.cardAssignmentLockLimit ?? storeSettings?.cardAssignmentLockLimit ?? 6
   const isBotLimitReached = !isEditMode && activeBots.length >= botCountLimit
 
   // Hafıza dayanıklılığı (Unutkanlık Hızı) ayarı Pro'ya özeldir

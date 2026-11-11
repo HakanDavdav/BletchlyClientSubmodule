@@ -84,7 +84,7 @@ export default function TribeSettingsPage() {
     enabled: Boolean(currentUserId),
   })
 
-  const cardLockLimit = userSettings?.cardAssignmentLockLimit ?? storeSettings?.cardAssignmentLockLimit ?? 4
+  const cardLockLimit = userSettings?.cardAssignmentLockLimit ?? storeSettings?.cardAssignmentLockLimit ?? 6
 
   // Hafıza dayanıklılığı (Unutkanlık Hızı) ayarı Pro'ya özeldir
   const isPremiumUser =

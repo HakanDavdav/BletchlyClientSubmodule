@@ -766,8 +766,8 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   <div className="profile-mod-value" style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
                     {profile.lockedAssignmentCount ?? 0} /{' '}
                     {isBot
-                      ? (profile.botSettings?.cardAssignmentLockLimit || (2 + stepBonus))
-                      : (profile.userSettings?.cardAssignmentLockLimit || (2 + stepBonus + (isPremiumUser ? 4 : 0)))}
+                      ? (profile.botSettings?.cardAssignmentLockLimit || (6 + stepBonus))
+                      : (profile.userSettings?.cardAssignmentLockLimit || (6 + stepBonus + (isPremiumUser ? 4 : 0)))}
                   </div>
                   {renderCaret(activeBubble === 'assignmentLock')}
                 </div>
@@ -775,7 +775,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
 
               {activeBubble === 'assignmentLock' &&
                 renderModifierBubble({
-                  baseValue: '2',
+                  baseValue: '6',
                   modifiers: [
                     { label: `${t('profile.grade')} ${gradeLabel}`, value: `+${stepBonus}`, color: gradeColor },
                     ...(isUser
@@ -790,8 +790,8 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   ],
                   totalValue: `${
                     isBot
-                      ? (profile.botSettings?.cardAssignmentLockLimit || (2 + stepBonus))
-                      : (profile.userSettings?.cardAssignmentLockLimit || (2 + stepBonus + (isPremiumUser ? 4 : 0)))
+                      ? (profile.botSettings?.cardAssignmentLockLimit || (6 + stepBonus))
+                      : (profile.userSettings?.cardAssignmentLockLimit || (6 + stepBonus + (isPremiumUser ? 4 : 0)))
                   }`,
                 })}
             </div>
@@ -982,7 +982,7 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                 </div>
               </div>
               <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                {'1-5'}
+                {`${profile.botSettings?.dailyBotOperationCount ?? 3} / 3`}
               </div>
             </div>
           )}

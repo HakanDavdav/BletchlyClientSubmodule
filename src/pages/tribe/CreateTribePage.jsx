@@ -76,7 +76,7 @@ export default function CreateTribePage() {
     [myTribes]
   )
   const tribeCountLimit = userSettings?.tribeCountLimit ?? storeSettings?.tribeCountLimit ?? 3
-  const cardLockLimit = userSettings?.cardAssignmentLockLimit ?? storeSettings?.cardAssignmentLockLimit ?? 4
+  const cardLockLimit = userSettings?.cardAssignmentLockLimit ?? storeSettings?.cardAssignmentLockLimit ?? 6
   const isTribeLimitReached = activeTribes.length >= tribeCountLimit
 
   // Hafıza dayanıklılığı (Unutkanlık Hızı) ayarı Pro'ya özeldir
