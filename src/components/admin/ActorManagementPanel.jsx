@@ -65,13 +65,6 @@ export default function ActorManagementPanel() {
   const [cleanupEntryId, setCleanupEntryId] = useState('')
   const [cleanupConfirm, setCleanupConfirm] = useState(null)
 
-  // Content Reduction State
-  const [reduceKeepRatio, setReduceKeepRatio] = useState('0.2')
-  const [reduceTargetPosts, setReduceTargetPosts] = useState('97')
-  const [reduceTargetEntries, setReduceTargetEntries] = useState('881')
-  const [reduceResult, setReduceResult] = useState(null)
-  const [isReduceConfirmOpen, setIsReduceConfirmOpen] = useState(false)
-
   // Set Points Mutation
   const setPointsMutation = useMutation({
     mutationFn: ({ actorId, points }) => adminApi.setActorPoint(actorId, points),
@@ -97,14 +90,14 @@ export default function ActorManagementPanel() {
 
   const handleSetPoints = () => {
     if (!pointActorId.trim() || !points.toString().trim()) {
-      return toast.error(t('admin.actor_id_placeholder'))
+      return toast.error(t('admin.cleanup_guid_required'))
     }
     setPointsMutation.mutate({ actorId: pointActorId.trim(), points: parseInt(points, 10) })
   }
 
   const handleSetPremium = (isPremium) => {
     if (!premiumActorId.trim()) {
-      return toast.error(t('admin.actor_id_placeholder'))
+      return toast.error(t('admin.cleanup_guid_required'))
     }
     setPremiumMutation.mutate({ actorId: premiumActorId.trim(), isPremium })
   }
@@ -182,19 +175,6 @@ export default function ActorManagementPanel() {
     },
   })
 
-  const reduceContentMutation = useMutation({
-    mutationFn: (payload) => adminApi.reduceContent(payload),
-    meta: { showErrorToast: true },
-    onSuccess: (response) => {
-      const data = response?.data?.data || response?.data
-      setReduceResult(data)
-      toast.success(
-        data?.dryRun ? t('admin.reduction_preview_success') : t('admin.reduction_success')
-      )
-      if (!data?.dryRun) invalidateCleanupQueries()
-    },
-  })
-
   const handleSeasonReset = () => {
     setIsSeasonResetModalOpen(true)
   }
@@ -217,30 +197,12 @@ export default function ActorManagementPanel() {
     if (type === 'entry') cleanupEntryMutation.mutate(id)
   }
 
-  const runReduction = (dryRun) => {
-    const ratio = Number.parseFloat(reduceKeepRatio)
-    if (Number.isNaN(ratio) || ratio <= 0 || ratio > 1) {
-      return toast.error(t('admin.keep_ratio_invalid'))
-    }
-
-    reduceContentMutation.mutate({
-      keepRatio: ratio,
-      targetPosts: reduceTargetPosts.trim() ? Number.parseInt(reduceTargetPosts, 10) : null,
-      targetEntries: reduceTargetEntries.trim()
-        ? Number.parseInt(reduceTargetEntries, 10)
-        : null,
-      dryRun,
-    })
-  }
-
   const isCleanupLoading =
     cleanupUserMutation.isPending ||
     cleanupBotMutation.isPending ||
     cleanupTribeMutation.isPending ||
     cleanupPostMutation.isPending ||
     cleanupEntryMutation.isPending
-
-  const isReduceLoading = reduceContentMutation.isPending
 
   return (
     <div className="admin-panel-card">
@@ -438,151 +400,6 @@ export default function ActorManagementPanel() {
           buttonLabel={t('admin.cleanup_soft_delete')}
           t={t}
         />
-
-        {/* ─── BLOK 8: CONTENT REDUCTION (Developer Only) ─── */}
-        {isDeveloper && (
-          <div className="admin-filter-card">
-            <div className="admin-section-title">
-              {t('admin.content_reduce_title')}
-            </div>
-            <p
-              style={{
-                fontSize: 12,
-                color: 'var(--color-text-secondary)',
-                margin: '0 0 10px',
-                lineHeight: 1.5,
-              }}
-            >
-              {t('admin.content_reduce_desc')}
-            </p>
-
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                gap: 10,
-                marginBottom: 10,
-              }}
-            >
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label admin-field-label">
-                  {t('admin.keep_ratio')}
-                </label>
-                <input
-                  type="number"
-                  min="0.01"
-                  max="1"
-                  step="0.01"
-                  className="input w-full admin-input"
-                  value={reduceKeepRatio}
-                  onChange={(e) => setReduceKeepRatio(e.target.value)}
-                />
-              </div>
-
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label admin-field-label">
-                  {t('admin.target_posts')}
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  className="input w-full admin-input"
-                  value={reduceTargetPosts}
-                  onChange={(e) => setReduceTargetPosts(e.target.value)}
-                />
-              </div>
-
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label admin-field-label">
-                  {t('admin.target_entries')}
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  className="input w-full admin-input"
-                  value={reduceTargetEntries}
-                  onChange={(e) => setReduceTargetEntries(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-2.5 flex-wrap">
-              <button
-                className="btn btn-secondary admin-btn"
-                onClick={() => runReduction(true)}
-                disabled={isReduceLoading}
-              >
-                {isReduceLoading ? t('admin.processing') : t('admin.preview')}
-              </button>
-
-              <button
-                className="btn btn-danger admin-btn"
-                onClick={() => setIsReduceConfirmOpen(true)}
-                disabled={isReduceLoading}
-              >
-                {isReduceLoading ? t('admin.reduction_running') : t('admin.run_reduction')}
-              </button>
-            </div>
-
-            {reduceResult && (
-              <div
-                style={{
-                  marginTop: 12,
-                  padding: '10px 12px',
-                  borderRadius: 'var(--radius-md)',
-                  background: 'transparent',
-                  border: '1px solid var(--color-border)',
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: 'var(--color-text-secondary)',
-                    marginBottom: 6,
-                  }}
-                >
-                  {t('admin.reduction_result_title')}
-                </div>
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                    gap: 6,
-                  }}
-                >
-                  {[
-                    [t('admin.active_posts'), reduceResult.activePosts],
-                    [t('admin.active_entries'), reduceResult.activeEntries],
-                    [t('admin.keep_posts'), reduceResult.keepPosts],
-                    [t('admin.keep_entries'), reduceResult.keepEntries],
-                    [
-                      t('admin.delete_posts'),
-                      reduceResult.deletePosts ?? reduceResult.deletedPosts,
-                    ],
-                    [
-                      t('admin.delete_entries'),
-                      reduceResult.deleteEntries ?? reduceResult.deletedEntries,
-                    ],
-                  ].map(([label, value]) => (
-                    <div
-                      key={label}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        gap: 8,
-                        fontSize: 12,
-                      }}
-                    >
-                      <span style={{ color: 'var(--color-text-secondary)' }}>{label}</span>
-                      <strong style={{ color: 'var(--color-text)' }}>{value ?? '-'}</strong>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       <ConfirmModal
@@ -594,20 +411,6 @@ export default function ActorManagementPanel() {
         confirmText={t('common.confirm')}
         confirmVariant="danger"
         isLoading={isCleanupLoading}
-      />
-
-      <ConfirmModal
-        isOpen={isDeveloper && isReduceConfirmOpen}
-        onClose={() => setIsReduceConfirmOpen(false)}
-        onConfirm={() => {
-          setIsReduceConfirmOpen(false)
-          runReduction(false)
-        }}
-        title={t('admin.run_reduction')}
-        description={t('admin.reduction_confirm_desc')}
-        confirmText={t('common.confirm')}
-        confirmVariant="danger"
-        isLoading={isReduceLoading}
       />
 
       <ConfirmModal

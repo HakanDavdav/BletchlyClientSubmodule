@@ -129,6 +129,7 @@ export default function SystemEventsPanel() {
   const [selectedEventName, setSelectedEventName] = useState(initialEvent.name)
   const [eventType, setEventType] = useState(initialEvent.name)
   const [payload, setPayload] = useState(JSON.stringify(initialEvent.defaultPayload, null, 2))
+  const [resetActorId, setResetActorId] = useState('')
   const [lastTraceId, setLastTraceId] = useState(null)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef(null)
@@ -184,6 +185,27 @@ export default function SystemEventsPanel() {
     },
   })
 
+  const resetBotStatusMutation = useMutation({
+    mutationFn: (actorId) => adminApi.resetBotStatus(actorId),
+    meta: { showErrorToast: true },
+    onSuccess: (res) => {
+      const traceId = res?.headers?.['x-trace-id'] || window.__lastApiSuccessTraceId || null
+      setLastTraceId(traceId)
+      toast.success(t('admin.bot_status_reset_success'), {
+        traceId,
+      })
+    },
+  })
+
+  const handleResetBotStatus = (e) => {
+    e?.preventDefault?.()
+    const trimmed = resetActorId.trim()
+    if (!trimmed) {
+      return toast.error(t('admin.cleanup_guid_required'))
+    }
+    resetBotStatusMutation.mutate(trimmed)
+  }
+
   const handleSelectEvent = (eventName) => {
     setSelectedEventName(eventName)
     for (const cat of visibleCategories) {
@@ -203,7 +225,7 @@ export default function SystemEventsPanel() {
       if (isActorEvent) {
         const actorId = parsed.ParentActorId?.trim()
         if (!actorId) {
-          return toast.error(t('admin.actor_id_placeholder'))
+          return toast.error(t('admin.cleanup_guid_required'))
         }
         triggerBotEventMutation.mutate({
           actorId,
@@ -391,6 +413,45 @@ export default function SystemEventsPanel() {
               </code>
             </div>
           )}
+        </div>
+
+        {/* Reset Bot Status Section */}
+        <div className="admin-filter-card">
+          <div className="admin-section-title">
+            {t('admin.reset_bot_status_title')}
+          </div>
+
+          <div className="form-group" style={{ marginBottom: '10px' }}>
+            <label className="form-label admin-field-label">
+              {t('admin.actor_id')}
+            </label>
+            <input
+              type="text"
+              className="input w-full admin-input admin-input--mono"
+              placeholder="e.g. 1847c130-aef0-4d9a-858f-0a02baf45dfd"
+              value={resetActorId}
+              onChange={(e) => setResetActorId(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleResetBotStatus()
+                }
+              }}
+              style={{
+                fontSize: 12.5,
+                padding: '7px 10px',
+              }}
+            />
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-primary admin-btn"
+            onClick={handleResetBotStatus}
+            disabled={resetBotStatusMutation.isPending}
+          >
+            {resetBotStatusMutation.isPending ? t('admin.processing') : t('admin.reset_status_btn')}
+          </button>
         </div>
       </div>
     </div>

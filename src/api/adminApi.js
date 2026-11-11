@@ -19,10 +19,10 @@ export const adminApi = {
 
   cleanupEntry: (entryId) => api.post(`/admin/cleanup/entry/${entryId}`),
 
-  reduceContent: (payload) => api.post('/admin/cleanup/content/reduce', payload, { timeout: 0 }),
-
   // BotMicroservice - AdminController
   triggerBotEvent: (actorId, data) => botApi.post(`/admin/bot/${actorId}/trigger-event`, data),
+
+  resetBotStatus: (actorId) => botApi.post(`/admin/bot/${actorId}/reset-status`),
 
   triggerSystemCustomEvent: (data) => botApi.post(`/admin/system/trigger-custom-event`, data),
 

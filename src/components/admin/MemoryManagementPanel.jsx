@@ -44,22 +44,22 @@ export default function MemoryManagementPanel() {
   })
 
   const handleTriggerTribeMemory = () => {
-    if (!tribeId) return toast.error(t('admin.tribe_id_placeholder'))
+    if (!tribeId) return toast.error(t('admin.cleanup_guid_required'))
     triggerTribeMemoryMutation.mutate(tribeId)
   }
 
   const handleForgetTribeMemories = () => {
-    if (!tribeId) return toast.error(t('admin.tribe_id_placeholder'))
+    if (!tribeId) return toast.error(t('admin.cleanup_guid_required'))
     forgetTribeMemoriesMutation.mutate(tribeId)
   }
 
   const handleTriggerActorMemory = () => {
-    if (!actorId) return toast.error(t('admin.actor_id_placeholder'))
+    if (!actorId) return toast.error(t('admin.cleanup_guid_required'))
     triggerActorMemoryMutation.mutate(actorId)
   }
 
   const handleForgetActorMemories = () => {
-    if (!actorId) return toast.error(t('admin.actor_id_placeholder'))
+    if (!actorId) return toast.error(t('admin.cleanup_guid_required'))
     forgetActorMemoriesMutation.mutate(actorId)
   }
 
