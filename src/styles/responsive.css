@@ -14,16 +14,25 @@
   display: contents;
 }
 
+.admin-tabs-wrap {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-width: 0;
+}
+
 .left-cache-tabs-scrollbar,
 .leaderboard-types-scrollbar,
-.mind-view-scrollbar {
+.mind-view-scrollbar,
+.admin-tabs-scrollbar {
   display: none;
 }
 
 .left-cache-tabs-scrollbar-thumb,
 .leaderboard-types-scrollbar-thumb,
 .mind-view-scrollbar-thumb,
-.profile-tabs-scrollbar-thumb {
+.profile-tabs-scrollbar-thumb,
+.admin-tabs-scrollbar-thumb {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -54,7 +63,8 @@
   .left-cache-tabs-wrap,
   .leaderboard-controls .leaderboard-types-wrap,
   .mind-view-toggles-wrap,
-  .profile-tab-group-wrap {
+  .profile-tab-group-wrap,
+  .admin-tabs-wrap {
     display: flex;
     flex-direction: column;
     flex: 1 1 auto;
@@ -68,14 +78,17 @@
 
   .left-cache-tabs-wrap .left-cache-tabs,
   .mind-view-toggles-wrap .mind-view-toggles,
-  .profile-tab-group-wrap .profile-tab-group {
+  .profile-tab-group-wrap .profile-tab-group,
+  .admin-tabs-wrap nav,
+  .admin-tabs-wrap .hscroll-strip {
     flex: 0 0 auto;
   }
 
   .left-cache-tabs-scrollbar,
   .leaderboard-types-scrollbar,
   .mind-view-scrollbar,
-  .profile-tabs-scrollbar {
+  .profile-tabs-scrollbar,
+  .admin-tabs-scrollbar {
     display: block;
     position: relative;
     height: 1px;
@@ -474,7 +487,8 @@
   }
 
   .form-section-label,
-  .section-divider-title {
+  .section-divider-title,
+  .admin-panel-title {
     font-size: 11.5px;
     margin-bottom: 6px;
     letter-spacing: 0.025em;

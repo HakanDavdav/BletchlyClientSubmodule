@@ -1,150 +1,113 @@
-import { useState } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { adminApi } from '../../api/adminApi'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
+import useAuthStore from '../../store/authStore'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Check } from 'lucide-react'
 
 export const EVENT_CATEGORIES = [
   {
     category: 'Custom & System Events',
+    categoryKey: 'custom_system_events',
     events: [
       {
         name: 'GenerateCardHintAndTagsEvent',
         defaultPayload: {
           PersonalityCardId: '',
-          CreatedAt: new Date().toISOString(),
-        },
-      },
-      {
-        name: 'DebateStatusEvent',
-        defaultPayload: {
-          ParentActorId: '',
-          DebateId: '',
-          Status: 'InProgress',
-          CreatedAt: new Date().toISOString(),
         },
       },
       {
         name: 'SeedPersonalityEvent',
+        developerOnly: true,
         defaultPayload: {
-          TribeId: '',
+          TribeId: null,
           BotId: null,
-          CreatedAt: new Date().toISOString(),
         },
       },
     ],
   },
   {
     category: 'Actor Events',
+    categoryKey: 'actor_events',
     events: [
       {
         name: 'PostCreatedEvent',
         defaultPayload: {
-          ParentActorId: '7abe8920-36be-43f0-95aa-538ee063fe4d',
-          CreatedPostId: '',
-          TribeId: null,
-          CreatedAt: new Date().toISOString(),
+          ParentActorId: '',
         },
       },
       {
         name: 'EntryCreatedEvent',
         defaultPayload: {
-          ParentActorId: '7abe8920-36be-43f0-95aa-538ee063fe4d',
-          ContentItemId: '',
-          CreatedAt: new Date().toISOString(),
+          ParentActorId: '',
         },
       },
       {
         name: 'LikedEvent',
         defaultPayload: {
-          ParentActorId: '7abe8920-36be-43f0-95aa-538ee063fe4d',
-          ContentItemId: '',
-          ReactionType: 'Like',
-          CreatedAt: new Date().toISOString(),
+          ParentActorId: '',
         },
       },
       {
         name: 'FollowedEvent',
         defaultPayload: {
-          ParentActorId: '7abe8920-36be-43f0-95aa-538ee063fe4d',
-          FollowedActorId: '',
-          CreatedAt: new Date().toISOString(),
+          ParentActorId: '',
         },
       },
       {
         name: 'BotCreatedEvent',
         defaultPayload: {
-          ParentActorId: '7abe8920-36be-43f0-95aa-538ee063fe4d',
-          CreatedBotId: '',
-          CreatedAt: new Date().toISOString(),
+          ParentActorId: '',
         },
       },
       {
         name: 'CreatedTribeEvent',
         defaultPayload: {
-          ParentActorId: '7abe8920-36be-43f0-95aa-538ee063fe4d',
-          TribeId: '',
-          CreatedAt: new Date().toISOString(),
+          ParentActorId: '',
         },
       },
       {
         name: 'JoinedTribeEvent',
         defaultPayload: {
-          ParentActorId: '7abe8920-36be-43f0-95aa-538ee063fe4d',
-          TribeId: '',
-          JoinedAt: new Date().toISOString(),
-          CreatedAt: new Date().toISOString(),
+          ParentActorId: '',
         },
       },
       {
         name: 'LeftTribeEvent',
         defaultPayload: {
-          ParentActorId: '7abe8920-36be-43f0-95aa-538ee063fe4d',
-          TribeId: '',
-          LeftAt: new Date().toISOString(),
-          CreatedAt: new Date().toISOString(),
+          ParentActorId: '',
         },
       },
       {
         name: 'ExpelledEvent',
         defaultPayload: {
-          ParentActorId: '7abe8920-36be-43f0-95aa-538ee063fe4d',
-          ExpelledActorId: '',
-          TribeId: '',
-          CreatedAt: new Date().toISOString(),
+          ParentActorId: '',
         },
       },
       {
         name: 'PromotedEvent',
         defaultPayload: {
-          ParentActorId: '7abe8920-36be-43f0-95aa-538ee063fe4d',
-          PromotedActorId: '',
-          TribeId: '',
-          PromotionType: 'Promotion',
-          CreatedAt: new Date().toISOString(),
+          ParentActorId: '',
         },
       },
       {
         name: 'AutoBioRequestEvent',
         defaultPayload: {
-          ParentActorId: '7abe8920-36be-43f0-95aa-538ee063fe4d',
-          RefactoredBotId: '',
-          CreatedAt: new Date().toISOString(),
+          ParentActorId: '',
         },
       },
       {
         name: 'AutoInterestsRequestEvent',
         defaultPayload: {
-          ParentActorId: '7abe8920-36be-43f0-95aa-538ee063fe4d',
-          RefactoredBotId: '',
-          CreatedAt: new Date().toISOString(),
+          ParentActorId: '',
         },
       },
       {
         name: 'EnemyChallengedEvent',
         defaultPayload: {
-          ParentActorId: '7abe8920-36be-43f0-95aa-538ee063fe4d',
-          CreatedAt: new Date().toISOString(),
+          ParentActorId: '',
         },
       },
     ],
@@ -153,13 +116,43 @@ export const EVENT_CATEGORIES = [
 
 export default function SystemEventsPanel() {
   const { t } = useTranslation()
-  const initialEvent = EVENT_CATEGORIES[0].events[0]
+  const isDeveloper = useAuthStore((state) => state.isDeveloper)
+
+  const visibleCategories = useMemo(() => {
+    return EVENT_CATEGORIES.map((cat) => ({
+      ...cat,
+      events: cat.events.filter((ev) => !ev.developerOnly || isDeveloper),
+    })).filter((cat) => cat.events.length > 0)
+  }, [isDeveloper])
+
+  const initialEvent = visibleCategories[0]?.events[0] || EVENT_CATEGORIES[0].events[0]
   const [selectedEventName, setSelectedEventName] = useState(initialEvent.name)
   const [eventType, setEventType] = useState(initialEvent.name)
   const [payload, setPayload] = useState(JSON.stringify(initialEvent.defaultPayload, null, 2))
   const [lastTraceId, setLastTraceId] = useState(null)
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const dropdownRef = useRef(null)
 
-  const isActorEvent = EVENT_CATEGORIES.some(
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsDropdownOpen(false)
+      }
+    }
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
+
+  const isActorEvent = visibleCategories.some(
     (cat) => cat.category === 'Actor Events' && cat.events.some((e) => e.name === selectedEventName)
   )
 
@@ -193,12 +186,11 @@ export default function SystemEventsPanel() {
 
   const handleSelectEvent = (eventName) => {
     setSelectedEventName(eventName)
-    for (const cat of EVENT_CATEGORIES) {
+    for (const cat of visibleCategories) {
       const found = cat.events.find((e) => e.name === eventName)
       if (found) {
         setEventType(found.name)
-        const newPayload = { ...found.defaultPayload, CreatedAt: new Date().toISOString() }
-        setPayload(JSON.stringify(newPayload, null, 2))
+        setPayload(JSON.stringify(found.defaultPayload, null, 2))
         break
       }
     }
@@ -209,8 +201,12 @@ export default function SystemEventsPanel() {
     try {
       const parsed = JSON.parse(payload)
       if (isActorEvent) {
+        const actorId = parsed.ParentActorId?.trim()
+        if (!actorId) {
+          return toast.error(t('admin.actor_id_placeholder'))
+        }
         triggerBotEventMutation.mutate({
-          actorId: parsed.ParentActorId,
+          actorId,
           eventType,
           payload: parsed,
         })
@@ -225,15 +221,12 @@ export default function SystemEventsPanel() {
   const isLoading = triggerSystemEventMutation.isPending || triggerBotEventMutation.isPending
 
   return (
-    <div className="card-surface admin-panel-card">
+    <div className="admin-panel-card">
       {/* Header */}
       <div className="admin-panel-header">
-        <h2 className="admin-panel-title">
+        <h2 className="section-divider-title" style={{ margin: 0 }}>
           {t('admin.system_events_title')}
         </h2>
-        <p className="admin-panel-subtitle">
-          {t('admin.system_events_desc')}
-        </p>
       </div>
 
       <div className="flex flex-col gap-6 w-full">
@@ -244,30 +237,95 @@ export default function SystemEventsPanel() {
           </div>
 
           {/* Event Category & Type Selector Dropdown */}
-          <div className="form-group" style={{ marginBottom: '8px' }}>
+          <div className="form-group" style={{ marginBottom: '10px', position: 'relative' }} ref={dropdownRef}>
             <label className="form-label admin-field-label">
               {t('admin.event_type')}
             </label>
-            <select
-              className="input w-full admin-input"
-              value={selectedEventName}
-              onChange={(e) => handleSelectEvent(e.target.value)}
+            <button
+              type="button"
+              onClick={() => setIsDropdownOpen((prev) => !prev)}
+              className="input w-full admin-input flex items-center justify-between cursor-pointer"
               style={{
                 padding: '7px 10px',
                 fontSize: 12.5,
-                cursor: 'pointer',
+                textAlign: 'left',
+                color: 'var(--color-text)',
               }}
             >
-              {EVENT_CATEGORIES.map((cat) => (
-                <optgroup key={cat.category} label={cat.category}>
-                  {cat.events.map((ev) => (
-                    <option key={ev.name} value={ev.name}>
-                      {ev.name}
-                    </option>
+              <span style={{ fontWeight: 500 }}>{selectedEventName}</span>
+              <span
+                style={{
+                  fontSize: 9,
+                  lineHeight: 1,
+                  display: 'inline-block',
+                  transform: isDropdownOpen ? 'rotate(180deg)' : 'none',
+                  transition: 'transform var(--transition-fast)',
+                  color: 'var(--color-text-muted)',
+                }}
+                aria-hidden="true"
+              >
+                ▼
+              </span>
+            </button>
+
+            <AnimatePresence>
+              {isDropdownOpen && (
+                <motion.div
+                  className="dropdown-menu-panel"
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.15 }}
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    marginTop: 4,
+                    zIndex: 60,
+                    maxHeight: 260,
+                    overflowY: 'auto',
+                  }}
+                >
+                  {visibleCategories.map((cat) => (
+                    <div key={cat.category} style={{ marginBottom: 4 }}>
+                      <div
+                        style={{
+                          padding: '6px 10px 4px',
+                          fontSize: 10.5,
+                          fontWeight: 700,
+                          color: 'var(--color-text-muted)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                        }}
+                      >
+                        {cat.categoryKey ? t(`admin.${cat.categoryKey}`) : cat.category}
+                      </div>
+                      {cat.events.map((ev) => {
+                        const isSelected = selectedEventName === ev.name
+                        return (
+                          <button
+                            key={ev.name}
+                            type="button"
+                            className={`dropdown-option-btn ${isSelected ? 'active' : ''}`}
+                            onClick={() => {
+                              handleSelectEvent(ev.name)
+                              setIsDropdownOpen(false)
+                            }}
+                            style={{ fontSize: 12.5 }}
+                          >
+                            <span>{ev.name}</span>
+                            {isSelected && (
+                              <Check size={14} style={{ color: 'var(--color-primary)' }} />
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
                   ))}
-                </optgroup>
-              ))}
-            </select>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Payload JSON Editor */}

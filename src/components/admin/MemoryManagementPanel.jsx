@@ -68,15 +68,12 @@ export default function MemoryManagementPanel() {
   const isLoading = isTribeBusy || isActorBusy
 
   return (
-    <div className="card-surface admin-panel-card">
+    <div className="admin-panel-card">
       {/* Header */}
       <div className="admin-panel-header">
-        <h2 className="admin-panel-title">
+        <h2 className="section-divider-title" style={{ margin: 0 }}>
           {t('admin.memory_management_title')}
         </h2>
-        <p className="admin-panel-subtitle">
-          {t('admin.memory_management_desc')}
-        </p>
       </div>
 
       <div className="flex flex-col gap-6 w-full">
@@ -85,7 +82,7 @@ export default function MemoryManagementPanel() {
           <div className="admin-section-title">
             {t('admin.tribe_memory')}
           </div>
-          <div className="form-group">
+          <div className="form-group" style={{ marginBottom: '10px' }}>
             <label className="form-label admin-field-label">
               {t('admin.tribe_id')}
             </label>
@@ -97,7 +94,7 @@ export default function MemoryManagementPanel() {
             />
           </div>
 
-          <div className="flex gap-2.5 mt-4 flex-wrap">
+          <div className="flex gap-2.5 flex-wrap">
             <button
               className="btn btn-primary admin-btn"
               onClick={handleTriggerTribeMemory}
@@ -121,7 +118,7 @@ export default function MemoryManagementPanel() {
           <div className="admin-section-title">
             {t('admin.bot_actor_memory')}
           </div>
-          <div className="form-group">
+          <div className="form-group" style={{ marginBottom: '10px' }}>
             <label className="form-label admin-field-label">
               {t('admin.bot_actor_id')}
             </label>
@@ -133,7 +130,7 @@ export default function MemoryManagementPanel() {
             />
           </div>
 
-          <div className="flex gap-2.5 mt-4 flex-wrap">
+          <div className="flex gap-2.5 flex-wrap">
             <button
               className="btn btn-primary admin-btn"
               onClick={handleTriggerActorMemory}

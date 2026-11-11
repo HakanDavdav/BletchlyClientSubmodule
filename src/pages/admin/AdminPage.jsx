@@ -7,6 +7,7 @@ import Logo from '../../components/common/icons/Logo'
 import BackButton from '../../components/common/BackButton'
 import { useTranslation } from 'react-i18next'
 import useAuthStore from '../../store/authStore'
+import { useHorizontalScrollIndicator } from '../../hooks/useHorizontalScrollIndicator'
 
 export default function AdminPage() {
   const { t } = useTranslation()
@@ -21,6 +22,7 @@ export default function AdminPage() {
   ]
 
   const tabs = allTabs.filter(tab => !tab.developerOnly || isDeveloper)
+  const [adminTabsRef, adminTabsScroll] = useHorizontalScrollIndicator([tabs.length, activeTab])
 
   return (
     <div className="flex-col gap-4">
@@ -40,41 +42,47 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Horizontal Navigation Tabs */}
-      <nav
-        className="flex overflow-x-auto gap-2 hide-scrollbar"
-        style={{ marginBottom: 20, minWidth: 0, overflowX: 'auto' }}
-      >
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.id
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              style={{
-                padding: '6px 14px',
-                borderRadius: '9999px',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: 12.5,
-                fontWeight: isActive ? 600 : 500,
-                transition: 'all var(--transition-fast)',
-                background: isActive ? 'var(--color-primary)' : 'var(--color-surface-2)',
-                color: isActive ? '#ffffff' : 'var(--color-text)',
-                whiteSpace: 'nowrap',
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive) e.currentTarget.style.background = 'var(--color-surface-hover)'
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) e.currentTarget.style.background = 'var(--color-surface-2)'
-              }}
-            >
-              {tab.label}
-            </button>
-          )
-        })}
-      </nav>
+      {/* Horizontal Navigation Tabs with Mobile Scroll Indicator */}
+      <div className="admin-tabs-wrap" style={{ marginBottom: 28 }}>
+        {adminTabsScroll.scrollable && (
+          <div className="admin-tabs-scrollbar" aria-hidden="true">
+            <div
+              className="admin-tabs-scrollbar-thumb"
+              style={{ width: `${adminTabsScroll.width}%`, left: `${adminTabsScroll.left}%` }}
+            />
+          </div>
+        )}
+        <nav
+          ref={adminTabsRef}
+          className="hscroll-strip flex overflow-x-auto gap-2 items-center"
+          style={{
+            minWidth: 0,
+            overflowX: 'auto',
+          }}
+        >
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id
+            return (
+              <button
+                key={tab.id}
+                className={`btn btn-sm ${isActive ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  borderRadius: 20,
+                  padding: '6px 14px',
+                  fontSize: 12.5,
+                  fontWeight: isActive ? 600 : 500,
+                  whiteSpace: 'nowrap',
+                  cursor: 'pointer',
+                  transition: 'all var(--transition-fast)',
+                }}
+              >
+                {tab.label}
+              </button>
+            )
+          })}
+        </nav>
+      </div>
 
       {/* Content Area */}
       <div className="flex-1 flex flex-col w-full">

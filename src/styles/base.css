@@ -1626,10 +1626,11 @@ body:has(.modal-overlay) {
 }
 
 .admin-filter-card {
-  padding: 16px;
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-2);
+  padding: 20px;
+  border-radius: var(--radius-xl);
+  background: transparent;
   border: 1px solid var(--color-border);
+  transition: border-color var(--transition-fast);
 }
 
 .admin-section-title {
@@ -1648,23 +1649,32 @@ body:has(.modal-overlay) {
 }
 
 .admin-panel-card {
-  padding: 24px;
-  border-radius: var(--radius-xl);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+}
+
+.card-surface.admin-panel-card {
+  background: transparent;
+  border: none;
+  padding: 0;
 }
 
 .admin-panel-header {
   border-bottom: 1px solid var(--color-border);
-  margin-bottom: 12px;
-  padding-bottom: 8px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
 }
 
 .admin-panel-title {
-  font-size: 18px;
-  font-weight: 700;
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
   margin: 0;
-  color: var(--color-text);
 }
 
 .admin-panel-subtitle {
@@ -1677,9 +1687,16 @@ body:has(.modal-overlay) {
   padding: 8px 12px;
   font-size: 13px;
   border-radius: var(--radius-md);
-  background: var(--color-surface);
-  border-color: var(--color-border);
+  background: transparent;
+  border: 1px solid var(--color-border);
   color: var(--color-text);
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.admin-input:focus {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--color-primary);
+  outline: none;
 }
 
 .admin-input--mono {

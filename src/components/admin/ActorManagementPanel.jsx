@@ -243,59 +243,58 @@ export default function ActorManagementPanel() {
   const isReduceLoading = reduceContentMutation.isPending
 
   return (
-    <div className="card-surface admin-panel-card">
+    <div className="admin-panel-card">
       {/* Header */}
       <div className="admin-panel-header">
-        <h2 className="admin-panel-title">
+        <h2 className="section-divider-title" style={{ margin: 0 }}>
           {t('admin.actor_management_title')}
         </h2>
-        <p className="admin-panel-subtitle">
-          {t('admin.actor_management_desc')}
-        </p>
       </div>
 
       <div className="flex flex-col gap-6 w-full">
-        {/* ─── BLOK 1: KİŞİ PUANI ─── */}
-        <div className="admin-filter-card">
-          <div className="admin-section-title">
-            {t('admin.actor_point_title')}
-          </div>
+        {/* ─── BLOK 1: KİŞİ PUANI (Developer Only) ─── */}
+        {isDeveloper && (
+          <div className="admin-filter-card">
+            <div className="admin-section-title">
+              {t('admin.actor_point_title')}
+            </div>
 
-          <div className="form-group" style={{ marginBottom: '8px' }}>
-            <label className="form-label admin-field-label">
-              {t('admin.actor_id')}
-            </label>
-            <input
-              className="input w-full admin-input admin-input--mono"
-              placeholder="e.g. 1847c130-aef0-4d9a-858f-0a02baf45dfd"
-              value={pointActorId}
-              onChange={(e) => setPointActorId(e.target.value)}
-            />
-          </div>
+            <div className="form-group" style={{ marginBottom: '8px' }}>
+              <label className="form-label admin-field-label">
+                {t('admin.actor_id')}
+              </label>
+              <input
+                className="input w-full admin-input admin-input--mono"
+                placeholder="e.g. 1847c130-aef0-4d9a-858f-0a02baf45dfd"
+                value={pointActorId}
+                onChange={(e) => setPointActorId(e.target.value)}
+              />
+            </div>
 
-          <div className="form-group" style={{ marginBottom: '10px' }}>
-            <label className="form-label admin-field-label">
-              {t('admin.new_point')}
-            </label>
-            <input
-              type="number"
-              className="input w-full admin-input"
-              placeholder="e.g. 1500"
-              value={points}
-              onChange={(e) => setPoints(e.target.value)}
-            />
-          </div>
+            <div className="form-group" style={{ marginBottom: '10px' }}>
+              <label className="form-label admin-field-label">
+                {t('admin.new_point')}
+              </label>
+              <input
+                type="number"
+                className="input w-full admin-input"
+                placeholder="e.g. 1500"
+                value={points}
+                onChange={(e) => setPoints(e.target.value)}
+              />
+            </div>
 
-          <div className="flex">
-            <button
-              className="btn btn-primary admin-btn"
-              onClick={handleSetPoints}
-              disabled={isPointsLoading}
-            >
-              {isPointsLoading ? t('admin.updating') : t('admin.update_point')}
-            </button>
+            <div className="flex">
+              <button
+                className="btn btn-primary admin-btn"
+                onClick={handleSetPoints}
+                disabled={isPointsLoading}
+              >
+                {isPointsLoading ? t('admin.updating') : t('admin.update_point')}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ─── BLOK 2: KİŞİ PREMIUM ─── */}
         <div className="admin-filter-card">
@@ -531,7 +530,7 @@ export default function ActorManagementPanel() {
                   marginTop: 12,
                   padding: '10px 12px',
                   borderRadius: 'var(--radius-md)',
-                  background: 'var(--color-surface)',
+                  background: 'transparent',
                   border: '1px solid var(--color-border)',
                 }}
               >

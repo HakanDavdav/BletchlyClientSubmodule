@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { adminApi } from '../../api/adminApi'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
+import { useHorizontalScrollIndicator } from '../../hooks/useHorizontalScrollIndicator'
 
 export default function ConfigManagementPanel() {
   const { t } = useTranslation()
@@ -12,6 +13,16 @@ export default function ConfigManagementPanel() {
   const [expandedCards, setExpandedCards] = useState({})
   const [isDirty, setIsDirty] = useState(false)
   const queryClient = useQueryClient()
+
+  const HIDDEN_VISUAL_SECTIONS = ['BotConfig', 'MemorySettings']
+  const topSections = config
+    ? Object.keys(config).filter((secKey) => !HIDDEN_VISUAL_SECTIONS.includes(secKey))
+    : []
+
+  const [configTabsRef, configTabsScroll] = useHorizontalScrollIndicator([
+    topSections.length,
+    activeSection,
+  ])
 
   const {
     data: configData,
@@ -31,9 +42,16 @@ export default function ConfigManagementPanel() {
     if (configData) {
       setConfig(configData)
       setConfigText(JSON.stringify(configData, null, 2))
-      const keys = Object.keys(configData)
-      if (keys.length > 0 && !activeSection) {
-        setActiveSection(keys[0])
+      const visualKeys = Object.keys(configData).filter(
+        (key) => !HIDDEN_VISUAL_SECTIONS.includes(key)
+      )
+      if (
+        visualKeys.length > 0 &&
+        (!activeSection || HIDDEN_VISUAL_SECTIONS.includes(activeSection))
+      ) {
+        setActiveSection(visualKeys[0])
+      } else if (visualKeys.length === 0 && !activeSection) {
+        setActiveSection('__raw__')
       }
     }
   }, [configData])
@@ -138,11 +156,23 @@ export default function ConfigManagementPanel() {
     })
   }
 
+  const isDocOrCommentKey = (key) => {
+    if (!key) return false
+    const lower = key.toLowerCase()
+    return (
+      lower.startsWith('_doc') ||
+      lower.startsWith('_comment') ||
+      lower.startsWith('_desc') ||
+      lower.startsWith('//')
+    )
+  }
+
   // Gather all collapsible card keys in an object
   const getAllCardKeys = (obj, path = []) => {
     let keys = []
     if (!obj || typeof obj !== 'object') return keys
     for (const [k, v] of Object.entries(obj)) {
+      if (isDocOrCommentKey(k)) continue
       const currentPath = [...path, k]
       const cardPathKey = currentPath.join('.')
       if (Array.isArray(v)) {
@@ -156,13 +186,14 @@ export default function ConfigManagementPanel() {
   }
 
   const getActiveKeys = () => {
-    if (!config || activeSection === '__raw__' || !config[activeSection]) return []
+    if (
+      !config ||
+      activeSection === '__raw__' ||
+      !config[activeSection] ||
+      HIDDEN_VISUAL_SECTIONS.includes(activeSection)
+    )
+      return []
     let keys = getAllCardKeys(config[activeSection], [activeSection])
-    if (config[activeSection]?.PromptSettings && Object.keys(config[activeSection]).length === 1) {
-      keys = keys.concat(
-        getAllCardKeys(config[activeSection].PromptSettings, [activeSection, 'PromptSettings'])
-      )
-    }
     return Array.from(new Set(keys))
   }
 
@@ -192,7 +223,8 @@ export default function ConfigManagementPanel() {
   // Count total leaf fields in an object recursively
   const countFields = (obj) => {
     if (!obj || typeof obj !== 'object') return 0
-    return Object.entries(obj).reduce((sum, [, v]) => {
+    return Object.entries(obj).reduce((sum, [k, v]) => {
+      if (isDocOrCommentKey(k)) return sum
       if (v === null) return sum
       if (Array.isArray(v)) return sum + v.length
       if (typeof v === 'object') return sum + countFields(v)
@@ -271,7 +303,7 @@ export default function ConfigManagementPanel() {
               padding: '6px 10px',
               fontSize: 12.5,
               borderRadius: 'var(--radius-md)',
-              background: 'var(--color-surface)',
+              background: 'transparent',
               border: '1px solid var(--color-border)',
               color: 'var(--color-text)',
               width: '100%',
@@ -304,7 +336,7 @@ export default function ConfigManagementPanel() {
               padding: '6px 10px',
               fontSize: 12.5,
               borderRadius: 'var(--radius-md)',
-              background: 'var(--color-surface)',
+              background: 'transparent',
               border: '1px solid var(--color-border)',
               color: 'var(--color-text)',
               width: '100%',
@@ -593,7 +625,7 @@ export default function ConfigManagementPanel() {
   const renderObjectNode = (path, obj, level = 0) => {
     if (!obj || typeof obj !== 'object') return null
 
-    const entries = Object.entries(obj)
+    const entries = Object.entries(obj).filter(([k]) => !isDocOrCommentKey(k))
     const promptStrings = entries.filter(([k, v]) => isPromptString(k, v))
     const primitives = entries.filter(
       ([k, v]) => v !== null && typeof v !== 'object' && !isPromptString(k, v)
@@ -611,8 +643,8 @@ export default function ConfigManagementPanel() {
             style={{
               padding: 14,
               borderRadius: 'var(--radius-lg)',
-              background: level === 0 ? 'var(--color-surface-2)' : 'var(--color-surface)',
-              border: '1px solid var(--color-border-light)',
+              background: 'transparent',
+              border: '1px solid var(--color-border)',
             }}
           >
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
@@ -627,7 +659,6 @@ export default function ConfigManagementPanel() {
           const isExpanded = expandedCards[cardPathKey] !== false
           const hasBooleanToggle = v && typeof v.Enabled === 'boolean'
           const fieldCount = countFields(v)
-          const accentColor = depthColors[level % depthColors.length]
 
           return (
             <div
@@ -635,9 +666,8 @@ export default function ConfigManagementPanel() {
               style={{
                 padding: '14px 14px 14px 18px',
                 borderRadius: 'var(--radius-lg)',
-                background: level === 0 ? 'var(--color-surface-2)' : 'var(--color-surface)',
-                border: '1px solid var(--color-border-light)',
-                borderLeft: `3px solid ${accentColor}`,
+                background: 'transparent',
+                border: '1px solid var(--color-border)',
                 marginBottom: 2,
               }}
             >
@@ -677,7 +707,7 @@ export default function ConfigManagementPanel() {
                         fontSize: 10,
                         padding: '1px 6px',
                         borderRadius: '9999px',
-                        background: 'var(--color-surface)',
+                        background: 'transparent',
                         border: '1px solid var(--color-border)',
                         color: 'var(--color-text-muted)',
                       }}
@@ -735,20 +765,13 @@ export default function ConfigManagementPanel() {
     )
   }
 
-  const topSections = config ? Object.keys(config) : []
-
   return (
-    <div className="card-surface admin-panel-card">
+    <div className="admin-panel-card">
       {/* Header */}
       <div className="flex justify-between items-center shrink-0 flex-wrap gap-3 admin-panel-header">
-        <div>
-          <h2 className="admin-panel-title">
-            {t('admin.bg_services_config')}
-          </h2>
-          <p className="admin-panel-subtitle">
-            {t('admin.bg_services_config_desc')}
-          </p>
-        </div>
+        <h2 className="section-divider-title" style={{ margin: 0 }}>
+          {t('admin.bg_services_config')}
+        </h2>
 
         <div className="flex items-center gap-2">
           <button
@@ -777,62 +800,80 @@ export default function ConfigManagementPanel() {
         </div>
       </div>
 
-      {/* Top Section Tabs & Expand/Collapse All (Auto-discovered from JSON keys + Raw JSON) */}
+      {/* Top Section Tabs & Expand/Collapse All (Mobile Scrollbar Standard) */}
       <div
         className="flex justify-between items-center border-b shrink-0 mb-3 gap-2 flex-wrap"
         style={{ borderColor: 'var(--color-border)', paddingBottom: 8 }}
       >
-        <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar" style={{ minWidth: 0, overflowX: 'auto' }}>
-          {topSections.map((secKey) => {
-            const isActive = activeSection === secKey
-            return (
-              <button
-                key={secKey}
-                onClick={() => {
-                  if (activeSection === '__raw__') {
-                    try {
-                      const parsed = JSON.parse(configText)
-                      setConfig(parsed)
-                    } catch {
-                      // Ignore parse error
-                    }
-                  }
-                  setActiveSection(secKey)
-                }}
-                style={{
-                  padding: '4px 12px',
-                  borderRadius: 'var(--radius-md)',
-                  fontSize: 12,
-                  fontWeight: isActive ? 600 : 500,
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: isActive ? 'var(--color-primary)' : 'var(--color-surface-2)',
-                  color: isActive ? '#ffffff' : 'var(--color-text-secondary)',
-                  transition: 'all var(--transition-fast)',
-                }}
-              >
-                {formatLabel(secKey)}
-              </button>
-            )
-          })}
-
-          <button
-            onClick={() => setActiveSection('__raw__')}
-            style={{
-              padding: '4px 12px',
-              borderRadius: 'var(--radius-md)',
-              fontSize: 12,
-              fontWeight: activeSection === '__raw__' ? 600 : 500,
-              border: 'none',
-              cursor: 'pointer',
-              background:
-                activeSection === '__raw__' ? 'var(--color-primary)' : 'var(--color-surface-2)',
-              color: activeSection === '__raw__' ? '#ffffff' : 'var(--color-text-secondary)',
-              transition: 'all var(--transition-fast)',
-            }}
+        <div className="admin-tabs-wrap" style={{ minWidth: 0, flex: '1 1 auto' }}>
+          {configTabsScroll.scrollable && (
+            <div className="admin-tabs-scrollbar" aria-hidden="true">
+              <div
+                className="admin-tabs-scrollbar-thumb"
+                style={{ width: `${configTabsScroll.width}%`, left: `${configTabsScroll.left}%` }}
+              />
+            </div>
+          )}
+          <div
+            ref={configTabsRef}
+            className="hscroll-strip flex items-center gap-2 overflow-x-auto hide-scrollbar"
+            style={{ minWidth: 0, overflowX: 'auto' }}
           >
-            Raw JSON
-          </button>
+            {topSections.map((secKey) => {
+              const isActive = activeSection === secKey
+              return (
+                <button
+                  key={secKey}
+                  className={`btn btn-sm ${isActive ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() => {
+                    if (activeSection === '__raw__') {
+                      try {
+                        const parsed = JSON.parse(configText)
+                        setConfig(parsed)
+                      } catch {
+                        // Ignore parse error
+                      }
+                    }
+                    setActiveSection(secKey)
+                  }}
+                  style={{
+                    borderRadius: 20,
+                    padding: '6px 14px',
+                    fontSize: 12.5,
+                    fontWeight: isActive ? 600 : 500,
+                    whiteSpace: 'nowrap',
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-fast)',
+                  }}
+                >
+                  {secKey === 'BackgroundServiceSettings'
+                    ? t('admin.bg_service_settings')
+                    : formatLabel(secKey)}
+                </button>
+              )
+            })}
+
+            <button
+              className={`btn btn-sm ${activeSection === '__raw__' ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => {
+                if (config) {
+                  setConfigText(JSON.stringify(config, null, 2))
+                }
+                setActiveSection('__raw__')
+              }}
+              style={{
+                borderRadius: 20,
+                padding: '6px 14px',
+                fontSize: 12.5,
+                fontWeight: activeSection === '__raw__' ? 600 : 500,
+                whiteSpace: 'nowrap',
+                cursor: 'pointer',
+                transition: 'all var(--transition-fast)',
+              }}
+            >
+              {t('admin.raw_json')}
+            </button>
+          </div>
         </div>
 
         {activeSection !== '__raw__' && (
@@ -848,7 +889,7 @@ export default function ConfigManagementPanel() {
               fontSize: 11.5,
               fontWeight: 600,
               border: '1px solid var(--color-border)',
-              background: 'var(--color-surface-2)',
+              background: 'transparent',
               color: 'var(--color-text-secondary)',
               cursor: 'pointer',
               transition: 'all var(--transition-fast)',
@@ -876,8 +917,8 @@ export default function ConfigManagementPanel() {
             style={{
               padding: 14,
               borderRadius: 'var(--radius-lg)',
-              background: 'var(--color-surface-2)',
-              border: '1px solid var(--color-border-light)',
+              background: 'transparent',
+              border: '1px solid var(--color-border)',
             }}
           >
             <div
@@ -888,7 +929,10 @@ export default function ConfigManagementPanel() {
             <textarea
               className="input w-full"
               value={configText}
-              onChange={(e) => setConfigText(e.target.value)}
+              onChange={(e) => {
+                setConfigText(e.target.value)
+                setIsDirty(true)
+              }}
               spellCheck={false}
               disabled={isLoading}
               rows={30}
@@ -898,7 +942,7 @@ export default function ConfigManagementPanel() {
                 lineHeight: 1.5,
                 padding: 12,
                 borderRadius: 'var(--radius-md)',
-                background: 'var(--color-surface)',
+                background: 'transparent',
                 borderColor: 'var(--color-border)',
                 color: 'var(--color-text)',
                 outline: 'none',
@@ -907,17 +951,8 @@ export default function ConfigManagementPanel() {
               }}
             />
           </div>
-        ) : config && config[activeSection] ? (
-          config[activeSection]?.PromptSettings &&
-          Object.keys(config[activeSection]).length === 1 ? (
-            renderObjectNode(
-              [activeSection, 'PromptSettings'],
-              config[activeSection].PromptSettings,
-              0
-            )
-          ) : (
-            renderObjectNode([activeSection], config[activeSection], 0)
-          )
+        ) : config && config[activeSection] && !HIDDEN_VISUAL_SECTIONS.includes(activeSection) ? (
+          renderObjectNode([activeSection], config[activeSection], 0)
         ) : isLoading ? (
           <div className="flex justify-center" style={{ padding: 40 }}>
             <div className="spinner spinner-lg" />
