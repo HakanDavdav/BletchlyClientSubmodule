@@ -280,12 +280,17 @@ export default function MarketplacePage() {
           price: buyModal.price,
         })}
         warning={
-          isLimitReached
-            ? t('card.buy_limit_reached_warning', {
-                limit: cardOwnershipLimit,
-                oldestCard: t('card.oldest_card'),
-              })
-            : null
+          isLimitReached ? (
+            <>
+              <div>
+                {t('card.buy_limit_reached_warning', {
+                  limit: cardOwnershipLimit,
+                  oldestCard: t('card.oldest_card'),
+                })}
+              </div>
+              <div style={{ marginTop: 8 }}>{t('card.limit_eviction_assignments_note')}</div>
+            </>
+          ) : null
         }
         confirmText={t('card.confirm_buy_btn')}
         cancelText={t('common.cancel')}

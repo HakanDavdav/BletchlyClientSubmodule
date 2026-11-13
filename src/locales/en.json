@@ -420,6 +420,7 @@
     "create_confirm_title": "Card Creation Confirmation",
     "create_confirm_desc": "Are you sure you want to create a new personality card named \"{{cardName}}\"?",
     "create_limit_reached_warning": "You have reached your card limit ({{limit}})! When you create this card, your oldest owned card \"{{oldestCard}}\" will be automatically and permanently deleted.",
+    "limit_eviction_assignments_note": "Additional note: When this card's ownership is removed, its assignments are also permanently removed from every bot and tribe it is assigned to. Locked assignments are not protected from this removal.",
     "create_limit_info_warning": "Card ownership status: {{count}} / {{limit}}. If the limit is exceeded, creating a new card will automatically delete your oldest owned card (\"{{oldestCard}}\").",
     "confirm_create_btn": "Yes, Create",
     "oldest_card": "Your oldest card",

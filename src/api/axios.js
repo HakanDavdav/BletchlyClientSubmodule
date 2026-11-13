@@ -28,6 +28,15 @@ if (typeof document !== 'undefined') {
   }
 }
 
+// ─── Target Language Header (mevcut çevirileri overlay etmek için) ────────────
+api.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    const lang = (localStorage.getItem('i18nextLng') || navigator.language || 'en').split('-')[0].toLowerCase()
+    config.headers['X-Target-Language'] = lang
+  }
+  return config
+})
+
 // ─── Cache Interceptor (Network Bypass) ───────────────────────────────────────
 api.interceptors.request.use((config) => {
   if (config.method?.toLowerCase() === 'get') {

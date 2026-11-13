@@ -420,6 +420,7 @@
     "create_confirm_title": "Kart Oluşturma Onayı",
     "create_confirm_desc": "\"{{cardName}}\" adlı yeni bir kişilik kartı oluşturmak istediğinize emin misiniz?",
     "create_limit_reached_warning": "Kart limitinize ({{limit}}) ulaştınız! Bu kartı oluşturduğunuzda, en eski sahip olduğunuz kart olan \"{{oldestCard}}\" otomatik ve kalıcı olarak silinecektir.",
+    "limit_eviction_assignments_note": "Ek not: Bu kartın sahipliği silindiğinde, kartın atandığı bütün botlardan ve klanlardan da atamaları kalıcı olarak kaldırılır. Kilitli atamalar da bu silmeden korunmaz.",
     "create_limit_info_warning": "Kart sahiplik durumunuz: {{count}} / {{limit}}. Limit aşıldığında yeni bir kart oluşturursanız en eski sahip olduğunuz kart (\"{{oldestCard}}\") otomatik olarak silinir.",
     "confirm_create_btn": "Evet, Oluştur",
     "oldest_card": "En eski kartınız",

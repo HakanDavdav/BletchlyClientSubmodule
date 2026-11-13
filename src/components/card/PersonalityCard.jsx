@@ -420,10 +420,17 @@ export default function PersonalityCard({
           description={t('card.create_confirm_desc', {
             cardName: editorCardName,
           })}
-          warning={t('card.create_limit_reached_warning', {
-            limit: cardOwnershipLimit,
-            oldestCard: oldestCardName,
-          })}
+          warning={
+            <>
+              <div>
+                {t('card.create_limit_reached_warning', {
+                  limit: cardOwnershipLimit,
+                  oldestCard: oldestCardName,
+                })}
+              </div>
+              <div style={{ marginTop: 8 }}>{t('card.limit_eviction_assignments_note')}</div>
+            </>
+          }
           confirmText={t('card.confirm_create_btn')}
           cancelText={t('common.cancel')}
           confirmVariant="danger"

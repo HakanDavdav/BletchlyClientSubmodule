@@ -400,6 +400,7 @@
     "create_confirm_title": "カード作成の確認",
     "create_confirm_desc": "「{{cardName}}」という名前の新しいパーソナリティカードを作成してもよろしいですか？",
     "create_limit_reached_warning": "カードの所持上限（{{limit}}）に達しています！このカードを作成すると、最も古い所持カード「{{oldestCard}}」が自動的に完全に削除されます。",
+    "limit_eviction_assignments_note": "補足：このカードの所持が削除されると、このカードが割り当てられているすべてのボットとトライブからも割り当てが完全に削除されます。ロックされた割り当てもこの削除から保護されません。",
     "create_limit_info_warning": "カード所持状況：{{count}} / {{limit}}。上限を超えた場合、新しいカードを作成すると最も古いカード（「{{oldestCard}}」）が自動的に削除されます。",
     "confirm_create_btn": "はい、作成する",
     "oldest_card": "最も古いカード",

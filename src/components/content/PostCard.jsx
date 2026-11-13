@@ -40,6 +40,9 @@ export default function PostCard({
   userReaction,
   userLikeId,
   triggeredNodeIds = null,
+  translatedTitle = null,
+  translatedContent = null,
+  translationSourceLanguage = null,
   isOwner = false,
   isSticky = false,
   onDelete,
@@ -56,14 +59,19 @@ export default function PostCard({
   const { isFavourite, isPending: isFavouritePending, toggleFavourite } = useFavourite(contentItemId)
 
   const targetLanguage = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0].toLowerCase()
-  const [translatedData, setTranslatedData] = useState(null)
+  const buildPreTranslated = () =>
+    translatedTitle || translatedContent
+      ? { title: translatedTitle, content: translatedContent, detectedLanguage: translationSourceLanguage }
+      : null
+  const [translatedData, setTranslatedData] = useState(buildPreTranslated)
   const [showOriginal, setShowOriginal] = useState(false)
   const [isTranslating, setIsTranslating] = useState(false)
 
   useEffect(() => {
-    setTranslatedData(null)
+    setTranslatedData(buildPreTranslated())
     setShowOriginal(false)
-  }, [content, title, targetLanguage])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [content, title, targetLanguage, translatedTitle, translatedContent])
 
   const getLanguageName = (code) => {
     if (!code) return ''

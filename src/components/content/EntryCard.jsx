@@ -46,6 +46,8 @@ export default function EntryCard({
   defaultExpandedEntryIds = null,
   triggeredNodeIds = null,
   title = null,
+  translatedContent = null,
+  translationSourceLanguage = null,
 }) {
   useDevLog('EntryCard', arguments[0] || {})
   const [showReplyDraft, setShowReplyDraft] = useState(false)
@@ -64,14 +66,19 @@ export default function EntryCard({
   const { isFavourite, isPending: isFavouritePending, toggleFavourite } = useFavourite(contentItemId)
 
   const targetLanguage = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0].toLowerCase()
-  const [translatedData, setTranslatedData] = useState(null)
+  const buildPreTranslated = () =>
+    translatedContent
+      ? { content: translatedContent, detectedLanguage: translationSourceLanguage }
+      : null
+  const [translatedData, setTranslatedData] = useState(buildPreTranslated)
   const [showOriginal, setShowOriginal] = useState(false)
   const [isTranslating, setIsTranslating] = useState(false)
 
   useEffect(() => {
-    setTranslatedData(null)
+    setTranslatedData(buildPreTranslated())
     setShowOriginal(false)
-  }, [content, localContent, targetLanguage])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [content, localContent, targetLanguage, translatedContent])
 
   const getLanguageName = (code) => {
     if (!code) return ''

@@ -355,6 +355,7 @@
     "create_confirm_title": "Karten-Erstellungsbestätigung",
     "create_confirm_desc": "Möchten Sie wirklich eine neue Persönlichkeitskarte namens „{{cardName}}“ erstellen?",
     "create_limit_reached_warning": "Sie haben Ihr Kartenlimit ({{limit}}) erreicht! Wenn Sie diese Karte erstellen, wird Ihre älteste Karte \"{{oldestCard}}\" automatisch dauerhaft gelöscht.",
+    "limit_eviction_assignments_note": "Zusätzlicher Hinweis: Wenn der Besitz dieser Karte entfernt wird, werden auch ihre Zuweisungen dauerhaft von allen Bots und Stämmen entfernt, denen sie zugewiesen ist. Gesperrte Zuweisungen sind davor nicht geschützt.",
     "create_limit_info_warning": "Kartenbesitz-Status: {{count}} / {{limit}}. Wenn das Limit überschritten wird, wird beim Erstellen einer neuen Karte Ihre älteste Karte (\"{{oldestCard}}\") automatisch gelöscht.",
     "confirm_create_btn": "Ja, Erstellen",
     "oldest_card": "Ihre älteste Karte",

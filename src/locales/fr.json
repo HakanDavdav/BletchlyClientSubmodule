@@ -355,6 +355,7 @@
     "create_confirm_title": "Confirmation de création de carte",
     "create_confirm_desc": "Voulez-vous vraiment créer une nouvelle carte de personnalité nommée « {{cardName}} » ?",
     "create_limit_reached_warning": "Vous avez atteint votre limite de cartes ({{limit}}) ! En créant cette carte, votre plus ancienne carte \"{{oldestCard}}\" sera automatiquement et définitivement supprimée.",
+    "limit_eviction_assignments_note": "Remarque supplémentaire : lorsque la possession de cette carte est supprimée, ses attributions sont également retirées définitivement de tous les bots et tribus auxquels elle est attribuée. Les attributions verrouillées ne sont pas protégées contre cette suppression.",
     "create_limit_info_warning": "Statut de possession de cartes : {{count}} / {{limit}}. En cas de dépassement de la limite, la création d'une nouvelle carte supprimera automatiquement votre plus ancienne carte (\"{{oldestCard}}\").",
     "confirm_create_btn": "Oui, Créer",
     "oldest_card": "Votre plus ancienne carte",
