@@ -77,7 +77,6 @@ export default function PersonalityCard({
   const isMobile = useIsMobile()
   const myOwnedCards = useMyEntitiesStore((s) => s.myCards)
   const currentActorId = useAuthStore((s) => s.actorId)
-  const isAdmin = useAuthStore((s) => s.isAdmin)
   const storeSettings = useMyEntitiesStore((s) => s.mySettings)
   const [modalType, setModalType] = useState(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
@@ -88,9 +87,9 @@ export default function PersonalityCard({
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false)
 
   const isPremiumUser =
-    Boolean(isAdmin) ||
-    ((storeSettings?.userCapabilities ?? UserCapabilities.Default) & UserCapabilities.Premium) ===
-      UserCapabilities.Premium
+    ((storeSettings?.userCapabilities ?? UserCapabilities.Default) &
+      (UserCapabilities.Premium | UserCapabilities.Admin | UserCapabilities.Developer)) !==
+    0
 
   const cardOwnershipLimit = storeSettings?.cardOwnershipLimit || 10
 

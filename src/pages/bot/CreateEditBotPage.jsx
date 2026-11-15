@@ -123,8 +123,9 @@ export default function CreateEditBotPage() {
 
   // Hafıza dayanıklılığı (Unutkanlık Hızı) ayarı Pro'ya özeldir
   const isPremiumUser =
-    ((userSettings?.userCapabilities ?? UserCapabilities.Default) & UserCapabilities.Premium) ===
-    UserCapabilities.Premium
+    ((userSettings?.userCapabilities ?? UserCapabilities.Default) &
+      (UserCapabilities.Premium | UserCapabilities.Admin | UserCapabilities.Developer)) !==
+    0
   const isMobileScreen = useIsMobile()
   const sliderRowStyle = isMobileScreen
     ? { width: '100%', maxWidth: 'none' }

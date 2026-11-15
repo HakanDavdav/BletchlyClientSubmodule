@@ -194,6 +194,8 @@ export const TribeGradeColors = {
 export const UserCapabilities = {
   Default: 0,
   Premium: 1,
+  Admin: 2,
+  Developer: 4,
 };
 
 export const Status = {
@@ -243,16 +245,6 @@ export const TribeRoleColors = {
 export const PromotionType = {
   Promotion: 0,
   Demotion: 1,
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-
-
-
-export const StandardRoles = {
-  StandardUser: 0,
-  Admin: 1,
-  Developer: 2,
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

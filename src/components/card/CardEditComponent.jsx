@@ -43,11 +43,10 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false)
 
   const storeSettings = useMyEntitiesStore((s) => s.mySettings)
-  const isAdmin = useAuthStore((s) => s.isAdmin)
   const isPremiumUser =
-    Boolean(isAdmin) ||
-    ((storeSettings?.userCapabilities ?? UserCapabilities.Default) & UserCapabilities.Premium) ===
-      UserCapabilities.Premium
+    ((storeSettings?.userCapabilities ?? UserCapabilities.Default) &
+      (UserCapabilities.Premium | UserCapabilities.Admin | UserCapabilities.Developer)) !==
+    0
 
   const [isConfirmed, setIsConfirmed] = useState(false)
   const isPriceValid =

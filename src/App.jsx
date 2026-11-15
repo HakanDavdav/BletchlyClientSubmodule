@@ -150,7 +150,10 @@ export default function App() {
     }
     if (hasFetchedOnce) {
       const userCapabilities = Number(mySettings?.userCapabilities ?? UserCapabilities.Default)
-      const isPremium = (userCapabilities & UserCapabilities.Premium) === UserCapabilities.Premium
+      const isPremium =
+        (userCapabilities &
+          (UserCapabilities.Premium | UserCapabilities.Admin | UserCapabilities.Developer)) !==
+        0
       useThemeStore.getState().validateThemePermission(isPremium)
     }
   }, [isLoggedIn, hasFetchedOnce, mySettings])

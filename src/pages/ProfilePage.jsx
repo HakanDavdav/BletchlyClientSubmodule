@@ -368,7 +368,9 @@ export default function ProfilePage() {
     : (currentUserProfile?.userSettings?.userCapabilities ?? UserCapabilities.Default)
 
   const isCurrentUserPremium =
-    (currentUserCapabilities & UserCapabilities.Premium) === UserCapabilities.Premium
+    (currentUserCapabilities &
+      (UserCapabilities.Premium | UserCapabilities.Admin | UserCapabilities.Developer)) !==
+    0
 
   const rawTheme = profile?.userSettings?.theme ?? profile?.botSettings?.theme
   const activeProfileTheme =
