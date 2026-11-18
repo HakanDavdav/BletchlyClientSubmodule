@@ -20,6 +20,8 @@ import useDevLog from '../../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { trackCreatePost } from '../../utils/analytics'
+import MentionEditor from '../../components/content/mention/MentionEditor'
+import { DropdownCaret, DropdownOption, DropdownPanel } from '../../components/common/Dropdown'
 
 export default function CreateEditPostPage() {
   useDevLog('CreateEditPostPage', arguments[0] || {})
@@ -40,6 +42,7 @@ export default function CreateEditPostPage() {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
+    mentions: [],
     topicTypes: [],
     tribeId: '',
   })
@@ -72,6 +75,10 @@ export default function CreateEditPostPage() {
       setFormData({
         title: existingPost.title || '',
         content: existingPost.content || '',
+        mentions: (existingPost.mentions || []).map((m) => ({
+          targetType: m.targetType,
+          targetId: m.actor?.actorId ?? m.tribe?.tribeId,
+        })),
         topicTypes: existingPost.topicTypes || [],
         tribeId: existingPost.tribeId || '',
       })
@@ -212,66 +219,42 @@ export default function CreateEditPostPage() {
               }}
             >
               <span>{selectedTribe?.tribeName || t('post.global')}</span>
-              <span
-                aria-hidden="true"
-                style={{
-                  fontSize: 9,
-                  lineHeight: 1,
-                  display: 'inline-block',
-                  transform: isTribeDropdownOpen ? 'rotate(180deg)' : 'none',
-                  transition: 'transform 0.2s',
-                }}
-              >
-                ▼
-              </span>
+              <DropdownCaret open={isTribeDropdownOpen} />
             </button>
-            {isTribeDropdownOpen && !mutation.isPending && !mutation.isSuccess && !isEditMode && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 6px)',
-                  left: 0,
-                  right: 0,
-                  zIndex: 60,
-                  background: 'var(--color-bg)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 12,
-                  boxShadow: 'var(--shadow-lg)',
-                  padding: 8,
-                  maxHeight: 320,
-                  overflowY: 'auto',
-                }}
-              >
-                <button
-                  type="button"
-                  className={`btn btn-sm ${formData.tribeId ? 'btn-ghost' : 'btn-primary'}`}
-                  style={{
-                    width: '100%',
-                    minHeight: 36,
-                    justifyContent: 'flex-start',
-                    padding: '7px 12px',
-                  }}
-                  onClick={() => selectTribe('')}
+            <DropdownPanel
+              open={isTribeDropdownOpen && !mutation.isPending && !mutation.isSuccess && !isEditMode}
+              role="listbox"
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                marginTop: 4,
+                zIndex: 60,
+                maxHeight: 320,
+                overflowY: 'auto',
+              }}
+            >
+              <DropdownOption active={!formData.tribeId} onClick={() => selectTribe('')}>
+                <span>{t('post.global')}</span>
+              </DropdownOption>
+              {myTribes?.map((tribe) => (
+                <DropdownOption
+                  key={tribe.tribeId}
+                  className="dropdown-option-btn--card"
+                  active={formData.tribeId === tribe.tribeId}
+                  onClick={() => selectTribe(tribe.tribeId)}
                 >
-                  {t('post.global')}
-                </button>
-                {myTribes?.map((tribe) => (
-                  <div
-                    key={tribe.tribeId}
-                    className={`create-post-tribe-option${formData.tribeId === tribe.tribeId ? ' is-selected' : ''}`}
-                    onClick={() => selectTribe(tribe.tribeId)}
-                  >
-                    <TribeMinimalCard
-                      tribe={tribe}
-                      clickable={false}
-                      showEditBtn={false}
-                      showMemoryMapBtn={false}
-                      showPoint={false}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
+                  <TribeMinimalCard
+                    tribe={tribe}
+                    clickable={false}
+                    showEditBtn={false}
+                    showMemoryMapBtn={false}
+                    showPoint={false}
+                  />
+                </DropdownOption>
+              ))}
+            </DropdownPanel>
           </div>
         </div>
 
@@ -304,14 +287,14 @@ export default function CreateEditPostPage() {
             {t('post.content_label')} <span style={{ color: 'var(--color-primary)' }}>*</span>
           </label>
           <div style={{ position: 'relative' }}>
-            <textarea
-              rows={8}
-              required
+            <MentionEditor
+              key={isEditMode ? existingPost?.contentItemId ?? 'edit' : 'new'}
+              initialContent={isEditMode ? existingPost?.content || '' : ''}
+              initialMentions={isEditMode ? existingPost?.mentions : null}
               placeholder={t('post.content_placeholder')}
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+              onChange={({ content, mentions }) => setFormData((prev) => ({ ...prev, content, mentions }))}
               disabled={mutation.isPending || mutation.isSuccess}
-              className={`input textarea textarea--autogrow ${hasSubmitted && !formData.content.trim() ? 'error' : ''}`}
+              invalid={hasSubmitted && !formData.content.trim()}
               style={{
                 minHeight: 150,
                 padding: '14px 16px',

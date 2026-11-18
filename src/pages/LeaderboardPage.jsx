@@ -25,6 +25,7 @@ import HowItWorksHelp from '../components/common/HowItWorksHelp'
 import { getQueryErrorMessage } from '../utils/errorHelper'
 import { formatDate } from '../utils/formatDate'
 import { useHorizontalScrollIndicator } from '../hooks/useHorizontalScrollIndicator'
+import { DropdownCaret, DropdownPanel } from '../components/common/Dropdown'
 
 export default function LeaderboardPage() {
   const [searchParams] = useSearchParams()
@@ -208,102 +209,90 @@ export default function LeaderboardPage() {
                 <Bot size={14} style={{ color: 'var(--color-primary)' }} />
               )}
               <span>{selectedSeasonLabel}</span>
-              <span
-                aria-hidden="true"
-                style={{
-                  fontSize: 9,
-                  lineHeight: 1,
-                  display: 'inline-block',
-                  transform: seasonDropdownOpen ? 'rotate(180deg)' : 'none',
-                  transition: 'transform 0.2s',
-                }}
-              >
-                ▼
-              </span>
+              <DropdownCaret open={seasonDropdownOpen} />
             </button>
 
-            {seasonDropdownOpen && (
+            <DropdownPanel
+              open={seasonDropdownOpen}
+              className="leaderboard-season-panel"
+              style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                marginTop: 6,
+                minWidth: 250,
+                zIndex: 50,
+              }}
+            >
               <div
-                className="leaderboard-season-panel dropdown-menu-panel"
                 style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  marginTop: 6,
-                  minWidth: 250,
-                  zIndex: 50,
+                  padding: '6px 10px',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: 'var(--color-text-muted)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
                 }}
               >
-                <div
-                  style={{
-                    padding: '6px 10px',
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: 'var(--color-text-muted)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                  }}
-                >
-                  {t('leaderboard.season_select')}
-                </div>
-
-                {/* Option 1: Live current season */}
-                <button
-                  type="button"
-                  className={`season-option-btn ${isCurrentSeason ? 'active' : ''}`}
-                  onClick={() => handleSeasonChange('current')}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Bot size={14} style={{ color: 'var(--color-primary)' }} />
-                    <div style={{ textAlign: 'left' }}>
-                      <div style={{ fontWeight: 600, fontSize: 13 }}>
-                        {t('leaderboard.active_season', {
-                          season: currentSeasonNumber,
-                        })}
-                      </div>
-                      {seasonStatus?.daysRemaining != null && (
-                        <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                          {seasonStatus.daysRemaining} {t('common.days_left')}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </button>
-
-                {/* Past seasons */}
-                {availableSeasons.length > 0 ? (
-                  availableSeasons.map((s) => {
-                    const isSelected = seasonParam === String(s.seasonNumber)
-                    return (
-                      <button
-                        key={s.seasonNumber}
-                        type="button"
-                        className={`season-option-btn ${isSelected ? 'active' : ''}`}
-                        onClick={() => handleSeasonChange(s.seasonNumber)}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <History size={14} />
-                          <div style={{ textAlign: 'left' }}>
-                            <div style={{ fontWeight: 600, fontSize: 13 }}>
-                              {t('common.season')} {s.seasonNumber}
-                            </div>
-                            {s.archivedAt && (
-                              <div className="date-text">
-                                {formatDate(s.archivedAt)}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </button>
-                    )
-                  })
-                ) : (
-                  <div style={{ padding: '8px 10px', fontSize: 12, color: 'var(--color-text-muted)', textAlign: 'center' }}>
-                    {t('common.nothing_here_yet')}
-                  </div>
-                )}
+                {t('leaderboard.season_select')}
               </div>
-            )}
+
+              {/* Option 1: Live current season */}
+              <button
+                type="button"
+                className={`season-option-btn ${isCurrentSeason ? 'active' : ''}`}
+                onClick={() => handleSeasonChange('current')}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Bot size={14} style={{ color: 'var(--color-primary)' }} />
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>
+                      {t('leaderboard.active_season', {
+                        season: currentSeasonNumber,
+                      })}
+                    </div>
+                    {seasonStatus?.daysRemaining != null && (
+                      <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
+                        {seasonStatus.daysRemaining} {t('common.days_left')}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </button>
+
+              {/* Past seasons */}
+              {availableSeasons.length > 0 ? (
+                availableSeasons.map((s) => {
+                  const isSelected = seasonParam === String(s.seasonNumber)
+                  return (
+                    <button
+                      key={s.seasonNumber}
+                      type="button"
+                      className={`season-option-btn ${isSelected ? 'active' : ''}`}
+                      onClick={() => handleSeasonChange(s.seasonNumber)}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <History size={14} />
+                        <div style={{ textAlign: 'left' }}>
+                          <div style={{ fontWeight: 600, fontSize: 13 }}>
+                            {t('common.season')} {s.seasonNumber}
+                          </div>
+                          {s.archivedAt && (
+                            <div className="date-text">
+                              {formatDate(s.archivedAt)}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })
+              ) : (
+                <div style={{ padding: '8px 10px', fontSize: 12, color: 'var(--color-text-muted)', textAlign: 'center' }}>
+                  {t('common.nothing_here_yet')}
+                </div>
+              )}
+            </DropdownPanel>
           </div>
 
           {/* Toggle Buttons: Users, Bots, Tribes — mobilde yatay kaydırılır */}

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Copy, Flag, MoreHorizontal, Share2, Star } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { DropdownOption, DropdownPanel } from '../common/Dropdown'
 
 export default function CardUtilityMenu({
   onShare,
@@ -86,29 +87,23 @@ export default function CardUtilityMenu({
       >
         <MoreHorizontal size={16} />
       </button>
-      {isOpen && position && createPortal(
-        <div
+      {createPortal(
+        <DropdownPanel
+          open={Boolean(isOpen && position)}
           ref={menuRef}
           role="menu"
           style={{
             position: 'fixed',
-            top: position.top,
-            left: position.left,
+            top: position?.top,
+            left: position?.left,
             width: 190,
-            background: 'var(--color-bg)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 10,
-            boxShadow: 'var(--shadow-lg)',
-            padding: 6,
             zIndex: 400,
           }}
         >
           {onToggleFavourite && (
-            <button
-              type="button"
+            <DropdownOption
               role="menuitem"
-              className="btn btn-ghost btn-sm card-utility-fav-item"
-              style={{ width: '100%', justifyContent: 'flex-start' }}
+              className="dropdown-option-btn--start card-utility-fav-item"
               onClick={run(onToggleFavourite)}
               disabled={favouriteDisabled}
             >
@@ -116,41 +111,35 @@ export default function CardUtilityMenu({
               {isFavourite
                 ? t('card.remove_favourite')
                 : t('card.add_favourite')}
-            </button>
+            </DropdownOption>
           )}
-          <button
-            type="button"
+          <DropdownOption
             role="menuitem"
-            className="btn btn-ghost btn-sm"
-            style={{ width: '100%', justifyContent: 'flex-start' }}
+            className="dropdown-option-btn--start"
             onClick={run(onShare)}
           >
             <Share2 size={14} />
             {t('action.share')}
-          </button>
-          <button
-            type="button"
+          </DropdownOption>
+          <DropdownOption
             role="menuitem"
-            className="btn btn-ghost btn-sm"
-            style={{ width: '100%', justifyContent: 'flex-start' }}
+            className="dropdown-option-btn--start"
             onClick={run(onReport)}
           >
             <Flag size={14} />
             {t('card.report')}
-          </button>
+          </DropdownOption>
           {onCopyEntryNo && (
-            <button
-              type="button"
+            <DropdownOption
               role="menuitem"
-              className="btn btn-ghost btn-sm"
-              style={{ width: '100%', justifyContent: 'flex-start' }}
+              className="dropdown-option-btn--start"
               onClick={run(onCopyEntryNo)}
             >
               <Copy size={14} />
               {t('card.copy_entry_no')}
-            </button>
+            </DropdownOption>
           )}
-        </div>,
+        </DropdownPanel>,
         document.body
       )}
     </div>

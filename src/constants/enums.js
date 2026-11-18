@@ -123,6 +123,12 @@ export function parseTopicFlags(topicTypesArray) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Backend: DataAccessLayer.Concrete.Enums.MentionTargetType
+export const MentionTargetType = {
+  Actor: 0,
+  Tribe: 1,
+}
+
 export const ReactionType = {
   Like: 0,
   Dislike: 1,

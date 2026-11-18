@@ -9,6 +9,7 @@ import ActorMinimalCard from '../actor/ActorMinimalCard'
 import ReactionButton from './ReactionButton'
 import LikeListModal from './LikeListModal'
 import EntryDraft from './EntryDraft'
+import MentionText from './mention/MentionText'
 import { contentItemApi } from '../../api/contentItemApi'
 import useAuthStore from '../../store/authStore'
 import useUIStore from '../../store/uiStore'
@@ -48,6 +49,7 @@ export default function EntryCard({
   title = null,
   translatedContent = null,
   translationSourceLanguage = null,
+  mentions = null,
 }) {
   useDevLog('EntryCard', arguments[0] || {})
   const [showReplyDraft, setShowReplyDraft] = useState(false)
@@ -60,6 +62,7 @@ export default function EntryCard({
   const loggedInActorId = useAuthStore((s) => s.actorId)
   const [isEditing, setIsEditing] = useState(false)
   const [localContent, setLocalContent] = useState(content)
+  const [localMentions, setLocalMentions] = useState(mentions)
   const queryClient = useQueryClient()
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
@@ -124,6 +127,10 @@ export default function EntryCard({
   useEffect(() => {
     setLocalContent(content)
   }, [content])
+
+  useEffect(() => {
+    setLocalMentions(mentions)
+  }, [mentions])
 
   useEffect(() => {
     if (defaultExpandedEntryIds?.has(contentItemId)) setIsExpanded(true)
@@ -278,9 +285,11 @@ export default function EntryCard({
             <EntryDraft
               editContentItemId={contentItemId}
               initialContent={localContent}
-              onSuccess={(newContent) => {
+              initialMentions={localMentions}
+              onSuccess={(newContent, newMentions) => {
                 setIsEditing(false)
                 setLocalContent(newContent)
+                setLocalMentions(newMentions)
                 setTranslatedData(null)
                 setShowOriginal(false)
                 if (queryKey) queryClient.invalidateQueries({ queryKey })
@@ -289,7 +298,9 @@ export default function EntryCard({
             />
           </div>
         ) : (
-          <p className="entry-card-content">{displayContent || '—'}</p>
+          <div className="entry-card-content">
+            {displayContent ? <MentionText text={displayContent} mentions={localMentions} /> : '—'}
+          </div>
         )}
 
         {/* Footer */}

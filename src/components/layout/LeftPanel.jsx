@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { DropdownCaret, DropdownOption, DropdownPanel } from '../common/Dropdown'
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { PenSquare, Flame, Clock8, ThumbsUp, Skull, PackageOpen } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -647,24 +648,21 @@ export default function LeftPanel() {
         </button>
       </div>
 
-      {isMobileTopicOpen && mobileTopicPos && createPortal(
-        <div
+      {createPortal(
+        <DropdownPanel
+          open={Boolean(isMobileTopicOpen && mobileTopicPos)}
           ref={mobileTopicPanelRef}
           role="menu"
           style={{
             position: 'fixed',
-            top: mobileTopicPos.top,
-            left: mobileTopicPos.left,
-            width: mobileTopicPos.width,
+            top: mobileTopicPos?.top,
+            left: mobileTopicPos?.left,
+            width: mobileTopicPos?.width,
             maxHeight: 'min(360px, 60vh)',
             overflowY: 'auto',
-            background: 'var(--color-bg)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 12,
-            boxShadow: 'var(--shadow-lg)',
             padding: 8,
             zIndex: 500,
-            display: 'flex',
+            flexDirection: 'row',
             flexWrap: 'wrap',
             gap: 6,
           }}
@@ -718,7 +716,7 @@ export default function LeftPanel() {
               </button>
             )
           })}
-        </div>,
+        </DropdownPanel>,
         document.body
       )}
 
@@ -889,77 +887,37 @@ function LimitDropdown({ limit, onChange, maxItems, t }) {
         }}
       >
         {limit}
-        <span
-          aria-hidden="true"
-          style={{
-            fontSize: 8,
-            color: 'var(--color-text-muted)',
-            transform: open ? 'rotate(180deg)' : 'none',
-            transition: 'transform var(--transition-fast)',
-            display: 'inline-block',
-          }}
-        >
-          ▼
-        </span>
+        <DropdownCaret open={open} />
       </button>
-      {open && (
-        <div
-          role="listbox"
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 6px)',
-            right: 0,
-            background: 'var(--color-bg)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 12,
-            padding: 6,
-            zIndex: 100,
-            minWidth: 64,
-            boxShadow: 'var(--shadow-lg)',
-          }}
-        >
-          {options.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => {
-                onChange(opt.value)
-                setOpen(false)
-              }}
-              onMouseDown={(e) => e.preventDefault()}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '100%',
-                background:
-                  opt.value === limit
-                    ? 'color-mix(in srgb, var(--color-primary) 12%, transparent)'
-                    : 'transparent',
-                border: 'none',
-                color: opt.value === limit ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-                fontSize: 12,
-                fontWeight: opt.value === limit ? 700 : 500,
-                padding: '6px 10px',
-                borderRadius: 8,
-                cursor: 'pointer',
-                textAlign: 'center',
-                fontFamily: 'inherit',
-                lineHeight: 1.2,
-                outline: 'none',
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={(e) => {
-                if (opt.value !== limit) e.currentTarget.style.background = 'var(--color-surface-2)'
-              }}
-              onMouseLeave={(e) => {
-                if (opt.value !== limit) e.currentTarget.style.background = 'transparent'
-              }}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      )}
+      <DropdownPanel
+        open={open}
+        role="listbox"
+        style={{
+        position: 'absolute',
+        top: '100%',
+        right: 0,
+        marginTop: 4,
+        zIndex: 100,
+        minWidth: 64,
+        }}
+      >
+        {options.map((opt) => (
+          <DropdownOption
+            key={opt.value}
+            role="option"
+            aria-selected={opt.value === limit}
+            active={opt.value === limit}
+            onClick={() => {
+              onChange(opt.value)
+              setOpen(false)
+            }}
+            onMouseDown={(e) => e.preventDefault()}
+            style={{ justifyContent: 'center' }}
+          >
+            {opt.label}
+          </DropdownOption>
+        ))}
+      </DropdownPanel>
     </div>
   )
 }

@@ -1,25 +1,36 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { contentItemApi } from '../../api/contentItemApi'
 import useAuthStore from '../../store/authStore'
 import useDevLog from '../../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 import { trackCreateEntry } from '../../utils/analytics'
+import MentionEditor from './mention/MentionEditor'
 
 /**
  * EntryDraft — plan.md Component #22
  * Post veya Entry altında inline yanıt yazma kutusu.
  */
-export default function EntryDraft({ parentContentItemId, editContentItemId = null, initialContent = '', onSuccess, onCancel }) {
+export default function EntryDraft({ parentContentItemId, editContentItemId = null, initialContent = '', initialMentions = null, onSuccess, onCancel }) {
   useDevLog('EntryDraft', arguments[0] || {})
-  const [content, setContent] = useState(initialContent)
+  const [draft, setDraft] = useState(() => ({
+    content: initialContent,
+    mentions: (initialMentions || []).map((m) => ({
+      targetType: m.targetType,
+      targetId: m.actor?.actorId ?? m.tribe?.tribeId,
+    })),
+    mentionDtos: initialMentions || [],
+  }))
+  const content = draft.content
+  const editorRef = useRef(null)
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
   const { t } = useTranslation()
 
   const mutation = useMutation({
     mutationFn: () => {
-      if (editContentItemId) return contentItemApi.editEntry(editContentItemId, { content })
-      return contentItemApi.createEntry(parentContentItemId, { content })
+      const dto = { content, mentions: draft.mentions }
+      if (editContentItemId) return contentItemApi.editEntry(editContentItemId, dto)
+      return contentItemApi.createEntry(parentContentItemId, dto)
     },
     meta: { showErrorToast: true },
     onSuccess: () => {
@@ -27,9 +38,9 @@ export default function EntryDraft({ parentContentItemId, editContentItemId = nu
         trackCreateEntry({
           parent_content_id: parentContentItemId,
         })
-        setContent('')
+        editorRef.current?.clear()
       }
-      if (onSuccess) onSuccess(content)
+      if (onSuccess) onSuccess(content, draft.mentionDtos)
     },
   })
 
@@ -53,12 +64,14 @@ export default function EntryDraft({ parentContentItemId, editContentItemId = nu
   return (
     <div className="entry-draft">
       <form noValidate onSubmit={handleSubmit}>
-        <textarea
-          className={`input textarea textarea--autogrow ${hasSubmitted && !content.trim() ? 'error' : ''}`}
+        <MentionEditor
+          ref={editorRef}
+          initialContent={initialContent}
+          initialMentions={initialMentions}
+          invalid={hasSubmitted && !content.trim()}
           placeholder={editContentItemId ? t('action.edit') : t('card.write_reply')}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={3}
+          onChange={setDraft}
+          disabled={mutation.isPending}
         />
         <div className="flex items-center justify-between" style={{ marginTop: 8 }}>
           {onCancel && (

@@ -936,8 +936,8 @@
     "perk_inheritance_title": "+4% カード継承チャンス",
     "perk_locks_desc": "カード割り当てを自動排除から保護します。",
     "perk_locks_title": "+4 カードロック制限",
-    "perk_tribes_desc": "コミュニティを構築し主導するための追加の部族スロット。",
-    "perk_tribes_title": "+4 部族作成制限",
+    "perk_tribes_desc": "より多くのコミュニティに参加するための追加の部族スロット。",
+    "perk_tribes_title": "+4 部族参加制限",
     "plan": "プラン",
     "plan_annual_label": "年間サブスクリプション",
     "plan_label": "月額購読",
@@ -948,7 +948,7 @@
     "ambience_on": "カードの雰囲気: オン",
     "ambience_on_title": "背景カードの雰囲気を表示",
     "secure_active": "検証され保護されています",
-    "secure_payment": "Lemon Squeezy による安全な決済",
+    "secure_payment": "Polar による安全な決済",
     "status_active": "アクティブなサブスクリプション",
     "status_active_desc": "Pro メンバーシップは有効です。自動更新とすべての特典が有効になります。",
     "status_canceled": "請求期間終了時のキャンセル",
@@ -1329,5 +1329,10 @@
     "accept": "すべて同意",
     "decline": "拒否",
     "privacy_policy": "プライバシーポリシー"
+  },
+  "mention": {
+    "persons": "人物",
+    "tribes": "部族",
+    "no_results": "一致する人物や部族はありません。"
   }
 }

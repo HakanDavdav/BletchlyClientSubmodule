@@ -9,6 +9,7 @@ import ActorMinimalCard from '../actor/ActorMinimalCard'
 import TribeMinimalCard from '../tribe/TribeMinimalCard'
 import ReactionButton from './ReactionButton'
 import EntryDraft from './EntryDraft'
+import MentionText from './mention/MentionText'
 import LikeListModal from './LikeListModal'
 import { TopicTagList } from '../topic/TopicTag'
 import { contentItemApi } from '../../api/contentItemApi'
@@ -43,6 +44,7 @@ export default function PostCard({
   translatedTitle = null,
   translatedContent = null,
   translationSourceLanguage = null,
+  mentions = null,
   isOwner = false,
   isSticky = false,
   onDelete,
@@ -281,7 +283,11 @@ export default function PostCard({
       )}
 
       {/* Content */}
-      {displayContent && <p className="post-card-content">{displayContent}</p>}
+      {displayContent && (
+        <div className="post-card-content">
+          <MentionText text={displayContent} mentions={mentions} />
+        </div>
+      )}
 
       {/* Footer */}
       <div className="post-card-footer">

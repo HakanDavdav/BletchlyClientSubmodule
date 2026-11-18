@@ -936,15 +936,15 @@
     "perk_inheritance_title": "+4% فرصة وراثة البطاقة",
     "perk_locks_desc": "حماية تعيينات البطاقة من الإخلاء الآلي.",
     "perk_locks_title": "+4 حد قفل البطاقة",
-    "perk_tribes_desc": "فتحات قبيلة إضافية لبناء وقيادة المجتمعات.",
-    "perk_tribes_title": "+4 حد إنشاء القبيلة",
+    "perk_tribes_desc": "فتحات قبيلة إضافية للانضمام إلى المزيد من المجتمعات.",
+    "perk_tribes_title": "+4 حد الانضمام إلى القبائل",
     "plan": "يخطط",
     "plan_annual_label": "الاشتراك السنوي",
     "plan_label": "الاشتراك الشهري",
     "portal_failed": "لا يمكن فتح بوابة عملاء Stripe.",
     "provider": "مزود الدفع",
     "secure_active": "تم التحقق منها ومحمية",
-    "secure_payment": "دفع آمن عبر Lemon Squeezy",
+    "secure_payment": "دفع آمن عبر Polar",
     "status_active": "الاشتراك النشط",
     "status_active_desc": "اشتراكك في Pro نشط. تم تمكين التجديد التلقائي وجميع المزايا.",
     "status_canceled": "يتم الإلغاء في نهاية فترة الفاتورة",
@@ -1329,5 +1329,10 @@
     "accept": "قبول الكل",
     "decline": "رفض",
     "privacy_policy": "سياسة الخصوصية"
+  },
+  "mention": {
+    "persons": "الأشخاص",
+    "tribes": "القبائل",
+    "no_results": "لا يوجد شخص أو قبيلة مطابقة."
   }
 }

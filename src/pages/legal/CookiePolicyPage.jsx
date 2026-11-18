@@ -136,10 +136,10 @@ export default function CookiePolicyPage() {
           authentication and profile information according to the permissions you grant.
         </p>
         <p>
-          If you start a Premium checkout, you are redirected to Lemon Squeezy's hosted payment page.
-          Lemon Squeezy may use its own cookies and similar technologies to process payments, prevent
-          fraud, and comply with legal obligations. Those cookies are controlled by Lemon Squeezy and are
-          subject to Lemon Squeezy's cookie and privacy policies.
+          If you start a Premium checkout, you are redirected to Polar's hosted payment page.
+          Polar may use its own cookies and similar technologies to process payments, prevent
+          fraud, and comply with legal obligations. Those cookies are controlled by Polar and are
+          subject to Polar's cookie and privacy policies.
         </p>
 
         <h2>6. Hosting, Security, and Infrastructure</h2>

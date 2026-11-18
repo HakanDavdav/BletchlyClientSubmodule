@@ -54,6 +54,8 @@ import Logo from '../common/icons/Logo'
 import FossilTogglePill from '../common/FossilTogglePill'
 import LockedSlash from '../common/LockedSlash'
 import SearchSuggestionsDropdown from '../common/SearchSuggestionsDropdown'
+import { DropdownCaret, DropdownOption, DropdownPanel } from '../common/Dropdown'
+import useSearchSuggestions from '../../hooks/useSearchSuggestions'
 import ModifierArrowSvg from '../../assets/FigmaNew/modifierarrow.svg?react'
 import { applyCustomColorVars, clearCustomColorVars, normalizeHex } from '../../utils/themeColor'
 import HowItWorksHelp from '../common/HowItWorksHelp'
@@ -170,9 +172,7 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
   const [topicDropdownPos, setTopicDropdownPos] = useState(null)
   const [tribesDropdownPos, setTribesDropdownPos] = useState(null)
   const [botsDropdownPos, setBotsDropdownPos] = useState(null)
-  const [suggestions, setSuggestions] = useState(null)
   const [showSuggestions, setShowSuggestions] = useState(false)
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
   const [recentSearches, setRecentSearches] = useState(() => getRecentSearches())
 
   useEffect(() => {
@@ -214,7 +214,6 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
   const colorInputRef = useRef(null)
   const colorRafRef = useRef(null)
   const pendingPreviewColorRef = useRef(null)
-  const debounceTimerRef = useRef(null)
   const suppressSuggestionsRef = useRef(false)
 
   // My Tribes & Bots from Global State
@@ -435,80 +434,15 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
     setShowSuggestions(false)
   }, [location.pathname, location.search])
 
-  // Debounced search suggestions
+  // Debounced search suggestions (shared hook; stale responses can't overwrite newer queries)
+  const { suggestions, isLoading: isLoadingSuggestions } = useSearchSuggestions(searchQuery, {
+    mode: searchMode,
+    filters: { orderType: filterOrderType, startDate: filterStartDate, endDate: filterEndDate },
+  })
+
   useEffect(() => {
-    // Önceki timer'ı temizle
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current)
-    }
-
-    // Eğer query boş veya çok kısaysa suggestions'ı temizle
-    if (!searchQuery || searchQuery.trim().length === 0) {
-      setSuggestions(null)
-      setIsLoadingSuggestions(false)
-      return
-    }
-
-    setIsLoadingSuggestions(true)
-
-    // 500ms bekle, sonra API çağrısı yap
-    debounceTimerRef.current = setTimeout(async () => {
-      try {
-        let result
-        switch (searchMode) {
-          case 'posts':
-            result = await searchApi.filterPosts({
-              query: searchQuery,
-              orderType: filterOrderType || 'None',
-              startDate: filterStartDate || null,
-              endDate: filterEndDate || null,
-            })
-            setSuggestions({ posts: result.data?.data || [] })
-            break
-          case 'actors':
-            result = await searchApi.filterActors({
-              query: searchQuery,
-              orderType: filterOrderType || 'None',
-              startDate: filterStartDate || null,
-              endDate: filterEndDate || null,
-            })
-            setSuggestions({ actors: result.data?.data || [] })
-            break
-          case 'tribes':
-            result = await searchApi.filterTribes({
-              query: searchQuery,
-              orderType: filterOrderType || 'None',
-              startDate: filterStartDate || null,
-              endDate: filterEndDate || null,
-            })
-            setSuggestions({ tribes: result.data?.data || [] })
-            break
-          default: // general
-            result = await searchApi.general(searchQuery)
-            const data = result.data?.data
-            console.log('General search response:', data)
-            setSuggestions({
-              posts: data?.posts || data?.Posts || [],
-              actors: data?.actors || data?.Actors || [],
-              tribes: data?.tribes || data?.Tribes || [],
-            })
-            break
-        }
-        if (!suppressSuggestionsRef.current) setShowSuggestions(true)
-      } catch (error) {
-        console.error('Suggestion error:', error)
-        setSuggestions(null)
-      } finally {
-        setIsLoadingSuggestions(false)
-      }
-    }, 500)
-
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current)
-      }
-    }
-  }, [searchQuery, searchMode, filterOrderType, filterStartDate, filterEndDate])
+    if (suggestions && !suppressSuggestionsRef.current) setShowSuggestions(true)
+  }, [suggestions])
 
   const handleSearch = (e) => {
     e.preventDefault()
@@ -650,49 +584,32 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
               style={{ gap: 4, whiteSpace: 'nowrap' }}
             >
               {searchModeOptions.find((o) => o.key === searchMode)?.label}
-              <span
-                style={{
-                  fontSize: 9,
-                  display: 'inline-block',
-                  transform: searchModeDropdown ? 'rotate(180deg)' : 'none',
-                  transition: 'transform var(--transition-fast)',
-                }}
-              >
-                ▼
-              </span>
+              <DropdownCaret open={searchModeDropdown} />
             </button>
-            <AnimatePresence>
-              {searchModeDropdown && (
-                <motion.div
-                  className="dropdown-menu-panel"
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    marginTop: 4,
-                    zIndex: 200,
-                    minWidth: 120,
+            <DropdownPanel
+              open={searchModeDropdown}
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                marginTop: 4,
+                zIndex: 200,
+                minWidth: 120,
+              }}
+            >
+              {searchModeOptions.map((opt) => (
+                <DropdownOption
+                  key={opt.key}
+                  active={searchMode === opt.key}
+                  onClick={() => {
+                    setSearchMode(opt.key)
+                    setSearchModeDropdown(false)
                   }}
                 >
-                  {searchModeOptions.map((opt) => (
-                    <button
-                      key={opt.key}
-                      type="button"
-                      className={`dropdown-option-btn${searchMode === opt.key ? ' active' : ''}`}
-                      onClick={() => {
-                        setSearchMode(opt.key)
-                        setSearchModeDropdown(false)
-                      }}
-                    >
-                      <span>{opt.label}</span>
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  <span>{opt.label}</span>
+                </DropdownOption>
+              ))}
+            </DropdownPanel>
           </div>
 
           <div style={{ flex: 1, position: 'relative' }} ref={searchRef}>
@@ -827,153 +744,143 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                 <X size={10} strokeWidth={3} />
               </button>
             )}
-            <AnimatePresence>
-              {isFilterOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  style={{
-                    position: 'absolute',
-                    top: '100%',
-                    right: 0,
-                    marginTop: 4,
-                    background: 'var(--color-bg)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: 8,
-                    boxShadow: 'var(--shadow-md)',
-                    zIndex: 200,
-                    minWidth: 220,
-                    padding: 12,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 12,
-                    textAlign: 'left',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: 'var(--color-text)',
-                      borderBottom: '1px solid var(--color-border-light)',
-                      paddingBottom: 6,
-                    }}
+            <DropdownPanel
+              open={isFilterOpen}
+              style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                marginTop: 4,
+                zIndex: 200,
+                minWidth: 220,
+                padding: 12,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+                textAlign: 'left',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: 'var(--color-text)',
+                  borderBottom: '1px solid var(--color-border-light)',
+                  paddingBottom: 6,
+                }}
+              >
+                <span>{t('search.filters_title')}</span>
+                <X
+                  size={14}
+                  color="var(--color-text-secondary)"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setIsFilterOpen(false)}
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
+                  {t('search.sort_by')}
+                </label>
+                <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                  <select
+                    className="input"
+                    style={{ padding: '4px 8px', height: 32, fontSize: 13, flex: 1 }}
+                    value={filterOrderType}
+                    onChange={handleOrderTypeChange}
                   >
-                    <span>{t('search.filters_title')}</span>
-                    <X
-                      size={14}
-                      color="var(--color-text-secondary)"
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => setIsFilterOpen(false)}
-                    />
-                  </div>
+                    <option value="">{t('search.none')}</option>
+                    {searchMode === 'posts' && (
+                      <option value="MostLiked">
+                        {t('topbar.most_liked')}
+                      </option>
+                    )}
+                    <option value="Newest">{t('sort.newest')}</option>
+                    <option value="Oldest">{t('topbar.oldest')}</option>
+                  </select>
+                  {filterOrderType && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      style={{ padding: 0, width: 32, height: 32, flexShrink: 0 }}
+                      onClick={() => {
+                        // Using the same manual change event pattern if needed, but direct state update might be enough.
+                        // The select uses handleOrderTypeChange, let's just create a synthetic event or call it if it takes an event,
+                        // or just do handleOrderTypeChange({ target: { value: '' } })
+                        handleOrderTypeChange({ target: { value: '' } })
+                      }}
+                      aria-label={t('common.clear')}
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+              </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
-                      {t('search.sort_by')}
-                    </label>
-                    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                      <select
-                        className="input"
-                        style={{ padding: '4px 8px', height: 32, fontSize: 13, flex: 1 }}
-                        value={filterOrderType}
-                        onChange={handleOrderTypeChange}
-                      >
-                        <option value="">{t('search.none')}</option>
-                        {searchMode === 'posts' && (
-                          <option value="MostLiked">
-                            {t('topbar.most_liked')}
-                          </option>
-                        )}
-                        <option value="Newest">{t('sort.newest')}</option>
-                        <option value="Oldest">{t('topbar.oldest')}</option>
-                      </select>
-                      {filterOrderType && (
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          style={{ padding: 0, width: 32, height: 32, flexShrink: 0 }}
-                          onClick={() => {
-                            // Using the same manual change event pattern if needed, but direct state update might be enough.
-                            // The select uses handleOrderTypeChange, let's just create a synthetic event or call it if it takes an event,
-                            // or just do handleOrderTypeChange({ target: { value: '' } })
-                            handleOrderTypeChange({ target: { value: '' } })
-                          }}
-                          aria-label={t('common.clear')}
-                        >
-                          <X size={16} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
+                  {t('search.start_date')}
+                </label>
+                <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                  <input
+                    type="date"
+                    className="input"
+                    style={{ padding: '4px 8px', height: 32, fontSize: 13, flex: 1 }}
+                    value={filterStartDate}
+                    onChange={(e) => setFilterStartDate(e.target.value)}
+                  />
+                  {filterStartDate && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      style={{ padding: 0, width: 32, height: 32, flexShrink: 0 }}
+                      onClick={() => setFilterStartDate('')}
+                      aria-label={t('common.clear')}
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+              </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
-                      {t('search.start_date')}
-                    </label>
-                    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                      <input
-                        type="date"
-                        className="input"
-                        style={{ padding: '4px 8px', height: 32, fontSize: 13, flex: 1 }}
-                        value={filterStartDate}
-                        onChange={(e) => setFilterStartDate(e.target.value)}
-                      />
-                      {filterStartDate && (
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          style={{ padding: 0, width: 32, height: 32, flexShrink: 0 }}
-                          onClick={() => setFilterStartDate('')}
-                          aria-label={t('common.clear')}
-                        >
-                          <X size={16} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
+                  {t('search.end_date')}
+                </label>
+                <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                  <input
+                    type="date"
+                    className="input"
+                    style={{ padding: '4px 8px', height: 32, fontSize: 13, flex: 1 }}
+                    value={filterEndDate}
+                    onChange={(e) => setFilterEndDate(e.target.value)}
+                  />
+                  {filterEndDate && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      style={{ padding: 0, width: 32, height: 32, flexShrink: 0 }}
+                      onClick={() => setFilterEndDate('')}
+                      aria-label={t('common.clear')}
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+              </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
-                      {t('search.end_date')}
-                    </label>
-                    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                      <input
-                        type="date"
-                        className="input"
-                        style={{ padding: '4px 8px', height: 32, fontSize: 13, flex: 1 }}
-                        value={filterEndDate}
-                        onChange={(e) => setFilterEndDate(e.target.value)}
-                      />
-                      {filterEndDate && (
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          style={{ padding: 0, width: 32, height: 32, flexShrink: 0 }}
-                          onClick={() => setFilterEndDate('')}
-                          aria-label={t('common.clear')}
-                        >
-                          <X size={16} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Ara butonu */}
-                  <button
-                    type="submit"
-                    className="btn btn-primary btn-sm"
-                    style={{ width: '100%', marginTop: 4, paddingTop: 7, paddingBottom: 7 }}
-                  >
-                    {t('topbar.search_button')}
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+              {/* Ara butonu */}
+              <button
+                type="submit"
+                className="btn btn-primary btn-sm"
+                style={{ width: '100%', marginTop: 4, paddingTop: 7, paddingBottom: 7 }}
+              >
+                {t('topbar.search_button')}
+              </button>
+            </DropdownPanel>
           </div>
 
           <button type="submit" className="btn btn-primary btn-sm">
@@ -1121,158 +1028,148 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                 </span>
               </button>
 
-              <AnimatePresence>
-                {isPaletteOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    style={{
-                      position: 'absolute',
-                      top: '100%',
-                      right: 0,
-                      marginTop: 6,
-                      background: 'var(--color-bg)',
-                      border: '1px solid var(--color-border)',
-                      borderRadius: 12,
-                      boxShadow: 'var(--shadow-lg)',
-                      zIndex: 250,
-                      width: 152,
-                      padding: 8,
-                    }}
-                  >
-                    <div
-                      style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 5 }}
-                    >
-                      {COLOR_PRESETS.map((preset) => {
-                        const activeBase = customColor || (isGreenMode ? '#10b981' : '#3b82f6')
-                        const locked = !isPremium && !preset.isDefault
-                        return (
-                          <button
-                            key={preset.color}
-                            type="button"
-                            aria-disabled={locked || undefined}
-                            onClick={() => {
-                              if (locked) {
-                                setIsPaletteOpen(false)
-                                navigate('/pro')
-                                return
-                              }
-                              cancelColorPreview()
-                              applyPaletteColor(preset.color)
-                            }}
-                            aria-label={t(`colors.${preset.key}`, preset.label)}
-                            title={locked ? `${t(`colors.${preset.key}`, preset.label)} (Pro)` : t(`colors.${preset.key}`, preset.label)}
-                            style={{
-                              position: 'relative',
-                              width: 20,
-                              height: 20,
-                              borderRadius: '50%',
-                              background: preset.color,
-                              border: `2px solid ${
-                                activeBase === preset.color
-                                  ? 'var(--color-text-primary)'
-                                  : 'transparent'
-                              }`,
-                              cursor: 'pointer',
-                              opacity: locked ? 0.6 : 1,
-                              padding: 0,
-                            }}
-                          >
-                            {locked && (
-                              <LockedSlash strokeWidth={2.2} />
-                            )}
-                          </button>
-                        )
-                      })}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 8 }}>
-                      {savedCustomColor && (
-                        <button
-                          type="button"
-                          aria-disabled={!isPremium || undefined}
-                          aria-label={t('topbar.premium_palette_saved')}
-                          title={!isPremium ? `${t('topbar.premium_palette_saved')} (Pro)` : t('topbar.premium_palette_saved')}
-                          onClick={() => {
-                            if (!isPremium) {
-                              setIsPaletteOpen(false)
-                              navigate('/pro')
-                              return
-                            }
-                            cancelColorPreview()
-                            applyPaletteColor(savedCustomColor)
-                          }}
-                          style={{
-                            position: 'relative',
-                            width: 24,
-                            height: 24,
-                            borderRadius: '50%',
-                            background: savedCustomColor,
-                            border: `2px solid ${
-                              customColor === savedCustomColor
-                                ? 'var(--color-text-primary)'
-                                : 'transparent'
-                            }`,
-                            cursor: 'pointer',
-                            opacity: !isPremium ? 0.6 : 1,
-                            padding: 0,
-                          }}
-                        >
-                          {!isPremium && (
-                            <LockedSlash strokeWidth={2.2} />
-                          )}
-                        </button>
-                      )}
+              <DropdownPanel
+                open={isPaletteOpen}
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: 6,
+                  zIndex: 250,
+                  width: 152,
+                  padding: 8,
+                }}
+              >
+                <div
+                  style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 5 }}
+                >
+                  {COLOR_PRESETS.map((preset) => {
+                    const activeBase = customColor || (isGreenMode ? '#10b981' : '#3b82f6')
+                    const locked = !isPremium && !preset.isDefault
+                    return (
                       <button
+                        key={preset.color}
                         type="button"
-                        aria-disabled={!isPremium || undefined}
-                        aria-label={t('topbar.premium_palette_custom')}
-                        title={!isPremium ? `${t('topbar.premium_palette_custom')} (Pro)` : t('topbar.premium_palette_custom')}
+                        aria-disabled={locked || undefined}
                         onClick={() => {
-                          if (!isPremium) {
+                          if (locked) {
                             setIsPaletteOpen(false)
                             navigate('/pro')
                             return
                           }
-                          colorInputRef.current?.click()
+                          cancelColorPreview()
+                          applyPaletteColor(preset.color)
                         }}
+                        aria-label={t(`colors.${preset.key}`, preset.label)}
+                        title={locked ? `${t(`colors.${preset.key}`, preset.label)} (Pro)` : t(`colors.${preset.key}`, preset.label)}
                         style={{
                           position: 'relative',
-                          width: 24,
-                          height: 24,
+                          width: 20,
+                          height: 20,
                           borderRadius: '50%',
-                          border: '1px solid var(--color-border)',
-                          background: 'var(--color-surface)',
-                          color: 'var(--color-text-secondary)',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
+                          background: preset.color,
+                          border: `2px solid ${
+                            activeBase === preset.color
+                              ? 'var(--color-text-primary)'
+                              : 'transparent'
+                          }`,
                           cursor: 'pointer',
-                          opacity: !isPremium ? 0.65 : 1,
+                          opacity: locked ? 0.6 : 1,
                           padding: 0,
                         }}
                       >
-                        <Edit2 size={12} />
-                        {!isPremium && (
+                        {locked && (
                           <LockedSlash strokeWidth={2.2} />
                         )}
                       </button>
-                      <input
-                        ref={colorInputRef}
-                        type="color"
-                        defaultValue={customColor || (isGreenMode ? '#10b981' : '#3b82f6')}
-                        style={{
-                          position: 'absolute',
-                          width: 0,
-                          height: 0,
-                          opacity: 0,
-                          pointerEvents: 'none',
-                        }}
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    )
+                  })}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 8 }}>
+                  {savedCustomColor && (
+                    <button
+                      type="button"
+                      aria-disabled={!isPremium || undefined}
+                      aria-label={t('topbar.premium_palette_saved')}
+                      title={!isPremium ? `${t('topbar.premium_palette_saved')} (Pro)` : t('topbar.premium_palette_saved')}
+                      onClick={() => {
+                        if (!isPremium) {
+                          setIsPaletteOpen(false)
+                          navigate('/pro')
+                          return
+                        }
+                        cancelColorPreview()
+                        applyPaletteColor(savedCustomColor)
+                      }}
+                      style={{
+                        position: 'relative',
+                        width: 24,
+                        height: 24,
+                        borderRadius: '50%',
+                        background: savedCustomColor,
+                        border: `2px solid ${
+                          customColor === savedCustomColor
+                            ? 'var(--color-text-primary)'
+                            : 'transparent'
+                        }`,
+                        cursor: 'pointer',
+                        opacity: !isPremium ? 0.6 : 1,
+                        padding: 0,
+                      }}
+                    >
+                      {!isPremium && (
+                        <LockedSlash strokeWidth={2.2} />
+                      )}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    aria-disabled={!isPremium || undefined}
+                    aria-label={t('topbar.premium_palette_custom')}
+                    title={!isPremium ? `${t('topbar.premium_palette_custom')} (Pro)` : t('topbar.premium_palette_custom')}
+                    onClick={() => {
+                      if (!isPremium) {
+                        setIsPaletteOpen(false)
+                        navigate('/pro')
+                        return
+                      }
+                      colorInputRef.current?.click()
+                    }}
+                    style={{
+                      position: 'relative',
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                      border: '1px solid var(--color-border)',
+                      background: 'var(--color-surface)',
+                      color: 'var(--color-text-secondary)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      opacity: !isPremium ? 0.65 : 1,
+                      padding: 0,
+                    }}
+                  >
+                    <Edit2 size={12} />
+                    {!isPremium && (
+                      <LockedSlash strokeWidth={2.2} />
+                    )}
+                  </button>
+                  <input
+                    ref={colorInputRef}
+                    type="color"
+                    defaultValue={customColor || (isGreenMode ? '#10b981' : '#3b82f6')}
+                    style={{
+                      position: 'absolute',
+                      width: 0,
+                      height: 0,
+                      opacity: 0,
+                      pointerEvents: 'none',
+                    }}
+                  />
+                </div>
+              </DropdownPanel>
             </div>
             <button
               className="btn-icon"
@@ -1313,57 +1210,49 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                   <span style={{ fontSize: 14 }}>{activeLangObj.fallbackEmoji || '🇹🇷'}</span>
                 )}
               </button>
-              <AnimatePresence>
-                {isLangOpen && (
-                  <motion.div
-                    className="dropdown-menu-panel"
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    style={{
-                      position: 'absolute',
-                      top: '100%',
-                      right: 0,
-                      marginTop: 4,
-                      zIndex: 200,
-                      minWidth: 120,
+              <DropdownPanel
+                open={isLangOpen}
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: 4,
+                  zIndex: 200,
+                  minWidth: 120,
+                }}
+              >
+                {langs.map((l) => (
+                  <DropdownOption
+                    key={l.code}
+                    active={currentLang === l.code}
+                    style={{ justifyContent: 'flex-start', gap: 7 }}
+                    onClick={() => {
+                      i18n.changeLanguage(l.code)
+                      setIsLangOpen(false)
                     }}
                   >
-                    {langs.map((l) => (
-                      <button
-                        key={l.code}
-                        type="button"
-                        className={`dropdown-option-btn${currentLang === l.code ? ' active' : ''}`}
-                        style={{ justifyContent: 'flex-start', gap: 7 }}
-                        onClick={() => {
-                          i18n.changeLanguage(l.code)
-                          setIsLangOpen(false)
+                    {l.flagUrl ? (
+                      <img
+                        src={l.flagUrl}
+                        alt={l.code}
+                        style={{ width: 19, height: 14, borderRadius: 2 }}
+                      />
+                    ) : (
+                      <span
+                        style={{
+                          fontSize: 14,
+                          display: 'inline-block',
+                          width: 19,
+                          textAlign: 'center',
                         }}
                       >
-                        {l.flagUrl ? (
-                          <img
-                            src={l.flagUrl}
-                            alt={l.code}
-                            style={{ width: 19, height: 14, borderRadius: 2 }}
-                          />
-                        ) : (
-                          <span
-                            style={{
-                              fontSize: 14,
-                              display: 'inline-block',
-                              width: 19,
-                              textAlign: 'center',
-                            }}
-                          >
-                            {l.fallbackEmoji}
-                          </span>
-                        )}
-                        <span style={{ fontSize: 12.5 }}>{l.label}</span>
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                        {l.fallbackEmoji}
+                      </span>
+                    )}
+                    <span style={{ fontSize: 12.5 }}>{l.label}</span>
+                  </DropdownOption>
+                ))}
+              </DropdownPanel>
             </div>
 
             <div
@@ -1544,81 +1433,71 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
           >
             ...
           </button>
-          <AnimatePresence>
-            {isTopicOpen && topicDropdownPos && (
-              <motion.div
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
+          <DropdownPanel
+            open={Boolean(isTopicOpen && topicDropdownPos)}
+            style={{
+              position: 'fixed',
+              top: topicDropdownPos?.top,
+              left: topicDropdownPos?.left,
+              zIndex: 200,
+              width: 320,
+              maxHeight: 360,
+              overflowY: 'auto',
+              padding: 10,
+            }}
+          >
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveLeftTopicType(null)
+                  setActiveLeftCacheType('trending')
+                  setIsTopicOpen(false)
+                }}
                 style={{
-                  position: 'fixed',
-                  top: topicDropdownPos.top,
-                  left: topicDropdownPos.left,
-                  background: 'var(--color-bg)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 12,
-                  boxShadow: 'var(--shadow-lg)',
-                  zIndex: 200,
-                  width: 320,
-                  maxHeight: 360,
-                  overflowY: 'auto',
-                  padding: 10,
+                  padding: '5px 14px',
+                  borderRadius: 20,
+                  fontSize: 13,
+                  fontWeight: activeLeftTopicType == null ? 600 : 500,
+                  cursor: 'pointer',
+                  background: activeLeftTopicType == null ? 'var(--color-primary)' : 'transparent',
+                  color: activeLeftTopicType == null ? '#fff' : 'var(--color-text-secondary)',
+                  border: `1px solid ${activeLeftTopicType == null ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                  transition: 'all 0.2s',
                 }}
               >
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {t('sort.all_topics')}
+              </button>
+              {TopicTypes.map((topic) => {
+                const color = TopicColors[topic.value] || 'var(--color-primary)'
+                const isSelected = activeLeftTopicType === topic.value
+                return (
                   <button
+                    key={topic.value}
                     type="button"
                     onClick={() => {
-                      setActiveLeftTopicType(null)
-                      setActiveLeftCacheType('trending')
+                      setActiveLeftTopicType(topic.value)
+                      setActiveLeftCacheType('topicPopular')
                       setIsTopicOpen(false)
                     }}
                     style={{
                       padding: '5px 14px',
                       borderRadius: 20,
                       fontSize: 13,
-                      fontWeight: activeLeftTopicType == null ? 600 : 500,
+                      fontWeight: isSelected ? 600 : 500,
                       cursor: 'pointer',
-                      background: activeLeftTopicType == null ? 'var(--color-primary)' : 'transparent',
-                      color: activeLeftTopicType == null ? '#fff' : 'var(--color-text-secondary)',
-                      border: `1px solid ${activeLeftTopicType == null ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                      background: isSelected ? color : `${color}18`,
+                      color: isSelected ? '#fff' : color,
+                      border: `1px solid ${isSelected ? color : `${color}55`}`,
                       transition: 'all 0.2s',
                     }}
                   >
-                    {t('sort.all_topics')}
+                    {t(`topics.${topic.key || topic.enumName?.toLowerCase()}`, topic.label)}
                   </button>
-                  {TopicTypes.map((topic) => {
-                    const color = TopicColors[topic.value] || 'var(--color-primary)'
-                    const isSelected = activeLeftTopicType === topic.value
-                    return (
-                      <button
-                        key={topic.value}
-                        type="button"
-                        onClick={() => {
-                          setActiveLeftTopicType(topic.value)
-                          setActiveLeftCacheType('topicPopular')
-                          setIsTopicOpen(false)
-                        }}
-                        style={{
-                          padding: '5px 14px',
-                          borderRadius: 20,
-                          fontSize: 13,
-                          fontWeight: isSelected ? 600 : 500,
-                          cursor: 'pointer',
-                          background: isSelected ? color : `${color}18`,
-                          color: isSelected ? '#fff' : color,
-                          border: `1px solid ${isSelected ? color : `${color}55`}`,
-                          transition: 'all 0.2s',
-                        }}
-                      >
-                        {t(`topics.${topic.key || topic.enumName?.toLowerCase()}`, topic.label)}
-                      </button>
-                    )
-                  })}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                )
+              })}
+            </div>
+          </DropdownPanel>
         </div>
 
         <div
@@ -1658,113 +1537,93 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                   }}
                 >
                   {t('common.tribes')}{' '}
-                  <span
+                  <DropdownCaret open={isMyTribesOpen} />
+                </button>
+                <DropdownPanel
+                  open={Boolean(isMyTribesOpen && tribesDropdownPos)}
+                  className="topbar-tribes-dropdown"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClickCapture={(e) => {
+                    if (e.target.closest('[data-keep-dropdown-open]')) return
+                    setIsMyTribesOpen(false)
+                    setTribesDropdownPos(null)
+                  }}
+                  style={{
+                    position: 'fixed',
+                    top: tribesDropdownPos?.top,
+                    left: tribesDropdownPos?.left,
+                    zIndex: 200,
+                    minWidth: 600,
+                    maxWidth: 600,
+                    maxHeight: 320,
+                    overflowY: 'auto',
+                    overflowX: 'hidden',
+                  }}
+                >
+                  <FossilTogglePill
+                    count={fossilTribeCount}
+                    open={showFossilTribes}
+                    onToggle={() => setShowFossilTribes((v) => !v)}
+                    keepDropdownOpen
+                    wrapperStyle={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}
+                  />
+                  <div className="minimal-card-list">
+                    {visibleMyTribes.map((tData) => (
+                      <div
+                        key={tData.tribeId}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          cursor: 'pointer',
+                          minWidth: 0,
+                        }}
+                        onClick={() => {
+                          setIsMyTribesOpen(false)
+                          setTribesDropdownPos(null)
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <TribeMinimalCard {...tData} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {(!myTribes || myTribes.length === 0) && (
+                    <p className="text-muted" style={{ padding: 8, textAlign: 'center' }}>
+                      {t('common.nothing_here_yet')}
+                    </p>
+                  )}
+                  <div
                     style={{
-                      fontSize: 9,
-                      display: 'inline-block',
-                      transform: isMyTribesOpen ? 'rotate(180deg)' : 'none',
-                      transition: 'transform var(--transition-fast)',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      marginTop: 8,
+                      marginBottom: 4,
                     }}
                   >
-                    ▼
-                  </span>
-                </button>
-                <AnimatePresence>
-                  {isMyTribesOpen && tribesDropdownPos && (
-                    <motion.div
-                      className="topbar-tribes-dropdown"
-                      initial={{ opacity: 0, y: -8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onClickCapture={(e) => {
-                        if (e.target.closest('[data-keep-dropdown-open]')) return
+                    <Link
+                      to="/create-tribe"
+                      onClick={() => {
                         setIsMyTribesOpen(false)
                         setTribesDropdownPos(null)
                       }}
                       style={{
-                        position: 'fixed',
-                        top: tribesDropdownPos.top,
-                        left: tribesDropdownPos.left,
-                        background: 'var(--color-bg)',
-                        border: '1px solid var(--color-border)',
-                        borderRadius: 12,
-                        boxShadow: 'var(--shadow-lg)',
-                        zIndex: 200,
-                        minWidth: 600,
-                        maxWidth: 600,
-                        maxHeight: 320,
-                        overflowY: 'auto',
-                        overflowX: 'hidden',
-                        padding: 8,
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'var(--color-text-muted)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        textDecoration: 'none',
                       }}
+                      aria-label={t('topbar.new_tribe')}
                     >
-                      <FossilTogglePill
-                        count={fossilTribeCount}
-                        open={showFossilTribes}
-                        onToggle={() => setShowFossilTribes((v) => !v)}
-                        keepDropdownOpen
-                        wrapperStyle={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}
-                      />
-                      <div className="minimal-card-list">
-                        {visibleMyTribes.map((tData) => (
-                          <div
-                            key={tData.tribeId}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 4,
-                              cursor: 'pointer',
-                              minWidth: 0,
-                            }}
-                            onClick={() => {
-                              setIsMyTribesOpen(false)
-                              setTribesDropdownPos(null)
-                            }}
-                          >
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <TribeMinimalCard {...tData} />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      {(!myTribes || myTribes.length === 0) && (
-                        <p className="text-muted" style={{ padding: 8, textAlign: 'center' }}>
-                          {t('common.nothing_here_yet')}
-                        </p>
-                      )}
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'center',
-                          marginTop: 8,
-                          marginBottom: 4,
-                        }}
-                      >
-                        <Link
-                          to="/create-tribe"
-                          onClick={() => {
-                            setIsMyTribesOpen(false)
-                            setTribesDropdownPos(null)
-                          }}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            color: 'var(--color-text-muted)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            textDecoration: 'none',
-                          }}
-                          aria-label={t('topbar.new_tribe')}
-                        >
-                          <CirclePlus size={19} strokeWidth={2.4} />
-                        </Link>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                      <CirclePlus size={19} strokeWidth={2.4} />
+                    </Link>
+                  </div>
+                </DropdownPanel>
               </div>
 
               {/* My Bots */}
@@ -1785,118 +1644,98 @@ export default function TopBar({ pendingInvitation = null, onOpenInvitation }) {
                   }}
                 >
                   {t('common.bots')}{' '}
-                  <span
+                  <DropdownCaret open={isMyBotsOpen} />
+                </button>
+                <DropdownPanel
+                  open={Boolean(isMyBotsOpen && botsDropdownPos)}
+                  className="topbar-bots-dropdown"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClickCapture={(e) => {
+                    if (e.target.closest('[data-keep-dropdown-open]')) return
+                    setIsMyBotsOpen(false)
+                    setBotsDropdownPos(null)
+                  }}
+                  style={{
+                    position: 'fixed',
+                    top: botsDropdownPos?.top,
+                    left: botsDropdownPos?.left,
+                    zIndex: 200,
+                    minWidth: 450,
+                    maxWidth: 450,
+                    maxHeight: 320,
+                    overflowY: 'auto',
+                    overflowX: 'hidden',
+                  }}
+                >
+                  <FossilTogglePill
+                    count={fossilBotCount}
+                    open={showFossilBots}
+                    onToggle={() => setShowFossilBots((v) => !v)}
+                    keepDropdownOpen
+                    wrapperStyle={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}
+                  />
+                  <div className="minimal-card-list">
+                    {visibleMyBots.map((b) => (
+                      <div
+                        key={b.actorId}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          cursor: 'pointer',
+                          minWidth: 0,
+                        }}
+                        onClick={() => {
+                          setIsMyBotsOpen(false)
+                          setBotsDropdownPos(null)
+                        }}
+                      >
+                        <div
+                          className="lb-card"
+                          style={{ flex: 1, padding: '8px 16px', minWidth: 0 }}
+                        >
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <ActorMinimalCard actor={b} clickable={true} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {(!myBots || myBots.length === 0) && (
+                    <p className="text-muted" style={{ padding: 8, textAlign: 'center' }}>
+                      {t('common.nothing_here_yet')}
+                    </p>
+                  )}
+                  <div
                     style={{
-                      fontSize: 9,
-                      display: 'inline-block',
-                      transform: isMyBotsOpen ? 'rotate(180deg)' : 'none',
-                      transition: 'transform var(--transition-fast)',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      marginTop: 8,
+                      marginBottom: 4,
                     }}
                   >
-                    ▼
-                  </span>
-                </button>
-                <AnimatePresence>
-                  {isMyBotsOpen && botsDropdownPos && (
-                    <motion.div
-                      className="topbar-bots-dropdown"
-                      initial={{ opacity: 0, y: -8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onClickCapture={(e) => {
-                        if (e.target.closest('[data-keep-dropdown-open]')) return
+                    <Link
+                      to="/create-bot"
+                      onClick={() => {
                         setIsMyBotsOpen(false)
                         setBotsDropdownPos(null)
                       }}
                       style={{
-                        position: 'fixed',
-                        top: botsDropdownPos.top,
-                        left: botsDropdownPos.left,
-                        background: 'var(--color-bg)',
-                        border: '1px solid var(--color-border)',
-                        borderRadius: 12,
-                        boxShadow: 'var(--shadow-lg)',
-                        zIndex: 200,
-                        minWidth: 450,
-                        maxWidth: 450,
-                        maxHeight: 320,
-                        overflowY: 'auto',
-                        overflowX: 'hidden',
-                        padding: 8,
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'var(--color-text-muted)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        textDecoration: 'none',
                       }}
+                      aria-label={t('topbar.new_bot')}
                     >
-                      <FossilTogglePill
-                        count={fossilBotCount}
-                        open={showFossilBots}
-                        onToggle={() => setShowFossilBots((v) => !v)}
-                        keepDropdownOpen
-                        wrapperStyle={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}
-                      />
-                      <div className="minimal-card-list">
-                        {visibleMyBots.map((b) => (
-                          <div
-                            key={b.actorId}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 4,
-                              cursor: 'pointer',
-                              minWidth: 0,
-                            }}
-                            onClick={() => {
-                              setIsMyBotsOpen(false)
-                              setBotsDropdownPos(null)
-                            }}
-                          >
-                            <div
-                              className="lb-card"
-                              style={{ flex: 1, padding: '8px 16px', minWidth: 0 }}
-                            >
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <ActorMinimalCard actor={b} clickable={true} />
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      {(!myBots || myBots.length === 0) && (
-                        <p className="text-muted" style={{ padding: 8, textAlign: 'center' }}>
-                          {t('common.nothing_here_yet')}
-                        </p>
-                      )}
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'center',
-                          marginTop: 8,
-                          marginBottom: 4,
-                        }}
-                      >
-                        <Link
-                          to="/create-bot"
-                          onClick={() => {
-                            setIsMyBotsOpen(false)
-                            setBotsDropdownPos(null)
-                          }}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            color: 'var(--color-text-muted)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            textDecoration: 'none',
-                          }}
-                          aria-label={t('topbar.new_bot')}
-                        >
-                          <CirclePlus size={19} strokeWidth={2.4} />
-                        </Link>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                      <CirclePlus size={19} strokeWidth={2.4} />
+                    </Link>
+                  </div>
+                </DropdownPanel>
               </div>
 
               {/* Cards */}

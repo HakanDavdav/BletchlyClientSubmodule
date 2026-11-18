@@ -918,8 +918,8 @@
     "perk_inheritance_title": "+%4 Kart Miras Şansı",
     "perk_locks_desc": "Kişilik kartı atamalarını otomatik tasfiyeden koruma hakkı.",
     "perk_locks_title": "+4 Kart Kilitleme Limiti",
-    "perk_tribes_desc": "Topluluklar oluşturmak için ek klan slotları.",
-    "perk_tribes_title": "+4 Klan Kurma Limiti",
+    "perk_tribes_desc": "Daha fazla topluluğa ve klana katılabilmek için ek üyelik slotları.",
+    "perk_tribes_title": "+4 Klan Katılım Limiti",
     "plan": "Plan",
     "plan_annual_label": "Yıllık Abonelik",
     "plan_label": "Aylık Abonelik",
@@ -931,7 +931,7 @@
     "ambience_on": "Kart Ambiyansı: Açık",
     "ambience_on_title": "Arka plan kart ambiyansını göster",
     "secure_active": "Doğrulanmış & Korumalı",
-    "secure_payment": "Lemon Squeezy ile Güvenli Ödeme",
+    "secure_payment": "Polar ile Güvenli Ödeme",
     "status_active": "Aktif Abonelik",
     "status_active_desc": "Pro üyeliğiniz aktif. Otomatik yenilenme ve tüm ayrıcalıklar devrede.",
     "status_canceled": "Dönem Sonunda İptal Olacak",
@@ -1335,5 +1335,10 @@
     "accept": "Tümünü Kabul Et",
     "decline": "Reddet",
     "privacy_policy": "Gizlilik Politikası"
+  },
+  "mention": {
+    "persons": "Kişiler",
+    "tribes": "Klanlar",
+    "no_results": "Eşleşen kişi veya klan yok."
   }
 }

@@ -4,7 +4,7 @@ import { adminApi } from '../../api/adminApi'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import useAuthStore from '../../store/authStore'
-import { motion, AnimatePresence } from 'framer-motion'
+import { DropdownCaret, DropdownPanel } from '../common/Dropdown'
 import { Check } from 'lucide-react'
 
 export const EVENT_CATEGORIES = [
@@ -275,79 +275,59 @@ export default function SystemEventsPanel() {
               }}
             >
               <span style={{ fontWeight: 500 }}>{selectedEventName}</span>
-              <span
-                style={{
-                  fontSize: 9,
-                  lineHeight: 1,
-                  display: 'inline-block',
-                  transform: isDropdownOpen ? 'rotate(180deg)' : 'none',
-                  transition: 'transform var(--transition-fast)',
-                  color: 'var(--color-text-muted)',
-                }}
-                aria-hidden="true"
-              >
-                ▼
-              </span>
+              <DropdownCaret open={isDropdownOpen} />
             </button>
 
-            <AnimatePresence>
-              {isDropdownOpen && (
-                <motion.div
-                  className="dropdown-menu-panel"
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.15 }}
-                  style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    right: 0,
-                    marginTop: 4,
-                    zIndex: 60,
-                    maxHeight: 260,
-                    overflowY: 'auto',
-                  }}
-                >
-                  {visibleCategories.map((cat) => (
-                    <div key={cat.category} style={{ marginBottom: 4 }}>
-                      <div
-                        style={{
-                          padding: '6px 10px 4px',
-                          fontSize: 10.5,
-                          fontWeight: 700,
-                          color: 'var(--color-text-muted)',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
+            <DropdownPanel
+              open={isDropdownOpen}
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                marginTop: 4,
+                zIndex: 60,
+                maxHeight: 260,
+                overflowY: 'auto',
+              }}
+            >
+              {visibleCategories.map((cat) => (
+                <div key={cat.category} style={{ marginBottom: 4 }}>
+                  <div
+                    style={{
+                      padding: '6px 10px 4px',
+                      fontSize: 10.5,
+                      fontWeight: 700,
+                      color: 'var(--color-text-muted)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                    }}
+                  >
+                    {cat.categoryKey ? t(`admin.${cat.categoryKey}`) : cat.category}
+                  </div>
+                  {cat.events.map((ev) => {
+                    const isSelected = selectedEventName === ev.name
+                    return (
+                      <button
+                        key={ev.name}
+                        type="button"
+                        className={`dropdown-option-btn ${isSelected ? 'active' : ''}`}
+                        onClick={() => {
+                          handleSelectEvent(ev.name)
+                          setIsDropdownOpen(false)
                         }}
+                        style={{ fontSize: 12.5 }}
                       >
-                        {cat.categoryKey ? t(`admin.${cat.categoryKey}`) : cat.category}
-                      </div>
-                      {cat.events.map((ev) => {
-                        const isSelected = selectedEventName === ev.name
-                        return (
-                          <button
-                            key={ev.name}
-                            type="button"
-                            className={`dropdown-option-btn ${isSelected ? 'active' : ''}`}
-                            onClick={() => {
-                              handleSelectEvent(ev.name)
-                              setIsDropdownOpen(false)
-                            }}
-                            style={{ fontSize: 12.5 }}
-                          >
-                            <span>{ev.name}</span>
-                            {isSelected && (
-                              <Check size={14} style={{ color: 'var(--color-primary)' }} />
-                            )}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                        <span>{ev.name}</span>
+                        {isSelected && (
+                          <Check size={14} style={{ color: 'var(--color-primary)' }} />
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              ))}
+            </DropdownPanel>
           </div>
 
           {/* Payload JSON Editor */}

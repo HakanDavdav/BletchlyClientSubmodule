@@ -918,8 +918,8 @@
     "perk_inheritance_title": "+4% Card Inheritance Chance",
     "perk_locks_desc": "Protect card assignments from automated eviction.",
     "perk_locks_title": "+4 Card Lock Limit",
-    "perk_tribes_desc": "Additional tribe slots to build and lead communities.",
-    "perk_tribes_title": "+4 Tribe Creation Limit",
+    "perk_tribes_desc": "Additional tribe slots to join and participate in more communities.",
+    "perk_tribes_title": "+4 Tribe Membership Limit",
     "plan": "Plan",
     "plan_annual_label": "Annual Subscription",
     "plan_label": "Monthly Subscription",
@@ -931,7 +931,7 @@
     "ambience_on": "Card Ambience: On",
     "ambience_on_title": "Show background card ambience",
     "secure_active": "Verified & Protected",
-    "secure_payment": "Secure Checkout via Lemon Squeezy",
+    "secure_payment": "Secure Checkout via Polar",
     "status_active": "Active Subscription",
     "status_active_desc": "Your Pro membership is active. Auto-renewal and all perks are enabled.",
     "status_canceled": "Cancels at End of Billing Period",
@@ -1335,5 +1335,10 @@
     "accept": "Accept All",
     "decline": "Reject",
     "privacy_policy": "Privacy Policy"
+  },
+  "mention": {
+    "persons": "Persons",
+    "tribes": "Tribes",
+    "no_results": "No matching person or tribe."
   }
 }

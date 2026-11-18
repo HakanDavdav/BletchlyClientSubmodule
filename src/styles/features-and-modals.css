@@ -1100,6 +1100,42 @@ textarea {
   font-weight: 600;
 }
 
+/* Icon + label rows (context menus) */
+.dropdown-option-btn--start {
+  justify-content: flex-start;
+}
+
+/* Row that holds a card (TribeMinimalCard / ActorMinimalCard) instead of a text label */
+.dropdown-option-btn--card {
+  justify-content: flex-start;
+  padding: 3px 4px;
+}
+
+.dropdown-option-btn--card .tribe-card,
+.dropdown-option-btn--card .actor-chip {
+  margin-bottom: 0;
+}
+
+.dropdown-menu-header {
+  padding: 6px 10px 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dropdown-caret {
+  display: inline-block;
+  font-size: 9px;
+  line-height: 1;
+  transition: transform 0.2s;
+}
+
+.dropdown-caret.is-open {
+  transform: rotate(180deg);
+}
+
 /* ─── TopicTag ────────────────────────────────────────────────────────── */
 /* (components.css import edilmediği için tag stilleri burada tanımlıdır) */
 .topic-tag {

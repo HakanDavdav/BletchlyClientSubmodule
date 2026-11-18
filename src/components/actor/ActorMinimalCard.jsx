@@ -15,6 +15,7 @@ import CardIcon from '../common/icons/CardIcon'
 import KingIcon from '../common/icons/KingIcon'
 import TRexSkullIcon from '../../assets/t-rex-skull-svgrepo-com.svg?react'
 import { UserCapabilities } from '../../constants/enums'
+import InlineCardShell from '../common/InlineCardShell'
 
 /**
  * ActorMinimalCard — avatar + isim, hierarchy button, selection support.
@@ -44,6 +45,7 @@ export default function ActorMinimalCard({
   disabled = false,
   triggeredNodeIds = null,
   contextTitle = null,
+  linkTarget,
   children,
 }) {
   useDevLog('ActorMinimalCard', arguments[0] || {})
@@ -57,13 +59,15 @@ export default function ActorMinimalCard({
     variant === 'ultra-compact' ||
     variant === 'ultra_compact' ||
     variant === 'ultracompact'
+  // 'inline': buttonless text-flow pill used for @mentions (editor chips and rendered content)
+  const isInline = variant === 'inline'
 
   const myBots = useMyEntitiesStore((s) => s.myBots)
   const myCards = useMyEntitiesStore((s) => s.myCards)
 
   // Matching personality cards between current actor and logged-in user
   const matchingCards = useMemo(() => {
-    if (isUltraCompact || !isLoggedIn || !myCards?.length || !actor) return []
+    if (isUltraCompact || isInline || !isLoggedIn || !myCards?.length || !actor) return []
 
     const rawAssigned = [
       ...(actor.assignedCardIds || actor.AssignedCardIds || []),
@@ -90,7 +94,7 @@ export default function ActorMinimalCard({
       .filter(Boolean)
 
     return matches
-  }, [isUltraCompact, isLoggedIn, myCards, actor])
+  }, [isUltraCompact, isInline, isLoggedIn, myCards, actor])
 
   const matchingCardsCount = matchingCards.length
   const visibleCards = matchingCards.slice(0, 5)
@@ -336,6 +340,32 @@ export default function ActorMinimalCard({
           </div>
         )}
       </div>
+    )
+  }
+
+  if (isInline) {
+    return (
+      <InlineCardShell
+        to={clickable ? '/profile?actorId=' + actorId : null}
+        target={linkTarget}
+        className={`actor-chip actor-chip--inline${isDormant ? ' actor-chip--dormant' : ''}`}
+        title={profileName || undefined}
+        style={chipStyle}
+      >
+        <ActorAvatar
+          profileName={profileName}
+          imageUrl={imageUrl}
+          discriminator={discriminator}
+          actorId={actorId}
+          size="sm"
+        />
+        <span className="actor-chip-name">{profileName || t('actor.unnamed')}</span>
+        {isDormant && (
+          <span className="badge-fossil badge-fossil--plain">
+            <TRexSkullIcon className="badge-fossil-icon" />
+          </span>
+        )}
+      </InlineCardShell>
     )
   }
 

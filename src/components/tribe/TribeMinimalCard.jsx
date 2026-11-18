@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next'
 import TRexSkullIcon from '../../assets/t-rex-skull-svgrepo-com.svg?react'
 import CardIcon from '../common/icons/CardIcon'
 import ImageWithLoader from '../common/ImageWithLoader'
+import InlineCardShell from '../common/InlineCardShell'
 
 /**
  * TribeMinimalCard — plan.md Component #4
@@ -40,6 +41,7 @@ export default function TribeMinimalCard({
   showEditBtn = true,
   variant = 'expanded',
   ultraCompact = false,
+  linkTarget,
   style = {},
 }) {
   const tribeId = propTribeId || tribe?.tribeId || tribe?.TribeId
@@ -73,6 +75,8 @@ export default function TribeMinimalCard({
   const myCards = useMyEntitiesStore((s) => s.myCards)
   const isMyTribe = myTribes?.some((t) => t.tribeId === tribeId)
   const isCompact = variant === 'compact'
+  // 'inline': buttonless text-flow pill used for @mentions (editor chips and rendered content)
+  const isInline = variant === 'inline'
   const isUltraCompact =
     ultraCompact ||
     variant === 'ultra-compact' ||
@@ -89,7 +93,7 @@ export default function TribeMinimalCard({
 
   // Matching personality cards between current tribe and logged-in user
   const matchingCards = useMemo(() => {
-    if (isUltraCompact || !isLoggedIn || !myCards?.length) return []
+    if (isUltraCompact || isInline || !isLoggedIn || !myCards?.length) return []
 
     const rawAssigned = [
       ...(propAssignedCardIds || []),
@@ -118,7 +122,7 @@ export default function TribeMinimalCard({
       .filter(Boolean)
 
     return matches
-  }, [isUltraCompact, isLoggedIn, myCards, propAssignedCardIds, propAssignedCardIdsUpper, tribe])
+  }, [isUltraCompact, isInline, isLoggedIn, myCards, propAssignedCardIds, propAssignedCardIdsUpper, tribe])
 
   const matchingCardsCount = matchingCards.length
   const visibleCards = matchingCards.slice(0, 5)
@@ -144,6 +148,35 @@ export default function TribeMinimalCard({
   }
 
   const shouldShowMission = showMission && !isCompact && !isUltraCompact && hasMission
+
+  if (isInline) {
+    return (
+      <InlineCardShell
+        to={clickable ? '/tribe?tribeId=' + tribeId : null}
+        target={linkTarget}
+        className={`tribe-card tribe-card--compact tribe-card--inline${isDormantTribe ? ' tribe-card--dormant' : ''}`}
+        title={tribeName || undefined}
+        style={style}
+      >
+        {showImage ? (
+          <img
+            src={imageUrl}
+            alt={tribeName}
+            className="tribe-card-img"
+            onError={() => setFailedUrl(imageUrl)}
+          />
+        ) : (
+          <span className="tribe-card-img tribe-card-img--fallback">{tribeName?.[0] || 'T'}</span>
+        )}
+        <span className="tribe-card-name truncate">{tribeName || t('tribe.unnamed_tribe')}</span>
+        {isDormantTribe && (
+          <span className="badge-fossil badge-fossil--plain">
+            <TRexSkullIcon className="badge-fossil-icon" />
+          </span>
+        )}
+      </InlineCardShell>
+    )
+  }
 
   return (
     <div

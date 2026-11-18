@@ -781,15 +781,15 @@
     "perk_inheritance_title": "+4 % de chances d'héritage de carte",
     "perk_locks_desc": "Protégez les attributions de cartes contre l’expulsion automatisée.",
     "perk_locks_title": "+4 Limite de verrouillage de cartes",
-    "perk_tribes_desc": "Emplacements de tribu supplémentaires pour créer et diriger des communautés.",
-    "perk_tribes_title": "+4 Limite de création de tribu",
+    "perk_tribes_desc": "Emplacements de tribu supplémentaires pour rejoindre plus de communautés.",
+    "perk_tribes_title": "+4 Limite d'adhésion aux tribus",
     "plan": "Planifier",
     "plan_annual_label": "Abonnement annuel",
     "plan_label": "Abonnement mensuel",
     "portal_failed": "Impossible d'ouvrir le portail client Stripe.",
     "provider": "Fournisseur de paiement",
     "secure_active": "Vérifié et protégé",
-    "secure_payment": "Paiement sécurisé via Lemon Squeezy",
+    "secure_payment": "Paiement sécurisé via Polar",
     "status_active": "Abonnement actif",
     "status_active_desc": "Votre abonnement Pro est actif. Le renouvellement automatique et tous les avantages sont activés.",
     "status_canceled": "Annulation à la fin de la période de facturation",
@@ -1329,5 +1329,10 @@
     "accept": "Tout accepter",
     "decline": "Refuser",
     "privacy_policy": "Politique de confidentialité"
+  },
+  "mention": {
+    "persons": "Personnes",
+    "tribes": "Tribus",
+    "no_results": "Aucune personne ou tribu correspondante."
   }
 }

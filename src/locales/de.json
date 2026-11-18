@@ -781,15 +781,15 @@
     "perk_inheritance_title": "+4 % Chance auf Kartenvererbung",
     "perk_locks_desc": "Schützen Sie Kartenzuweisungen vor der automatischen Löschung.",
     "perk_locks_title": "+4 Kartensperrlimit",
-    "perk_tribes_desc": "Zusätzliche Stammesplätze zum Aufbau und zur Führung von Gemeinschaften.",
-    "perk_tribes_title": "+4 Stammesgründungslimit",
+    "perk_tribes_desc": "Zusätzliche Stammesplätze, um weiteren Gemeinschaften beizutreten.",
+    "perk_tribes_title": "+4 Stammesmitgliedschaftslimit",
     "plan": "Planen",
     "plan_annual_label": "Jahresabonnement",
     "plan_label": "Monatsabonnement",
     "portal_failed": "Das Stripe-Kundenportal konnte nicht geöffnet werden.",
     "provider": "Zahlungsanbieter",
     "secure_active": "Verifiziert und geschützt",
-    "secure_payment": "Sichere Zahlung über Lemon Squeezy",
+    "secure_payment": "Sichere Zahlung über Polar",
     "status_active": "Aktives Abonnement",
     "status_active_desc": "Ihre Pro-Mitgliedschaft ist aktiv. Automatische Verlängerung und alle Vorteile sind aktiviert.",
     "status_canceled": "Storniert am Ende des Abrechnungszeitraums",
@@ -1329,5 +1329,10 @@
     "accept": "Alle akzeptieren",
     "decline": "Ablehnen",
     "privacy_policy": "Datenschutzerklärung"
+  },
+  "mention": {
+    "persons": "Personen",
+    "tribes": "Stämme",
+    "no_results": "Keine passende Person oder kein passender Stamm."
   }
 }

@@ -8,6 +8,7 @@ import PostCard from '../components/content/PostCard'
 import ActorMinimalCard from '../components/actor/ActorMinimalCard'
 import TribeMinimalCard from '../components/tribe/TribeMinimalCard'
 import SearchSuggestionsDropdown from '../components/common/SearchSuggestionsDropdown'
+import useSearchSuggestions from '../hooks/useSearchSuggestions'
 import BackButton from '../components/common/BackButton'
 import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
@@ -276,9 +277,7 @@ export default function SearchPage() {
  * sayfa içi arama formu. Masaüstünde gizlenir.
  */
 function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, t }) {
-  const [suggestions, setSuggestions] = useState(null)
   const [showSuggestions, setShowSuggestions] = useState(false)
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
   const [recentSearches, setRecentSearches] = useState(() => getRecentSearches())
   const searchWrapRef = useRef(null)
 
@@ -295,51 +294,16 @@ function MobileSearchForm({ query, mode, onQueryChange, onModeChange, onSubmit, 
     { key: 'tribes', label: t('search.mode.tribes') },
   ]
 
-  // Debounced search suggestions (identical to PC topbar)
+  // Debounced search suggestions (shared with the PC topbar)
+  const { suggestions, isLoading: isLoadingSuggestions } = useSearchSuggestions(query, {
+    mode,
+    limit: 5,
+    generalLimit: 3,
+  })
+
   useEffect(() => {
-    if (!query || query.trim().length === 0) {
-      setSuggestions(null)
-      setIsLoadingSuggestions(false)
-      return
-    }
-
-    setIsLoadingSuggestions(true)
-    const timer = setTimeout(async () => {
-      try {
-        let result
-        switch (mode) {
-          case 'posts':
-            result = await searchApi.filterPosts({ query: query.trim() })
-            setSuggestions({ posts: (result.data?.data || []).slice(0, 5) })
-            break
-          case 'actors':
-            result = await searchApi.filterActors({ query: query.trim() })
-            setSuggestions({ actors: (result.data?.data || []).slice(0, 5) })
-            break
-          case 'tribes':
-            result = await searchApi.filterTribes({ query: query.trim() })
-            setSuggestions({ tribes: (result.data?.data || []).slice(0, 5) })
-            break
-          default:
-            result = await searchApi.general(query.trim())
-            const data = result.data?.data
-            setSuggestions({
-              posts: (data?.posts || data?.Posts || []).slice(0, 3),
-              actors: (data?.actors || data?.Actors || []).slice(0, 3),
-              tribes: (data?.tribes || data?.Tribes || []).slice(0, 3),
-            })
-        }
-        setShowSuggestions(true)
-      } catch (err) {
-        console.error('Failed to fetch search suggestions:', err)
-        setSuggestions(null)
-      } finally {
-        setIsLoadingSuggestions(false)
-      }
-    }, 500)
-
-    return () => clearTimeout(timer)
-  }, [query, mode])
+    if (suggestions) setShowSuggestions(true)
+  }, [suggestions])
 
   // Click outside to close suggestions
   useEffect(() => {
