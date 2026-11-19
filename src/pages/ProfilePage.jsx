@@ -54,6 +54,9 @@ import PostCard from '../components/content/PostCard'
 import EntryCard from '../components/content/EntryCard'
 import ContextualEntryThread from '../components/content/ContextualEntryThread'
 import ActorMinimalCard from '../components/actor/ActorMinimalCard'
+import MentionEditor from '../components/content/mention/MentionEditor'
+import MentionText from '../components/content/mention/MentionText'
+import { mentionDtosToInputs } from '../components/content/mention/mentionUtils'
 import TribeMinimalCard from '../components/tribe/TribeMinimalCard'
 import FossilTogglePill from '../components/common/FossilTogglePill'
 import FollowListModal from '../components/profile/FollowListModal'
@@ -233,11 +236,11 @@ export default function ProfilePage() {
   const [editForm, setEditForm] = useState({
     profileName: '',
     bio: '',
+    bioMentions: [],
     imageUrl: '',
     topicTypes: [],
   })
   const editNameRef = useRef(null)
-  const editBioRef = useRef(null)
 
   const toggleTopic = (value) => {
     setEditForm((prev) => ({
@@ -653,6 +656,7 @@ export default function ProfilePage() {
     setEditForm({
       profileName: profile?.profileName || '',
       bio: profile?.bio || '',
+      bioMentions: mentionDtosToInputs(profile?.bioMentions),
       imageUrl: profile?.imageUrl || '',
       topicTypes: initialTopics,
     })
@@ -661,7 +665,7 @@ export default function ProfilePage() {
 
   const handleEditSave = () => {
     const profileName = editNameRef.current?.value ?? editForm.profileName
-    const bio = editBioRef.current?.value ?? editForm.bio
+    const bio = editForm.bio
     if (!bio.trim()) {
       toast.error(t('profile.bio_empty_error'))
       return
@@ -671,6 +675,7 @@ export default function ProfilePage() {
       profileName,
       imageUrl: editForm.imageUrl || '',
       bio,
+      bioMentions: editForm.bioMentions,
       topicTypes: editForm.topicTypes,
 
       postPerPage: profile?.postPerPage || 20,
@@ -950,22 +955,14 @@ export default function ProfilePage() {
 
             {isEditing ? (
               <>
-                <textarea
-                  ref={editBioRef}
-                  className="input textarea textarea--autogrow"
-                  style={{
-                    margin: '8px 0',
-                    width: '100%',
-                    maxWidth: 600,
-                    minHeight: 80,
-                    fontSize: 14,
-                    padding: '12px 16px',
-                    borderRadius: 12,
-                    background: 'var(--color-surface)',
-                    color: 'var(--color-text-primary)',
-                  }}
-                  defaultValue={editForm.bio}
+                <MentionEditor
+                  key={profile?.actorId}
+                  className="textarea--surface"
+                  initialContent={editForm.bio}
+                  initialMentions={profile?.bioMentions}
                   placeholder={t('profile.bio_placeholder')}
+                  onChange={({ content, mentions }) => setEditForm((prev) => ({ ...prev, bio: content, bioMentions: mentions }))}
+                  style={{ margin: '8px 0', maxWidth: 600, fontSize: 14, padding: '12px 16px', lineHeight: 1.6 }}
                 />
                 <div style={{ margin: '4px 0 12px 0', maxWidth: 600 }}>
                   <label
@@ -987,9 +984,9 @@ export default function ProfilePage() {
                 </div>
               </>
             ) : (
-              <p className="text-muted" style={{ margin: '8px 0', lineHeight: 1.5, maxWidth: 600 }}>
-                {profile.bio || t('profile.no_bio')}
-              </p>
+              <div className="text-muted" style={{ margin: '8px 0', lineHeight: 1.5, maxWidth: 600 }}>
+                {profile.bio ? <MentionText text={profile.bio} mentions={profile.bioMentions} /> : t('profile.no_bio')}
+              </div>
             )}
 
 

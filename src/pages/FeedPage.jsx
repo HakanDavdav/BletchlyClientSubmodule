@@ -1,89 +1,50 @@
-import { useState, useEffect } from 'react'
-import { useQuery, useQueries } from '@tanstack/react-query'
-import { searchApi, parseCacheResponse } from '../api/searchApi'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { contentItemApi } from '../api/contentItemApi'
-import { Clock8, Flame, Heart, Skull } from 'lucide-react'
+import { Clock8 } from 'lucide-react'
 import PostCard from '../components/content/PostCard'
 import BackButton from '../components/common/BackButton'
-import useUIStore from '../store/uiStore'
+import InfiniteScrollStatus from '../components/common/InfiniteScrollStatus'
+import useInfiniteScroll from '../hooks/useInfiniteScroll'
 import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 import { getQueryErrorMessage } from '../utils/errorHelper'
 
-export default function FeedPage({ cacheType = 'recent' }) {
+const PAGE_SIZE = 4
+
+export default function FeedPage() {
   useDevLog('FeedPage', arguments[0] || {})
   const { t } = useTranslation()
 
-  const getFeedConfig = () => {
-    switch (cacheType) {
-      case 'trending':
-        return {
-          queryFn: () => searchApi.getTrendingPosts(),
-          title: t('feed.trending'),
-          icon: <Flame size={22} color="#fff" />,
-          description: t('feed.trending_desc'),
-        }
-      case 'mostLiked':
-        return {
-          queryFn: () => searchApi.getMostLikedEntries(),
-          title: t('feed.most_liked'),
-          icon: <Heart size={22} color="#fff" />,
-          description: t('feed.most_liked_desc'),
-          isPost: false,
-        }
-      case 'mostDisliked':
-        return {
-          queryFn: () => searchApi.getMostDislikedEntries(),
-          title: t('feed.most_disliked'),
-          icon: <Skull size={22} color="#fff" />,
-          description: t('feed.most_disliked_desc'),
-          isPost: false,
-        }
-      case 'recent':
-      default:
-        return {
-          queryFn: () => searchApi.getRecentPosts(),
-          title: t('feed.recent'),
-          icon: <Clock8 size={22} color="#fff" />,
-          description: t('feed.recent_desc'),
-          isPost: true,
-        }
-    }
-  }
-
-  const { queryFn, title, icon, description, isPost } = getFeedConfig()
-
-  // 1. Önce Redis'ten (veya Cache'den) Minimal Listeyi Çek
-  const { data: minimalData, isLoading: isListLoading, isError: isListError, error: listError } = useQuery({
-    queryKey: ['feed', cacheType],
-    queryFn: queryFn,
-    select: parseCacheResponse,
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['feed', 'newPosts'],
+    queryFn: ({ pageParam = 1 }) =>
+      contentItemApi.getNewPosts(pageParam).then((res) => {
+        const list = res?.data?.data || res?.data
+        return Array.isArray(list) ? list : []
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length === PAGE_SIZE ? allPages.length + 1 : undefined,
+    staleTime: 1000 * 60 * 5,
   })
 
-  // Sadece ilk 4 tanesini alacağız
-  const itemsToFetch = minimalData ? minimalData.slice(0, 4) : []
-
-  // 2. Alınan listedeki ID'leri kullanarak tek tek tam Post/Entry datasını çek
-  const fullItemQueries = useQueries({
-    queries: itemsToFetch.map((minimalItem) => ({
-      queryKey: [isPost ? 'post' : 'entry', minimalItem.contentItemId],
-      queryFn: () =>
-        isPost
-          ? contentItemApi.getPost(minimalItem.contentItemId).then((res) => res.data?.data)
-          : contentItemApi.getEntry(minimalItem.contentItemId).then((res) => res.data?.data),
-      enabled: !!minimalItem.contentItemId,
-      staleTime: 1000 * 60 * 5, // 5 dk cache
-    })),
+  const { sentinelRef: loadMoreRef, isWaiting } = useInfiniteScroll({
+    hasNextPage: Boolean(hasNextPage),
+    isFetchingNextPage,
+    fetchNextPage,
   })
 
-  const isLoadingDetails = fullItemQueries.some((q) => q.isLoading)
-  const isErrorDetails = fullItemQueries.some((q) => q.isError)
+  const posts = data?.pages?.flatMap((page) => page) || []
 
-  const fullData = fullItemQueries
-    .map((q) => q.data)
-    .filter(Boolean)
-
-  if (isListLoading || (isLoadingDetails && itemsToFetch.length > 0)) {
+  if (isLoading) {
     return (
       <div className="flex justify-center" style={{ padding: '40px 0' }}>
         <div className="spinner spinner-lg"></div>
@@ -91,12 +52,11 @@ export default function FeedPage({ cacheType = 'recent' }) {
     )
   }
 
-  if (isListError || isErrorDetails) {
-    const activeError = listError || fullItemQueries.find((q) => q.isError)?.error
-    return <div className="empty-state">{getQueryErrorMessage(activeError, t)}</div>
+  if (isError) {
+    return <div className="empty-state">{getQueryErrorMessage(error, t)}</div>
   }
 
-  if (!minimalData || minimalData.length === 0) {
+  if (posts.length === 0) {
     return <div className="empty-state">{t('common.nothing_here_yet')}</div>
   }
 
@@ -110,20 +70,26 @@ export default function FeedPage({ cacheType = 'recent' }) {
       {/* Header */}
       <div className="page-header-row">
         <div className="page-header-icon">
-          {icon}
+          <Clock8 size={22} color="#fff" />
         </div>
         <div>
-          <h1 className="page-header-title">{title}</h1>
-          <p className="page-header-subtitle">{description}</p>
+          <h1 className="page-header-title">{t('feed.recent')}</h1>
+          <p className="page-header-subtitle">{t('feed.recent_desc')}</p>
         </div>
       </div>
 
       <div className="flex-col gap-4" style={{ marginTop: 16 }}>
-        {fullData.map((item) => (
-          // Burada item artık backend'den gelen dolu PostDto veya EntryDto
+        {posts.map((item) => (
           <PostCard key={item.contentItemId} {...item} />
         ))}
       </div>
+
+      <div ref={loadMoreRef} style={{ height: 1 }} />
+      <InfiniteScrollStatus
+        isFetching={isFetchingNextPage || isWaiting}
+        hasNextPage={Boolean(hasNextPage)}
+        hasItems={posts.length > 0}
+      />
     </div>
   )
 }

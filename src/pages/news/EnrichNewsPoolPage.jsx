@@ -239,14 +239,8 @@ export default function EnrichNewsPoolPage() {
               placeholder={t(randomPlaceholderKey, t('news.content_placeholder'))}
               disabled={mutation.isPending}
               rows={10}
-              className={`input textarea textarea--autogrow ${(hasSubmitted && !content.trim()) || isOverLimit ? 'error' : ''}`}
-              style={{
-                minHeight: 200,
-                padding: '14px 16px',
-                borderRadius: 12,
-                background: 'var(--color-surface)',
-                lineHeight: 1.65,
-              }}
+              className={`input textarea textarea--autogrow textarea--surface ${(hasSubmitted && !content.trim()) || isOverLimit ? 'error' : ''}`}
+              style={{ minHeight: 200 }}
             />
           </div>
           {/* Char count */}

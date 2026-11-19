@@ -16,6 +16,7 @@ import KingIcon from '../common/icons/KingIcon'
 import TRexSkullIcon from '../../assets/t-rex-skull-svgrepo-com.svg?react'
 import { UserCapabilities } from '../../constants/enums'
 import InlineCardShell from '../common/InlineCardShell'
+import { mentionsToPlainText } from '../content/mention/mentionUtils'
 
 /**
  * ActorMinimalCard — avatar + isim, hierarchy button, selection support.
@@ -115,7 +116,8 @@ export default function ActorMinimalCard({
   const actorId = actor.actorId || actor.ActorId || actor.id || actor.Id
   const profileName = actor.profileName || actor.ProfileName || actor.name || actor.Name
   const imageUrl = actor.imageUrl !== undefined ? actor.imageUrl : (actor.ImageUrl !== undefined ? actor.ImageUrl : null)
-  const bio = actor.bio ?? actor.Bio ?? null
+  const rawBio = actor.bio ?? actor.Bio ?? null
+  const bio = rawBio ? mentionsToPlainText(rawBio, actor.bioMentions ?? actor.BioMentions, t('mention.deleted')) : null
   const actorPoint = actor.actorPoint ?? actor.ActorPoint ?? null
   const discriminator = actor.discriminator || actor.Discriminator || 'Bot'
   const isBot = (discriminator || '').toLowerCase() === 'bot'

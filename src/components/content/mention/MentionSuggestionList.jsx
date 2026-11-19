@@ -16,7 +16,7 @@ const VIEWPORT_GUTTER = 16
  * Rendered by TipTap's suggestion plugin through a ReactRenderer; keyboard events are forwarded
  * through the imperative `onKeyDown` handle.
  */
-export default function MentionSuggestionList({ ref, query, command, clientRect }) {
+export default function MentionSuggestionList({ ref, query, command }) {
   const { t } = useTranslation()
   const { suggestions, isLoading } = useSearchSuggestions(query, {
     mode: 'general',
@@ -62,16 +62,7 @@ export default function MentionSuggestionList({ ref, query, command, clientRect 
     },
   }))
 
-  const rect = clientRect?.()
-  if (!rect) return null
-
   const width = Math.min(PANEL_WIDTH, window.innerWidth - VIEWPORT_GUTTER * 2)
-  const left = Math.max(VIEWPORT_GUTTER, Math.min(rect.left, window.innerWidth - width - VIEWPORT_GUTTER))
-  const spaceBelow = window.innerHeight - rect.bottom
-  const placeAbove = spaceBelow < 240 && rect.top > spaceBelow
-  const position = placeAbove
-    ? { bottom: window.innerHeight - rect.top + 4 }
-    : { top: rect.bottom + 4 }
 
   const actorItems = items.filter((i) => i.attrs.targetType === MentionTargetType.Actor)
   const tribeItems = items.filter((i) => i.attrs.targetType === MentionTargetType.Tribe)
@@ -81,7 +72,7 @@ export default function MentionSuggestionList({ ref, query, command, clientRect 
     return (
       <DropdownOption
         key={item.key}
-        className="dropdown-option-btn--card"
+        className="dropdown-option-btn--card lb-card"
         active={index === selectedIndex}
         role="option"
         aria-selected={index === selectedIndex}
@@ -102,7 +93,7 @@ export default function MentionSuggestionList({ ref, query, command, clientRect 
   }
 
   return (
-    <DropdownPanel className="mention-suggestion-panel" style={{ left, width, ...position }} role="listbox">
+    <DropdownPanel className="mention-suggestion-panel" style={{ width }} role="listbox">
       {!query ? (
         <div className="mention-suggestion-idle" aria-hidden="true">
           <Search size={17} />
@@ -118,13 +109,13 @@ export default function MentionSuggestionList({ ref, query, command, clientRect 
           {actorItems.length > 0 && (
             <div className="mention-suggestion-group">
               <div className="search-suggestion-header">{t('mention.persons')}</div>
-              {actorItems.map(renderItem)}
+              <div className="minimal-card-list">{actorItems.map(renderItem)}</div>
             </div>
           )}
           {tribeItems.length > 0 && (
             <div className="mention-suggestion-group">
               <div className="search-suggestion-header">{t('mention.tribes')}</div>
-              {tribeItems.map(renderItem)}
+              <div className="minimal-card-list">{tribeItems.map(renderItem)}</div>
             </div>
           )}
         </>

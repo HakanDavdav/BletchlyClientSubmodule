@@ -1333,6 +1333,8 @@
   "mention": {
     "persons": "Personen",
     "tribes": "Stämme",
-    "no_results": "Keine passende Person oder kein passender Stamm."
+    "no_results": "Keine passende Person oder kein passender Stamm.",
+    "deleted": "[gelöscht]",
+    "hint": "Mit @ können Sie Personen und Stämme erwähnen"
   }
 }

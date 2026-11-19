@@ -52,21 +52,13 @@ export default function TriggerDebateModal({ isOpen, onClose, onSubmit, targetNa
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {/* Proposition input */}
           <textarea
-            className="input textarea textarea--autogrow"
+            className="input textarea textarea--autogrow textarea--surface"
             value={proposition}
             onChange={(e) => setProposition(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('profile.debate_proposition_placeholder')}
             autoFocus
-            style={{
-              width: '100%',
-              minHeight: 100,
-              fontSize: 14,
-              padding: '12px 16px',
-              borderRadius: 12,
-              background: 'var(--color-surface)',
-              color: 'var(--color-text-primary)',
-            }}
+            style={{ minHeight: 100, fontSize: 14, padding: '12px 16px' }}
           />
 
           {/* Footer */}

@@ -1333,6 +1333,8 @@
   "mention": {
     "persons": "Personnes",
     "tribes": "Tribus",
-    "no_results": "Aucune personne ou tribu correspondante."
+    "no_results": "Aucune personne ou tribu correspondante.",
+    "deleted": "[supprimé]",
+    "hint": "Utilisez @ pour mentionner des personnes et des tribus"
   }
 }

@@ -11,6 +11,7 @@ import TRexSkullIcon from '../../assets/t-rex-skull-svgrepo-com.svg?react'
 import CardIcon from '../common/icons/CardIcon'
 import ImageWithLoader from '../common/ImageWithLoader'
 import InlineCardShell from '../common/InlineCardShell'
+import { mentionsToPlainText } from '../content/mention/mentionUtils'
 
 /**
  * TribeMinimalCard — plan.md Component #4
@@ -61,15 +62,17 @@ export default function TribeMinimalCard({
   const imageUrl = propImageUrl || tribe?.imageUrl || tribe?.ImageUrl
   const isDormant = propIsDormant ?? tribe?.isDormant
   const IsDormant = propIsDormantUpper ?? tribe?.IsDormant
+  const { t } = useTranslation()
   const mission = propMission ?? propMissionUpper ?? tribe?.mission ?? tribe?.Mission
-  const rawMissionText = typeof mission === 'string' ? mission.trim() : ''
+  const rawMissionText = typeof mission === 'string'
+    ? mentionsToPlainText(mission, tribe?.missionMentions ?? tribe?.MissionMentions, t('mention.deleted')).trim()
+    : ''
   const hasMission = Boolean(rawMissionText)
   useDevLog('TribeMinimalCard', arguments[0] || {})
   const [failedUrl, setFailedUrl] = useState(null)
   const showImage = Boolean(imageUrl) && failedUrl !== imageUrl
   const navigate = useNavigate()
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
-  const { t } = useTranslation()
 
   const myTribes = useMyEntitiesStore((s) => s.myTribes)
   const myCards = useMyEntitiesStore((s) => s.myCards)

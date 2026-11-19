@@ -1339,6 +1339,8 @@
   "mention": {
     "persons": "Kişiler",
     "tribes": "Klanlar",
-    "no_results": "Eşleşen kişi veya klan yok."
+    "no_results": "Eşleşen kişi veya klan yok.",
+    "deleted": "[silinmiş]",
+    "hint": "@ ile kişileri ve klanları mentionlayabilirsiniz"
   }
 }

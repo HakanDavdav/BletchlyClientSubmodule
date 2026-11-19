@@ -14,6 +14,7 @@ import { normalizeCardId } from '../../utils/cardOwnership'
 import { formatDateTime } from '../../utils/formatDate'
 
 import i18n from '../../i18n'
+import MentionText from '../content/mention/MentionText'
 
 function normalizeTags(rawTags) {
   if (Array.isArray(rawTags)) return rawTags
@@ -115,7 +116,9 @@ export default function CardDetailModal({ card, isOpen, onClose, onEditClick = n
       icon: BotFlashCardsIcon,
       iconSize: 15,
       label: t('card.prompt'),
-      value: personalityPrompt || (
+      value: personalityPrompt ? (
+        <MentionText text={personalityPrompt} mentions={cardData.mentions ?? card.mentions} />
+      ) : (
         <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--color-danger)' }}>
           <Crown size={16} /> 
           {t('card.hidden_prompt')}

@@ -192,13 +192,12 @@ export default function App() {
   <path d="M539.371 262C553.559 262 564.995 274.438 564.995 289.695V339.218C564.995 354.475 553.559 366.913 539.371 366.913C525.183 366.913 513.747 354.475 513.747 339.218V289.695C513.747 274.438 525.183 262 539.371 262Z" fill="${mainColor}" />
 </svg>`
     const encodedSvg = encodeURIComponent(svgString)
-    let link = document.querySelector("link[rel*='icon']")
-    if (!link) {
-      link = document.createElement('link')
-      link.rel = 'icon'
-      document.head.appendChild(link)
-    }
+    document.querySelectorAll("link[rel~='icon']").forEach((el) => el.remove())
+    const link = document.createElement('link')
+    link.rel = 'icon'
+    link.type = 'image/svg+xml'
     link.href = `data:image/svg+xml,${encodedSvg}`
+    document.head.appendChild(link)
   }, [isGreenMode, customColor, isDarkMode])
 
   return (

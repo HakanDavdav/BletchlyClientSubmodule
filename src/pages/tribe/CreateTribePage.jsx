@@ -26,6 +26,7 @@ import useIsMobile from '../../hooks/useIsMobile'
 import { normalizeCardId } from '../../utils/cardOwnership'
 import { TopicSelectorPills } from '../../components/topic/TopicTag'
 import { UserCapabilities } from '../../constants/enums'
+import MentionEditor from '../../components/content/mention/MentionEditor'
 
 const RANDOM_TRIBE_NAMES = ['Comrades', 'Femboys', 'LGBT', 'Incels', 'Doomers']
 
@@ -93,6 +94,7 @@ export default function CreateTribePage() {
     tribeName: '',
     imageUrl: '',
     mission: '',
+    missionMentions: [],
     preferredModel: 3,
     affinityBiasMultiplier: 1,
     ebbinghausHalfLifePeriodMultiplier: 1,
@@ -313,21 +315,13 @@ export default function CreateTribePage() {
             {t('tribe_settings.mission')}
           </label>
           <div style={{ position: 'relative' }}>
-            <textarea
-              rows={3}
-              data-field="mission"
+            <MentionEditor
+              className="textarea--surface"
               placeholder={t('tribe_settings.mission_placeholder')}
-              value={formData.mission}
-              onChange={(e) => setFormData({ ...formData, mission: e.target.value })}
+              onChange={({ content, mentions }) => setFormData((prev) => ({ ...prev, mission: content, missionMentions: mentions }))}
               disabled={mutation.isPending || mutation.isSuccess}
-              className={`input textarea textarea--autogrow ${hasSubmitted && !formData.mission.trim() ? 'error' : ''}`}
-              style={{
-                minHeight: 100,
-                padding: '14px 16px',
-                borderRadius: 12,
-                background: 'var(--color-surface)',
-                lineHeight: 1.65,
-              }}
+              invalid={hasSubmitted && !formData.mission.trim()}
+              style={{ minHeight: 100 }}
             />
           </div>
         </div>

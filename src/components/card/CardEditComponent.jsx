@@ -16,6 +16,11 @@ import PremiumModal from '../common/PremiumModal'
 import useAuthStore from '../../store/authStore'
 import useIsMobile from '../../hooks/useIsMobile'
 import { UserCapabilities } from '../../constants/enums'
+import MentionEditor from '../content/mention/MentionEditor'
+import { mentionDtosToInputs } from '../content/mention/mentionUtils'
+
+
+const PERSONALITY_PROMPT_MAX_LENGTH = 2000
 
 export default function CardEditComponent({ card, myBots = [], onClose, onSaved }) {
   const { t } = useTranslation()
@@ -34,11 +39,14 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
   const [editFormData, setEditFormData] = useState({
     cardName: '',
     personalityPrompt: '',
+    mentions: [],
     imageUrl: '',
     isListedOnMarketplace: false,
     price: '',
     assignedBotIds: [],
   })
+  // The mention editor reads its content once on mount; bumped whenever the form is (re)filled from the card.
+  const [promptEditorVersion, setPromptEditorVersion] = useState(0)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false)
 
@@ -52,9 +60,13 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
   const isPriceValid =
     !editFormData.isListedOnMarketplace ||
     (editFormData.price !== '' && !isNaN(parseInt(editFormData.price, 10)) && parseInt(editFormData.price, 10) >= 0)
+  const isPromptLengthValid = editFormData.personalityPrompt.length <= PERSONALITY_PROMPT_MAX_LENGTH
   const canConfirm =
     !isCreator ||
-    (Boolean(editFormData.cardName.trim()) && Boolean(editFormData.personalityPrompt.trim()) && isPriceValid)
+    (Boolean(editFormData.cardName.trim()) &&
+      Boolean(editFormData.personalityPrompt.trim()) &&
+      isPromptLengthValid &&
+      isPriceValid)
 
   useEffect(() => {
     if (!card) return
@@ -70,16 +82,20 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
       rawAssignments.map((a) => a.bot).filter(Boolean)
     const assignedBotIds = assignedBots.map((b) => b.actorId || b.id || b.botId).filter(Boolean)
 
+    const cardMentions = isCreator ? innerCardData.mentions || card.mentions || [] : []
     setEditFormData({
       cardName: innerCardData.cardName || card.cardName || '',
       personalityPrompt: isCreator
         ? innerCardData.personalityPrompt || card.personalityPrompt || ''
         : '',
+      mentions: mentionDtosToInputs(cardMentions),
+      initialMentions: cardMentions,
       imageUrl: innerCardData.imageUrl || card.imageUrl || '',
       isListedOnMarketplace: Boolean(innerCardData.isListedOnMarketplace),
       price: innerCardData.price !== undefined && innerCardData.price !== null ? String(innerCardData.price) : (card.price !== undefined && card.price !== null ? String(card.price) : ''),
       assignedBotIds,
     })
+    setPromptEditorVersion((v) => v + 1)
     setIsConfirmed(false)
   }, [card])
 
@@ -122,6 +138,7 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
       }
       if (editFormData.personalityPrompt.trim()) {
         payload.personalityPrompt = editFormData.personalityPrompt.trim()
+        payload.mentions = editFormData.mentions
       }
       payload.imageUrl = editFormData.imageUrl || ''
       payload.isListedOnMarketplace = editFormData.isListedOnMarketplace
@@ -353,24 +370,23 @@ export default function CardEditComponent({ card, myBots = [], onClose, onSaved 
           </div>
 
           {isCreator ? (
-            <textarea
-              className="input textarea personality-card-editor__prompt"
-              value={editFormData.personalityPrompt}
-              onChange={(event) =>
-                setEditFormData((prev) => ({ ...prev, personalityPrompt: event.target.value }))
+            <MentionEditor
+              key={`${cardId ?? 'card'}-${promptEditorVersion}`}
+              className="personality-card-editor__prompt"
+              initialContent={editFormData.personalityPrompt}
+              initialMentions={editFormData.initialMentions}
+              onChange={({ content, mentions }) =>
+                setEditFormData((prev) => ({ ...prev, personalityPrompt: content, mentions }))
               }
               placeholder={t('card.personality_prompt_placeholder')}
-              disabled={editMutation.isPending || deleteMutation.isPending}
-              readOnly={isConfirmed}
-              maxLength={2000}
-              aria-label={t('card.personality_prompt')}
+              disabled={editMutation.isPending || deleteMutation.isPending || isConfirmed}
+              invalid={!isPromptLengthValid}
               style={
                 isConfirmed
                   ? {
                       borderColor: 'transparent',
                       background: 'transparent',
                       boxShadow: 'none',
-                      resize: 'none',
                     }
                   : undefined
               }

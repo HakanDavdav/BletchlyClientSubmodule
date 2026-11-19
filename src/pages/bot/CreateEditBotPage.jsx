@@ -27,6 +27,8 @@ import MemoryTuningSlider, {
 import useIsMobile from '../../hooks/useIsMobile'
 import { buildOwnedCardIdSet, normalizeCardId } from '../../utils/cardOwnership'
 import { trackCreateBot } from '../../utils/analytics'
+import MentionEditor from '../../components/content/mention/MentionEditor'
+import { mentionDtosToInputs } from '../../components/content/mention/mentionUtils'
 
 const RANDOM_BOT_NAMES = ['GigaChad', 'Nietzsche', 'Doge', 'Kitty']
 const BOT_CREATOR_ACK_KEY = 'bletchly_bot_creator_ack'
@@ -61,6 +63,8 @@ export default function CreateEditBotPage() {
     profileName: '',
     imageUrl: '',
     bio: '',
+    bioMentions: [],
+    bioMentionDtos: [],
     personalityCardId: null,
     personalityCardName: '',
     personalityCardPrompt: '',
@@ -139,11 +143,15 @@ export default function CreateEditBotPage() {
   })
 
   const [existingCard, setExistingCard] = useState(null)
+  // Bumped whenever the form is (re)filled, so the bio editor remounts with the new initial content.
+  const [bioEditorVersion, setBioEditorVersion] = useState(0)
 
   const EMPTY_FORM = {
     profileName: '',
     imageUrl: '',
     bio: '',
+    bioMentions: [],
+    bioMentionDtos: [],
     personalityCardId: null,
     personalityCardName: '',
     personalityCardPrompt: '',
@@ -168,6 +176,7 @@ export default function CreateEditBotPage() {
 
     if (!isEditMode) {
       setFormData(EMPTY_FORM)
+      setBioEditorVersion((v) => v + 1)
       return
     }
 
@@ -203,6 +212,8 @@ export default function CreateEditBotPage() {
         profileName: existingBot.profileName || '',
         imageUrl: existingBot.imageUrl || '',
         bio: existingBot.bio || '',
+        bioMentions: mentionDtosToInputs(existingBot.bioMentions),
+        bioMentionDtos: existingBot.bioMentions || [],
         personalityCardId: null,
         personalityCardName: '',
         personalityCardPrompt: '',
@@ -224,6 +235,7 @@ export default function CreateEditBotPage() {
         selectedCardIds: personalAssignedIds,
         lockedCardIds: existingLockedIds,
       })
+      setBioEditorVersion((v) => v + 1)
     }
   }, [isEditMode, existingBot, botId])
 
@@ -349,6 +361,7 @@ export default function CreateEditBotPage() {
       personalityCardImageUrl,
       personalityCardConfirmed,
       personalityCardLocked,
+      bioMentionDtos: _bioMentionDtos,
       ...payload
     } = formData
     payload.assignedCardIds = ownedSelectedCardIds
@@ -360,6 +373,7 @@ export default function CreateEditBotPage() {
     payload.lockPersonalityCard = personalityCardConfirmed ? Boolean(personalityCardLocked) : false
     if (payload.autoBio) {
       payload.bio = ''
+      payload.bioMentions = []
     }
     if (payload.autoInterests) {
       payload.topicTypes = []
@@ -592,21 +606,17 @@ export default function CreateEditBotPage() {
                 {t('bot.bio')}
               </label>
               <div style={{ position: 'relative' }}>
-                <textarea
-                  rows={2}
-                  data-field="bio"
+                <MentionEditor
+                  key={`bio-${bioEditorVersion}`}
+                  className="textarea--surface"
+                  initialContent={formData.bio}
+                  initialMentions={formData.bioMentionDtos}
                   placeholder={t('bot.bio_placeholder')}
-                  value={formData.bio}
-                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                  onChange={({ content, mentions, mentionDtos }) =>
+                    setFormData((prev) => ({ ...prev, bio: content, bioMentions: mentions, bioMentionDtos: mentionDtos }))
+                  }
                   disabled={mutation.isPending || mutation.isSuccess}
-                  className={`input textarea textarea--autogrow ${hasSubmitted && !formData.autoBio && !formData.bio.trim() ? 'error' : ''}`}
-                  style={{
-                    minHeight: 80,
-                    padding: '14px 16px',
-                    borderRadius: 12,
-                    background: 'var(--color-surface)',
-                    lineHeight: 1.65,
-                  }}
+                  invalid={hasSubmitted && !formData.autoBio && !formData.bio.trim()}
                 />
               </div>
             </div>

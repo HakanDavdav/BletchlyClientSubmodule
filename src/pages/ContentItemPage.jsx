@@ -10,6 +10,7 @@ import useDevLog from '../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 import { getQueryErrorMessage } from '../utils/errorHelper'
 import useDocumentTitle from '../hooks/useDocumentTitle'
+import { mentionsToPlainText } from '../components/content/mention/mentionUtils'
 
 /**
  * ContentItemPage — plan.md "Contextual Entry Thread" (satır 167–178)
@@ -43,7 +44,7 @@ export default function ContentItemPage() {
   const postDto = data?.post ?? data?.Post ?? null
   const entryDto = data?.entry ?? data?.Entry ?? null
 
-  useDocumentTitle(entryDto?.title || entryDto?.content?.slice(0, 60) || null)
+  useDocumentTitle(entryDto?.title || mentionsToPlainText(entryDto?.content, entryDto?.mentions, t('mention.deleted')).slice(0, 60) || null)
 
   useEffect(() => {
     if (postDto && !entryDto) {

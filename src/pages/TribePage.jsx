@@ -44,6 +44,7 @@ import { getQueryErrorMessage } from '../utils/errorHelper'
 import { formatDate } from '../utils/formatDate'
 import { buildOwnedCardIdSet, sortCardsOwnedFirst } from '../utils/cardOwnership'
 import { getMemoryEmblems } from '../components/common/MemoryEmblems'
+import MentionText from '../components/content/mention/MentionText'
 
 export default function TribePage({ tribeId: propTribeId = null, embedded = false }) {
   const [searchParams] = useSearchParams()
@@ -339,9 +340,9 @@ export default function TribePage({ tribeId: propTribeId = null, embedded = fals
                 <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>{tribe.tribeName}</h1>
               </div>
 
-              <p className="text-muted" style={{ margin: '8px 0', lineHeight: 1.5, maxWidth: 600 }}>
-                {tribe.mission || t('tribe.no_mission')}
-              </p>
+              <div className="text-muted" style={{ margin: '8px 0', lineHeight: 1.5, maxWidth: 600 }}>
+                {tribe.mission ? <MentionText text={tribe.mission} mentions={tribe.missionMentions} /> : t('tribe.no_mission')}
+              </div>
 
               {tribe.createdAt && (
                 <p

@@ -27,6 +27,8 @@ import toast from 'react-hot-toast'
 import { buildOwnedCardIdSet, normalizeCardId, sortCardsOwnedFirst } from '../utils/cardOwnership'
 import { TopicSelectorPills } from '../components/topic/TopicTag'
 import { TopicTypes as TopicTypesEnum, UserCapabilities } from '../constants/enums'
+import MentionEditor from '../components/content/mention/MentionEditor'
+import { mentionDtosToInputs } from '../components/content/mention/mentionUtils'
 
 export default function TribeSettingsPage() {
   const [searchParams] = useSearchParams()
@@ -43,6 +45,7 @@ export default function TribeSettingsPage() {
     tribeName: '',
     imageUrl: '',
     mission: '',
+    missionMentions: [],
     preferredModel: 3,
     affinityBiasMultiplier: 1,
     ebbinghausHalfLifePeriodMultiplier: 1,
@@ -130,6 +133,7 @@ export default function TribeSettingsPage() {
         tribeName: tribe.tribeName || '',
         imageUrl: tribe.imageUrl || '',
         mission: tribe.mission || '',
+        missionMentions: mentionDtosToInputs(tribe.missionMentions),
         preferredModel: tribe.preferredModel ?? 3,
         affinityBiasMultiplier: tribe.affinityBiasMultiplier ?? 1,
         ebbinghausHalfLifePeriodMultiplier: tribe.ebbinghausHalfLifePeriodMultiplier ?? 1,
@@ -401,13 +405,12 @@ export default function TribeSettingsPage() {
         <div>
           <label className="form-section-label">{t('tribe_settings.mission')}</label>
           <div style={{ position: 'relative' }}>
-            <textarea
-              name="mission"
-              rows={3}
-              value={formData.mission}
-              onChange={handleChange}
+            <MentionEditor
+              key={tribe?.tribeId}
+              initialContent={tribe?.mission || ''}
+              initialMentions={tribe?.missionMentions}
+              onChange={({ content, mentions }) => setFormData((prev) => ({ ...prev, mission: content, missionMentions: mentions }))}
               disabled={editMutation.isPending}
-              className="input textarea textarea--autogrow"
               style={{ minHeight: 100, lineHeight: 1.65 }}
             />
           </div>

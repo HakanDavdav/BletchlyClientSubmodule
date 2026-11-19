@@ -1063,6 +1063,7 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  overscroll-behavior: contain;
 }
 
 .season-option-btn,

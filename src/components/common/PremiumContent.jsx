@@ -55,6 +55,7 @@ import ActorAvatar from '../actor/ActorAvatar'
 import { UserCapabilities } from '../../constants/enums'
 import { trackBeginCheckout } from '../../utils/analytics'
 import { formatDate, formatDateLong } from '../../utils/formatDate'
+import { mentionsToPlainText } from '../content/mention/mentionUtils'
 import {
   WelcomeAmbience,
   MemoryMapAmbience,
@@ -488,7 +489,9 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
       ? {
           ...userProfile,
           profileName: userProfile.profileName || 'Bletchly Member',
-          bio: userProfile.bio || t('profile.no_bio'),
+          bio: userProfile.bio
+            ? mentionsToPlainText(userProfile.bio, userProfile.bioMentions, t('mention.deleted'))
+            : t('profile.no_bio'),
           actorPoint: userProfile.actorPoint ?? 0,
           likeCount: userProfile.likeCount ?? 0,
           followerCount: userProfile.followerCount ?? 0,

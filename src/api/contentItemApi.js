@@ -20,6 +20,9 @@ export const contentItemApi = {
     api.get(`/contentitem/${contentItemId}/actor-like/${actorId}`),
 
   // ─── Post ────────────────────────────────────────────────────────────────
+  getNewPosts: (page = 1) =>
+    api.get('/contentitem/post/new', { params: { page } }),
+
   getPost: (postId) =>
     api.get(`/contentitem/post/${postId}`),
 

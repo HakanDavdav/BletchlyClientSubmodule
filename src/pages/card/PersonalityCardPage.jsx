@@ -31,6 +31,7 @@ export default function PersonalityCardPage() {
   const [formData, setFormData] = useState({
     cardName: '',
     personalityPrompt: '',
+    mentions: [],
     imageUrl: '',
     tags: [],
     personalityCardConfirmed: false,
@@ -108,6 +109,7 @@ export default function PersonalityCardPage() {
       setFormData({
         cardName: '',
         personalityPrompt: '',
+        mentions: [],
         imageUrl: '',
         tags: [],
         personalityCardConfirmed: false,
@@ -115,11 +117,12 @@ export default function PersonalityCardPage() {
     },
   })
 
-  const handlePersonalityCardChange = (field, value) => {
+  const handlePersonalityCardChange = (field, value, mentions) => {
     setFormData((current) => ({
       ...current,
       cardName: field === 'cardName' ? value : current.cardName,
       personalityPrompt: field === 'prompt' ? value : current.personalityPrompt,
+      mentions: field === 'prompt' ? mentions ?? [] : current.mentions,
       imageUrl: field === 'imageUrl' ? value : current.imageUrl,
       personalityCardConfirmed: false,
     }))

@@ -87,6 +87,10 @@ select {
   background: var(--color-text-faint);
 }
 
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 /* â”€â”€â”€ Layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .layout-root {
   display: flex;
@@ -426,6 +430,13 @@ select {
   overflow-y: auto;
   max-height: min(60vh, 420px);
   resize: vertical;
+}
+
+.textarea.textarea--surface {
+  padding: 14px 16px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  line-height: 1.65;
 }
 
 .form-group {

@@ -1339,6 +1339,8 @@
   "mention": {
     "persons": "Persons",
     "tribes": "Tribes",
-    "no_results": "No matching person or tribe."
+    "no_results": "No matching person or tribe.",
+    "deleted": "[deleted]",
+    "hint": "Use @ to mention people and tribes"
   }
 }

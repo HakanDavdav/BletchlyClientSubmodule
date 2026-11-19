@@ -33,6 +33,8 @@ import useMyEntitiesStore from '../../store/myEntitiesStore'
 import useAuthStore from '../../store/authStore'
 import useIsMobile from '../../hooks/useIsMobile'
 import { UserCapabilities } from '../../constants/enums'
+import MentionEditor from '../content/mention/MentionEditor'
+import MentionText from '../content/mention/MentionText'
 
 export default function PersonalityCard({
   card,
@@ -364,22 +366,19 @@ export default function PersonalityCard({
               </div>
           </div>
 
-          <textarea
-            className={`input textarea personality-card-editor__prompt${showValidation && !editorPrompt.trim() ? ' error' : ''}`}
-            value={editorPrompt}
-            onChange={(event) => onEditorChange?.('prompt', event.target.value)}
+          <MentionEditor
+            className="personality-card-editor__prompt"
+            initialContent={editorPrompt}
+            onChange={({ content, mentions }) => onEditorChange?.('prompt', content, mentions)}
             placeholder={t('card.personality_prompt_placeholder')}
-            disabled={disabled}
-            readOnly={editorConfirmed}
-            maxLength={2000}
-            aria-label={t('card.personality_prompt')}
+            disabled={disabled || editorConfirmed}
+            invalid={(showValidation && !editorPrompt.trim()) || editorPrompt.length > 2000}
             style={
               editorConfirmed
                 ? {
                     borderColor: 'transparent',
                     background: 'transparent',
                     boxShadow: 'none',
-                    resize: 'none',
                   }
                 : undefined
             }
@@ -459,6 +458,8 @@ export default function PersonalityCard({
     card?.ownership?.originalCard?.cardHint ||
     card?.ownership?.originalCard?.personalityPrompt ||
     ''
+  // Mentions belong to the prompt (only the creator receives them); tokens without a match stay plain text.
+  const promptMentions = card?.mentions || card?.card?.mentions || card?.ownership?.originalCard?.mentions || null
   const rawTags =
     card?.cardTags ||
     card?.tags ||
@@ -1063,7 +1064,11 @@ export default function PersonalityCard({
         )}
       </div>
 
-      {hint && <p className="personality-card__hint">{hint}</p>}
+      {hint && (
+        <div className="personality-card__hint">
+          <MentionText text={hint} mentions={promptMentions} />
+        </div>
+      )}
 
       {tags.length > 0 && (
         <div className="personality-card__tags">

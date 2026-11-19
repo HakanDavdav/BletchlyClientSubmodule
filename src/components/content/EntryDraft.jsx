@@ -6,6 +6,7 @@ import useDevLog from '../../utils/useDevLog'
 import { useTranslation } from 'react-i18next'
 import { trackCreateEntry } from '../../utils/analytics'
 import MentionEditor from './mention/MentionEditor'
+import { mentionDtosToInputs } from './mention/mentionUtils'
 
 /**
  * EntryDraft — plan.md Component #22
@@ -15,10 +16,7 @@ export default function EntryDraft({ parentContentItemId, editContentItemId = nu
   useDevLog('EntryDraft', arguments[0] || {})
   const [draft, setDraft] = useState(() => ({
     content: initialContent,
-    mentions: (initialMentions || []).map((m) => ({
-      targetType: m.targetType,
-      targetId: m.actor?.actorId ?? m.tribe?.tribeId,
-    })),
+    mentions: mentionDtosToInputs(initialMentions),
     mentionDtos: initialMentions || [],
   }))
   const content = draft.content

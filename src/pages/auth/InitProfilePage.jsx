@@ -11,6 +11,7 @@ import toast from 'react-hot-toast'
 import AvatarUpload from '../../components/common/AvatarUpload'
 import SelectionMarker from '../../components/common/SelectionMarker'
 import { TopicSelectorPills } from '../../components/topic/TopicTag'
+import MentionEditor from '../../components/content/mention/MentionEditor'
 
 export default function InitProfilePage() {
   useDevLog('InitProfilePage', arguments[0] || {})
@@ -20,6 +21,7 @@ export default function InitProfilePage() {
 
   const [profileName, setProfileName] = useState('')
   const [bio, setBio] = useState('')
+  const [bioMentions, setBioMentions] = useState([])
   const [imageUrl, setImageUrl] = useState('')
   const [selectedTopics, setSelectedTopics] = useState([])
   const [socialEmailPreference, setSocialEmailPreference] = useState(true)
@@ -75,6 +77,7 @@ export default function InitProfilePage() {
       userId: actorId,
       profileName: profileName,
       bio: bio,
+      bioMentions: bioMentions,
       imageUrl: imageUrl,
       topicTypes: selectedTopics,
 
@@ -139,19 +142,14 @@ export default function InitProfilePage() {
             {t('auth.bio')}
           </label>
           <div style={{ position: 'relative' }}>
-            <textarea
+            <MentionEditor
+              className="textarea--surface"
               placeholder={t('profile.bio_placeholder')}
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              rows={4}
-              className="input textarea textarea--autogrow"
-              style={{
-                padding: '14px 16px',
-                borderRadius: 12,
-                background: 'var(--color-surface)',
-                minHeight: 120,
-                lineHeight: 1.5,
+              onChange={({ content, mentions }) => {
+                setBio(content)
+                setBioMentions(mentions)
               }}
+              style={{ minHeight: 120, lineHeight: 1.5 }}
             />
           </div>
         </div>

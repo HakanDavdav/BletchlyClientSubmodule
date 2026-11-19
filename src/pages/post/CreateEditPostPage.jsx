@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { trackCreatePost } from '../../utils/analytics'
 import MentionEditor from '../../components/content/mention/MentionEditor'
+import { mentionDtosToInputs } from '../../components/content/mention/mentionUtils'
 import { DropdownCaret, DropdownOption, DropdownPanel } from '../../components/common/Dropdown'
 
 export default function CreateEditPostPage() {
@@ -75,10 +76,7 @@ export default function CreateEditPostPage() {
       setFormData({
         title: existingPost.title || '',
         content: existingPost.content || '',
-        mentions: (existingPost.mentions || []).map((m) => ({
-          targetType: m.targetType,
-          targetId: m.actor?.actorId ?? m.tribe?.tribeId,
-        })),
+        mentions: mentionDtosToInputs(existingPost.mentions),
         topicTypes: existingPost.topicTypes || [],
         tribeId: existingPost.tribeId || '',
       })
@@ -289,19 +287,14 @@ export default function CreateEditPostPage() {
           <div style={{ position: 'relative' }}>
             <MentionEditor
               key={isEditMode ? existingPost?.contentItemId ?? 'edit' : 'new'}
+              className="textarea--surface"
               initialContent={isEditMode ? existingPost?.content || '' : ''}
               initialMentions={isEditMode ? existingPost?.mentions : null}
               placeholder={t('post.content_placeholder')}
               onChange={({ content, mentions }) => setFormData((prev) => ({ ...prev, content, mentions }))}
               disabled={mutation.isPending || mutation.isSuccess}
               invalid={hasSubmitted && !formData.content.trim()}
-              style={{
-                minHeight: 150,
-                padding: '14px 16px',
-                borderRadius: 12,
-                background: 'var(--color-surface)',
-                lineHeight: 1.65,
-              }}
+              style={{ minHeight: 150 }}
             />
           </div>
         </div>
