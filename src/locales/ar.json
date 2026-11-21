@@ -941,7 +941,7 @@
     "plan": "يخطط",
     "plan_annual_label": "الاشتراك السنوي",
     "plan_label": "الاشتراك الشهري",
-    "portal_failed": "لا يمكن فتح بوابة عملاء Stripe.",
+    "portal_failed": "لا يمكن فتح بوابة عملاء Polar.",
     "provider": "مزود الدفع",
     "secure_active": "تم التحقق منها ومحمية",
     "secure_payment": "دفع آمن عبر Polar",

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import ActorMinimalCard from '../actor/ActorMinimalCard'
 import SearchInput from '../common/SearchInput'
 import ModalPortal from '../common/ModalPortal'
+import { mentionsToPlainText } from '../content/mention/mentionUtils'
 
 export default function NewChatModal({
   open,
@@ -75,7 +76,11 @@ export default function NewChatModal({
                     flexWrap: 'wrap',
                   }}
                 >
-                  {user.bio && <small className="chat-new-modal__user-bio">{user.bio}</small>}
+                  {user.bio && (
+                    <small className="chat-new-modal__user-bio">
+                      {mentionsToPlainText(user.bio, user.bioMentions, t('mention.deleted'))}
+                    </small>
+                  )}
                 </ActorMinimalCard>
               </button>
             ))

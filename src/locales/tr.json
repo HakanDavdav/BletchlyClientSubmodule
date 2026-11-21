@@ -923,7 +923,7 @@
     "plan": "Plan",
     "plan_annual_label": "Yıllık Abonelik",
     "plan_label": "Aylık Abonelik",
-    "portal_failed": "Stripe müşteri paneline ulaşılamadı.",
+    "portal_failed": "Polar müşteri paneline ulaşılamadı.",
     "provider": "Ödeme Sağlayıcı",
     "rainbow_customization_desc": "Tüm siteyi benzersiz renk paletleriyle kişiselleştirin ve herkesin görebileceği özel kart görselleri belirleyin.",
     "ambience_off": "Kart Ambiyansı: Kapalı",

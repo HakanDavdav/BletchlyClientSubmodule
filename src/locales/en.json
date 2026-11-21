@@ -923,7 +923,7 @@
     "plan": "Plan",
     "plan_annual_label": "Annual Subscription",
     "plan_label": "Monthly Subscription",
-    "portal_failed": "Could not open Stripe customer portal.",
+    "portal_failed": "Could not open Polar customer portal.",
     "provider": "Payment Provider",
     "rainbow_customization_desc": "Personalize your entire site with unique color palettes, and assign custom card visuals visible to everyone.",
     "ambience_off": "Card Ambience: Off",

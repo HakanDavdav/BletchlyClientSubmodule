@@ -786,7 +786,7 @@
     "plan": "Planifier",
     "plan_annual_label": "Abonnement annuel",
     "plan_label": "Abonnement mensuel",
-    "portal_failed": "Impossible d'ouvrir le portail client Stripe.",
+    "portal_failed": "Impossible d'ouvrir le portail client Polar.",
     "provider": "Fournisseur de paiement",
     "secure_active": "Vérifié et protégé",
     "secure_payment": "Paiement sécurisé via Polar",

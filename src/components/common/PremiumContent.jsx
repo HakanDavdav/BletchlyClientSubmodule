@@ -913,7 +913,7 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                   <span
                     style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)' }}
                   >
-                    Stripe Checkout
+                    Polar
                   </span>
                   <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
                     {subStatus?.stripeSubscriptionId
@@ -2063,32 +2063,25 @@ export default function PremiumContent({ variant = 'modal', isOpen = true, onClo
                   gap: 10,
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                  <AlertTriangle
-                    size={18}
-                    color="var(--color-danger, #ef4444)"
-                    style={{ flexShrink: 0, marginTop: 2 }}
-                  />
-                  <div>
-                    <div
-                      style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)' }}
-                    >
-                      {t(
-                        'premium.cancel_confirm_title'
-                      )}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 12,
-                        color: 'var(--color-text-muted)',
-                        marginTop: 2,
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      {t(
-                        'premium.cancel_confirm_desc'
-                      )}
-                    </div>
+                <div>
+                  <div
+                    style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)' }}
+                  >
+                    {t(
+                      'premium.cancel_confirm_title'
+                    )}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: 'var(--color-text-muted)',
+                      marginTop: 2,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {t(
+                      'premium.cancel_confirm_desc'
+                    )}
                   </div>
                 </div>
 

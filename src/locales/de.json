@@ -786,7 +786,7 @@
     "plan": "Planen",
     "plan_annual_label": "Jahresabonnement",
     "plan_label": "Monatsabonnement",
-    "portal_failed": "Das Stripe-Kundenportal konnte nicht geöffnet werden.",
+    "portal_failed": "Das Polar-Kundenportal konnte nicht geöffnet werden.",
     "provider": "Zahlungsanbieter",
     "secure_active": "Verifiziert und geschützt",
     "secure_payment": "Sichere Zahlung über Polar",

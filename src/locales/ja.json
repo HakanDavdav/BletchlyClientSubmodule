@@ -941,7 +941,7 @@
     "plan": "プラン",
     "plan_annual_label": "年間サブスクリプション",
     "plan_label": "月額購読",
-    "portal_failed": "Stripe カスタマー ポータルを開けませんでした。",
+    "portal_failed": "Polar カスタマー ポータルを開けませんでした。",
     "provider": "決済プロバイダー",
     "ambience_off": "カードの雰囲気: オフ",
     "ambience_off_title": "背景カードの雰囲気を非表示",

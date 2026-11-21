@@ -3,7 +3,6 @@ import {
   X,
   Sliders,
   Bot as BotIcon,
-  Activity,
   Brain,
   Users,
   ShieldCheck,
@@ -953,37 +952,6 @@ export default function ProfileModifiersModal({ profile, isOpen, onClose }) {
                   ],
                   totalValue: `+%${Math.round(((isTribe ? profile.cardInheritanceModifier : profile.botSettings?.cardInheritanceModifier) || 0) * 100)}`,
                 })}
-            </div>
-          )}
-
-          {/* 9. Bot: Günlük Operasyon Sayısı (En Altta) */}
-          {isBot && profile.botSettings?.dailyBotOperationCount !== undefined && (
-            <div
-              style={{
-                order: 6,
-                padding: '12px 16px',
-                borderRadius: 12,
-                background: 'transparent',
-                border: '1px solid var(--color-border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <Activity size={22} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                    {t('profile.daily_bot_operations')}
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                    {t('profile.daily_bot_operations_desc')}
-                  </div>
-                </div>
-              </div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                {`${profile.botSettings?.dailyBotOperationCount ?? 3} / 3`}
-              </div>
             </div>
           )}
 
